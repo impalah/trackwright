@@ -41,6 +41,31 @@ def cmd_config(_args: argparse.Namespace, settings: Settings) -> int:
     return 0
 
 
+def cmd_bridge(_args: argparse.Namespace, settings: Settings) -> int:
+    from trackwright.bridge import run_bridge  # noqa: PLC0415
+
+    run_bridge(settings.bridge)
+    return 0
+
+
+def cmd_bridge_status(_args: argparse.Namespace, settings: Settings) -> int:
+    from trackwright.bridge import BridgeClient  # noqa: PLC0415
+
+    emit(BridgeClient(settings.bridge.socket_path).call("bridge.status", timeout=settings.bridge.request_timeout))
+    return 0
+
+
+def cmd_ping(args: argparse.Namespace, settings: Settings) -> int:
+    from trackwright.bridge import BridgeClient  # noqa: PLC0415
+
+    client = BridgeClient(settings.bridge.socket_path)
+    timeout = settings.bridge.request_timeout
+    hello = client.call("hello", timeout=timeout)
+    pong = client.request("ping", {"echo": args.echo}, timeout=timeout)
+    emit({"ok": bool(pong.get("ok")), "hello": hello, "ping": pong})
+    return 0 if pong.get("ok") else 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="trackwright", description="Trackwright: MCP server for Cubase.")
     parser.add_argument("--config", type=Path, help="configuration file (default: $TRACKWRIGHT_CONFIG or ~/.config)")
@@ -48,6 +73,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True, metavar="COMMAND")
     sub.add_parser("version", help="print the version").set_defaults(handler=cmd_version)
     sub.add_parser("config", help="print the effective configuration").set_defaults(handler=cmd_config)
+    sub.add_parser("bridge", help="run the bridge daemon (keep it running)").set_defaults(handler=cmd_bridge)
+    sub.add_parser("bridge-status", help="show the bridge status").set_defaults(handler=cmd_bridge_status)
+    ping = sub.add_parser("ping", help="check the round trip Python -> Cubase -> Python")
+    ping.add_argument("--echo", default="hola-ñ-✓", help="text echoed back by the script")
+    ping.set_defaults(handler=cmd_ping)
     return parser
 
 

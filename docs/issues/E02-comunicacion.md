@@ -6,7 +6,7 @@ Evidencia de la POC: `docs/protocol.md` y `findings.md`, secciones 8 a 10 (recon
 
 ## TW-0201 Protocolo SysEx
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:** `trackwright.protocol`.
   - Trama `F0 7D 54 57 <ver> <seq_hi> <seq_lo> <idx> <count> <payload ASCII> F7`, con la marca **`TW`** (0x54 0x57). Es distinta de la de la POC (`CP`), para que no se confundan.
   - Fragmentos de 240 bytes como máximo, y 64 fragmentos por mensaje.
@@ -19,7 +19,7 @@ Evidencia de la POC: `docs/protocol.md` y `findings.md`, secciones 8 a 10 (recon
 
 ## TW-0202 Transporte MIDI virtual
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:**
   - `trackwright.transport.MidiTransport`: mido + rtmidi, con dos puertos virtuales de CoreMIDI, `Trackwright To Cubase` y `Trackwright From Cubase`.
   - Contadores de tramas enviadas, recibidas y ajenas.
@@ -30,7 +30,7 @@ Evidencia de la POC: `docs/protocol.md` y `findings.md`, secciones 8 a 10 (recon
 
 ## TW-0203 Cliente del host
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:** `trackwright.host.HostClient`.
   - Correlación por `rid`.
   - Timeout por petición; las escrituras tienen resultado desconocido y **no se reintentan**.
@@ -46,7 +46,7 @@ Evidencia de la POC: `docs/protocol.md` y `findings.md`, secciones 8 a 10 (recon
 
 ## TW-0204 Puente (daemon) e IPC local
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:**
   - `trackwright.bridge`: proceso de larga vida, dueño de los puertos y del `HostClient`.
   - Servidor de Unix socket en `$TMPDIR/trackwright-<uid>/bridge.sock`, con directorio 0700 y socket 0600. **Sin puerto de red.**
