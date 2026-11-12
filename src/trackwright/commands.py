@@ -79,7 +79,7 @@ _SPECS = [
         "Remove Selected Tracks",
         "confirm",
         "Remove the selected tracks",
-        "verified: asks for confirmation when the track has events",
+        "verified: may ask for confirmation when the track has events, unless the user disabled that prompt",
     ),
     CommandSpec(
         "project.selected_to_new_folder",
@@ -109,7 +109,7 @@ _SPECS = [
         "Locate Next Marker",
         "direct",
         "Move the cursor to the next marker",
-        "verified; stays put when there is no next marker",
+        "verified; without a next marker it goes to the end of the last event (Cubase 15)",
     ),
     CommandSpec(
         "transport.locate_prev_marker",

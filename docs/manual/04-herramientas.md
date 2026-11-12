@@ -46,7 +46,7 @@ Las herramientas basadas en comandos de Cubase informan de `command_class`:
 |---|---|
 | `direct` | Actúa sin intervención. |
 | `dialog` | Abre un diálogo de Cubase que el usuario debe completar. **Nunca se da por terminado.** |
-| `confirm` | Cubase puede pedir confirmación (por ejemplo, al borrar una pista con eventos). |
+| `confirm` | Cubase puede pedir confirmación (por ejemplo, al borrar una pista con eventos), salvo que el usuario haya marcado «no volver a preguntar». |
 | `ui_selection` | Actúa sobre la selección de la ventana de Cubase, que Trackwright no puede ver. |
 | `unknown` | Cubase la acepta, pero su efecto no se ha observado. |
 
@@ -164,6 +164,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 ### `cubase_markers`
 
 - **`action`:** `add_marker_track` (`direct`, escritura), `insert_at_cursor` (`direct`, escritura; necesita una pista de marcadores), `locate_prev` o `locate_next` (navegación: el cursor salta al marcador anterior o siguiente).
+- Sin un marcador siguiente, `locate_next` lleva al final del último evento del proyecto; sin uno anterior, `locate_prev` lleva al inicio. No se detienen en los localizadores.
 - La creación de pistas y marcadores no se puede leer desde la API, así que devuelve `verified: "not_observable"`.
 
 ### `cubase_remove_selected_tracks` (destructiva)
@@ -171,7 +172,8 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 - **Entrada:** `expect_selected` y `dry_run`.
 - Solo actúa si la indicada es la **única** pista seleccionada (`SELECTION_MISMATCH`, con la lista de las seleccionadas), porque el comando de Cubase borra todas las seleccionadas. Selecciónala antes con `cubase_select_track`.
 - Limitación: no ve las pistas sin canal de mezclador (marcadores, carpetas), así que no sabe si hay alguna de ellas seleccionada. Revísalo en pantalla antes de aplicar.
-- Si la pista tiene eventos, Cubase pide confirmación y la herramienta devuelve `pending_confirmation`.
+- Si la pista tiene eventos, Cubase puede pedir confirmación (salvo que se haya desactivado ese aviso) y la herramienta devuelve `pending_confirmation`.
+- Para pistas sin canal de mezclador (marcadores, carpetas), selecciónalas a mano y usa `cubase_run_command` con `project.remove_selected_tracks`.
 
 ### `cubase_split_at_locators` (destructiva)
 
