@@ -24,4 +24,12 @@ Cada entrada registra una ejecución **real** contra Cubase. Las pruebas con el 
 | `cubase_get_transport` | cursor en 1. 1. 1. 0; ciclo entre los compases 2 y 4 | 17 ms |
 | `cubase_poll_changes` | 2 eventos | 207 ms |
 
-**Pendiente:** verificar contra Cubase las herramientas de escritura, de navegación y de comandos.
+### Escrituras reversibles (tests de integración)
+
+Comando: `TRACKWRIGHT_ALLOW_WRITES=1 TRACKWRIGHT_TEST_TRACK="POC-TEST"`. Resultado: **5 superados** en 1,52 s.
+
+- **`test_mute_roundtrip`:** `cubase_set_track_mix` activa el mute de POC-TEST, lo verifica releyendo y lo restaura.
+- **`test_cursor_roundtrip`:** `cubase_set_position` lleva el cursor al compás 3, lo verifica y lo devuelve a su posición.
+- **Estado antes y después,** leído de forma independiente: mute `False` → `False`; cursor `1. 1. 1.  0` → `1. 1. 1.  0`. Nada quedó cambiado.
+
+**Pendiente:** el resto de herramientas de escritura y las de comandos (tutoriales 3 a 6).
