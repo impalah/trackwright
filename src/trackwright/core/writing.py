@@ -24,6 +24,7 @@ from trackwright.core.base import (
     TAG_VOLUME,
     JsonObject,
     ServiceBase,
+    operation,
 )
 from trackwright.core.models import (
     Change,
@@ -95,6 +96,7 @@ class WritingMixin(ServiceBase):
         )
 
     # ------------------------------------------------------------------ parameters
+    @operation
     def set_parameter(
         self,
         track: str,
@@ -137,6 +139,8 @@ class WritingMixin(ServiceBase):
             )
         self.policy.check_track(name)
         params = {"id": obj["id"], "tag": tag, "value": process, **MIXER}
+        if expect_title is not None:
+            params["expectTitle"] = expect_title  # re-checked by the script in the same tick as the write
         result = self._write("da.param.set", params, int(obj["id"]), tag)
         after = result.get("after") or self.read_parameter(int(obj["id"]), tag)
         ok = after.get("process") is not None and abs(float(after["process"]) - process) <= tolerance
@@ -148,6 +152,7 @@ class WritingMixin(ServiceBase):
             note=None if ok else "the value read back differs from the request",
         )
 
+    @operation
     def set_track_mix(
         self,
         track: str,
@@ -179,15 +184,21 @@ class WritingMixin(ServiceBase):
                 dry_run=True, target=name, verified=None, changes=[self._change(b, v, None, None) for b, v in befores]
             )
         self.policy.check_track(name)
-        changes = []
+        changes: list[Change] = []
         for before, value in befores:
             tag = int(before["tag"])
-            result = self._write("da.param.set", {"id": oid, "tag": tag, "value": value, **MIXER}, oid, tag)
+            try:
+                result = self._write("da.param.set", {"id": oid, "tag": tag, "value": value, **MIXER}, oid, tag)
+            except TrackwrightError as exc:
+                # Earlier changes did happen: say so, so that nobody assumes the track is untouched.
+                exc.details["applied"] = [c.model_dump() for c in changes]
+                raise
             after = result.get("after") or self.read_parameter(oid, tag)
             ok = after.get("process") is not None and abs(float(after["process"]) - value) <= 1e-3
             changes.append(self._change(before, value, after, ok))
         return WriteOut(dry_run=False, target=name, changes=changes, verified=all(c.verified for c in changes))
 
+    @operation
     def rename_track(self, track: str, new_name: str, *, dry_run: bool = True) -> WriteOut:
         new_name = new_name.strip()
         if not 1 <= len(new_name) <= 64:
@@ -219,6 +230,7 @@ class WritingMixin(ServiceBase):
         )
 
     # ------------------------------------------------------------------ plugins
+    @operation
     def insert_plugin(self, track: str, slot: int, plugin_uid: str, *, dry_run: bool = True) -> InsertPluginOut:
         item = self.resolve_track(TrackSelector.parse(track))
         name = self.track_info(item).name
@@ -242,7 +254,10 @@ class WritingMixin(ServiceBase):
         try:
             result = self.call("pm.set", {"slot": slot_obj["id"], "uid": plugin_uid, **MIXER})
         except RequestTimeoutError as exc:
-            exc.details["read_back"] = self.call("da.object", {"id": slot_obj["id"], **MIXER})
+            try:
+                exc.details["read_back"] = self.call("da.object", {"id": slot_obj["id"], **MIXER})
+            except TrackwrightError as read_error:
+                exc.details["read_back_error"] = str(read_error)
             raise
         children = self.children(int(slot_obj["id"])) if result.get("result") else []
         plugin = children[0] if children else None
@@ -282,21 +297,29 @@ class WritingMixin(ServiceBase):
         match = [c for c in self.channels() if c["id"] == base]
         return base, self.track_info(match[0]).name if match else None
 
+    @operation
     def select_track(self, track: str | None = None, step: str | None = None) -> SelectOut:
         if (track is None) == (step is None):
             raise PreconditionFailedError("give exactly one of track or step", code="BAD_REQUEST")
-        _, before_name = self._selected_name()
+        before_id, before_name = self._selected_name()
+
+        def base() -> JsonObject:
+            return self.call("da.base")
+
         if step is not None:
             if step not in ("next", "prev"):
                 raise PreconditionFailedError("step must be 'next' or 'prev'", code="BAD_REQUEST")
             self.call("sel.step", {"direction": step})
+            self.wait_until(base, lambda b: int(b.get("base", -1)) != before_id)
             after_id, after_name = self._selected_name()
             return SelectOut(selected_before=before_name, selected_after=after_name, verified=after_id >= 0)
         item = self.resolve_track(TrackSelector.parse(track))
         self.call("da.param.set", {"id": item["id"], "tag": TAG_SELECTED, "value": 1, **MIXER})
+        self.wait_until(base, lambda b: b.get("base") == item["id"])
         after_id, after_name = self._selected_name()
         return SelectOut(selected_before=before_name, selected_after=after_name, verified=after_id == item["id"])
 
+    @operation
     def set_position(self, which: str, time: str, *, unit: str = "bars", dry_run: bool = False) -> PositionOut:
         field = {"cursor": "locator", "cycle_left": "cycleLeft", "cycle_right": "cycleRight"}.get(which)
         if field is None:
@@ -341,6 +364,7 @@ class WritingMixin(ServiceBase):
             note=note,
         )
 
+    @operation
     def set_tempo(self, bpm: float, *, dry_run: bool = True) -> TempoOut:
         if not 20 <= bpm <= 300:
             raise PreconditionFailedError("tempo must be within 20..300 BPM", code="OUT_OF_RANGE")

@@ -12,3 +12,11 @@ Primera versión, basada en el diseño verificado en la prueba de concepto `cuba
 - **Diagnóstico** `trackwright doctor`.
 - **Pruebas:** unitarias, de contrato MCP, del script con Node.js, de extremo a extremo y de integración opcionales contra Cubase.
 - **Documentación:** manuales, tutoriales, arquitectura, desarrollo e issues.
+- **Endurecimiento** tras una revisión independiente (épica E10):
+  - sesión fijada durante cada herramienta;
+  - borrado solo con selección única;
+  - paginación del filtro de parámetros sin pérdidas;
+  - plazo único con `BUSY` en el puente;
+  - `INTERNAL_ERROR` con resultado desconocido;
+  - cambios ya aplicados en los errores parciales;
+  - `expectTitle` comprobado en el script.

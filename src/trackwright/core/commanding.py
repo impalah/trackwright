@@ -12,7 +12,7 @@ from __future__ import annotations
 from typing import Literal
 
 from trackwright.commands import COMMANDS, CommandSpec
-from trackwright.core.base import JsonObject, ServiceBase
+from trackwright.core.base import JsonObject, ServiceBase, operation
 from trackwright.core.models import CommandOut, CommandStatus
 from trackwright.core.refs import TrackSelector
 from trackwright.core.writing import bars_tuple, format_bars
@@ -88,6 +88,7 @@ class CommandingMixin(ServiceBase):
             return "fired", "acts on the selection in the Cubase window, which Trackwright cannot see: ask the user"
         return "fired", None
 
+    @operation
     def run_command(self, key: str, *, dry_run: bool = True, force: bool = False) -> CommandOut:
         spec = self._spec(key)
         can = self._can_perform(key)
@@ -106,6 +107,7 @@ class CommandingMixin(ServiceBase):
         )
 
     # ------------------------------------------------------------------ markers
+    @operation
     def markers(self, action: str, *, dry_run: bool = True) -> CommandOut:
         key = MARKER_ACTIONS.get(action)
         if key is None:
@@ -147,15 +149,18 @@ class CommandingMixin(ServiceBase):
         return str(raw["time"]) if isinstance(raw, dict) else None
 
     # ------------------------------------------------------------------ removing tracks
+    @operation
     def remove_selected_tracks(self, expect_selected: str, *, dry_run: bool = True) -> CommandOut:
         spec = self._spec("project.remove_selected_tracks")
         expected = self.resolve_track(TrackSelector.parse(expect_selected))
         base = int(self.call("da.base").get("base", -1))
-        if base != expected["id"]:
+        # "Remove Selected Tracks" removes *every* selected track: require exactly one, the expected one.
+        selected = [self.track_info(c).name for c in self.channels() if self.track_info(c).selected]
+        if base != expected["id"] or selected != [self.track_info(expected).name]:
             raise PreconditionFailedError(
-                "the selected track is not the expected one; select it first (cubase_select_track)",
+                "the selection must be exactly the expected track; select it alone first (cubase_select_track)",
                 code="SELECTION_MISMATCH",
-                details={"expected": self.track_info(expected).name},
+                details={"expected": self.track_info(expected).name, "selected": selected},
             )
         name = self.track_info(expected).name
         can = self._can_perform(spec.key)
@@ -163,8 +168,10 @@ class CommandingMixin(ServiceBase):
             return self._out(spec, dry_run=True, can=can, status="planned", verified=None, details={"track": name})
         self.policy.check_track(name)
         self._fire(spec)
-        still_there = any(c["id"] == expected["id"] for c in self.channels())
-        if still_there:
+        listing = self.wait_until(
+            lambda: {"ids": [c["id"] for c in self.channels()]}, lambda d: expected["id"] not in d["ids"]
+        )
+        if expected["id"] in listing["ids"]:
             return self._out(
                 spec,
                 dry_run=False,
@@ -177,6 +184,7 @@ class CommandingMixin(ServiceBase):
         return self._out(spec, dry_run=False, can=can, status="done", verified=True, details={"track": name})
 
     # ------------------------------------------------------------------ split at locators
+    @operation
     def split_at_locators(self, left: str, right: str, *, dry_run: bool = True) -> CommandOut:
         spec = self._spec("edit.split_loop")
         left_pos, right_pos = bars_tuple(left), bars_tuple(right)
@@ -184,10 +192,15 @@ class CommandingMixin(ServiceBase):
             raise PreconditionFailedError("locators look like '2. 1. 1. 0'", code="BAD_TIME")
         if left_pos >= right_pos:
             raise PreconditionFailedError("the left locator must be before the right one", code="BAD_TIME")
+        previous = dict(self.call("transport.get").get("primary") or {})
         details: dict[str, str | int | float | bool | None] = {
             "left": format_bars(left_pos),
             "right": format_bars(right_pos),
-            "warning": "splits every track with events crossing the locators",
+            # The locators are left at the split points: restoring them right away could race with the
+            # command, which Cubase runs in its own idle tick. Report them so they can be restored.
+            "previous_left": (previous.get("cycleLeft") or {}).get("time"),
+            "previous_right": (previous.get("cycleRight") or {}).get("time"),
+            "warning": "splits every track with events crossing the locators; the locators stay at the split points",
         }
         if dry_run:
             return self._out(
@@ -225,6 +238,7 @@ class CommandingMixin(ServiceBase):
         )
 
     # ------------------------------------------------------------------ add a track with the user's help
+    @operation
     def add_track_interactive(self, phase: Literal["start", "confirm"], kind: str, suggested_name: str) -> CommandOut:
         key = TRACK_KINDS.get(kind)
         if key is None:
@@ -232,6 +246,11 @@ class CommandingMixin(ServiceBase):
         spec = self._spec(key)
         if phase == "start":
             self.policy.check_project_write()
+            if any(self.track_info(c).name == suggested_name for c in self.channels()):
+                # Otherwise 'confirm' could report an old track as the new one.
+                raise PreconditionFailedError(
+                    f"a track called {suggested_name!r} already exists; suggest another name", code="NAME_CONFLICT"
+                )
             can = self._can_perform(key)
             if can is False:
                 raise PreconditionFailedError(

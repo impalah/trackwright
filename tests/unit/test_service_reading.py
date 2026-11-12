@@ -7,7 +7,7 @@ import pytest
 from trackwright.core.policy import WritePolicy
 from trackwright.core.refs import ObjectRef
 from trackwright.core.service import CubaseService
-from trackwright.errors import NotFoundError, PreconditionFailedError, StaleReferenceError, TrackwrightError
+from trackwright.errors import NotFoundError, PreconditionFailedError, StaleSessionError, TrackwrightError
 from trackwright.fake import FakeCubase
 
 STUDIO_EQ = "946051208E29496E804F64A825C8A047"
@@ -194,16 +194,33 @@ def test_poll_changes_with_drops(service: CubaseService, fake: FakeCubase) -> No
     assert "dropped" in service.poll_changes().advice
 
 
-def test_refs_are_validated(service: CubaseService, fake: FakeCubase) -> None:
-    ref = service.list_tracks().tracks[2].ref
-    assert service.resolve_ref(ref)["title"] == "POC-TEST"
-    fake.reload_script()
-    with pytest.raises(StaleReferenceError):
-        service.resolve_ref(ref)
-    decoded = ObjectRef.decode(ref)
-    same_session_wrong_object = ObjectRef(fake.session, decoded.object_id, decoded.type_name, decoded.unique_name)
-    with pytest.raises(StaleReferenceError, match="different object"):
-        service.resolve_ref(same_session_wrong_object.encode())
+def test_refs_belong_to_the_session(service: CubaseService, fake: FakeCubase) -> None:
+    ref = ObjectRef.decode(service.list_tracks().tracks[2].ref)
+    assert ref.session == fake.session
+    assert ref.type_name == "AudioChannel"
+
+
+def test_script_reload_during_a_tool_stops_before_writing(service: CubaseService, fake: FakeCubase) -> None:
+    """TW-1001: ids gathered before a reload must never reach a write."""
+    original = fake._op_da_param_get
+
+    def reload_then_read(p: dict[str, object]) -> dict[str, object]:
+        fake.reload_script()  # Cubase reloads the script between the tool's reads
+        return original(p)
+
+    fake._op_da_param_get = reload_then_read  # type: ignore[method-assign]
+    with pytest.raises(StaleSessionError, match="before any further write"):
+        service.set_track_mix("POC-INSTR", mute=True, dry_run=False)
+    assert not any(op == "da.param.set" for op, _ in fake.calls)
+
+
+def test_session_pin_blocks_writes_after_a_silent_change(service: CubaseService, fake: FakeCubase) -> None:
+    with service.pinned_session():
+        service.call("hello")
+        fake.session = "other"
+        with pytest.raises(StaleSessionError):
+            service.call("da.param.set", {"id": 1, "tag": 1025, "value": 0.5})
+    assert service.call("hello")["sessionId"] == "other"  # outside a tool there is no pin
 
 
 def test_session_is_negotiated_lazily() -> None:

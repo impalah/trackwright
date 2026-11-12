@@ -45,6 +45,11 @@ Cada comprobación que falla incluye un `fix` con la solución.
 - **Qué significa:** **el cambio puede haberse aplicado o no.** Trackwright no reintenta y adjunta la relectura del valor (`read_back`).
 - **Solución:** consulta `read_back`. Si se repite, sube `[bridge] write_timeout`.
 
+## `BUSY`
+
+- **Causa:** otra escritura, quizá de otra sesión MCP, seguía en curso cuando llegó esta. La escritura **no se envió**.
+- **Solución:** repetirla es seguro.
+
 ## `WRITES_DISABLED` o `NOT_ALLOWED`
 
 - **Causa:** la configuración no permite esa escritura.

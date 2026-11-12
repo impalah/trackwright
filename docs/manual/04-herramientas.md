@@ -22,13 +22,19 @@ Solo se ven las pistas que tienen **canal de mezclador** (audio, instrumento, gr
 | `insert:N` | El plugin cargado en el slot de inserción N (1–8). |
 | `strip:eq` | El EQ del channel strip. |
 
-### Referencias `ref`
+### Referencias `ref` y sesiones
 
-Las salidas incluyen `ref` opacas para los objetos. **Solo valen mientras Cubase no recargue el script**: tras reiniciar Cubase los identificadores internos se reutilizan para otros objetos. Por eso Trackwright comprueba cada `ref` antes de usarla y, si ya no es válida, responde `STALE_REF`. Para referirte a una pista de forma duradera, usa su `uid:`.
+Las salidas incluyen `ref` opacas para los objetos. Son **informativas**: ninguna herramienta las acepta como entrada. Identifican el objeto dentro de la sesión actual del script.
+
+Tras reiniciar Cubase, los identificadores internos cambian y se reutilizan para otros objetos. Para designar una pista de forma duradera, usa su `uid:`.
+
+Cada herramienta fija la sesión del script mientras se ejecuta. Si Cubase recarga el script en mitad de una operación, la herramienta se detiene con `STALE_SESSION` **antes de escribir nada más**. Basta con volver a lanzarla.
 
 ### Ensayo y aplicación (`dry_run`)
 
 Toda herramienta que modifica el proyecto tiene `dry_run`, que por defecto es `true`: devuelve el plan (valor actual y valor pedido) sin tocar nada. Con `dry_run=false` aplica el cambio, relee el valor y devuelve `verified`.
+
+Hay una excepción: `cubase_add_track_interactive`. Su fase `start` solo abre un diálogo de Cubase, y quien decide si se crea la pista eres tú, en ese diálogo.
 
 Las escrituras **no se reintentan nunca**. Si una vence por tiempo (`TIMEOUT`), su resultado es desconocido: el error incluye la relectura del valor (`read_back`).
 
@@ -51,6 +57,9 @@ Los errores llegan como error de herramienta, con el formato `CÓDIGO: mensaje |
 | Código | Causa |
 |---|---|
 | `BRIDGE_UNAVAILABLE` | El puente no está en marcha (`trackwright bridge`). |
+| `BUSY` | Otra escritura seguía en curso y esta **no se envió**. Se puede repetir. |
+| `INTERNAL_ERROR` | Error inesperado en el puente. En escrituras, el resultado es desconocido (`outcome: unknown`). |
+| `STALE_SESSION` | Cubase recargó el script durante la operación; se detuvo antes de seguir escribiendo. |
 | `TIMEOUT` | Cubase no respondió a tiempo. En escrituras: resultado desconocido. |
 | `WRITES_DISABLED`, `NOT_ALLOWED` | La configuración no permite esa escritura. |
 | `TRACK_NOT_FOUND`, `TRACK_AMBIGUOUS`, `NO_SELECTION` | No se puede resolver la pista. |
@@ -89,7 +98,7 @@ La pista seleccionada y sus secciones (Inserts, Strips, Sends…). Si la selecci
 
 - **Entrada:** `target`, `track`, `offset`, `limit` (≤ 25), `filter`.
 - **Salida:** los parámetros, con `tag`, `title` (localizado), `process`, `display`, `plain` y `automatable`.
-- Con `filter`, recorre como mucho 500 parámetros. Si se detiene antes del final, devuelve `truncated: true`.
+- **Paginación:** la salida incluye `next_offset`, que es el `offset` para pedir la página siguiente, y `truncated: true` mientras queden parámetros. Con `filter`, cada llamada recorre como mucho 500 parámetros; ninguna coincidencia se pierde entre páginas.
 
 ### `cubase_get_parameter`
 
@@ -103,6 +112,8 @@ Posición del cursor, localizadores de ciclo y tempo, en compases. Si Cubase aú
 ### `cubase_poll_changes`
 
 Cambios que Cubase ha notificado desde la última llamada; la llamada vacía el registro. Un evento `removed` es una **pista para volver a comprobar**, no una prueba de borrado: Cubase también lo emite al cambiar de pista seleccionada.
+
+Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan `still_valid: null`, y `unchecked` dice cuántos son.
 
 ## Herramientas de escritura y navegación
 
@@ -123,6 +134,7 @@ Cambios que Cubase ha notificado desde la última llamada; la llamada vacía el 
 - **Entrada:** `track` y, al menos, uno de `volume` (normalizado de 0 a 1), `mute`, `solo` o `record_arm`; además, `dry_run`.
 - Funciona en pistas **no seleccionadas**.
 - El volumen en dB todavía no está disponible.
+- Si un cambio falla después de aplicar otros, el error incluye `applied`, con los cambios que sí se hicieron.
 
 ### `cubase_rename_track` (escritura)
 
@@ -157,7 +169,8 @@ Cambios que Cubase ha notificado desde la última llamada; la llamada vacía el 
 ### `cubase_remove_selected_tracks` (destructiva)
 
 - **Entrada:** `expect_selected` y `dry_run`.
-- Solo actúa si la pista seleccionada es exactamente la indicada (`SELECTION_MISMATCH`). Selecciónala antes con `cubase_select_track`.
+- Solo actúa si la indicada es la **única** pista seleccionada (`SELECTION_MISMATCH`, con la lista de las seleccionadas), porque el comando de Cubase borra todas las seleccionadas. Selecciónala antes con `cubase_select_track`.
+- Limitación: no ve las pistas sin canal de mezclador (marcadores, carpetas), así que no sabe si hay alguna de ellas seleccionada. Revísalo en pantalla antes de aplicar.
 - Si la pista tiene eventos, Cubase pide confirmación y la herramienta devuelve `pending_confirmation`.
 
 ### `cubase_split_at_locators` (destructiva)
@@ -165,11 +178,12 @@ Cambios que Cubase ha notificado desde la última llamada; la llamada vacía el 
 - **Entrada:** `left`, `right` y `dry_run`.
 - Coloca los localizadores, los relee y lanza «Split Loop».
 - **Corta todas las pistas** que tienen eventos en ese rango.
+- Los localizadores **se quedan** en los puntos de corte; restaurarlos enseguida podría adelantarse al comando. La salida incluye `previous_left` y `previous_right`, para restaurarlos después con `cubase_set_position`.
 
 ### `cubase_add_track_interactive` (escritura, con el usuario)
 
 - **Entrada:** `phase` (`start` o `confirm`), `kind` (`audio`, `group` o `folder`) y `suggested_name`.
-- **`start`:** abre el diálogo «Añadir pista» de Cubase y devuelve `awaiting_user` con instrucciones para el usuario.
+- **`start`:** abre el diálogo «Añadir pista» de Cubase y devuelve `awaiting_user` con instrucciones para el usuario. Rechaza nombres que ya existen (`NAME_CONFLICT`), para que `confirm` no confunda una pista antigua con la nueva.
 - **`confirm`:** comprueba que la pista existe. Las carpetas no tienen canal de mezclador, así que en ese caso la verificación es visual.
 
 ### `cubase_run_command` (destructiva, avanzada)

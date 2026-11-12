@@ -41,11 +41,12 @@ La evidencia está en `cubase-mcp-poc/docs/findings.md` y `progress.md`.
 | Decisión | Motivo |
 |---|---|
 | Puente separado del servidor MCP | Los puertos virtuales tienen nombre fijo y solo puede haber un dueño; varias sesiones MCP los comparten a través del puente. Cubase vuelve a conectar solo si el puente se reinicia (verificado). |
+| Sesión fijada durante cada herramienta | El puente renegocia la sesión de forma transparente en las lecturas; sin el fijado, una escritura posterior a una recarga podría llevar un identificador viejo que ahora nombra a otro objeto (hallazgo TW-1001). |
 | Referencias opacas con sesión y huella | Los identificadores internos se reutilizan para otros objetos tras recargar el script (verificado: el ID 550 pasó de Compressor a Input Filter). |
 | Selectores `uid:` para las pistas | `getObjectUniqueIDString` del canal se mantuvo entre reinicios (verificado). |
 | DirectAccess sobre `mMixConsole` | Da acceso a todas las pistas sin seleccionarlas. Los identificadores valen en ambas instancias (verificado). |
 | Deduplicación del mezclador | El último hijo de «VST Mixer» repite el último canal (verificado dos veces). |
-| Escrituras sin reintento | Tras un timeout, la escritura pudo ejecutarse (verificado con respuestas tardías). |
+| Escrituras sin reintento y plazo único | Tras un timeout, la escritura pudo ejecutarse (verificado con respuestas tardías). El tiempo de espera del cerrojo de escritura y la renegociación cuentan dentro del plazo; si el cerrojo no se libera a tiempo, `BUSY` sin enviar. |
 | Supresión de duplicados en curso, en el script | Un duplicado en ráfaga se ejecutaba dos veces; corregido y verificado. |
 | Rechazo de escrituras fuera de [0, 1] | Cubase las limita a ese rango; el enrutado (22) no se puede volver a escribir (verificado, con un incidente). |
 | Clases de comando | Los comandos no devuelven resultado; unos abren diálogos y otros actúan sobre la selección de la interfaz (verificado). |

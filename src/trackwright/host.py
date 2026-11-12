@@ -22,7 +22,7 @@ from typing import Any
 from loguru import logger
 
 from trackwright import protocol
-from trackwright.errors import ProtocolError, RequestTimeoutError, StaleSessionError, host_error
+from trackwright.errors import ProtocolError, RequestTimeoutError, StaleSessionError, TrackwrightError, host_error
 from trackwright.ops import WRITE_OPS
 from trackwright.transport import Transport
 
@@ -115,14 +115,27 @@ class HostClient:
         timeout: float | None = None,
         rid: str | None = None,
     ) -> Reply:
-        """Send one request and wait for its response. Writes are serialized and never retried."""
-        if op in WRITE_OPS:
-            with self._write_lock:
-                return self._request(op, params, timeout, rid)
-        return self._request(op, params, timeout, rid)
+        """Send one request and wait for its response. Writes are serialized and never retried.
 
-    def _request(self, op: str, params: JsonObject | None, timeout: float | None, rid: str | None) -> Reply:
+        The whole call, including waiting for another write to finish, fits in ``timeout``: if the
+        write lock is not free in time the request fails with ``BUSY`` without being sent.
+        """
         wait = self.default_timeout if timeout is None else timeout
+        if op not in WRITE_OPS:
+            return self._request(op, params, wait, rid)
+        started = time.monotonic()
+        if not self._write_lock.acquire(timeout=max(wait, 0.0)):
+            raise TrackwrightError(
+                f"another write is still running; {op} was not sent",
+                code="BUSY",
+                details={"op": op, "outcome": "not_executed"},
+            )
+        try:
+            return self._request(op, params, wait - (time.monotonic() - started), rid)
+        finally:
+            self._write_lock.release()
+
+    def _request(self, op: str, params: JsonObject | None, wait: float, rid: str | None) -> Reply:
         rid = rid or self.new_rid()
         payload = protocol.encode_payload(protocol.make_request(op, rid, self.session_id, params))
         pending = _Pending(op=op, sent_at=time.monotonic())
@@ -134,7 +147,7 @@ class HostClient:
             seq = next(self._seq_counter) % protocol.SEQ_MODULO
             for frame in protocol.build_frames(payload, seq):
                 self.transport.send_sysex(frame)
-            if not pending.event.wait(wait):
+            if not pending.event.wait(max(wait, 0.0)) and not self._arrived(pending):
                 is_write = op in WRITE_OPS
                 outcome = "unknown: read the state back, do not retry" if is_write else "no response"
                 raise RequestTimeoutError(
@@ -164,6 +177,11 @@ class HostClient:
             duration_ms=duration_ms,
         )
 
+    def _arrived(self, pending: _Pending) -> bool:
+        """A response may land between the end of the wait and the removal of the pending entry."""
+        with self._lock:
+            return pending.response is not None
+
     # ------------------------------------------------------------------ session
     def hello(self, timeout: float | None = None) -> Reply:
         reply = self.request("hello", timeout=timeout)
@@ -179,18 +197,33 @@ class HostClient:
         return reply
 
     def call(self, op: str, params: JsonObject | None = None, *, timeout: float | None = None) -> Reply:
-        """Request with session negotiation; a stale session is renegotiated and retried for reads only."""
+        """Request with session negotiation; a stale session is renegotiated and retried for reads only.
+
+        Every step (``hello``, request, retry) shares one deadline, so the caller's timeout holds.
+        Callers that gathered object ids before a renegotiation must not reuse them: the MCP layer
+        pins the session per tool call (see ``trackwright.core.base``).
+        """
+        deadline = time.monotonic() + (self.default_timeout if timeout is None else timeout)
+
+        def remaining() -> float:
+            left = deadline - time.monotonic()
+            if left <= 0:
+                raise RequestTimeoutError(
+                    f"{op}: no time left", outcome_unknown=False, details={"op": op, "outcome": "not_executed"}
+                )
+            return left
+
         if op == "hello":
-            return self.hello(timeout)
+            return self.hello(remaining())
         if not self.session_id:
-            self.hello(timeout)
+            self.hello(remaining())
         try:
-            return self.request(op, params, timeout=timeout)
+            return self.request(op, params, timeout=remaining())
         except StaleSessionError:
             if op in WRITE_OPS:
                 raise
-            self.hello(timeout)
-            return self.request(op, params, timeout=timeout)
+            self.hello(remaining())
+            return self.request(op, params, timeout=remaining())
 
     def stats(self) -> JsonObject:
         return {

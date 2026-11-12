@@ -130,7 +130,8 @@ class ParametersOut(_Out):
     offset: int
     scanned: int
     items: list[ParameterInfo]
-    truncated: bool = Field(description="true when a filter stopped scanning before the end")
+    next_offset: int = Field(description="offset to pass to get the following parameters")
+    truncated: bool = Field(description="true when more parameters remain after next_offset")
 
 
 class ParameterOut(_Out):
@@ -157,12 +158,13 @@ class ChangeEvent(_Out):
     tag: int | None
     ref: str | None
     title: str | None
-    still_valid: bool
+    still_valid: bool | None = Field(description="null when the object was not checked (see unchecked)")
 
 
 class ChangesOut(_Out):
     events: list[ChangeEvent]
     dropped: int
+    unchecked: int = Field(description="events whose object was not looked up (only the first 20 objects are)")
     advice: str
 
 

@@ -19,6 +19,7 @@ Las issues documentan cada unidad de trabajo **antes** de implementarla. Al cerr
 | E07 | Herramientas basadas en comandos de Cubase | [E07-herramientas-comandos.md](E07-herramientas-comandos.md) |
 | E08 | Documentación de usuario: manuales y tutoriales | [E08-documentacion.md](E08-documentacion.md) |
 | E09 | Calidad y pruebas | [E09-calidad-pruebas.md](E09-calidad-pruebas.md) |
+| E10 | Endurecimiento tras la revisión independiente | [E10-endurecimiento.md](E10-endurecimiento.md) |
 
 ## Criterios comunes a todas las issues
 

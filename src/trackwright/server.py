@@ -93,7 +93,9 @@ def build_server(service: CubaseService) -> MCPServer:
         return await run(service.status)
 
     @server.tool(annotations=READ, description="All mixer channels with name, uid, volume, mute, solo and routing.")
-    async def cubase_list_tracks(offset: int = 0, limit: Annotated[int, Field(ge=1, le=128)] = 32) -> TrackListOut:
+    async def cubase_list_tracks(
+        offset: Annotated[int, Field(ge=0)] = 0, limit: Annotated[int, Field(ge=1, le=128)] = 32
+    ) -> TrackListOut:
         return await run(lambda: service.list_tracks(offset, limit))
 
     @server.tool(annotations=READ, description="The selected track and its sections (Inserts, Strips, Sends...).")
@@ -109,7 +111,7 @@ def build_server(service: CubaseService) -> MCPServer:
         track: TrackArg = "selected",
         slot: Annotated[int, Field(ge=1, le=16)] = 1,
         filter: Annotated[str | None, Field(description="text to match in name, vendor or category")] = None,  # noqa: A002
-        offset: int = 0,
+        offset: Annotated[int, Field(ge=0)] = 0,
         limit: Annotated[int, Field(ge=1, le=40)] = 20,
     ) -> PluginCatalogOut:
         return await run(lambda: service.list_available_plugins(track, slot, filter, offset, limit))
@@ -118,7 +120,7 @@ def build_server(service: CubaseService) -> MCPServer:
     async def cubase_list_parameters(
         target: TargetArg,
         track: TrackArg = "selected",
-        offset: int = 0,
+        offset: Annotated[int, Field(ge=0, description="use next_offset from the previous page")] = 0,
         limit: Annotated[int, Field(ge=1, le=25)] = 25,
         filter: Annotated[str | None, Field(description="text to match in the parameter title")] = None,  # noqa: A002
     ) -> ParametersOut:

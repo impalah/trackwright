@@ -8,7 +8,7 @@ import pytest
 
 from tests.support import ScriptedTransport, fail, ok
 from trackwright import protocol
-from trackwright.errors import HostError, ProtocolError, RequestTimeoutError, StaleSessionError
+from trackwright.errors import HostError, ProtocolError, RequestTimeoutError, StaleSessionError, TrackwrightError
 from trackwright.host import HostClient
 
 JsonObject = dict[str, Any]
@@ -212,3 +212,38 @@ def test_non_dict_result_becomes_empty() -> None:
     client = HostClient(ScriptedTransport(lambda req: {**ok(req), "r": [1, 2]}), default_timeout=0.5)
     client.open()
     assert client.request("ping").result == {}
+
+
+def test_write_lock_busy_is_not_sent() -> None:
+    client, transport, _ = make(delay=0.3)
+    client.session_id = "s1"
+    thread = threading.Thread(target=lambda: client.request("da.param.set", {"value": 0.2}, timeout=1.0))
+    thread.start()
+    time.sleep(0.05)
+    with pytest.raises(TrackwrightError) as exc:
+        client.request("da.param.set", {"value": 0.7}, timeout=0.05)
+    assert exc.value.code == "BUSY"
+    assert exc.value.details["outcome"] == "not_executed"
+    thread.join()
+    assert [r["p"]["value"] for r in transport.requests] == [0.2]
+
+
+def test_call_shares_one_deadline() -> None:
+    client, _, script = make(delay=0.2)
+    script.session = "s1"
+    with pytest.raises(RequestTimeoutError) as exc:
+        client.call("silent", timeout=0.25)  # hello uses most of the budget, nothing is left for the request
+    assert exc.value.details["op"] in ("silent", "hello")
+
+
+def test_response_arriving_at_the_deadline_is_used() -> None:
+    client, _, _ = make()
+    client.hello()
+    original = client._arrived
+
+    def arrived_late(pending: Any) -> bool:
+        pending.response = ok({"rid": "x", "op": "ping"}, {"echo": "just in time"})
+        return original(pending)
+
+    client._arrived = arrived_late  # type: ignore[method-assign]
+    assert client.request("silent", timeout=0.01).result["echo"] == "just in time"

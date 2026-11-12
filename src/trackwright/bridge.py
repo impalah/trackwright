@@ -35,7 +35,7 @@ from trackwright.errors import (
     TrackwrightError,
 )
 from trackwright.host import Reply
-from trackwright.ops import ALL_OPS
+from trackwright.ops import ALL_OPS, WRITE_OPS
 from trackwright.transport import Transport
 
 MAX_LINE = 64 * 1024
@@ -127,6 +127,15 @@ class Bridge:
             self.errors += 1
             logger.debug("request failed: {}", exc)
             return {"ok": False, "error": exc.to_dict(), "meta": self._meta(started)}
+        except Exception as exc:
+            self.errors += 1
+            logger.exception("unexpected error handling {}", obj)
+            op_name = obj.get("op") if isinstance(obj, dict) else None
+            outcome = "unknown" if op_name in WRITE_OPS else "not_executed_or_lost"
+            error = TrackwrightError(
+                f"internal bridge error: {exc}", code="INTERNAL_ERROR", details={"op": op_name, "outcome": outcome}
+            )
+            return {"ok": False, "error": error.to_dict(), "meta": self._meta(started)}
         logger.debug("{} ok in {:.1f} ms (via {})", op, reply.duration_ms, reply.via)
         meta = self._meta(started) | {"rid": reply.rid, "via": reply.via, "duplicate": reply.duplicate}
         return {"ok": True, "result": reply.result, "meta": meta}

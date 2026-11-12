@@ -273,3 +273,16 @@ def test_prepare_socket_dir_cannot_fix(short_tmp: Path, monkeypatch: pytest.Monk
     monkeypatch.setattr(Path, "chmod", lambda self, mode: None)
     with pytest.raises(BridgeUnavailableError, match="private"):
         prepare_socket_dir(directory)
+
+
+def test_unexpected_exception_is_reported_with_unknown_outcome() -> None:
+    class Exploding(FakeHost):
+        def call(self, op: str, params: JsonObject | None = None, *, timeout: float | None = None) -> Reply:
+            raise OSError("rtmidi send failed")
+
+    bridge = Bridge(Exploding())
+    out = bridge.handle({"op": "da.param.set", "p": {}})
+    assert out["error"]["code"] == "INTERNAL_ERROR"
+    assert out["error"]["details"]["outcome"] == "unknown"
+    read = bridge.handle({"op": "da.object", "p": {}})
+    assert read["error"]["details"]["outcome"] == "not_executed_or_lost"

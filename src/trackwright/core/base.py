@@ -2,16 +2,26 @@
 
 from __future__ import annotations
 
+import functools
 import re
+import threading
 import time
-from collections.abc import Callable
-from typing import Any
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
+from typing import Any, Concatenate
 
 from trackwright.core.models import ParameterInfo, TrackInfo, Value
 from trackwright.core.policy import WritePolicy
 from trackwright.core.refs import ObjectRef, TrackSelector
-from trackwright.errors import HostError, NotFoundError, PreconditionFailedError, TrackwrightError
+from trackwright.errors import (
+    HostError,
+    NotFoundError,
+    PreconditionFailedError,
+    StaleSessionError,
+    TrackwrightError,
+)
 from trackwright.hostport import HostPort
+from trackwright.ops import WRITE_OPS
 
 JsonObject = dict[str, Any]
 MIXER: JsonObject = {"scope": "mixer"}
@@ -29,6 +39,26 @@ TAG_NAME, TAG_SELECTED, TAG_VOLUME, TAG_MUTE, TAG_SOLO, TAG_RECORD, TAG_INPUT, T
 _SLOT_SUFFIX = re.compile(r"-\d+$")
 
 
+_INACTIVE = object()
+
+
+def operation[S: "ServiceBase", **P, R](fn: Callable[Concatenate[S, P], R]) -> Callable[Concatenate[S, P], R]:
+    """Mark a public tool method: the script session is pinned for its whole duration.
+
+    Object ids are only meaningful inside one script session. A tool gathers ids over several
+    calls; if Cubase reloads the script in between, the bridge renegotiates transparently and a
+    later write could carry an id that now names another object. Pinning makes the tool stop with
+    ``STALE_SESSION`` before any further write.
+    """
+
+    def wrapper(self: S, /, *args: P.args, **kwargs: P.kwargs) -> R:
+        with self.pinned_session():
+            return fn(self, *args, **kwargs)
+
+    functools.update_wrapper(wrapper, fn)
+    return wrapper
+
+
 class ServiceBase:
     """Base of :class:`trackwright.core.service.CubaseService`; tool groups are mixins on top of it."""
 
@@ -44,10 +74,41 @@ class ServiceBase:
         self.policy = policy
         self._sleep = sleep
         self._settle_timeout = settle_timeout
+        self._local = threading.local()
 
     # ------------------------------------------------------------------ host access
+    @contextmanager
+    def pinned_session(self) -> Iterator[None]:
+        """Pin the session for the current thread (nested uses keep the outer pin)."""
+        if getattr(self._local, "session", _INACTIVE) is not _INACTIVE:
+            yield
+            return
+        self._local.session = None
+        try:
+            yield
+        finally:
+            self._local.session = _INACTIVE
+
     def call(self, op: str, params: JsonObject | None = None) -> JsonObject:
-        return self.host.call(op, params)
+        pinned = getattr(self._local, "session", _INACTIVE)
+        if op in WRITE_OPS and pinned not in (_INACTIVE, None) and self.host.session_id != pinned:
+            raise self._session_changed(op)
+        result = self.host.call(op, params)
+        if pinned is not _INACTIVE:
+            current = self.host.session_id
+            if pinned is None:
+                self._local.session = current
+            elif current != pinned:
+                raise self._session_changed(op)
+        return result
+
+    @staticmethod
+    def _session_changed(op: str) -> StaleSessionError:
+        return StaleSessionError(
+            "Cubase reloaded the script during this operation; it was stopped before any further write. "
+            "Run the tool again.",
+            details={"op": op},
+        )
 
     def session(self) -> str:
         if self.host.session_id is None:
@@ -71,14 +132,6 @@ class ServiceBase:
         return ObjectRef(
             self.session(), int(described["id"]), str(described["type"]), str(described["uniqueName"])
         ).encode()
-
-    def resolve_ref(self, text: str) -> JsonObject:
-        """Validate an opaque reference and return the object it designates, freshly described."""
-        ref = ObjectRef.decode(text)
-        ref.check_session(self.session())
-        described = self.call("da.object", {"id": ref.object_id, **MIXER})
-        ref.check_fingerprint(described)
-        return described
 
     # ------------------------------------------------------------------ tracks
     def channels(self) -> list[JsonObject]:
