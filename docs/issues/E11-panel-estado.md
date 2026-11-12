@@ -4,6 +4,15 @@
 
 Es una ayuda visual y de depuración. **No cambia el funcionamiento:** las herramientas MCP no dependen del panel.
 
+## Observación de partida (captura del usuario, 2026-11-12)
+
+En la pestaña MIDI Remote, Cubase muestra:
+- **Título «Trackwright - Bridge»:** viene de `makeDeviceDriver('Trackwright', 'Bridge', …)`.
+- **«Página de mapeado: Bridge»:** viene de `makePage('Bridge')`.
+- **En el centro:** un recuadro redondeado casi cuadrado, con una pequeña barra blanca dentro y una línea horizontal a cada lado.
+
+**Pregunta abierta:** no se sabe si ese dibujo es el campo de texto `makeLabelField(0, 0, 4, 1)` escalado (la barra blanca) con decoración de Cubase, o un marcador genérico que Cubase pinta cuando la superficie no tiene controles. Un campo de 4×1 debería verse ancho y bajo, y no es lo que aparece. Lo resuelve el primer experimento del alcance (punto 2): añadir elementos fáciles de reconocer y ver qué cambia.
+
 ## TW-1101 Panel de estado en la superficie
 
 - **Estado:** pendiente
