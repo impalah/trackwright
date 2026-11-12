@@ -66,6 +66,7 @@ markers = [
     "integration: needs a running bridge and Cubase (opt-in: TRACKWRIGHT_INTEGRATION=1)",
     "integration_write: modifies the open Cubase project (opt-in: TRACKWRIGHT_ALLOW_WRITES=1)",
     "node: runs the MIDI Remote script under Node.js (skipped if node is missing)",
+    "slow: builds the distribution (a few seconds)",
 ]
 
 [tool.coverage.run]

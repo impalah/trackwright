@@ -23,8 +23,12 @@ def log_records() -> Iterator[list[str]]:
 
 
 @pytest.fixture(autouse=True)
-def _isolated_config(monkeypatch: pytest.MonkeyPatch, tmp_path_factory: pytest.TempPathFactory) -> None:
-    """Never read the developer's real configuration or socket directory during tests."""
+def _isolated_config(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    """Never read the developer's real configuration or socket directory, except in integration tests."""
+    if request.node.get_closest_marker("integration"):
+        return
     home = tmp_path_factory.mktemp("home")
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.delenv("TRACKWRIGHT_CONFIG", raising=False)

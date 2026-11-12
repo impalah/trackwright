@@ -22,7 +22,7 @@
 
 ## TW-0904 Tests de integración opcionales contra Cubase
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:** `tests/integration/`.
   - **Lecturas** con `TRACKWRIGHT_INTEGRATION=1`: puente en marcha y Cubase abierto.
   - **Escrituras reversibles**, solo con además `TRACKWRIGHT_ALLOW_WRITES=1` y una pista que el usuario indique en `TRACKWRIGHT_TEST_TRACK`. Cada escritura se restaura.
@@ -37,5 +37,6 @@
 
 ## TW-0906 Puesta en marcha desde el paquete
 
-- **Estado:** pendiente
-- **Alcance:** un test de humo construye la distribución con `uv build` y comprueba que incluye el script de Cubase (marca `slow`, opcional).
+- **Estado:** hecha
+- **Alcance:** `tests/e2e/test_package_build.py` construye el wheel con `uv build` y comprueba que incluye el script de Cubase, `py.typed` y el ejecutable `trackwright` (marca `slow`).
+- **Añadido:** `tests/e2e/test_stdio_server.py` arranca el proceso real `trackwright serve --simulate` y le habla un cliente MCP por stdio. Demuestra que los logs (incluso en DEBUG) no contaminan stdout.
