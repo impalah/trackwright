@@ -4,7 +4,7 @@ Objetivo: el script ES5 que se ejecuta dentro de Cubase y expone las operaciones
 
 ## TW-0301 Port del script de la POC
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:** `src/trackwright/cubase/Trackwright_Bridge.js`, que se distribuye como dato del paquete.
   - Fabricante `Trackwright` y dispositivo `Bridge`.
   - Puertos `Trackwright To Cubase` y `Trackwright From Cubase`.
@@ -16,26 +16,28 @@ Objetivo: el script ES5 que se ejecuta dentro de Cubase y expone las operaciones
     - selección: `sel.step`;
     - transporte: `transport.setTime` y `transport.setTempo`;
     - comandos: `cmd.canPerform` y `cmd.run`.
-  - Supresión de duplicados en curso, deduplicación del mezclador y protección del sondeo.
+  - Supresión de duplicados en curso y deduplicación del mezclador.
   - Se elimina la opción `raw`, que se verificó que no tiene efecto útil (`findings` 41).
+  - Se elimina el sondeo `da.param.probe`: ninguna herramienta lo usa y fue el origen del incidente del enrutado en la POC. Las escrituras fuera de [0, 1] se rechazan con `BAD_REQUEST`.
 - **Aceptación:**
   - `node --check` pasa sin errores.
   - Carga sin excepciones con una API simulada (TW-0302).
 
 ## TW-0302 Pruebas del script con Node.js
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:**
   - Arnés en `tests/script/` que emula la API MIDI Remote: página, `mOnIdle`, DirectAccess con un árbol en memoria, Plugin Manager, transporte y comandos.
   - Ejecuta el script real sin Cubase.
   - Un test de pytest (marca `node`) lanza el arnés y valida el protocolo de extremo a extremo con el codificador de Python.
 - **Aceptación:**
-  - Cubre `hello`, lectura de parámetros, escritura y relectura, `INVALID_OBJECT`, `STALE_SESSION`, duplicado secuencial y en curso, deduplicación del mezclador y rechazo del sondeo no restaurable.
+  - Cubre `hello`, lectura de parámetros, escritura y relectura, `INVALID_OBJECT`, `STALE_SESSION`, duplicado secuencial y en curso, deduplicación del mezclador, rechazo de valores fuera de [0, 1], selección, transporte, comandos, inserción de plugins y coherencia de la lista de operaciones con `trackwright.ops`.
+  - Verificado que los tests detectan una marca SysEx alterada: 16 de 17 fallan.
   - Se salta, con un motivo claro, si `node` no está instalado.
 
 ## TW-0303 Instalación del script
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:** comando `trackwright script install`.
   - Por defecto, **ensayo**: muestra el destino (`~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/bridge/Trackwright_Bridge.js`), si existe y si coincide.
   - Con `--apply`, copia el script.

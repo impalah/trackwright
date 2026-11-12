@@ -66,6 +66,23 @@ def cmd_ping(args: argparse.Namespace, settings: Settings) -> int:
     return 0 if pong.get("ok") else 1
 
 
+def cmd_script(args: argparse.Namespace, settings: Settings) -> int:
+    from trackwright.cubase import install_script, script_status  # noqa: PLC0415
+
+    install_dir = args.dir or settings.script.install_dir
+    if args.action == "status":
+        emit(script_status(install_dir).to_dict())
+        return 0
+    status, written = install_script(install_dir, apply=args.apply)
+    payload = {**status.to_dict(), "written": written, "dry_run": not args.apply}
+    if not args.apply and status.state != "up_to_date":
+        payload["next_step"] = "re-run with --apply to copy the script, then restart Cubase"
+    elif written:
+        payload["next_step"] = "restart Cubase (it does not reload changed scripts by itself)"
+    emit(payload)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="trackwright", description="Trackwright: MCP server for Cubase.")
     parser.add_argument("--config", type=Path, help="configuration file (default: $TRACKWRIGHT_CONFIG or ~/.config)")
@@ -75,6 +92,11 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("config", help="print the effective configuration").set_defaults(handler=cmd_config)
     sub.add_parser("bridge", help="run the bridge daemon (keep it running)").set_defaults(handler=cmd_bridge)
     sub.add_parser("bridge-status", help="show the bridge status").set_defaults(handler=cmd_bridge_status)
+    script = sub.add_parser("script", help="install or check the Cubase MIDI Remote script")
+    script.add_argument("action", choices=["status", "install"])
+    script.add_argument("--dir", type=Path, help="override [script] install_dir")
+    script.add_argument("--apply", action="store_true", help="really copy the file (default: dry run)")
+    script.set_defaults(handler=cmd_script)
     ping = sub.add_parser("ping", help="check the round trip Python -> Cubase -> Python")
     ping.add_argument("--echo", default="hola-ñ-✓", help="text echoed back by the script")
     ping.set_defaults(handler=cmd_ping)
