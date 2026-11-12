@@ -152,21 +152,19 @@ if (timeDisplay) {
 	}
 }
 
-// ---------------------------------------------------------------- commands (0.2.0)
+// ---------------------------------------------------------------- commands
 // Each command gets a custom value variable bound with page.makeCommandBinding. Setting the
-// variable to 1 (and back to 0 on the next idle tick) should trigger the command (forum report;
-// to be verified). Names come from the official command list; 'AddTrack' vs 'Add Track' is
-// ambiguous, so both spellings are registered and the test reports which one works.
+// variable to 1 (and back to 0 on the next idle tick) triggers the command (verified in the POC).
+// The keys must match trackwright/commands.py, which also records how each command behaves.
 var COMMANDS = [
 	// Exact (category, name) from the "click to copy" snippets of the official list
 	// https://steinbergmedia.github.io/midiremote_api_doc/examples/commandbindings/ (headed Cubase/Nuendo 13).
-	// 'Add Track' (with space, as the visible list shows) is kept once to test the spelling claim.
+	// Verified (POC): the category is 'AddTrack' (no space); 'Add Track' gives canPerform=false.
 	['zoom.in', 'Zoom', 'Zoom In'],
 	['zoom.out', 'Zoom', 'Zoom Out'],
 	['edit.undo', 'Edit', 'Undo'],
 	['edit.redo', 'Edit', 'Redo'],
 	['addtrack.audio', 'AddTrack', 'Audio'],
-	['addtrack.audio.spaced', 'Add Track', 'Audio'],
 	['addtrack.marker', 'AddTrack', 'Marker'],
 	['addtrack.group', 'AddTrack', 'Group Channel'],
 	['addtrack.folder', 'AddTrack', 'Folder'],

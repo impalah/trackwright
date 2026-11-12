@@ -201,7 +201,7 @@ class BridgeServer:
 
 
 # ---------------------------------------------------------------------------- client
-def _error_from_dict(error: JsonObject) -> TrackwrightError:
+def error_from_dict(error: JsonObject) -> TrackwrightError:
     from trackwright import errors as module  # noqa: PLC0415 - small local lookup table
 
     code = str(error.get("code", "BRIDGE_ERROR"))
@@ -261,7 +261,7 @@ class BridgeClient:
         response = self.request(op, params, timeout=timeout)
         if not response.get("ok"):
             error = response.get("error")
-            raise _error_from_dict(error if isinstance(error, dict) else {})
+            raise error_from_dict(error if isinstance(error, dict) else {})
         result = response.get("result")
         return result if isinstance(result, dict) else {}
 

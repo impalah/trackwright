@@ -1,0 +1,252 @@
+"""The Trackwright MCP server: tool registration on top of :class:`~trackwright.core.service.CubaseService`.
+
+Every tool is a thin async wrapper: it runs the blocking service call in a worker thread and turns
+:class:`~trackwright.errors.TrackwrightError` into an MCP tool error ``"CODE: message"`` so the
+model can read it and correct itself.
+"""
+
+from __future__ import annotations
+
+import json
+from collections.abc import Callable
+from typing import Annotated, Literal
+
+import anyio.to_thread
+from loguru import logger
+from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.exceptions import ToolError
+from mcp_types import ToolAnnotations
+from pydantic import Field
+
+from trackwright import SERVER_NAME, __version__
+from trackwright.core.models import (
+    ChangesOut,
+    CommandOut,
+    InsertPluginOut,
+    InsertsOut,
+    ParameterOut,
+    ParametersOut,
+    PluginCatalogOut,
+    PositionOut,
+    SelectedChannelOut,
+    SelectOut,
+    StatusOut,
+    TempoOut,
+    TrackListOut,
+    TransportOut,
+    WriteOut,
+)
+from trackwright.core.service import CubaseService
+from trackwright.errors import TrackwrightError
+
+INSTRUCTIONS = """\
+Trackwright controls a running Cubase through its MIDI Remote API.
+
+Rules for using these tools:
+- Designate tracks with the `track` selector: "selected", "uid:<UID>" (stable, preferred) or an exact name.
+  Take uids from cubase_list_tracks. Object `ref`s are only valid until Cubase reloads the script.
+- Every tool that modifies the project has `dry_run` (default true). First call it with dry_run=true,
+  show the plan to the user, and only after the user agrees call it again with dry_run=false.
+- Writes are never retried automatically. After a TIMEOUT the outcome is unknown: read the value back.
+- Commands report a `command_class`. "dialog" means Cubase opened a dialog that the user must complete:
+  never claim it is done. "ui_selection" commands act on the Cubase window selection, which these tools
+  cannot see: ask the user to check the result.
+- Routing (inputs, outputs, send destinations) cannot be changed through this API.
+- If a tool fails with WRITES_DISABLED, writes are disabled in the user's Trackwright configuration.
+"""
+
+TrackArg = Annotated[str, Field(description='"selected", "uid:<UID>" (from cubase_list_tracks) or an exact track name')]
+TargetArg = Annotated[
+    str, Field(description="'channel' (track parameters), 'insert:N' (plugin in slot N) or 'strip:eq'")
+]
+DryRunArg = Annotated[bool, Field(description="true (default): only return the plan; false: apply it")]
+TimeArg = Annotated[str, Field(description="'3. 1. 1. 0' (bar. beat. 16th. tick) or, with unit=seconds, '0:00:02.000'")]
+
+READ = ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
+NAVIGATE = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=True, open_world_hint=False)
+WRITE = ToolAnnotations(read_only_hint=False, destructive_hint=False, idempotent_hint=False, open_world_hint=False)
+DESTRUCTIVE = ToolAnnotations(read_only_hint=False, destructive_hint=True, idempotent_hint=False, open_world_hint=False)
+
+
+def tool_error(exc: TrackwrightError) -> ToolError:
+    text = f"{exc.code}: {exc.message}"
+    if exc.details:
+        text += f" | details: {json.dumps(exc.details, ensure_ascii=False, default=str)}"
+    return ToolError(text)
+
+
+async def run[T](fn: Callable[[], T]) -> T:
+    """Run a blocking service call off the event loop and map domain errors to tool errors."""
+    try:
+        return await anyio.to_thread.run_sync(fn)
+    except TrackwrightError as exc:
+        logger.info("tool error {}", exc)
+        raise tool_error(exc) from exc
+
+
+def build_server(service: CubaseService) -> MCPServer:
+    server: MCPServer = MCPServer(name=SERVER_NAME, version=__version__, instructions=INSTRUCTIONS)
+
+    # ------------------------------------------------------------------ read tools (E05)
+    @server.tool(annotations=READ, description="Connection, script version, capabilities and write policy.")
+    async def cubase_status() -> StatusOut:
+        return await run(service.status)
+
+    @server.tool(annotations=READ, description="All mixer channels with name, uid, volume, mute, solo and routing.")
+    async def cubase_list_tracks(offset: int = 0, limit: Annotated[int, Field(ge=1, le=128)] = 32) -> TrackListOut:
+        return await run(lambda: service.list_tracks(offset, limit))
+
+    @server.tool(annotations=READ, description="The selected track and its sections (Inserts, Strips, Sends...).")
+    async def cubase_get_selected_channel() -> SelectedChannelOut:
+        return await run(service.get_selected_channel)
+
+    @server.tool(annotations=READ, description="The 8 insert slots of a track and the plugin loaded in each.")
+    async def cubase_list_inserts(track: TrackArg = "selected") -> InsertsOut:
+        return await run(lambda: service.list_inserts(track))
+
+    @server.tool(annotations=READ, description="Plugins that can be loaded in an insert slot (name, vendor, uid).")
+    async def cubase_list_available_plugins(
+        track: TrackArg = "selected",
+        slot: Annotated[int, Field(ge=1, le=16)] = 1,
+        filter: Annotated[str | None, Field(description="text to match in name, vendor or category")] = None,  # noqa: A002
+        offset: int = 0,
+        limit: Annotated[int, Field(ge=1, le=40)] = 20,
+    ) -> PluginCatalogOut:
+        return await run(lambda: service.list_available_plugins(track, slot, filter, offset, limit))
+
+    @server.tool(annotations=READ, description="Parameters of the channel, of a plugin or of the strip EQ.")
+    async def cubase_list_parameters(
+        target: TargetArg,
+        track: TrackArg = "selected",
+        offset: int = 0,
+        limit: Annotated[int, Field(ge=1, le=25)] = 25,
+        filter: Annotated[str | None, Field(description="text to match in the parameter title")] = None,  # noqa: A002
+    ) -> ParametersOut:
+        return await run(lambda: service.list_parameters(track, target, offset, limit, filter))
+
+    @server.tool(annotations=READ, description="One parameter, by tag, with its display value and units.")
+    async def cubase_get_parameter(target: TargetArg, tag: int, track: TrackArg = "selected") -> ParameterOut:
+        return await run(lambda: service.get_parameter(track, target, tag))
+
+    @server.tool(annotations=READ, description="Cursor position, cycle locators and tempo.")
+    async def cubase_get_transport() -> TransportOut:
+        return await run(service.get_transport)
+
+    @server.tool(
+        annotations=ToolAnnotations(read_only_hint=True, destructive_hint=False, idempotent_hint=False),
+        description="Changes Cubase reported since the last call (hints to re-read objects). Empties the buffer.",
+    )
+    async def cubase_poll_changes() -> ChangesOut:
+        return await run(service.poll_changes)
+
+    # ------------------------------------------------------------------ write and navigation tools (E06)
+    @server.tool(annotations=WRITE, description="Set a parameter (process 0..1 or plain units) and verify it.")
+    async def cubase_set_parameter(
+        target: TargetArg,
+        tag: int,
+        value: float,
+        track: TrackArg = "selected",
+        unit: Literal["process", "plain"] = "process",
+        expect_title: Annotated[str | None, Field(description="refuse if the parameter title differs")] = None,
+        dry_run: DryRunArg = True,
+    ) -> WriteOut:
+        return await run(
+            lambda: service.set_parameter(
+                track, target, tag, value, unit=unit, dry_run=dry_run, expect_title=expect_title
+            )
+        )
+
+    @server.tool(annotations=WRITE, description="Load a plugin (by uid) into an empty insert slot and verify it.")
+    async def cubase_insert_plugin(
+        slot: Annotated[int, Field(ge=1, le=16)],
+        plugin_uid: Annotated[str, Field(description="uid from cubase_list_available_plugins")],
+        track: TrackArg = "selected",
+        dry_run: DryRunArg = True,
+    ) -> InsertPluginOut:
+        return await run(lambda: service.insert_plugin(track, slot, plugin_uid, dry_run=dry_run))
+
+    @server.tool(annotations=WRITE, description="Volume (normalized 0..1), mute, solo or record arm of any track.")
+    async def cubase_set_track_mix(
+        track: TrackArg,
+        volume: Annotated[float | None, Field(ge=0, le=1, description="normalized fader value")] = None,
+        mute: bool | None = None,
+        solo: bool | None = None,
+        record_arm: bool | None = None,
+        dry_run: DryRunArg = True,
+    ) -> WriteOut:
+        return await run(
+            lambda: service.set_track_mix(
+                track, volume=volume, mute=mute, solo=solo, record_arm=record_arm, dry_run=dry_run
+            )
+        )
+
+    @server.tool(annotations=WRITE, description="Rename a track (refuses names used by another track).")
+    async def cubase_rename_track(
+        track: TrackArg, new_name: Annotated[str, Field(min_length=1, max_length=64)], dry_run: DryRunArg = True
+    ) -> WriteOut:
+        return await run(lambda: service.rename_track(track, new_name, dry_run=dry_run))
+
+    @server.tool(annotations=NAVIGATE, description="Select a track, or the next/previous one. Single selection.")
+    async def cubase_select_track(
+        track: Annotated[str | None, Field(description="track selector; omit when using step")] = None,
+        step: Literal["next", "prev"] | None = None,
+    ) -> SelectOut:
+        return await run(lambda: service.select_track(track, step))
+
+    @server.tool(annotations=NAVIGATE, description="Move the cursor or a cycle locator (transport stopped).")
+    async def cubase_set_position(
+        which: Literal["cursor", "cycle_left", "cycle_right"],
+        time: TimeArg,
+        unit: Literal["bars", "seconds"] = "bars",
+        dry_run: Annotated[bool, Field(description="true: only show the current and requested positions")] = False,
+    ) -> PositionOut:
+        return await run(lambda: service.set_position(which, time, unit=unit, dry_run=dry_run))
+
+    @server.tool(annotations=WRITE, description="Set the project tempo in BPM (20..300).")
+    async def cubase_set_tempo(bpm: Annotated[float, Field(ge=20, le=300)], dry_run: DryRunArg = True) -> TempoOut:
+        return await run(lambda: service.set_tempo(bpm, dry_run=dry_run))
+
+    # ------------------------------------------------------------------ command tools (E07)
+    @server.tool(annotations=WRITE, description="Marker track, insert a marker at the cursor, or jump between markers.")
+    async def cubase_markers(
+        action: Literal["add_marker_track", "insert_at_cursor", "locate_prev", "locate_next"],
+        dry_run: DryRunArg = True,
+    ) -> CommandOut:
+        return await run(lambda: service.markers(action, dry_run=dry_run))
+
+    @server.tool(
+        annotations=DESTRUCTIVE,
+        description="Remove the selected track. expect_selected must match the current selection exactly.",
+    )
+    async def cubase_remove_selected_tracks(expect_selected: TrackArg, dry_run: DryRunArg = True) -> CommandOut:
+        return await run(lambda: service.remove_selected_tracks(expect_selected, dry_run=dry_run))
+
+    @server.tool(annotations=DESTRUCTIVE, description="Split every event crossing the given locators (all tracks).")
+    async def cubase_split_at_locators(left: TimeArg, right: TimeArg, dry_run: DryRunArg = True) -> CommandOut:
+        return await run(lambda: service.split_at_locators(left, right, dry_run=dry_run))
+
+    @server.tool(
+        annotations=WRITE,
+        description="Create an audio/group/folder track with the user's help: 'start' opens Cubase's dialog, "
+        "'confirm' checks that the track exists.",
+    )
+    async def cubase_add_track_interactive(
+        phase: Literal["start", "confirm"],
+        kind: Literal["audio", "group", "folder"],
+        suggested_name: Annotated[str, Field(min_length=1, max_length=64)],
+    ) -> CommandOut:
+        return await run(lambda: service.add_track_interactive(phase, kind, suggested_name))
+
+    @server.tool(
+        annotations=DESTRUCTIVE,
+        description="Run a Cubase command from the allow-list (see the tools reference). Advanced: prefer the "
+        "dedicated tools. Reports the observed command class.",
+    )
+    async def cubase_run_command(
+        key: Annotated[str, Field(description="command key, e.g. 'edit.undo' or 'zoom.in'")],
+        dry_run: DryRunArg = True,
+        force: Annotated[bool, Field(description="fire even if Cubase says it cannot be performed")] = False,
+    ) -> CommandOut:
+        return await run(lambda: service.run_command(key, dry_run=dry_run, force=force))
+
+    return server

@@ -4,7 +4,7 @@ Objetivo: la capa común que comparten todas las herramientas. Implementa los pr
 
 ## TW-0401 Puerto hacia el host y simulador de Cubase
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:**
   - Protocolo `HostPort` (`call(op, params, timeout) -> dict`), con dos implementaciones:
     - `BridgeHost`, mediante IPC con el puente;
@@ -20,7 +20,7 @@ Objetivo: la capa común que comparten todas las herramientas. Implementa los pr
 
 ## TW-0402 Referencias opacas y resolución de pistas
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:**
   - `TrackRef`: `{uid}`, `{name}` o `"selected"`.
   - Resolución contra `da.channels` (alcance del mezclador, con deduplicación).
@@ -35,7 +35,7 @@ Objetivo: la capa común que comparten todas las herramientas. Implementa los pr
 
 ## TW-0403 Política de escritura y ensayo
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:**
   - `WritePolicy`, construida desde la configuración:
     - escrituras deshabilitadas → `WRITES_DISABLED`;
@@ -46,7 +46,7 @@ Objetivo: la capa común que comparten todas las herramientas. Implementa los pr
 
 ## TW-0404 Servidor MCP
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:** `trackwright.server`.
   - `MCPServer` con nombre `trackwright` e instrucciones para el modelo: ensayar primero, confirmar con el usuario y explicar los comandos de diálogo.
   - Registro de herramientas.

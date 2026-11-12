@@ -4,13 +4,13 @@ Todas aplican la política de escritura (TW-0403): `dry_run` por defecto, sin re
 
 | Issue | Herramienta | Diseño | Evidencia (POC) | Estado |
 |---|---|---|---|---|
-| TW-0601 | `cubase_set_parameter` | n.º 8 | findings 11–12 | pendiente |
-| TW-0602 | `cubase_insert_plugin` | n.º 5 | findings 8 | pendiente |
-| TW-0603 | `cubase_set_track_mix` | n.º 11 | findings 30 | pendiente |
-| TW-0604 | `cubase_rename_track` | n.º 12 | findings 31 | pendiente |
-| TW-0605 | `cubase_select_track` | n.º 13 | findings 32 | pendiente |
-| TW-0606 | `cubase_set_position` | n.º 15 | findings 34 | pendiente |
-| TW-0607 | `cubase_set_tempo` | n.º 19 | findings 43 | pendiente |
+| TW-0601 | `cubase_set_parameter` | n.º 8 | findings 11–12 | hecha |
+| TW-0602 | `cubase_insert_plugin` | n.º 5 | findings 8 | hecha |
+| TW-0603 | `cubase_set_track_mix` | n.º 11 | findings 30 | hecha |
+| TW-0604 | `cubase_rename_track` | n.º 12 | findings 31 | hecha |
+| TW-0605 | `cubase_select_track` | n.º 13 | findings 32 | hecha |
+| TW-0606 | `cubase_set_position` | n.º 15 | findings 34 | hecha |
+| TW-0607 | `cubase_set_tempo` | n.º 19 | findings 43 | hecha |
 
 ## Criterios de aceptación comunes
 

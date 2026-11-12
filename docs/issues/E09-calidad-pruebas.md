@@ -2,14 +2,14 @@
 
 ## TW-0901 Tests unitarios y cobertura ≥ 85 %
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:**
   - Tests en `tests/unit/` para cada módulo.
   - `uv run pytest --cov` falla si la cobertura total baja del 85 %.
 
 ## TW-0902 Tests de contrato MCP
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:** `tests/contract/`.
   - Cliente MCP en memoria (`mcp.client.Client`) contra el servidor con `FakeCubase`.
   - Lista de herramientas esperada y anotaciones de solo lectura o destructiva.
@@ -17,7 +17,7 @@
 
 ## TW-0903 Tests del script con Node.js
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:** ver TW-0302 (marca `node`).
 
 ## TW-0904 Tests de integración opcionales contra Cubase

@@ -15,8 +15,15 @@ Handler = Callable[[JsonObject], JsonObject | list[JsonObject] | None]
 
 
 def ok(request: JsonObject, result: JsonObject | None = None, **extra: Any) -> JsonObject:
-    return {"v": 1, "sid": request.get("sid"), "rid": request["rid"], "op": request["op"], "ok": True,
-            "r": result or {}, **extra}  # fmt: skip
+    return {
+        "v": 1,
+        "sid": request.get("sid"),
+        "rid": request["rid"],
+        "op": request["op"],
+        "ok": True,
+        "r": result or {},
+        **extra,
+    }
 
 
 def fail(request: JsonObject, code: str, msg: str = "") -> JsonObject:
