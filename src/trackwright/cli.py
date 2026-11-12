@@ -149,7 +149,8 @@ def cmd_doctor(_args: argparse.Namespace, settings: Settings) -> int:
                 "Cubase answers",
                 False,
                 exc.to_dict(),
-                "open Cubase and check Studio > MIDI Remote: the 'Trackwright Bridge' surface must be active",
+                "open Cubase; in the MIDI Remote tab of the lower zone the 'Trackwright - Bridge' surface "
+                "must be active (see docs/manual/01-instalacion.md, step 6)",
             )
     check("writes", True, {"enabled": settings.writes.enabled, "allowed_tracks": list(settings.writes.allowed_tracks)})
     ok = all(c["ok"] for c in checks)

@@ -1,0 +1,196 @@
+# Referencia de herramientas MCP
+
+El servidor `trackwright` publica 21 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+
+## Conceptos comunes
+
+### Cómo se indica una pista: `track`
+
+| Forma | Ejemplo | Notas |
+|---|---|---|
+| `"selected"` | `"selected"` | La pista seleccionada en Cubase. Es el valor por defecto. |
+| `"uid:<UID>"` | `"uid:79CDBA14…"` | **Recomendada.** Identificador estable, incluso tras reiniciar Cubase. Se obtiene de `cubase_list_tracks`. |
+| Nombre exacto | `"Voz"` o `"name:Voz"` | Falla con `TRACK_AMBIGUOUS` si dos pistas se llaman igual. Usa `name:` si el nombre es literalmente `selected`. |
+
+Solo se ven las pistas que tienen **canal de mezclador** (audio, instrumento, grupo, FX, salidas). Las de marcadores y las carpetas no aparecen.
+
+### Qué parte de una pista: `target`
+
+| Valor | Qué es |
+|---|---|
+| `channel` | Los parámetros del canal: nombre (1024), volumen (1025), mute (1027), solo (1028), selección (4000), armado (4002)… |
+| `insert:N` | El plugin cargado en el slot de inserción N (1–8). |
+| `strip:eq` | El EQ del channel strip. |
+
+### Referencias `ref`
+
+Las salidas incluyen `ref` opacas para los objetos. **Solo valen mientras Cubase no recargue el script**: tras reiniciar Cubase los identificadores internos se reutilizan para otros objetos. Por eso Trackwright comprueba cada `ref` antes de usarla y, si ya no es válida, responde `STALE_REF`. Para referirte a una pista de forma duradera, usa su `uid:`.
+
+### Ensayo y aplicación (`dry_run`)
+
+Toda herramienta que modifica el proyecto tiene `dry_run`, que por defecto es `true`: devuelve el plan (valor actual y valor pedido) sin tocar nada. Con `dry_run=false` aplica el cambio, relee el valor y devuelve `verified`.
+
+Las escrituras **no se reintentan nunca**. Si una vence por tiempo (`TIMEOUT`), su resultado es desconocido: el error incluye la relectura del valor (`read_back`).
+
+### Clases de comando
+
+Las herramientas basadas en comandos de Cubase informan de `command_class`:
+
+| Clase | Significado |
+|---|---|
+| `direct` | Actúa sin intervención. |
+| `dialog` | Abre un diálogo de Cubase que el usuario debe completar. **Nunca se da por terminado.** |
+| `confirm` | Cubase puede pedir confirmación (por ejemplo, al borrar una pista con eventos). |
+| `ui_selection` | Actúa sobre la selección de la ventana de Cubase, que Trackwright no puede ver. |
+| `unknown` | Cubase la acepta, pero su efecto no se ha observado. |
+
+### Errores
+
+Los errores llegan como error de herramienta, con el formato `CÓDIGO: mensaje | details: {...}`. Los más habituales:
+
+| Código | Causa |
+|---|---|
+| `BRIDGE_UNAVAILABLE` | El puente no está en marcha (`trackwright bridge`). |
+| `TIMEOUT` | Cubase no respondió a tiempo. En escrituras: resultado desconocido. |
+| `WRITES_DISABLED`, `NOT_ALLOWED` | La configuración no permite esa escritura. |
+| `TRACK_NOT_FOUND`, `TRACK_AMBIGUOUS`, `NO_SELECTION` | No se puede resolver la pista. |
+| `STALE_REF`, `INVALID_OBJECT` | La referencia es de otra sesión o el objeto ya no existe. |
+| `CANNOT_PERFORM` | Cubase dice que ahora no se puede ejecutar ese comando. |
+| `PRECONDITION_FAILED` y otros (`SLOT_OCCUPIED`, `NAME_CONFLICT`, `SELECTION_MISMATCH`…) | El estado actual no permite la operación. |
+
+## Herramientas de lectura
+
+No modifican nada.
+
+### `cubase_status`
+
+Estado de la conexión: versión del script, aplicación y versión de Cubase, acceso al mezclador y al transporte, número de comandos y política de escritura. `simulated: true` indica que responde el simulador, no Cubase.
+
+### `cubase_list_tracks`
+
+- **Entrada:** `offset`, `limit` (≤ 128).
+- **Salida:** por pista, `track` (selector `uid:`), `name`, `type`, `selected`, `volume`, `mute`, `solo`, `input`, `output` y `ref`.
+
+### `cubase_get_selected_channel`
+
+La pista seleccionada y sus secciones (Inserts, Strips, Sends…). Si la seleccionada no tiene canal de mezclador, `track` es `null`.
+
+### `cubase_list_inserts`
+
+- **Entrada:** `track`.
+- **Salida:** los 8 slots, con `empty` y, si están ocupados, el `name` y el `plugin_uid` del plugin cargado.
+
+### `cubase_list_available_plugins`
+
+- **Entrada:** `track`, `slot`, `filter` (nombre, fabricante o categoría), `offset`, `limit`.
+- **Salida:** los plugins que se pueden cargar, con su `uid`. Los slots del channel strip no ofrecen catálogo (`NO_COLLECTION`).
+
+### `cubase_list_parameters`
+
+- **Entrada:** `target`, `track`, `offset`, `limit` (≤ 25), `filter`.
+- **Salida:** los parámetros, con `tag`, `title` (localizado), `process`, `display`, `plain` y `automatable`.
+- Con `filter`, recorre como mucho 500 parámetros. Si se detiene antes del final, devuelve `truncated: true`.
+
+### `cubase_get_parameter`
+
+- **Entrada:** `target`, `tag`, `track`.
+- **Salida:** un solo parámetro.
+
+### `cubase_get_transport`
+
+Posición del cursor, localizadores de ciclo y tempo, en compases. Si Cubase aún no ha enviado ningún valor, responde `UNAVAILABLE`: mueve el cursor una vez en Cubase y vuelve a intentarlo.
+
+### `cubase_poll_changes`
+
+Cambios que Cubase ha notificado desde la última llamada; la llamada vacía el registro. Un evento `removed` es una **pista para volver a comprobar**, no una prueba de borrado: Cubase también lo emite al cambiar de pista seleccionada.
+
+## Herramientas de escritura y navegación
+
+### `cubase_set_parameter` (escritura)
+
+- **Entrada:** `target`, `tag`, `value`, `track`, `unit` (`process` de 0 a 1, o `plain` en unidades reales vía Cubase), `expect_title`, `dry_run`.
+- **Verificación:** relectura, con una tolerancia de 1e-3.
+- **Errores:** `OUT_OF_RANGE`, `PARAM_LOCKED` y `PARAM_NOT_FOUND`.
+
+### `cubase_insert_plugin` (escritura)
+
+- **Entrada:** `slot`, `plugin_uid`, `track`, `dry_run`.
+- Solo en slots vacíos (`SLOT_OCCUPIED`).
+- **Verificación:** el slot contiene un plugin con ese `uid`.
+
+### `cubase_set_track_mix` (escritura)
+
+- **Entrada:** `track` y, al menos, uno de `volume` (normalizado de 0 a 1), `mute`, `solo` o `record_arm`; además, `dry_run`.
+- Funciona en pistas **no seleccionadas**.
+- El volumen en dB todavía no está disponible.
+
+### `cubase_rename_track` (escritura)
+
+- **Entrada:** `track`, `new_name`, `dry_run`.
+- Rechaza los nombres que ya usa otra pista (`NAME_CONFLICT`).
+- Después del cambio, usa el selector `uid:`: el selector por nombre deja de valer.
+
+### `cubase_select_track` (navegación)
+
+- **Entrada:** `track`, o bien `step` (`next` o `prev`).
+- La selección es única: deselecciona las demás pistas.
+
+### `cubase_set_position` (navegación)
+
+- **Entrada:** `which` (`cursor`, `cycle_left` o `cycle_right`), `time`, `unit` (`bars` o `seconds`) y `dry_run`.
+- **Formato de compases:** `"3. 1. 1. 0"` (compás, tiempo, semicorchea, tick).
+- **Formato de segundos:** `"0:00:02.000"`.
+- La verificación en segundos asume compás de 4/4 y tempo constante.
+
+### `cubase_set_tempo` (escritura)
+
+- **Entrada:** `bpm` (de 20 a 300) y `dry_run`.
+- **Verificación:** relectura, con una tolerancia de 0,01.
+
+## Herramientas basadas en comandos
+
+### `cubase_markers`
+
+- **`action`:** `add_marker_track` (`direct`, escritura), `insert_at_cursor` (`direct`, escritura; necesita una pista de marcadores), `locate_prev` o `locate_next` (navegación: el cursor salta al marcador anterior o siguiente).
+- La creación de pistas y marcadores no se puede leer desde la API, así que devuelve `verified: "not_observable"`.
+
+### `cubase_remove_selected_tracks` (destructiva)
+
+- **Entrada:** `expect_selected` y `dry_run`.
+- Solo actúa si la pista seleccionada es exactamente la indicada (`SELECTION_MISMATCH`). Selecciónala antes con `cubase_select_track`.
+- Si la pista tiene eventos, Cubase pide confirmación y la herramienta devuelve `pending_confirmation`.
+
+### `cubase_split_at_locators` (destructiva)
+
+- **Entrada:** `left`, `right` y `dry_run`.
+- Coloca los localizadores, los relee y lanza «Split Loop».
+- **Corta todas las pistas** que tienen eventos en ese rango.
+
+### `cubase_add_track_interactive` (escritura, con el usuario)
+
+- **Entrada:** `phase` (`start` o `confirm`), `kind` (`audio`, `group` o `folder`) y `suggested_name`.
+- **`start`:** abre el diálogo «Añadir pista» de Cubase y devuelve `awaiting_user` con instrucciones para el usuario.
+- **`confirm`:** comprueba que la pista existe. Las carpetas no tienen canal de mezclador, así que en ese caso la verificación es visual.
+
+### `cubase_run_command` (destructiva, avanzada)
+
+- **Entrada:** `key`, `dry_run` y `force`.
+- Ejecuta un comando de la lista permitida. Es mejor usar las herramientas específicas.
+
+| `key` | Clase |
+|---|---|
+| `zoom.in`, `zoom.out` | unknown |
+| `edit.undo`, `edit.redo`, `edit.cut`, `edit.copy`, `edit.paste`, `edit.delete`, `edit.split_at_cursor`, `edit.split_range`, `edit.select_all`, `edit.select_none`, `edit.select_in_loop` | ui_selection |
+| `edit.split_loop` | direct |
+| `addtrack.audio`, `addtrack.group`, `addtrack.folder`, `audio.detect_silence` | dialog |
+| `addtrack.marker`, `marker.insert`, `project.select_track_next`, `project.select_track_prev`, `transport.locate_next_marker`, `transport.locate_prev_marker` | direct |
+| `project.remove_selected_tracks` | confirm |
+| `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.set_left_locator`, `transport.set_right_locator`, `transport.locators_to_selection` | unknown |
+
+## Lo que no se puede hacer
+
+Verificado en la prueba de concepto:
+- **Enrutado:** cambiar entradas, salidas o el destino de los envíos. La API lo ignora o lo deja en «Sin bus».
+- **Leer el contenido de las pistas:** eventos, audio, marcadores como datos o curvas de automatización.
+- **Completar diálogos** de Cubase: añadir pistas con opciones o detectar silencios.
+- **Cargar módulos del channel strip** distintos del EQ (Cubase Elements).

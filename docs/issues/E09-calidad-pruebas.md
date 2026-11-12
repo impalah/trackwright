@@ -30,7 +30,7 @@
 
 ## TW-0905 Coherencia de la documentación
 
-- **Estado:** pendiente
+- **Estado:** hecha
 - **Alcance:**
   - Un test comprueba que cada herramienta registrada aparece en `docs/manual/04-herramientas.md`.
   - Un test comprueba que cada clave de configuración aparece en `docs/manual/03-configuracion.md`.

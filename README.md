@@ -1,1 +1,65 @@
 # Trackwright
+
+**Trackwright** es un servidor [MCP](https://modelcontextprotocol.io) que permite a un asistente como Claude **inspeccionar y controlar Cubase**: pistas, mezcla, plugins de inserción y sus parámetros, transporte, marcadores y comandos. Funciona a través de un script MIDI Remote que se ejecuta dentro de Cubase.
+
+| | |
+|---|---|
+| Paquete | `trackwright-mcp` |
+| Ejecutable | `trackwright` |
+| Servidor MCP | `trackwright` (stdio) |
+| Plataforma | macOS, Cubase 15.0.20 o posterior (verificado en Elements 15.0.30) |
+
+## Inicio rápido
+
+```sh
+cd /Volumes/Data/projects/sound/trackwright
+uv sync
+uv run trackwright script install --apply   # copia el script a Cubase; después reinicia Cubase
+uv run trackwright bridge                   # en una terminal aparte; déjala abierta
+uv run trackwright doctor                   # comprueba toda la cadena
+claude mcp add trackwright -- uv --directory "$PWD" run trackwright serve
+```
+
+¿Sin Cubase a mano? `uv run trackwright serve --simulate` responde desde un Cubase simulado.
+
+## Qué puede hacer
+
+21 herramientas, todas con salida estructurada:
+
+- **Lectura:** estado, pistas del mezclador, canal seleccionado, inserts, catálogo de plugins, parámetros, transporte y cambios recientes.
+- **Escritura**, siempre con ensayo previo (`dry_run`) y verificación por relectura: parámetros (en valor normalizado o en unidades reales), inserción de plugins, volumen, mute, solo, armado, nombre de pista y tempo.
+- **Navegación:** seleccionar pistas y mover el cursor y los localizadores.
+- **Comandos de Cubase:** marcadores, borrado de pistas, división en los localizadores, creación de pistas con ayuda del usuario y una lista de comandos permitidos. Cada comando indica cómo se comporta: si actúa directamente, si abre un diálogo o si pide confirmación.
+
+Por defecto **solo lee**. Las escrituras se habilitan en la configuración y se pueden limitar a pistas concretas.
+
+## Documentación
+
+- **Manuales**
+  - [Instalación](docs/manual/01-instalacion.md)
+  - [Operación y conexión con Claude Code o Claude Desktop](docs/manual/02-operacion.md)
+  - [Configuración](docs/manual/03-configuracion.md)
+  - [Referencia de herramientas](docs/manual/04-herramientas.md)
+  - [Resolución de problemas](docs/manual/05-problemas.md)
+- **Tutoriales**
+  1. [Primera conexión](docs/tutoriales/01-primera-conexion.md)
+  2. [Inspeccionar una pista](docs/tutoriales/02-inspeccionar-pista.md)
+  3. [Primer cambio seguro](docs/tutoriales/03-primer-cambio-seguro.md)
+  4. [Insertar un EQ](docs/tutoriales/04-insertar-eq.md)
+  5. [Marcadores y cursor](docs/tutoriales/05-marcadores-cursor.md)
+  6. [Pista con diálogo](docs/tutoriales/06-pista-con-dialogo.md)
+- **Proyecto**
+  - [Arquitectura](docs/arquitectura.md)
+  - [Desarrollo](docs/desarrollo.md)
+  - [Épicas e issues](docs/issues/README.md)
+
+## Estado
+
+- El diseño procede de la prueba de concepto `cubase-mcp-poc`, cuyas capacidades se verificaron contra Cubase Elements 15.0.30.
+- El script `Trackwright_Bridge.js` 1.0.0 deriva de esa versión; su verificación propia contra Cubase se hace con los tests de integración (`tests/integration`).
+- El resto se prueba con tests unitarios, de contrato MCP, del script con Node.js y de extremo a extremo, con una cobertura superior al 95 %.
+
+## Limitaciones conocidas
+
+- **No es posible por la API** cambiar el enrutado (entradas, salidas o envíos), leer el contenido de las pistas (eventos, audio o automatización) ni completar diálogos de Cubase.
+- **Solo se ven** las pistas que tienen canal de mezclador.
