@@ -88,3 +88,14 @@ Origen: revisión de código independiente del 2026-11-12, hecha por un agente s
   - se documenta la excepción de `add_track_interactive`;
   - `split_at_locators` informa de los localizadores anteriores (`previous_left` y `previous_right`), pero **no** los restaura: hacerlo justo después de disparar el comando podría adelantarse a él, porque Cubase lo ejecuta en su propio ciclo. Es una decisión que se aparta de la sugerencia de la revisión.
   - Menores: `offset ≥ 0` en `cubase_list_tracks`.
+
+## TW-1014 La ruta de instalación por defecto no se expandía
+
+- **Estado:** hecha
+- **Gravedad:** alta. Detectado al instalar por primera vez en la máquina del usuario (2026-11-12).
+- **Problema:** pydantic no ejecuta los validadores sobre los valores por defecto. `[script] install_dir` conservaba el `~` literal, y `trackwright script install --apply` copió el script en `./~/Documents/…` **dentro del repositorio**, mientras informaba `up_to_date`. Los tests no lo detectaron porque siempre pasaban `--dir` con una ruta absoluta.
+- **Solución:**
+  - `validate_default=True` en `install_dir` y `socket_dir`;
+  - `install_script` rechaza rutas relativas;
+  - tests de regresión: las rutas por defecto son absolutas y el destino por defecto queda bajo `$HOME`.
+- **Limpieza:** se borró la carpeta `./~` creada por error, que solo contenía ese archivo, y se reinstaló en la ruta correcta.

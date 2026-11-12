@@ -39,7 +39,7 @@ class BridgeConfig(_Section):
     """Virtual port Python writes to; Cubase sees it as the script's MIDI input."""
     from_cubase_port: str = Field(default="Trackwright From Cubase", min_length=1)
     """Virtual port Python reads from; Cubase sees it as the script's MIDI output."""
-    socket_dir: Path = Field(default_factory=default_socket_dir)
+    socket_dir: Path = Field(default_factory=default_socket_dir, validate_default=True)
     """Directory of the IPC Unix socket (created with mode 0700)."""
     request_timeout: float = Field(default=3.0, ge=0.05, le=30.0)
     """Default timeout in seconds for one request to Cubase."""
@@ -80,7 +80,8 @@ class LoggingConfig(_Section):
 
 
 class ScriptConfig(_Section):
-    install_dir: Path = DEFAULT_SCRIPT_DIR
+    # validate_default: pydantic does not run validators on defaults otherwise, and "~" would stay literal.
+    install_dir: Path = Field(default=DEFAULT_SCRIPT_DIR, validate_default=True)
     """Where ``trackwright script install`` copies the MIDI Remote script."""
 
     @field_validator("install_dir", mode="after")

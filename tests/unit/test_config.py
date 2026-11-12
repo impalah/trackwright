@@ -91,3 +91,15 @@ def test_settings_are_immutable() -> None:
     settings = Settings()
     with pytest.raises(ValueError, match="frozen"):
         settings.writes.enabled = True  # type: ignore[misc]
+
+
+def test_default_paths_are_expanded_and_absolute() -> None:
+    """Regression (TW-1014): defaults are not validated by pydantic unless asked, so '~' stayed literal."""
+    settings = Settings()
+    assert settings.script.install_dir.is_absolute()
+    assert "~" not in str(settings.script.install_dir)
+    assert (
+        settings.script.install_dir
+        == Path("~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/bridge").expanduser()
+    )
+    assert settings.bridge.socket_dir.is_absolute()

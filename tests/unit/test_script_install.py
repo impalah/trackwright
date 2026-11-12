@@ -73,3 +73,18 @@ def test_cli_status_and_install(tmp_path: Path, capsys: pytest.CaptureFixture[st
     done = json.loads(capsys.readouterr().out)
     assert done["written"] is True
     assert "restart Cubase" in done["next_step"]
+
+
+def test_relative_install_dir_is_refused(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.chdir(tmp_path)
+    with pytest.raises(PreconditionFailedError, match="absolute"):
+        install_script(Path("~/Documents/x"), apply=True)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_cli_default_destination_is_under_home(capsys: pytest.CaptureFixture[str]) -> None:
+    import os
+
+    assert main(["script", "status"]) == 0
+    destination = json.loads(capsys.readouterr().out)["destination"]
+    assert destination.startswith(os.environ["HOME"])

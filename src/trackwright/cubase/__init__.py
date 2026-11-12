@@ -66,6 +66,8 @@ def install_script(install_dir: Path, *, apply: bool) -> tuple[ScriptStatus, boo
 
     Returns the status *after* the call and whether a file was written.
     """
+    if not install_dir.is_absolute():
+        raise PreconditionFailedError(f"the install directory must be an absolute path: {install_dir}")
     status = script_status(install_dir)
     if not apply or status.state == "up_to_date":
         return status, False
