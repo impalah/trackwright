@@ -1,0 +1,91 @@
+[project]
+name = "trackwright-mcp"
+version = "0.1.0"
+description = "Trackwright: MCP server to inspect and control Cubase through a MIDI Remote script"
+readme = "README.md"
+authors = [
+    { name = "impalah", email = "impalah@gmail.com" }
+]
+license = { text = "Proprietary" }
+requires-python = ">=3.14"
+keywords = ["mcp", "cubase", "midi-remote", "daw"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: MacOS",
+    "Topic :: Multimedia :: Sound/Audio :: MIDI",
+]
+dependencies = [
+    "loguru>=0.8.0",
+    "mcp>=2.3.0",
+    "mido>=1.3.3",
+    "pydantic>=2.14.3",
+    "python-rtmidi>=1.5.8",
+]
+
+[project.scripts]
+trackwright = "trackwright.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.13.7,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "trackwright"
+
+[tool.ruff]
+line-length = 120
+target-version = "py314"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RET", "PTH", "PL", "RUF", "S", "T20", "LOG"]
+ignore = [
+    "PLR0913",  # explicit keyword arguments on service methods are clearer than parameter objects
+    "PLR2004",  # protocol constants are named where they matter
+    "S101",     # assert is used in tests
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "PLR", "PLC0415", "SLF001"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+packages = ["trackwright"]
+mypy_path = "src"
+
+[[tool.mypy.overrides]]
+module = ["mido", "mido.*", "rtmidi", "rtmidi.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+    "integration: needs a running bridge and Cubase (opt-in: TRACKWRIGHT_INTEGRATION=1)",
+    "integration_write: modifies the open Cubase project (opt-in: TRACKWRIGHT_ALLOW_WRITES=1)",
+    "node: runs the MIDI Remote script under Node.js (skipped if node is missing)",
+]
+
+[tool.coverage.run]
+source = ["trackwright"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_covered = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "\\.\\.\\.$",
+]
+
+[dependency-groups]
+dev = [
+    "anyio>=4.16.0",
+    "mypy>=2.4.1",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.4",
+]
