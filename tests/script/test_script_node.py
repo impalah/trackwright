@@ -17,7 +17,7 @@ from typing import Any
 import pytest
 
 from trackwright import ops, protocol
-from trackwright.cubase import SCRIPT_PATH
+from trackwright.cubase import SCRIPT_PATH, SCRIPT_VERSION
 
 pytestmark = pytest.mark.node
 NODE = shutil.which("node")
@@ -29,10 +29,10 @@ if NODE is None:  # pragma: no cover - depends on the machine
 
 
 class Harness:
-    def __init__(self) -> None:
+    def __init__(self, script: Path = SCRIPT_PATH) -> None:
         assert NODE is not None
         self.proc = subprocess.Popen(
-            [NODE, str(HARNESS), str(SCRIPT_PATH)],
+            [NODE, str(HARNESS), str(script)],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -114,7 +114,7 @@ def test_script_ops_match_python_ops() -> None:
 
 def test_hello_reports_identity(h: Harness) -> None:
     hello = h.call("hello")
-    assert hello["r"]["scriptVersion"] == "1.0.0"
+    assert hello["r"]["scriptVersion"] == SCRIPT_VERSION
     assert hello["r"]["host"]["appName"] == "Cubase"
     assert hello["via"] == "sysex"
 

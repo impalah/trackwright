@@ -1,5 +1,12 @@
 # Cambios
 
+## Sin publicar
+
+- **Script 1.0.1:** incluye el panel de estado de la superficie MIDI Remote (TW-1101), **desactivado** (`PANEL_ENABLED = false`). Las operaciones no cambian.
+- **Experimento TW-1101** en `experiments/tw1101/`: genera una versión de prueba con el panel activado.
+- **`trackwright script install --file <script>`:** instala otro script, como el del experimento.
+- **Simulador:** «Locate Next Marker» sin marcador siguiente va al final del último evento, como en Cubase 15.
+
 ## 0.1.0 — 2026-11-12
 
 Primera versión, basada en el diseño verificado en la prueba de concepto `cubase-mcp-poc`.

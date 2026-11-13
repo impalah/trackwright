@@ -2,7 +2,7 @@
 
 Al terminar este manual tendrás Trackwright instalado, el script cargado en Cubase y una comprobación de que Python y Cubase se hablan. Calcula unos 15 minutos.
 
-> **Estado de la verificación.** El protocolo y las operaciones del script se verificaron contra Cubase Elements 15.0.30 en la prueba de concepto (`cubase-mcp-poc`). El script `Trackwright_Bridge.js` 1.0.0 deriva de esa versión. Antes de usarlo en serio, ejecuta los tests de integración del paso 9.
+> **Estado de la verificación.** El protocolo y las operaciones del script se verificaron contra Cubase Elements 15.0.30 en la prueba de concepto (`cubase-mcp-poc`). El script `Trackwright_Bridge.js` deriva de esa versión. Antes de usarlo en serio, ejecuta los tests de integración del paso 9.
 
 ## Cómo encajan las piezas
 
@@ -95,7 +95,7 @@ Los nombres exactos de los menús en español pueden variar ligeramente según l
 uv run trackwright ping
 ```
 
-Debe responder `"ok": true`, con la versión del script (`1.0.0`) y el eco `hola-ñ-✓`. Después ejecuta el diagnóstico completo:
+Debe responder `"ok": true`, con la versión del script (por ejemplo, `1.0.1`) y el eco `hola-ñ-✓`. Después ejecuta el diagnóstico completo:
 
 ```sh
 uv run trackwright doctor

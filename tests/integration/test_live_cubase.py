@@ -18,6 +18,7 @@ from trackwright.cli import make_service
 from trackwright.config import load_settings
 from trackwright.core.policy import WritePolicy
 from trackwright.core.service import CubaseService
+from trackwright.cubase import SCRIPT_VERSION
 
 LIVE = os.environ.get("TRACKWRIGHT_INTEGRATION") == "1"
 WRITES = LIVE and os.environ.get("TRACKWRIGHT_ALLOW_WRITES") == "1"
@@ -46,7 +47,7 @@ def test_status(live: CubaseService) -> None:
     status = live.status()
     assert status.connected
     assert status.simulated is False
-    assert status.script_version == "1.0.0"
+    assert status.script_version == SCRIPT_VERSION
 
 
 def test_tracks_and_inserts(live: CubaseService) -> None:

@@ -53,27 +53,31 @@ class ScriptStatus:
         }
 
 
-def script_status(install_dir: Path) -> ScriptStatus:
+def script_status(install_dir: Path, source: Path = SCRIPT_PATH) -> ScriptStatus:
+    """Compare the installed script with ``source`` (the packaged script by default)."""
     destination = install_dir / SCRIPT_NAME
     if not destination.exists():
-        return ScriptStatus(destination, "missing", SCRIPT_VERSION, None)
-    state: InstallState = "up_to_date" if _digest(destination) == _digest(SCRIPT_PATH) else "different"
-    return ScriptStatus(destination, state, SCRIPT_VERSION, _version_of(destination))
+        return ScriptStatus(destination, "missing", _version_of(source), None)
+    state: InstallState = "up_to_date" if _digest(destination) == _digest(source) else "different"
+    return ScriptStatus(destination, state, _version_of(source), _version_of(destination))
 
 
-def install_script(install_dir: Path, *, apply: bool) -> tuple[ScriptStatus, bool]:
-    """Copy the packaged script to ``install_dir``. Without ``apply`` only report what would happen.
+def install_script(install_dir: Path, *, apply: bool, source: Path = SCRIPT_PATH) -> tuple[ScriptStatus, bool]:
+    """Copy ``source`` (the packaged script by default) to ``install_dir``. Without ``apply`` only report.
 
+    ``source`` lets developers install an experiment build (for example ``experiments/tw1101``).
     Returns the status *after* the call and whether a file was written.
     """
     if not install_dir.is_absolute():
         raise PreconditionFailedError(f"the install directory must be an absolute path: {install_dir}")
-    status = script_status(install_dir)
+    if not source.is_file() or _version_of(source) is None:
+        raise PreconditionFailedError(f"{source} is not a Trackwright MIDI Remote script")
+    status = script_status(install_dir, source)
     if not apply or status.state == "up_to_date":
         return status, False
     if status.destination.is_symlink():
         raise PreconditionFailedError(f"refusing to overwrite a symbolic link: {status.destination}")
     install_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(SCRIPT_PATH, status.destination)
-    logger.info("installed {} {} at {}", SCRIPT_NAME, SCRIPT_VERSION, status.destination)
-    return script_status(install_dir), True
+    shutil.copyfile(source, status.destination)
+    logger.info("installed {} {} at {}", SCRIPT_NAME, _version_of(source), status.destination)
+    return script_status(install_dir, source), True

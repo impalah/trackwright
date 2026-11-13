@@ -7,6 +7,7 @@ import pytest
 from trackwright.core.policy import WritePolicy
 from trackwright.core.refs import ObjectRef
 from trackwright.core.service import CubaseService
+from trackwright.cubase import SCRIPT_VERSION
 from trackwright.errors import NotFoundError, PreconditionFailedError, StaleSessionError, TrackwrightError
 from trackwright.fake import FakeCubase
 
@@ -17,7 +18,7 @@ def test_status(service: CubaseService) -> None:
     status = service.status()
     assert status.connected is True
     assert status.simulated is True
-    assert status.script_version == "1.0.0"
+    assert status.script_version == SCRIPT_VERSION
     assert status.mixer_access is True
     assert status.commands_bound == 30
     assert status.writes_enabled is True

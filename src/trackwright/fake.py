@@ -23,11 +23,11 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from trackwright.commands import COMMANDS
+from trackwright.cubase import SCRIPT_VERSION
 from trackwright.errors import HostError, StaleSessionError, TrackwrightError
 from trackwright.ops import SESSIONLESS_OPS
 
 JsonObject = dict[str, Any]
-SCRIPT_VERSION = "1.0.0"
 BARS = "Compases+Tiempos"
 SECONDS = "Segundos"
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -12,7 +13,8 @@ from trackwright.errors import PreconditionFailedError
 
 def test_packaged_script_exists_and_has_version() -> None:
     assert SCRIPT_PATH.is_file()
-    assert SCRIPT_VERSION == "1.0.0"
+    assert SCRIPT_VERSION is not None
+    assert re.fullmatch(r"\d+\.\d+\.\d+", SCRIPT_VERSION)
 
 
 def test_status_missing(tmp_path: Path) -> None:
@@ -88,3 +90,29 @@ def test_cli_default_destination_is_under_home(capsys: pytest.CaptureFixture[str
     assert main(["script", "status"]) == 0
     destination = json.loads(capsys.readouterr().out)["destination"]
     assert destination.startswith(os.environ["HOME"])
+
+
+def test_install_another_source(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    experiment = tmp_path / "exp.js"
+    experiment.write_text(
+        SCRIPT_PATH.read_text(encoding="utf-8").replace(f"'{SCRIPT_VERSION}'", f"'{SCRIPT_VERSION}+x'"),
+        encoding="utf-8",
+    )
+    target = tmp_path / "bridge"
+    status, written = install_script(target, apply=True, source=experiment)
+    assert written is True
+    assert (status.state, status.installed_version) == ("up_to_date", f"{SCRIPT_VERSION}+x")
+    assert script_status(target).state == "different"  # compared with the packaged script
+    assert main(["script", "status", "--dir", str(target), "--file", str(experiment)]) == 0
+    assert json.loads(capsys.readouterr().out)["state"] == "up_to_date"
+    status, written = install_script(target, apply=True)  # back to the released script
+    assert (written, status.installed_version) == (True, SCRIPT_VERSION)
+
+
+def test_install_refuses_a_file_that_is_not_a_script(tmp_path: Path) -> None:
+    bogus = tmp_path / "notes.txt"
+    bogus.write_text("hello", encoding="utf-8")
+    with pytest.raises(PreconditionFailedError, match="not a Trackwright"):
+        install_script(tmp_path / "bridge", apply=True, source=bogus)
+    with pytest.raises(PreconditionFailedError):
+        install_script(tmp_path / "bridge", apply=False, source=tmp_path / "missing.js")

@@ -41,6 +41,14 @@ La superficie se **dibuja a partir de los elementos que declara el script**. No 
    - Debe ser **pasivo**: ningún elemento del panel se asocia a comandos ni a valores de Cubase que el usuario pudiera cambiar por accidente al hacer clic en la superficie.
 4. **Si los textos dinámicos no funcionan:** quedarse con el texto fijo y la pista seleccionada, y documentar la limitación.
 
+### Preparación del experimento (hecha, 2026-11-13)
+
+- **Panel en el script principal, desactivado** (`PANEL_ENABLED = false`): el script publicado no cambia. Un test comprueba que sigue teniendo un único campo de 4×1 y `capabilities.panel.enabled = false`.
+- **Versión de prueba:** `experiments/tw1101/build.py` genera `1.0.1+tw1101` con el panel activado.
+- **Instalación:** `trackwright script install --file <script>` (con ensayo previo) instala la versión de prueba, y `script install --apply` vuelve a la publicada.
+- **Arnés de Node.js:** emula los campos, `relateTo`, las lámparas y `setLabelFieldText` / `setLabelFieldHostObject`. Los tests comprueban la disposición, el texto con cada petición, el parpadeo y que todas las operaciones siguen respondiendo. **Esto solo demuestra que el script llama a la API como se pretende; lo que dibuja Cubase solo se sabe en Cubase.**
+- **Protocolo:** pasos E1 a E6 en [`experiments/tw1101/README.md`](../../experiments/tw1101/README.md).
+
 ### Riesgos
 
 - **Mapping Assistant:** los elementos visibles aparecen en el asistente de asignación de Cubase, y el usuario podría asignarles funciones. Usar campos de texto y lámparas, que no se asignan, y nunca knobs ni botones.

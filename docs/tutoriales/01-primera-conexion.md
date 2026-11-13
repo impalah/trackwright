@@ -34,7 +34,7 @@ Si esto funciona, la parte MCP está bien. Quita el servidor simulado con `claud
    ```sh
    uv run trackwright ping
    ```
-   Espera `"ok": true` y `"scriptVersion": "1.0.0"`.
+   Espera `"ok": true` y la versión del script en `scriptVersion` (por ejemplo, `"1.0.1"`).
 
 ## Paso 3. Registrar el servidor real
 

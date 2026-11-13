@@ -67,13 +67,14 @@ def cmd_ping(args: argparse.Namespace, settings: Settings) -> int:
 
 
 def cmd_script(args: argparse.Namespace, settings: Settings) -> int:
-    from trackwright.cubase import install_script, script_status  # noqa: PLC0415
+    from trackwright.cubase import SCRIPT_PATH, install_script, script_status  # noqa: PLC0415
 
     install_dir = args.dir or settings.script.install_dir
+    source = args.file.resolve() if args.file else SCRIPT_PATH
     if args.action == "status":
-        emit(script_status(install_dir).to_dict())
+        emit(script_status(install_dir, source).to_dict())
         return 0
-    status, written = install_script(install_dir, apply=args.apply)
+    status, written = install_script(install_dir, apply=args.apply, source=source)
     payload = {**status.to_dict(), "written": written, "dry_run": not args.apply}
     if not args.apply and status.state != "up_to_date":
         payload["next_step"] = "re-run with --apply to copy the script, then restart Cubase"
@@ -175,6 +176,7 @@ def build_parser() -> argparse.ArgumentParser:
     script.add_argument("action", choices=["status", "install"])
     script.add_argument("--dir", type=Path, help="override [script] install_dir")
     script.add_argument("--apply", action="store_true", help="really copy the file (default: dry run)")
+    script.add_argument("--file", type=Path, help="install this script instead of the packaged one (experiments)")
     script.set_defaults(handler=cmd_script)
     ping = sub.add_parser("ping", help="check the round trip Python -> Cubase -> Python")
     ping.add_argument("--echo", default="hola-ñ-✓", help="text echoed back by the script")

@@ -77,6 +77,8 @@ function displayOf(p) {
 
 var logs = []
 var fired = []
+var surfaceElements = []
+var panelLog = []
 var listeners = { remove: [], change: [], param: [] }
 
 function makeDirectAccess(hostObject) {
@@ -192,7 +194,22 @@ var api = {
 			},
 			makeDetectionUnit: function () { return { detectPortPair: chain } },
 			mSurface: {
-				makeLabelField: function () { return {} },
+				makeLabelField: function (x, y, w, h) {
+					var field = { kind: 'label', x: x, y: y, w: w, h: h, related: null }
+					field.relateTo = function (element) { field.related = element.kind + '@' + element.x + ',' + element.y; return field }
+					surfaceElements.push(field)
+					return field
+				},
+				makeLamp: function (x, y, w, h) {
+					var lamp = { kind: 'lamp', x: x, y: y, w: w, h: h, shape: 'rectangle' }
+					lamp.setShapeCircle = function () { lamp.shape = 'circle'; return lamp }
+					lamp.mSurfaceValue = {
+						setDisplayValue: function (dev, text) { panelLog.push({ display: text }) },
+						setProcessValue: function (dev, value) { panelLog.push({ lamp: value }) }
+					}
+					surfaceElements.push(lamp)
+					return lamp
+				},
 				makeCustomValueVariable: function (name) {
 					return { name: name, setProcessValue: function (dev, v) { if (v > 0) fired.push(name) } }
 				}
@@ -212,6 +229,8 @@ var api = {
 							mMixConsole: 'mixer',
 							mTransport: { mTimeDisplay: timeDisplay }
 						},
+						setLabelFieldText: function (field, text) { field.text = text; return page },
+						setLabelFieldHostObject: function (field, hostObject) { field.hostObject = String(hostObject); return page },
 						makeCommandBinding: function (variable, category, name) {
 							return { canPerform: function () { return category !== 'Add Track' && !(category === 'Edit' && name === 'Undo') } }
 						}
@@ -259,6 +278,12 @@ rl.on('line', function (line) {
 		listeners.da.forEach(function (d) { if (d.mOnObjectWillBeRemoved) d.mOnObjectWillBeRemoved(device, mapping, step.remove) })
 	}
 	var reply = { sent: sent, logs: logs.splice(0) }
-	if (step.state) reply.state = { fired: fired.slice(), selectedId: selectedId, ids: { mixer: mixer.id, out: out.id, instr: instr.id, audio: audio.id } }
+	if (step.state) {
+		reply.state = { fired: fired.slice(), selectedId: selectedId, ids: { mixer: mixer.id, out: out.id, instr: instr.id, audio: audio.id } }
+		reply.state.surface = surfaceElements.map(function (e) {
+			return { kind: e.kind, x: e.x, y: e.y, w: e.w, h: e.h, text: e.text, hostObject: e.hostObject, related: e.related, shape: e.shape }
+		})
+		reply.state.panelLog = panelLog.splice(0)
+	}
 	process.stdout.write(JSON.stringify(reply) + '\n')
 })

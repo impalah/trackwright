@@ -56,7 +56,7 @@ Por defecto **solo lee**. Las escrituras se habilitan en la configuración y se 
 ## Estado
 
 - El diseño procede de la prueba de concepto `cubase-mcp-poc`, cuyas capacidades se verificaron contra Cubase Elements 15.0.30.
-- El script `Trackwright_Bridge.js` 1.0.0 deriva de esa versión. Su verificación contra Cubase real se anota en el [registro de verificación](docs/verificacion.md). A 2026-11-12, **las 21 herramientas** se han ejecutado contra Cubase Elements 15.0.30, con confirmación visual del usuario donde la API no puede observar el resultado.
+- El script `Trackwright_Bridge.js` deriva de esa versión. La verificación se hizo con la 1.0.0; la 1.0.1 solo añade el panel de estado experimental, desactivado. Su verificación contra Cubase real se anota en el [registro de verificación](docs/verificacion.md). A 2026-11-12, **las 21 herramientas** se han ejecutado contra Cubase Elements 15.0.30, con confirmación visual del usuario donde la API no puede observar el resultado.
 - El resto se prueba con tests unitarios, de contrato MCP, del script con Node.js y de extremo a extremo, con una cobertura superior al 95 %.
 
 ## Limitaciones conocidas
