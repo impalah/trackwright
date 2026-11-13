@@ -1,5 +1,7 @@
 # E12 — Funcionalidades ampliadas
 
+**Estado de la épica: cerrada (2026-11-13).** Las 12 issues están cerradas o hechas, todas verificadas en Cubase Elements 15.0.30, y casi todas también por el usuario desde Claude Code. Script 1.5.5; 32 herramientas.
+
 Origen: preguntas del usuario del 2026-11-13. El análisis y la procedencia de cada dato están en [`docs/investigacion.md`](../investigacion.md); los comandos, en [`docs/referencia/comandos-cubase.txt`](../referencia/comandos-cubase.txt).
 
 Regla común: un comando sin probar **no** se expone como herramienta hasta verificar en Cubase su clase (`direct`, `dialog`, `confirm`…) y su efecto observable.
@@ -58,7 +60,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1205 Experimento: presets de los plugins
 
-- **Estado:** implementada (`cubase_plugin_preset`, script 1.5.5). Experimento en [experiments/tw1205](../../experiments/tw1205/README.md). Requiere un preset cargado y un clic del usuario en la ventana del plugin la primera vez; el nombre del preset no es accesible. Falta que el usuario la pruebe
+- **Estado:** cerrada. `cubase_plugin_preset` probada por el usuario desde Claude Code el 2026-11-13. Experimento en [experiments/tw1205](../../experiments/tw1205/README.md). Requiere un preset cargado y un clic del usuario en la ventana del plugin la primera vez; el nombre del preset no es accesible
 - **Hipótesis:** `Preset / Next` y `Previous` actúan sobre el editor del plugin que tiene el foco.
 - **Experimento:**
   1. abrir el editor del plugin desde la API, con el parámetro de edición del slot;
