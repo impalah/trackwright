@@ -31,6 +31,8 @@ uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve
 
 ### Claude Code
 
+`uv run trackwright setup` lo registra por ti (ver el [manual de instalación](01-instalacion.md#instalación-guiada-recomendada)). A mano:
+
 ```sh
 claude mcp add trackwright -- uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve
 ```

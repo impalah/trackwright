@@ -10,7 +10,8 @@ Origen: pregunta del usuario del 2026-11-13. Hoy Trackwright se usa desde el có
 
 ## TW-1301 Instalación guiada: `trackwright setup`
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-13). Verificada en el Mac del usuario; detalle en [verificacion.md](../verificacion.md)
+- **Implementación:** `trackwright/installer.py` (pasos, preguntas por stderr y resumen JSON por stdout) y `trackwright/doctor.py` (el diagnóstico, compartido con `doctor`). El comando que registra en Claude Code depende de cómo se ejecuta: desde el repositorio, `uv --directory <repo> run trackwright serve`; instalado con `uv tool`, la ruta absoluta de `trackwright`.
 - **Objetivo:** que, tras instalar el paquete, un solo comando deje todo listo.
 - **Pasos**, cada uno con lo que se va a hacer (destino, contenido y archivo que se reemplazaría) y **confirmación** antes de aplicarlo:
   1. instalar o actualizar el script en la carpeta MIDI Remote de Cubase (lo que hoy hace `script install --apply`);

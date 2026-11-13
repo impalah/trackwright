@@ -49,6 +49,35 @@ uv run trackwright version
 
 Debe responder algo como `{"trackwright": "0.2.0"}`.
 
+## Instalación guiada (recomendada)
+
+Un solo comando hace los pasos 4 y 8 y la comprobación del 7:
+
+```sh
+uv run trackwright setup
+```
+
+Recorre tres pasos. En cada uno **muestra lo que va a hacer y pregunta** antes de aplicarlo (la respuesta por defecto es «no»):
+
+1. **Script de Cubase:** el destino, la versión y, si ya había uno, la versión que se reemplaza. Si ya está al día, no hace nada.
+2. **Configuración:** si `~/.config/trackwright/config.toml` no existe, pregunta si se permiten las escrituras y el guardado (por defecto, no), enseña el contenido y lo crea con permisos `600`. **Un archivo que ya existe no se toca.**
+3. **Claude Code:** si `claude` está en el `PATH` y el servidor no está registrado, enseña el comando `claude mcp add --scope user trackwright -- …` y lo ejecuta. Si no encuentra `claude`, solo muestra el comando. **Un registro existente no se reemplaza.**
+
+Al final ejecuta `doctor` y lista lo que queda por hacer, por ejemplo reiniciar Cubase. Justo después de instalar es normal que falle «bridge running»: el puente arranca con el servidor MCP.
+
+Las preguntas salen por la salida de error; por la salida estándar, un resumen en JSON. Opciones:
+
+| Opción | Efecto |
+|---|---|
+| `--yes script`, `--yes config`, `--yes claude` | Aplica ese paso sin preguntar. Se repite para varios pasos; no hay un «sí a todo» implícito. |
+| `--writes` / `--no-writes` | Al crear la configuración, permite o no las escrituras. Con `--yes config` y sin esta opción: no. |
+| `--save` / `--no-save` | Igual para el guardado del proyecto. Solo cuenta con las escrituras permitidas. |
+| `--config RUTA` (antes de `setup`) | Crea o usa la configuración en otra ruta. |
+
+`setup` nunca usa `sudo`, ni cambia ajustes de Cubase, IAC o Accesibilidad. Después sigue en el paso 6 (activar el script en Cubase).
+
+Si prefieres hacerlo a mano, sigue los pasos 4 a 8.
+
 ## 4. Instalar el script en Cubase
 
 Primero un ensayo, que no copia nada y solo muestra el destino:

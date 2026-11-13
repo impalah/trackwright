@@ -2,6 +2,8 @@
 
 ## Sin publicar
 
+- **Instalación guiada** (TW-1301): `trackwright setup` instala el script de Cubase, crea la configuración si no existe (escrituras y guardado desactivados por defecto) y registra el servidor en Claude Code. Cada paso se muestra y se confirma; `--yes PASO` para no preguntar. Termina con `doctor`.
+- `doctor` muestra también `[writes] save` y, con `autostart`, explica que el puente arranca con el servidor MCP.
 - **Transporte MIDI con CoreMIDI vía `ctypes`** (TW-1302), por defecto en macOS:
   - el paquete es Python puro y no necesita compilar nada (ni Xcode);
   - `mido` y `python-rtmidi` quedan comentados en `pyproject.toml`; el transporte basado en ellos se conserva y se elige con `[bridge] backend = "rtmidi"`.

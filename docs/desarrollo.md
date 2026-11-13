@@ -30,7 +30,9 @@ uv build                        # wheel y sdist en dist/
 
 ```text
 src/trackwright/
-  cli.py            # comandos: bridge, serve, doctor, script, ping, config...
+  cli.py            # comandos: bridge, serve, setup, doctor, script, ping, config...
+  installer.py      # trackwright setup: instalación guiada con confirmación por paso (TW-1301)
+  doctor.py         # diagnóstico de la cadena (doctor y último paso de setup)
   config.py         # configuración (TOML + entorno, pydantic)
   logs.py           # loguru, stderr, intercepción de logging
   errors.py         # jerarquía de errores con código estable

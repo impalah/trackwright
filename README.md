@@ -14,11 +14,10 @@
 ```sh
 cd /Volumes/Data/projects/sound/trackwright
 uv sync
-uv run trackwright script install --apply   # copia el script a Cubase; después reinicia Cubase
-uv run trackwright bridge                   # en una terminal aparte; déjala abierta
-uv run trackwright doctor                   # comprueba toda la cadena
-claude mcp add trackwright -- uv --directory "$PWD" run trackwright serve
+uv run trackwright setup   # instalación guiada: script de Cubase, configuración, Claude Code y diagnóstico
 ```
+
+`setup` muestra cada paso y pide confirmación antes de aplicarlo. Después, reinicia Cubase y activa la superficie (ver el [manual de instalación](docs/manual/01-instalacion.md)). El puente arranca solo con el servidor MCP.
 
 ¿Sin Cubase a mano? `uv run trackwright serve --simulate` responde desde un Cubase simulado.
 

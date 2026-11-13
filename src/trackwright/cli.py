@@ -17,7 +17,7 @@ from typing import Any
 from loguru import logger
 
 from trackwright import __version__
-from trackwright.config import Settings, load_settings
+from trackwright.config import Settings, config_path, load_settings
 from trackwright.errors import TrackwrightError
 from trackwright.logs import configure_logging
 
@@ -120,47 +120,23 @@ def cmd_serve(args: argparse.Namespace, settings: Settings) -> int:
 
 def cmd_doctor(_args: argparse.Namespace, settings: Settings) -> int:
     """Check every link of the chain and say what to do next."""
-    from trackwright.bridge import BridgeClient  # noqa: PLC0415
-    from trackwright.cubase import script_status  # noqa: PLC0415
+    from trackwright.doctor import run_doctor  # noqa: PLC0415
 
-    checks: list[dict[str, Any]] = []
+    report = run_doctor(settings)
+    emit(report)
+    return 0 if report["ok"] else 1
 
-    def check(name: str, ok: bool, detail: Any, fix: str | None = None) -> bool:
-        checks.append({"check": name, "ok": ok, "detail": detail, **({"fix": fix} if fix and not ok else {})})
-        return ok
 
-    check("configuration", True, str(settings.source or "built-in defaults"))
-    status = script_status(settings.script.install_dir)
-    check(
-        "script installed",
-        status.state == "up_to_date",
-        status.to_dict(),
-        "run 'trackwright script install --apply' and restart Cubase",
-    )
-    client = BridgeClient(settings.bridge.socket_path)
-    try:
-        bridge = client.call("bridge.status", timeout=settings.bridge.request_timeout)
-        bridge_ok = check(
-            "bridge running", True, {"socket": str(settings.bridge.socket_path), "pid": bridge.get("pid")}
-        )
-    except TrackwrightError as exc:
-        bridge_ok = check("bridge running", False, exc.to_dict(), "start it in a terminal: 'trackwright bridge'")
-    if bridge_ok:
-        try:
-            hello = client.call("hello", timeout=settings.bridge.request_timeout)
-            check("Cubase answers", True, {"script": hello.get("scriptVersion"), "host": hello.get("host")})
-        except TrackwrightError as exc:
-            check(
-                "Cubase answers",
-                False,
-                exc.to_dict(),
-                "open Cubase; in the MIDI Remote tab of the lower zone the 'Trackwright - Bridge' surface "
-                "must be active (see docs/manual/01-instalacion.md, step 6)",
-            )
-    check("writes", True, {"enabled": settings.writes.enabled, "allowed_tracks": list(settings.writes.allowed_tracks)})
-    ok = all(c["ok"] for c in checks)
-    emit({"ok": ok, "checks": checks})
-    return 0 if ok else 1
+def cmd_setup(args: argparse.Namespace, settings: Settings) -> int:
+    """Guided installation (TW-1301): every step is shown and confirmed before it is applied."""
+    from trackwright.installer import ConsolePrompter, Setup  # noqa: PLC0415
+
+    config_file, _explicit = config_path(args.config)
+    result = Setup(
+        settings, config_file, ConsolePrompter(), assume_yes=args.yes, writes=args.writes, save=args.save
+    ).run()
+    emit(result)
+    return 0 if result["ok"] else 1
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -176,6 +152,22 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--simulate", action="store_true", help="answer from the built-in Cubase simulator")
     serve.set_defaults(handler=cmd_serve)
     sub.add_parser("doctor", help="diagnose the whole chain and suggest fixes").set_defaults(handler=cmd_doctor)
+    setup = sub.add_parser("setup", help="guided installation: Cubase script, configuration, Claude Code, doctor")
+    setup.add_argument(
+        "--yes",
+        action="append",
+        default=[],
+        choices=["script", "config", "claude"],
+        metavar="STEP",
+        help="apply STEP (script, config or claude) without asking; repeat it for several steps",
+    )
+    setup.add_argument(
+        "--writes", action=argparse.BooleanOptionalAction, help="new configuration: allow writes (default: ask; no)"
+    )
+    setup.add_argument(
+        "--save", action=argparse.BooleanOptionalAction, help="new configuration: allow saving (default: ask; no)"
+    )
+    setup.set_defaults(handler=cmd_setup)
     script = sub.add_parser("script", help="install or check the Cubase MIDI Remote script")
     script.add_argument("action", choices=["status", "install"])
     script.add_argument("--dir", type=Path, help="override [script] install_dir")
@@ -191,7 +183,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     try:
-        settings = load_settings(args.config)
+        settings = load_settings(args.config, missing_ok=args.command == "setup")
     except TrackwrightError as exc:
         configure_logging("INFO")
         logger.error("{}", exc)

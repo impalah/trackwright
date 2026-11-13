@@ -352,3 +352,12 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
   - escritura: mute de POC-TEST escrito y restaurado, ambos verificados;
   - 260 tramas recibidas, sin errores de transporte.
 - **Entorno sin `mido` ni `python-rtmidi`** (`uv sync` los quitó): todo lo anterior funciona sin ellos.
+
+## 2026-11-13 — TW-1301: `trackwright setup`
+
+- **Sobre la instalación real,** sin entrada (toda pregunta habría respondido «no»): script 1.5.5 al día, configuración existente y servidor ya registrado en Claude Code (`claude mcp get`, solo lectura). Los tres pasos se saltaron, nada se escribió, y `doctor` dio 5/5.
+- **Instalación desde cero, aislada** (HOME y TMPDIR temporales, sin `claude` en el `PATH`, respuestas sí/sí/no/sí):
+  - script instalado en la carpeta MIDI Remote del HOME temporal;
+  - configuración creada con `enabled = true`, `save = false` y permisos `600`;
+  - el paso de Claude Code mostró el comando para registrarlo a mano;
+  - `doctor`: solo «bridge running» en rojo, como se espera sin servidor MCP. Directorios temporales borrados.

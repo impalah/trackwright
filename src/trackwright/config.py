@@ -116,13 +116,24 @@ class Settings(_Section):
     """File the settings were loaded from (``None`` = built-in defaults)."""
 
 
-def load_settings(path: Path | None = None, *, environ: dict[str, str] | None = None) -> Settings:
-    """Load settings from ``path``, ``$TRACKWRIGHT_CONFIG`` or the default location."""
+def config_path(path: Path | None = None, *, environ: dict[str, str] | None = None) -> tuple[Path, bool]:
+    """The configuration file to use and whether it was given explicitly (argument or ``$TRACKWRIGHT_CONFIG``)."""
     env = os.environ if environ is None else environ
     explicit = path or (Path(env[CONFIG_ENV]) if env.get(CONFIG_ENV) else None)
-    candidate = (explicit or DEFAULT_CONFIG_PATH).expanduser()
+    return (explicit or DEFAULT_CONFIG_PATH).expanduser(), explicit is not None
+
+
+def load_settings(
+    path: Path | None = None, *, environ: dict[str, str] | None = None, missing_ok: bool = False
+) -> Settings:
+    """Load settings from ``path``, ``$TRACKWRIGHT_CONFIG`` or the default location.
+
+    A missing default file means built-in defaults; a missing explicit file is an error unless ``missing_ok``
+    (``trackwright setup`` is about to create it).
+    """
+    candidate, explicit = config_path(path, environ=environ)
     if not candidate.exists():
-        if explicit is not None:
+        if explicit and not missing_ok:
             raise ConfigError(f"configuration file not found: {candidate}", details={"path": str(candidate)})
         return Settings()
     try:

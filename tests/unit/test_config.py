@@ -103,3 +103,10 @@ def test_default_paths_are_expanded_and_absolute() -> None:
         == Path("~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/bridge").expanduser()
     )
     assert settings.bridge.socket_dir.is_absolute()
+
+
+def test_missing_explicit_file_can_be_allowed(tmp_path: Path) -> None:
+    missing = tmp_path / "new.toml"
+    with pytest.raises(ConfigError):
+        load_settings(missing, environ={})
+    assert load_settings(missing, environ={}, missing_ok=True).source is None
