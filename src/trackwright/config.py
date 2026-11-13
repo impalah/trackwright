@@ -65,6 +65,8 @@ class WritesConfig(_Section):
     """Master switch. While false every write tool fails with ``WRITES_DISABLED`` (dry runs still work)."""
     allowed_tracks: tuple[str, ...] = ()
     """Track names that may be modified. Empty means every track (when ``enabled``)."""
+    save: bool = False
+    """Allow cubase_save_project to save the project file on disk (TW-1202). Separate from ``enabled``."""
 
 
 class LoggingConfig(_Section):

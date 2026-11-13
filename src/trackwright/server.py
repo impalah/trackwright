@@ -36,6 +36,7 @@ from trackwright.core.models import (
     PositionOut,
     ProjectOut,
     RangeEditOut,
+    SaveOut,
     SelectedChannelOut,
     SelectOut,
     StatusOut,
@@ -61,6 +62,7 @@ Rules for using these tools:
   cannot see: ask the user to check the result.
 - Routing (inputs, outputs, send destinations) cannot be changed through this API.
 - Podcast-style editing: cubase_edit_range works in seconds and acts on every track in the range.
+- Never save on your own initiative: cubase_save_project only when the user asks to save, after a dry run.
 - Automation: list the parameters with cubase_list_automation_targets, then record a curve with
   cubase_record_automation. Recording plays the project (audible) and writes the track's automation.
   Give points in real units ("plain": -20 for -20 dB, 1000 for 1 kHz, pan -100 left..0..+100 right):
@@ -309,6 +311,19 @@ def build_server(service: CubaseService) -> MCPServer:
                 start, end, action, unit=unit, verify_track=verify_track, track=track, dry_run=dry_run
             )
         )
+
+    # ------------------------------------------------------------------ save (TW-1202)
+    @server.tool(
+        annotations=DESTRUCTIVE,
+        description="Save the project file, ONLY when the user explicitly asks to save. mode 'save' overwrites "
+        "the open .cpr; 'new_version' writes <name>-NN.cpr and Cubase continues on it. Needs [writes] save = "
+        "true. Dry run by default: show the plan and ask for confirmation. Verified by the .cpr file dates.",
+    )
+    async def cubase_save_project(
+        mode: Annotated[Literal["save", "new_version"], Field(description="overwrite or save a new version")] = "save",
+        dry_run: DryRunArg = True,
+    ) -> SaveOut:
+        return await run(lambda: service.save_project(mode, dry_run=dry_run))
 
     # ------------------------------------------------------------------ export (TW-1204)
     @server.tool(

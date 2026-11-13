@@ -1069,6 +1069,11 @@ class FakeExports:
     def add(self, path: str, duration: float | None, *, modified: float = 2e9, size: int = 1000) -> None:
         self.files.append(self._file(path, size, modified, duration))
 
-    def find(self, folder: object, since: float) -> list[object]:
+    def find(self, folder: object, since: float, suffixes: frozenset[str] | None = None) -> list[object]:
         self.searched.append((folder, since))
-        return [f for f in self.files if f.modified >= since - 1.0]
+        return sorted(
+            (f for f in self.files
+             if f.modified >= since - 1.0 and (suffixes is None or any(f.path.lower().endswith(x) for x in suffixes))),
+            key=lambda f: f.modified,  # type: ignore[attr-defined]
+            reverse=True,
+        )  # fmt: skip

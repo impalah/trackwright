@@ -2,6 +2,9 @@
 
 ## Sin publicar
 
+- **Guardar el proyecto** (TW-1202):
+  - herramienta `cubase_save_project` (`save` o `new_version`), con permiso propio `[writes] save`, desactivado por defecto, y verificación por la fecha de los `.cpr`;
+  - **script 1.5.3**, con `File / Save` y `Save New Version`.
 - **Exportar la mezcla** (TW-1204):
   - herramienta `cubase_export_mix` en dos fases: el rango (o todo el audio) y el diálogo de Cubase; después, la confirmación del archivo y de su duración;
   - **script 1.5.2**, con `File / Export Audio Mixdown`.

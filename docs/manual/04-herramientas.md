@@ -1,6 +1,6 @@
 # Referencia de herramientas MCP
 
-El servidor `trackwright` publica 28 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 29 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 ## Conceptos comunes
 
@@ -225,7 +225,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `transport.set_left_locator`, `transport.set_right_locator`, `transport.locate_next_event`, `transport.locate_selection`, `transport.locate_selection_end` | direct (verificado, TW-1211) |
 | `process.silence` | dialog (verificado, TW-1211: pregunta si el archivo de audio está compartido) |
 | `edit.select_events_under_cursor`, `transport.locate_prev_event`, `transport.to_left_locator`, `tool.range`, `tool.select` | unknown |
-| `file.save`, `file.save_new_version` | unknown (experimento TW-1202) |
+| `file.save`, `file.save_new_version` | direct (verificado, TW-1202, en un proyecto ya guardado) |
 
 ## Edición por rangos en segundos
 
@@ -264,6 +264,24 @@ Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
 - **Errores:** `BAD_TIME`, `TRANSPORT_RUNNING`, `NO_RANGE_SELECTION` (Cubase no creó la selección, por ejemplo porque la ventana de proyecto no está delante), `SPLIT_FAILED` y `WRITES_DISABLED`.
 - **Deshacer:** **Edición > Deshacer** en Cubase lo revierte, como se verificó con cada acción. No se guarda el proyecto.
 - **No incluida:** «Process > Silence» abre un diálogo si el archivo de audio lo comparten varios eventos.
+
+## Guardar el proyecto
+
+### `cubase_save_project` (destructiva, con ensayo)
+
+**Solo cuando el usuario pide guardar.** Trackwright nunca guarda por iniciativa propia ni encadena un guardado tras otras escrituras.
+
+- **Permiso:** necesita `[writes] enabled = true` **y** `[writes] save = true`.
+- **Entrada:**
+  - `mode`:
+    - `save`: sobrescribe el `.cpr` abierto;
+    - `new_version`: crea `<nombre>-NN.cpr`, y Cubase pasa a trabajar sobre él;
+  - `dry_run`, por defecto `true`.
+- **Ensayo:** muestra la carpeta del proyecto (deducida de los archivos de audio abiertos) y sus `.cpr` con fecha y tamaño, para saber qué se va a sobrescribir.
+- **Verificación:** algún `.cpr` de la carpeta con fecha posterior a la orden; con `new_version`, uno nuevo. Solo se leen nombres, tamaños y fechas.
+- **Estados:** `saved` o `awaiting_user`. El segundo, si en 10 s no se escribió nada: probablemente hay un diálogo, como «Guardar como» en un proyecto que nunca se guardó.
+- **Verificado en Cubase Elements:** `Save` reescribió `X0001.cpr` en 1 s, y `Save New Version` creó `X0001-01.cpr`. Ninguno abrió diálogo.
+- **No se ofrecen** cerrar, revertir ni salir.
 
 ## Exportar la mezcla
 

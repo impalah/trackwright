@@ -25,7 +25,7 @@ async def test_serve_simulate_over_stdio(tmp_path: Path) -> None:
     )
     async with Client(params) as client:
         tools = await client.list_tools()
-        assert len(tools.tools) == 28
+        assert len(tools.tools) == 29
         status = await client.call_tool("cubase_status", {})
         assert not status.is_error
         assert isinstance(status.structured_content, dict)

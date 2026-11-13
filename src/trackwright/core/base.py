@@ -30,7 +30,7 @@ T = TypeVar("T")
 
 
 class ExportFinder(Protocol):
-    def find(self, folder: Path, since: float) -> list[ExportedFile]: ...
+    def find(self, folder: Path, since: float, suffixes: frozenset[str] = ...) -> list[ExportedFile]: ...
 
 
 class AppLauncher(Protocol):

@@ -24,7 +24,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1202 Guardar el proyecto y otras operaciones de archivo
 
-- **Estado:** pendiente
+- **Estado:** implementada (`cubase_save_project`, script 1.5.3, permiso `[writes] save`). Experimento en [experiments/tw1202](../../experiments/tw1202/README.md). `Close`, `Revert` y `Quit` se descartan
 - **Objetivo:** guardar desde Trackwright; por ejemplo, antes y después de una sesión de cambios.
 - **Experimento previo**, en un proyecto desechable: clase y efecto de `File / Save`, `Save New Version` y, solo para clasificarlos, `Save As`, `Open`, `New`, `Close` y `Revert`.
 - **Alcance tras el experimento:**

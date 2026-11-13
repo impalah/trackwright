@@ -308,3 +308,8 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
   - el ensayo de `start` propone la carpeta `…/X0001.test/Mixdown`, deducida con `lsof`;
   - `confirm` encontró `X0001.mp3` (27,99 s), con `verified: true`.
 - **Prueba del usuario, episodio completo en MP3:** 139,721 s para 139,976 s. Se amplía la tolerancia para formatos comprimidos.
+
+## 2026-11-13 — TW-1202: guardar
+
+- **Experimento,** con autorización del usuario: `File / Save` reescribió `X0001.cpr` y `Save New Version` creó `X0001-01.cpr`, ambos sin diálogo. Detalle en [experiments/tw1202](../experiments/tw1202/README.md).
+- **`cubase_save_project`:** en ensayo, contra Cubase, listó los dos `.cpr`; sin `[writes] save`, el guardado real da `SAVE_DISABLED`.

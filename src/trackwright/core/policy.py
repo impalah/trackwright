@@ -4,6 +4,7 @@
   Dry runs always work, and so does *navigation* (selecting a track, moving the cursor), which
   does not modify the project.
 - ``allowed_tracks``: when not empty, only those track names may be modified (``NOT_ALLOWED``).
+- ``save``: saving the project file needs its own switch (``SAVE_DISABLED``), on top of ``enabled``.
 """
 
 from __future__ import annotations
@@ -18,10 +19,21 @@ from trackwright.errors import PolicyError
 class WritePolicy:
     enabled: bool = False
     allowed_tracks: tuple[str, ...] = ()
+    save: bool = False
 
     @classmethod
     def from_config(cls, config: WritesConfig) -> WritePolicy:
-        return cls(enabled=config.enabled, allowed_tracks=config.allowed_tracks)
+        return cls(enabled=config.enabled, allowed_tracks=config.allowed_tracks, save=config.save)
+
+    def check_save(self) -> None:
+        """Raise unless saving the project file is allowed."""
+        self.check_project_write()
+        if not self.save:
+            raise PolicyError(
+                "saving is disabled; set [writes] save = true in the Trackwright configuration "
+                "(dry runs work without it)",
+                code="SAVE_DISABLED",
+            )
 
     def check_project_write(self) -> None:
         """Raise unless project modifications are enabled."""
@@ -43,4 +55,4 @@ class WritePolicy:
             )
 
     def describe(self) -> dict[str, object]:
-        return {"writes_enabled": self.enabled, "allowed_tracks": list(self.allowed_tracks)}
+        return {"writes_enabled": self.enabled, "allowed_tracks": list(self.allowed_tracks), "save": self.save}

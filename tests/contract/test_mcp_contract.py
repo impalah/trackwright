@@ -47,6 +47,7 @@ NAVIGATION_TOOLS = {
     "cubase_convert_value",
 }
 DESTRUCTIVE_TOOLS = {
+    "cubase_save_project",
     "cubase_edit_range",
     "cubase_remove_selected_tracks",
     "cubase_split_at_locators",
@@ -248,3 +249,9 @@ async def test_export_mix(client: Client) -> None:
     assert started["status"] == "awaiting_user"
     confirm = await call(client, "cubase_export_mix", {"phase": "confirm", "since": started["since"]})
     assert confirm["status"] == "not_found"
+
+
+async def test_save_project_needs_its_own_switch(client: Client) -> None:
+    plan = await call(client, "cubase_save_project", {})
+    assert plan["status"] == "planned"
+    assert "SAVE_DISABLED" in await call_error(client, "cubase_save_project", {"dry_run": False})

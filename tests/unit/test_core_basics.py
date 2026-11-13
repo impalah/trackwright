@@ -92,7 +92,7 @@ def test_policy_allowed_tracks() -> None:
     with pytest.raises(PolicyError) as exc:
         policy.check_track("Vocals")
     assert exc.value.code == "NOT_ALLOWED"
-    assert policy.describe() == {"writes_enabled": True, "allowed_tracks": ["POC-TEST"]}
+    assert policy.describe() == {"writes_enabled": True, "allowed_tracks": ["POC-TEST"], "save": False}
 
 
 def test_policy_enabled_without_list_allows_all() -> None:

@@ -37,6 +37,7 @@ launch_timeout = 120.0
 [writes]
 enabled = true
 allowed_tracks = ["POC-TEST", "Voz"]   # vacío = todas las pistas
+save = false                           # true = cubase_save_project puede guardar el .cpr
 
 [logging]
 level = "INFO"
@@ -75,6 +76,7 @@ Si cambias los nombres de los puertos, el script de Cubase no los encontrará, p
 |---|---|---|
 | `enabled` | `false` | Interruptor general. Con `false`, las escrituras fallan con `WRITES_DISABLED`; los ensayos (`dry_run`) y la navegación siguen funcionando. |
 | `allowed_tracks` | `[]` | Nombres de pista que se pueden modificar. Vacío significa todas. Fuera de la lista: `NOT_ALLOWED`. |
+| `save` | `false` | Permite que `cubase_save_project` **guarde el archivo del proyecto en disco**. Es independiente de `enabled`, y hacen falta las dos. Sin él: `SAVE_DISABLED`. Los ensayos funcionan siempre. |
 
 Qué cuenta como escritura:
 - **Escritura** (sujeta a `[writes]`): parámetros, mezcla, nombre, plugins, tempo, marcadores, borrado y división de eventos, comandos.

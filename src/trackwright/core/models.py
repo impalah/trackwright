@@ -399,3 +399,22 @@ class ExportOut(_Out):
     verified: bool | None = None
     instructions: str | None = None
     notes: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------- save (TW-1202)
+class ProjectFileOut(_Out):
+    name: str
+    size_bytes: int
+    modified: str = Field(description="local time, YYYY-MM-DD HH:MM:SS")
+
+
+class SaveOut(_Out):
+    mode: Literal["save", "new_version"]
+    dry_run: bool
+    status: Literal["planned", "saved", "awaiting_user"]
+    folder: str | None = Field(description="project folder (deduced from the audio files Cubase has open)")
+    files_before: list[ProjectFileOut] = Field(default_factory=list, description=".cpr files, newest first")
+    saved: ProjectFileOut | None = Field(default=None, description="the .cpr written by this save")
+    verified: bool | None = None
+    instructions: str | None = None
+    notes: list[str] = Field(default_factory=list)
