@@ -133,3 +133,12 @@ El proyecto no se ha guardado.
 1. **No se graba automatización** al escribir el parámetro de volumen por DirectAccess (`setParameterProcessValue`) con la escritura activada y en reproducción. Hipótesis: Cubase no considera esos cambios un control «tocado», que es lo que necesita para grabar en Touch.
 2. **El script recibe la posición del cursor durante la reproducción** (`mTransportLocator.mOnChange`): avanzó del compás 1 al 4 a lo largo de la rampa. Así se puede detectar la reproducción y seguir la posición.
 3. **Latencia:** una escritura completa con resolución de la pista cuesta unos 0,33 s. Para escrituras rápidas en serie habría que escribir sobre el objeto ya resuelto.
+
+## 2026-11-13 — TW-1206, variante B1 (modos de automatización), script 1.2.0
+
+- Script 1.2.0 cargado; 35 comandos asociados, 0 errores.
+- **`canPerform`**, sin pista seleccionada y con POC-TEST seleccionada (mismo resultado):
+  - `false`: `automation.mode_touch`, `automation.mode_auto_latch`, `automation.mode_cross_over` y `automation.next_mode`;
+  - `true`: `automation.toggle_write_selected`.
+- El usuario **no encuentra** el selector de modo de automatización en la barra de herramientas de su Cubase en español.
+- **Conclusión:** en Cubase **Elements** 15.0.30 los modos de automatización no se pueden cambiar por comando. Hipótesis, sin confirmar en la documentación de Steinberg: Elements no ofrece modos seleccionables y trabaja siempre en Touch. **La variante B1 no es aplicable en esta edición.**
