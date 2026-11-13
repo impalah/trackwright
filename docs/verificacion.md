@@ -142,3 +142,28 @@ El proyecto no se ha guardado.
   - `true`: `automation.toggle_write_selected`.
 - El usuario **no encuentra** el selector de modo de automatización en la barra de herramientas de su Cubase en español.
 - **Conclusión:** en Cubase **Elements** 15.0.30 los modos de automatización no se pueden cambiar por comando. Hipótesis, sin confirmar en la documentación de Steinberg: Elements no ofrece modos seleccionables y trabaja siempre en Touch. **La variante B1 no es aplicable en esta edición.**
+
+## 2026-11-13 — TW-1206, variante B2 (fader de superficie con toque): **graba automatización**
+
+- **Script:** `1.2.1+tw1206` (`AUTOMATION_FADER_ENABLED = true`), con puente y Cubase reiniciados. `capabilities.automationFader = {enabled: true, errors: []}`.
+- **Mecanismo:**
+  - un fader de la superficie, `makeFader(10, 0, 1, 2)`, enlazado con `page.makeValueBinding` a `mTrackSelection.mMixerChannel.mValue.mVolume`;
+  - su `mTouchState.bindTo(customVariable)`;
+  - el script pone esa variable a 1 (tocar), mueve el fader con `mSurfaceValue.setProcessValue` y la pone a 0 (soltar).
+- **Datos:** `experiments/tw1206/results-variante-b2.json`. Los de la variante A, en `results-variante-a.json`.
+
+| Paso | Resultado |
+|---|---|
+| A0–A1 (11:05:30) | Estado inicial: 0 dB, W y R desactivados, cursor en el compás 1. W activado |
+| A2 (11:06:08) | POC-TEST seleccionada; reproducción detectada; tocar → 21 valores de 0,79 a 0,40 → soltar, sin errores. **El volumen de la pista siguió al fader** (de −0,38 a −12,2 dB). El usuario vio moverse los dos faders y, **tras parar, apareció una curva en el carril de automatización de volumen** |
+| A3–A4, 1.er intento (11:07:17) | **No válido:** detección de la reproducción falseada por los avisos del propio movimiento del cursor. Corregido en el guion: se espera 0,6 s y solo cuenta que el cursor avance |
+| A3–A4, reintento (11:08:06) | W desactivado y R activado. Sin intervención de Trackwright, el volumen **reprodujo la rampa**: −0,07 dB (compás 1) → −2,27 (compás 2) → −6,12 (compás 3) → **−12,2 dB (compás 4.3)**, y se mantuvo |
+| A6 | Volumen 0 dB, W y R desactivados, cursor en el compás 1. **La curva grabada sigue en el proyecto**, sin efecto con R desactivado |
+
+**Conclusiones:**
+1. **Sí se puede grabar automatización de volumen desde Trackwright en Cubase Elements 15.0.30:** con un fader de la superficie enlazado al parámetro, tocado y soltado por el script. Así es como graban los controladores físicos en modo Touch.
+2. La escritura directa por DirectAccess (variante A) mueve el valor, pero **no** cuenta como toque.
+3. **Limitaciones actuales del mecanismo:**
+   - solo el **volumen** de la **pista seleccionada**: el enlace es a `mTrackSelection.mMixerChannel`;
+   - resolución temporal de unos 0,33 s por punto, con la reproducción en marcha;
+   - la reproducción la inicia y la detiene el usuario.

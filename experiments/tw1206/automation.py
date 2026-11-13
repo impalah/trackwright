@@ -28,6 +28,7 @@ TAG_VOLUME, TAG_WRITE, TAG_READ = 1025, 4013, 4014
 RESULTS = Path(__file__).with_name("results.json")
 RAMP_FROM, RAMP_TO, RAMP_SECONDS, STEP_SECONDS = 0.79, 0.40, 4.0, 0.2
 WAIT_FOR_PLAY_SECONDS = 180
+READBACK_SECONDS = 8.0
 
 
 def service() -> CubaseService:
@@ -51,14 +52,18 @@ def save(step: str, data: dict[str, Any]) -> None:
 
 
 def wait_for_play(s: CubaseService) -> tuple[str, float]:
-    """Playback is detected when the cursor moves or any transport callback arrives."""
-    first = s.call("transport.get")
-    start, updates = first["primary"]["locator"]["time"], first.get("updates")
+    """Playback is detected when the cursor advances.
+
+    The baseline is taken after a short settle so that the callbacks caused by our own cursor move
+    (set_position) are not mistaken for playback (that happened in the first B2 readback).
+    """
+    time.sleep(0.6)
+    start = s.get_transport().cursor.time
     deadline = time.monotonic() + WAIT_FOR_PLAY_SECONDS
     while time.monotonic() < deadline:
-        now = s.call("transport.get")
-        if now["primary"]["locator"]["time"] != start or now.get("updates") != updates:
-            return str(now["primary"]["locator"]["time"]), time.monotonic()
+        now = s.get_transport().cursor.time
+        if now != start:
+            return now, time.monotonic()
         time.sleep(0.05)
     raise SystemExit(f"no playback detected in {WAIT_FOR_PLAY_SECONDS} s")
 
@@ -122,12 +127,17 @@ def readback() -> None:
     s.set_position("cursor", "1.1.1.0")
     first, started = wait_for_play(s)
     samples = []
-    while time.monotonic() - started < RAMP_SECONDS + 1.0:
+    while time.monotonic() - started < READBACK_SECONDS:
         v = param(s, t, TAG_VOLUME)
         samples.append({"t": round(time.monotonic() - started, 2), "process": v["process"], "display": v["display"],
                         "cursor": s.get_transport().cursor.time})  # fmt: skip
         time.sleep(STEP_SECONDS)
-    save("A3_A4_readback", {"write_off": off, "read_on": on, "volume_reset": reset,
+    step_name = (
+        "A3_A4_readback"
+        if not (RESULTS.exists() and "A3_A4_readback" in RESULTS.read_text(encoding="utf-8"))
+        else "A3_A4_readback_retry"
+    )
+    save(step_name, {"write_off": off, "read_on": on, "volume_reset": reset,
                             "playback_detected_at_cursor": first, "samples": samples})  # fmt: skip
 
 

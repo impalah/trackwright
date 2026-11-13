@@ -70,7 +70,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1206 Experimento: grabar automatización de volumen
 
-- **Estado:** pendiente
+- **Estado:** hecha. **Resultado positivo con la variante B2** (2026-11-13); la A no graba y la B1 no está disponible en Elements
 - **Hipótesis:** con la escritura de automatización activada (parámetro 4013) y el transporte en marcha, los cambios de volumen hechos por la API quedan grabados como automatización y se reproducen con la lectura activada (4014).
 - **Experimento**, sin cambiar el script, en una pista con audio de un proyecto desechable:
 
@@ -89,6 +89,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 - **Variantes pendientes:**
   - **B1 — descartada en Elements (2026-11-13):** los comandos de modo dan `canPerform=false` y el selector no aparece en la interfaz.
   - *(B1, planteamiento original)* **Sin cambiar el script:** el usuario pone a mano el modo de automatización **Auto-Latch** (o Cross-Over), en el que la escritura arranca con cualquier cambio del parámetro, y se repiten A1–A4.
-  - **B2 — preparada (2026-11-13):** script 1.2.1 con el fader detrás de `AUTOMATION_FADER_ENABLED`; versión de prueba `1.2.1+tw1206` con `experiments/tw1206/build.py`; paso `record-b2` en `experiments/tw1206/automation.py`; tests con el arnés en `tests/script/test_automation_fader.py`. Protocolo en `experiments/tw1206/README.md`.
+  - **B2 — FUNCIONA (2026-11-13):** el fader de la superficie con toque graba la automatización, y esta se reproduce con R activado (de 0 a −12,2 dB entre los compases 1 y 4.3). Ver [verificacion.md](../verificacion.md).
+  - *(B2, preparación)* script 1.2.1 con el fader detrás de `AUTOMATION_FADER_ENABLED`; versión de prueba `1.2.1+tw1206` con `experiments/tw1206/build.py`; paso `record-b2` en `experiments/tw1206/automation.py`; tests con el arnés en `tests/script/test_automation_fader.py`. Protocolo en `experiments/tw1206/README.md`.
   - *(B2, planteamiento)* **Con cambios en el script:** un fader de la superficie enlazado (`makeValueBinding`) al volumen de la pista seleccionada (`mTrackSelection.mMixerChannel.mValue.mVolume`). El script movería el fader con su estado de toque (`mTouchState`), como un controlador físico, que es como los controladores graban automatización.
 - **Si alguna variante funciona:** diseñar `cubase_record_automation(track, parameter, points)`. Requeriría iniciar el transporte desde Trackwright, con `Transport / Start` o `mTransport.mValue.mStart`, que habría que verificar.

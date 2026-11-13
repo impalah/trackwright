@@ -6,7 +6,7 @@ Issue: [TW-1206](../../docs/issues/E12-funcionalidades-ampliadas.md). Resultados
 |---|---|---|
 | A | Escribir el parámetro de volumen por DirectAccess con la escritura activada | **No graba** (2026-11-13) |
 | B1 | Cambiar el modo a Auto-Latch o Cross-Over por comando | **No disponible en Elements** (`canPerform=false`) |
-| B2 | Fader de la superficie enlazado al volumen de la pista seleccionada, con su estado de toque controlado por el script | En preparación |
+| B2 | Fader de la superficie enlazado al volumen de la pista seleccionada, con su estado de toque controlado por el script | **Graba y se reproduce** (2026-11-13) |
 
 ## Variante B2
 
