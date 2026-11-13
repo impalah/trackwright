@@ -49,6 +49,19 @@ La superficie se **dibuja a partir de los elementos que declara el script**. No 
 - **Arnés de Node.js:** emula los campos, `relateTo`, las lámparas y `setLabelFieldText` / `setLabelFieldHostObject`. Los tests comprueban la disposición, el texto con cada petición, el parpadeo y que todas las operaciones siguen respondiendo. **Esto solo demuestra que el script llama a la API como se pretende; lo que dibuja Cubase solo se sabe en Cubase.**
 - **Protocolo:** pasos E1 a E6 en [`experiments/tw1101/README.md`](../../experiments/tw1101/README.md).
 
+### Resultados del experimento (2026-11-13)
+
+Detalle en [`docs/verificacion.md`](../verificacion.md#2026-11-13--experimento-tw-1101-panel-de-estado-script-101tw1101).
+
+| Mecanismo | Resultado |
+|---|---|
+| Texto fijo (`setLabelFieldText`) | ✅ funciona |
+| Pista seleccionada (`setLabelFieldHostObject`) | ✅ funciona y se actualiza sola |
+| Lámpara (`setProcessValue`) | ✅ parpadea según lo que fija el script |
+| Texto dinámico (`relateTo` + `setDisplayValue`) | ❌ siempre «-» |
+
+La **pregunta abierta** queda resuelta: el dibujo inicial era el campo de texto de 4×1 vacío.
+
 ### Riesgos
 
 - **Mapping Assistant:** los elementos visibles aparecen en el asistente de asignación de Cubase, y el usuario podría asignarles funciones. Usar campos de texto y lámparas, que no se asignan, y nunca knobs ni botones.
