@@ -245,17 +245,17 @@ _SPECS = [
         "transport.start",
         "Transport",
         "Start",
-        "unknown",
+        "direct",
         "Start playback (never records)",
-        "not observed yet",
+        "verified: the cursor advances (2026-11-13)",
     ),
     CommandSpec(
         "transport.stop",
         "Transport",
         "Stop",
-        "unknown",
+        "direct",
         "Stop playback",
-        "not observed yet",
+        "verified: the cursor stops at once (2026-11-13)",
     ),
 ]
 

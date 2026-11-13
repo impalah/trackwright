@@ -167,3 +167,10 @@ El proyecto no se ha guardado.
    - solo el **volumen** de la **pista seleccionada**: el enlace es a `mTrackSelection.mMixerChannel`;
    - resolución temporal de unos 0,33 s por punto, con la reproducción en marcha;
    - la reproducción la inicia y la detiene el usuario.
+
+## 2026-11-13 — reproducción desde Trackwright (script 1.2.2+tw1206)
+
+- **`canPerform`:** `true` para `transport.start` y `transport.stop`.
+- **`cubase_run_command("transport.start")`:** el cursor avanzó de `1. 1. 1. 0` a `1. 4. 3. 94` en 2,1 s, según los avisos de transporte durante la reproducción. El usuario confirma que reprodujo.
+- **`cubase_run_command("transport.stop")`:** el cursor se detuvo en `2. 1. 4. 17` y no cambió en los 0,8 s siguientes. El usuario confirma que paró.
+- **Conclusión:** Trackwright puede iniciar y detener la reproducción (clase `direct`).
