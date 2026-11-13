@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import itertools
 import secrets
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -115,6 +116,9 @@ class FakeCubase:
         self.range: tuple[float, float] | None = None
         self.history: list[dict[int, list[tuple[float, float]]]] = []
         self.clipboard_seconds = 0.0
+        self.selected_events: list[tuple[int, tuple[float, float]]] = []  # object selection (TW-1212)
+        self.auto_select_under_cursor = True
+        """Cubase preference seen on the user's system (TW-1212): moving the cursor selects the events under it."""
         # Automation simulation (TW-1207): playback advances the cursor on every transport.get.
         self.automation_controls = True
         self.playing = False
@@ -606,16 +610,20 @@ class FakeCubase:
     RANGE_ACTIONS = ("edit.delete", "edit.delete_time", "edit.cut_time", "edit.insert_silence", "edit.crop_range")
 
     def _can(self, key: str) -> bool:
-        """canPerform as observed: undo needs history and no open dialog, range actions need a range."""
-        if key == "edit.undo":
-            return bool(self.history) and self.pending_dialog is None
-        if key in self.RANGE_ACTIONS and key != "edit.delete":
-            return self.range is not None  # verified: Crop Range needs a range selection
-        if key == "edit.delete" and self.tool == "range":
-            return self.range is not None
-        if key == "edit.select_in_loop":
-            return self._seconds(self.transport["cycleLeft"]) < self._seconds(self.transport["cycleRight"])
-        return key not in self.can_perform_false
+        """canPerform as observed (TW-1211/1212): undo needs history and no open dialog, range actions a
+        range, object actions a selection, Select Events under Cursor an event under the cursor."""
+        rules: dict[str, Callable[[], bool]] = {
+            "edit.undo": lambda: bool(self.history) and self.pending_dialog is None,
+            "edit.delete": lambda: self.range is not None if self.tool == "range" else bool(self.selected_events),
+            "edit.select_events_under_cursor": lambda: bool(self._under_cursor()),
+            "edit.split_at_cursor": lambda: bool(self.selected_events),
+            "edit.select_in_loop": lambda: (
+                self._seconds(self.transport["cycleLeft"]) < self._seconds(self.transport["cycleRight"])
+            ),
+        }
+        rules.update({k: lambda: self.range is not None for k in self.RANGE_ACTIONS if k != "edit.delete"})
+        rule = rules.get(key)
+        return rule() if rule is not None else key not in self.can_perform_false
 
     # ------------------------------------------------------------------ writes
     def _op_da_param_set(self, p: JsonObject) -> JsonObject:
@@ -787,6 +795,7 @@ class FakeCubase:
             self.transport[which] = time
         elif which == "locator":
             self.transport[which] = self._bars_at(_parse_seconds(time))
+            self._cursor_moved()
         else:  # verified bug (TW-1211): locators set through the seconds display land elsewhere
             self.transport[which] = "1. 1. 1.  0"
         return {"which": which, "display": display, "requested": time, "before": before}
@@ -843,6 +852,16 @@ class FakeCubase:
             self.range = (start, end) if self.tool == "range" and start < end else None
         elif key == "edit.select_none":
             self.range = None
+            self.selected_events = []
+        elif key == "edit.select_events_under_cursor":  # verified: only the selected tracks
+            self.selected_events = self._under_cursor()
+        elif key == "edit.split_at_cursor" and self.selected_events:
+            self._split_selected(self._seconds(self.transport["locator"]))
+        elif key == "edit.delete" and self.tool == "select" and self.selected_events:
+            self._snapshot()
+            for tid, event in self.selected_events:
+                self.track_events[tid].remove(event)
+            self.selected_events = []
         elif key in self.RANGE_ACTIONS and self.range is not None:
             self.history.append({tid: list(events) for tid, events in self.track_events.items()})
             for tid, events in self.track_events.items():
@@ -851,9 +870,33 @@ class FakeCubase:
                 self.clipboard_seconds = self.range[1] - self.range[0]
         elif key == "edit.undo" and self.history:
             self.track_events = self.history.pop()
+            self.selected_events = []
         else:
             return False
         return True
+
+    def _snapshot(self) -> None:
+        self.history.append({tid: list(events) for tid, events in self.track_events.items()})
+
+    def _under_cursor(self) -> list[tuple[int, tuple[float, float]]]:
+        here = self._seconds(self.transport["locator"])
+        return [(self.selected, e) for e in self.track_events.get(self.selected, []) if e[0] - 1e-6 <= here < e[1]]
+
+    def _split_selected(self, at: float) -> None:
+        self._snapshot()
+        for tid, (a, b) in self.selected_events:
+            if a + 1e-6 < at < b - 1e-6:
+                events = self.track_events[tid]
+                events[events.index((a, b))] = (a, at)
+                events.append((at, b))
+        self.selected_events = []
+
+    def selection_bounds(self) -> tuple[float, float] | None:
+        if self.tool == "range":
+            return self.range
+        if not self.selected_events:
+            return None
+        return min(e[0] for _, e in self.selected_events), max(e[1] for _, e in self.selected_events)
 
     def edges(self, track_id: int) -> list[float]:
         return sorted({round(edge, 3) for event in self.track_events.get(track_id, []) for edge in event})
@@ -877,6 +920,14 @@ class FakeCubase:
                 self.selected = -1
 
     def _apply_transport(self, key: str) -> None:
+        self._apply_transport_move(key)
+        self._cursor_moved()
+
+    def _cursor_moved(self) -> None:
+        if self.auto_select_under_cursor and self.tool == "select" and self.track_events:
+            self.selected_events = self._under_cursor()
+
+    def _apply_transport_move(self, key: str) -> None:
         cursor = self.transport["locator"]
         if key in ("transport.set_left_locator", "transport.set_right_locator"):
             self.transport["cycleLeft" if "left" in key else "cycleRight"] = cursor
@@ -885,8 +936,10 @@ class FakeCubase:
             following = [edge for edge in self.edges(self.selected) if edge > here + 1e-6]
             if following:
                 self.transport["locator"] = self._bars_at(following[0])
-        elif key in ("transport.locate_selection", "transport.locate_selection_end") and self.range is not None:
-            self.transport["locator"] = self._bars_at(self.range[0 if key.endswith("selection") else 1])
+        elif key in ("transport.locate_selection", "transport.locate_selection_end") and self.selection_bounds():
+            bounds = self.selection_bounds()
+            assert bounds is not None
+            self.transport["locator"] = self._bars_at(bounds[0 if key.endswith("selection") else 1])
         elif key == "transport.start":
             self.playing = True
             self.position = _bars_to_beats(cursor, self.meter)

@@ -14,6 +14,7 @@ Verified in Cubase Elements 15.0.30 (experiments/tw1211):
 from __future__ import annotations
 
 import contextlib
+import itertools
 import math
 from typing import Literal
 
@@ -41,6 +42,7 @@ EFFECTS: dict[str, str] = {
 }
 TAG_START, TAG_RECORD = 4015, 4019
 MAX_EDGES = 48
+MAX_ROUNDS = 6  # single-track deletion: events hidden under others only show up after those are deleted
 PROBE_MARGIN = 1.0  # seconds before the range where the probe starts
 
 
@@ -75,8 +77,9 @@ class RangeMixin(ProjectMixin):
     def _performable(self, key: str) -> bool:
         return self.call("cmd.canPerform", {"key": key}).get("canPerform", {}).get(key) is True
 
-    def probe_edges(self, transport: int, start: float) -> tuple[list[float], bool]:
-        """Event edges after ``start`` on the selected tracks, and whether the walk reached the last one."""
+    def probe_edges(self, transport: int, start: float, until: float = math.inf) -> tuple[list[float], bool]:
+        """Event edges after ``start`` on the selected tracks (up to the first one past ``until``), and
+        whether the walk reached the last edge."""
         self._move_cursor_seconds(transport, start)
         edges: list[float] = []
         previous = self._cursor_seconds(transport)
@@ -92,6 +95,8 @@ class RangeMixin(ProjectMixin):
                 return edges, True
             edges.append(now)
             previous = now
+            if now > until:
+                return edges, False
         return edges, False
 
     # ------------------------------------------------------------------ tool
@@ -104,6 +109,7 @@ class RangeMixin(ProjectMixin):
         *,
         unit: str = "seconds",
         verify_track: str | None = None,
+        track: str | None = None,
         dry_run: bool = True,
     ) -> RangeEditOut:
         if action not in ACTION_KEYS:
@@ -115,7 +121,14 @@ class RangeMixin(ProjectMixin):
             self._move_cursor_seconds(transport, cursor_before)
         if not 0 <= start_s < end_s:
             raise PreconditionFailedError("the range must have 0 <= start < end", code="BAD_TIME")
-        probe_item = self.resolve_track(TrackSelector.parse(verify_track)) if verify_track else None
+        if track is not None and action != "delete":
+            raise PreconditionFailedError(
+                "on a single track only 'delete' is possible: closing or opening time on one track would "
+                "put it out of sync with the others",
+                code="BAD_REQUEST",
+            )
+        target = self.resolve_track(TrackSelector.parse(track)) if track else None
+        probe_item = target or (self.resolve_track(TrackSelector.parse(verify_track)) if verify_track else None)
         out = RangeEditOut(
             dry_run=dry_run,
             action=action,
@@ -123,7 +136,12 @@ class RangeMixin(ProjectMixin):
             end=format_seconds(end_s),
             length_seconds=round(end_s - start_s, 3),
             effect=EFFECTS[action],
-            scope="every track with events in the range (Cubase's Select in Loop selects all tracks)",
+            scope=(
+                f"only the track {self.track_info(target).name}"
+                if target
+                else "every track with events in the range (Cubase's Select in Loop selects all tracks)"
+            ),
+            track=self.track_info(target).name if target else None,
             verify_track=self.track_info(probe_item).name if probe_item else None,
             notes=["Edit > Undo in Cubase reverts it", "the project is not saved"],
         )
@@ -132,8 +150,102 @@ class RangeMixin(ProjectMixin):
         self.policy.check_project_write()
         if self._transport_flag(transport, TAG_START) or self._transport_flag(transport, TAG_RECORD):
             raise PreconditionFailedError("stop the transport before editing", code="TRANSPORT_RUNNING")
-        self._apply_range(out, transport, (start_s, end_s), probe_item=probe_item, cursor_before=cursor_before)
+        if target is not None:
+            self._delete_on_track(out, transport, (start_s, end_s), int(target["id"]), cursor_before)
+        else:
+            self._apply_range(out, transport, (start_s, end_s), probe_item=probe_item, cursor_before=cursor_before)
         return out
+
+    # ------------------------------------------------------------------ one track (TW-1212)
+    def _clear_selection(self) -> None:
+        if self._performable("edit.select_none"):
+            self._range_cmd("edit.select_none")
+
+    def _selection_bounds(self, transport: int) -> tuple[float, float] | None:
+        bounds = []
+        for key in ("transport.locate_selection", "transport.locate_selection_end"):
+            if not self._performable(key):
+                return None
+            previous = self._cursor_seconds(transport)
+            self._range_cmd(key)
+
+            def moved(value: float, last: float = previous) -> bool:
+                return value != last
+
+            bounds.append(self.wait_until(lambda: self._cursor_seconds(transport), moved))
+        return bounds[0], bounds[1]
+
+    def _delete_on_track(
+        self, out: RangeEditOut, transport: int, span: tuple[float, float], channel: int, cursor_before: float
+    ) -> None:
+        """Verified recipe (experiments/tw1212): split this track's events at both ends, then delete the
+        pieces inside one by one with Select Events under Cursor, which only looks at the selected track."""
+        start, end = span
+        selected = self.call("da.base").get("base")
+        probe_from = max(start - PROBE_MARGIN, 0.0)
+        steps = 0
+        try:
+            self._range_cmd("tool.select")
+            self._select_channel(channel)
+            before = self.probe_edges(transport, probe_from)
+            for cut in (start, end):
+                self._clear_selection()
+                self._move_cursor_seconds(transport, cut)
+                if self._performable("edit.select_events_under_cursor"):
+                    self._range_cmd("edit.select_events_under_cursor")
+                    if self._performable("edit.split_at_cursor"):
+                        self._range_cmd("edit.split_at_cursor")
+                        steps += 1
+            for _ in range(MAX_ROUNDS):
+                deleted = self._delete_round(transport, start, end)
+                steps += deleted
+                if not deleted:
+                    break
+            out.applied = True
+        finally:
+            out.undo_steps = steps
+            self._clear_selection()
+            out.notes.append("the Object Selection tool is active")
+            self._restore(transport, {}, cursor_before, selected)
+        self._select_channel(channel)
+        after = self.probe_edges(transport, probe_from)
+        self._restore(transport, {}, cursor_before, selected)
+        out.edges_before = [format_seconds(e) for e in before[0]]
+        out.edges_after = [format_seconds(e) for e in after[0]]
+        out.mismatches = compare_edges("delete", start, end, before, after)
+        out.verified = not out.mismatches
+        if steps > 1:
+            out.notes.append(f"undoing it in Cubase takes {steps} Undo steps")
+
+    def _delete_round(self, transport: int, start: float, end: float) -> int:
+        """Delete every event piece found between consecutive edges inside the range; return how many."""
+        edges, _ = self.probe_edges(transport, start, until=end)
+        points = [start, *(e for e in edges if e < end - SECONDS_TOLERANCE), end]
+        deleted = 0
+        for a, b in itertools.pairwise(points):
+            if b - a <= SECONDS_TOLERANCE:
+                continue
+            self._clear_selection()
+            self._move_cursor_seconds(transport, (a + b) / 2)
+            if not self._performable("edit.select_events_under_cursor"):
+                continue
+            self._range_cmd("edit.select_events_under_cursor")
+            bounds = self._selection_bounds(transport)
+            if bounds is None or bounds[0] < start - SECONDS_TOLERANCE or bounds[1] > end + SECONDS_TOLERANCE:
+                raise PreconditionFailedError(
+                    "an event reaches outside the range (the split did not happen); nothing more was deleted",
+                    code="SPLIT_FAILED",
+                    details={"selection": [format_seconds(x) for x in bounds] if bounds else None},
+                )
+            # Measuring moved the cursor to the selection end, and with Cubase's "auto-select events under
+            # cursor" preference that changes the selection (verified, TW-1212): select the piece again.
+            self._clear_selection()
+            self._move_cursor_seconds(transport, (a + b) / 2)
+            self._range_cmd("edit.select_events_under_cursor")
+            if self._performable("edit.delete"):
+                self._range_cmd("edit.delete")
+                deleted += 1
+        return deleted
 
     def _apply_range(
         self,
@@ -167,6 +279,7 @@ class RangeMixin(ProjectMixin):
                 )
             self._range_cmd(key)
             out.applied = True
+            out.undo_steps = 1
             if not self._performable("edit.undo"):
                 out.notes.append("Undo is not available: Cubase may be showing a dialog; answer it")
         finally:

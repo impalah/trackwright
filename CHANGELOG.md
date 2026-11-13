@@ -2,6 +2,7 @@
 
 ## Sin publicar
 
+- **Borrado en una sola pista** (TW-1212): `cubase_edit_range` con `track` y `action: "delete"`. Corta, borra los trozos uno a uno, verifica e informa de los pasos de deshacer.
 - **Edición por rangos en segundos** (TW-1211):
   - herramienta `cubase_edit_range` (`delete`, `delete_time`, `cut_time`, `insert_silence`, `crop`), con verificación por sondeo de los bordes de los eventos;
   - **script 1.5.1**, con 14 comandos de edición, herramienta y sondeo.

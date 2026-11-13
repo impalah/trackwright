@@ -228,3 +228,13 @@ async def test_edit_range(client: Client) -> None:
         {"start": "2", "end": "30", "action": "delete", "verify_track": "POC-TEST", "dry_run": False},
     )
     assert done["verified"] is True
+
+
+async def test_edit_range_single_track(client: Client) -> None:
+    done = await call(
+        client,
+        "cubase_edit_range",
+        {"start": "2", "end": "30", "action": "delete", "track": "POC-TEST", "dry_run": False},
+    )
+    assert (done["verified"], done["track"]) == (True, "POC-TEST")
+    assert done["undo_steps"] > 1

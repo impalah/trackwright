@@ -290,3 +290,10 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
   - localizadores, cursor y pista seleccionada restaurados;
   - herramienta de objetos activa al terminar;
   - **Deshacer** en Cubase devolvió el audio.
+
+## 2026-11-13 — TW-1212: borrado en una sola pista
+
+- **Herramienta:** `cubase_edit_range(2, 30, delete, track=POC-TEST)`.
+- **Primer intento:** borró de más, por la preferencia de selección automática bajo el cursor; restaurado con Deshacer.
+- **Tras la corrección:** `verified: true`; POC-INSTR intacta; 7 pasos de deshacer, informados y reales.
+- Detalle en [experiments/tw1212](../experiments/tw1212/README.md).

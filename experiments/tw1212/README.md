@@ -31,3 +31,12 @@
 - **Seguridad:** antes de cada borrado se mide la selección con «Locate Selection / Selection End». Si sale del rango, porque el corte falló, no se borra.
 - **Deshacer** necesita varios pasos. La herramienta debe informar de cuántos.
 - **Cerrar el hueco** (`delete_time`) o **insertar silencio** en una sola pista desincronizaría esa pista del resto. No se ofrece.
+
+## Implementación y fallo encontrado (2026-11-13)
+
+- **Primera versión de la herramienta:** antes de cada borrado medía la selección con «Locate Selection End», que **mueve el cursor**. Con la preferencia de Cubase «seleccionar automáticamente eventos bajo el cursor», activa en el sistema del usuario, la selección cambiaba al evento que empieza donde acaba el medido, y `Delete` lo borraba: **se perdió el evento de 30 a 139,976 s**.
+  - Además, la herramienta informó de 8 pasos de deshacer y hicieron falta 15.
+  - El proyecto se restauró deshaciendo paso a paso hasta recuperar los bordes originales.
+- **Diagnóstico:** se repitió paso a paso, mirando los bordes tras cada acción. Se midió la selección 18–22 y desapareció el evento de 22 a 139,976.
+- **Corrección:** tras medir, se vuelve al centro del trozo y se repite la selección antes de borrar. El simulador reproduce la preferencia (`auto_select_under_cursor`) y un test cubre los dos casos.
+- **Verificación tras la corrección:** `verified: true`. POC-TEST queda con bordes `2.0, 30.0, 2:19.976` y POC-INSTR sin cambios. Se informaron **7 pasos** de deshacer y hicieron falta **7**. Tarda 26 s.

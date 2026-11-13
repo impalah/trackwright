@@ -363,11 +363,13 @@ class RangeEditOut(_Out):
     length_seconds: float
     effect: str
     scope: str
+    track: str | None = Field(default=None, description="the only track edited (single-track delete)")
     verify_track: str | None = Field(description="track whose event edges were probed to verify")
     applied: bool = False
     locators: list[str] = Field(default_factory=list, description="the range as bars, while editing")
     edges_before: list[str] = Field(default_factory=list, description="event edges (starts and ends) probed")
     edges_after: list[str] = Field(default_factory=list)
+    undo_steps: int = Field(default=0, description="Undo steps that revert the edit in Cubase")
     verified: bool | None = None
     mismatches: list[str] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)

@@ -280,7 +280,8 @@ def build_server(service: CubaseService) -> MCPServer:
     # ------------------------------------------------------------------ range editing (TW-1211)
     @server.tool(
         annotations=DESTRUCTIVE,
-        description="Edit a time range of the project, in seconds (or bars), on EVERY track with events in it: "
+        description="Edit a time range of the project, in seconds (or bars), on EVERY track with events in it "
+        "(or, with track and action 'delete', on that track only): "
         "delete (leave a gap), delete_time or cut_time (remove and close the gap), insert_silence, crop. "
         "With verify_track (a track with audio), checks the result by probing its event edges before and after. "
         "Undo in Cubase reverts it. Dry run by default.",
@@ -296,10 +297,16 @@ def build_server(service: CubaseService) -> MCPServer:
         verify_track: Annotated[
             str | None, Field(description="track whose audio edges are probed to verify (recommended)")
         ] = None,
+        track: Annotated[
+            str | None,
+            Field(description="edit ONLY this track (action 'delete' only, e.g. a cough on one microphone)"),
+        ] = None,
         dry_run: DryRunArg = True,
     ) -> RangeEditOut:
         return await run(
-            lambda: service.edit_range(start, end, action, unit=unit, verify_track=verify_track, dry_run=dry_run)
+            lambda: service.edit_range(
+                start, end, action, unit=unit, verify_track=verify_track, track=track, dry_run=dry_run
+            )
         )
 
     # ------------------------------------------------------------------ lifecycle (TW-1201)

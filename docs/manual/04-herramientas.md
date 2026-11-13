@@ -245,14 +245,22 @@ Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
     | `crop` | Deja solo el rango |
   - `verify_track`: una pista con audio cuyos bordes de eventos se sondean antes y después para comprobar el resultado. **Recomendado.**
   - `dry_run`.
-- **Alcance: todas las pistas con eventos en el rango.** Es lo que hace Cubase con «Seleccionar en ciclo». Para un podcast, `delete_time` corta el tramo en todas las pistas a la vez. Editar una sola pista es la issue TW-1212.
+- **Alcance: todas las pistas con eventos en el rango.** Es lo que hace Cubase con «Seleccionar en ciclo». Para un podcast, `delete_time` corta el tramo en todas las pistas a la vez.
+- **Una sola pista** (`track`, solo con `action: "delete"`): borra el audio del rango únicamente en esa pista, por ejemplo una tos en un micro. Usa la herramienta de objetos:
+  1. corta los eventos de la pista en los dos extremos;
+  2. borra los trozos de dentro uno a uno, poniendo el cursor encima y usando «Select Events under Cursor», que solo mira la pista seleccionada;
+  3. repite el sondeo hasta que no queda nada, porque puede haber trozos ocultos bajo otros.
+  - **Seguridad:** antes de cada borrado mide la selección; si se sale del rango (un corte no se hizo), para con `SPLIT_FAILED` sin borrar más.
+  - **Deshacer:** necesita varios pasos. `undo_steps` dice cuántos.
+  - **Duración:** tarda más, unos 25 s para un rango con 6 eventos.
+  - **No se permite** cerrar o abrir tiempo en una sola pista: la desincronizaría del resto.
 - **Qué hace:**
   1. pone los localizadores en el rango: lleva el cursor a cada extremo, en segundos, y usa «Set Left/Right Locator»;
   2. activa la herramienta de **Selección de rango**, lanza «Select in Loop» y ejecuta la acción;
   3. vuelve a la herramienta de **Selección de objetos** (no puede saber cuál tenías antes);
   4. deja como estaban los localizadores, el cursor y la pista seleccionada.
 - **Verificación:** con `verify_track`, recorre los bordes de los eventos de esa pista con «Locate Next Event» (inicios y finales, sin distinguirlos) y comprueba que coinciden con lo esperado. Revisa hasta 48 bordes a partir de 1 s antes del rango.
-- **Errores:** `BAD_TIME`, `TRANSPORT_RUNNING`, `NO_RANGE_SELECTION` (Cubase no creó la selección, por ejemplo porque la ventana de proyecto no está delante) y `WRITES_DISABLED`.
+- **Errores:** `BAD_TIME`, `TRANSPORT_RUNNING`, `NO_RANGE_SELECTION` (Cubase no creó la selección, por ejemplo porque la ventana de proyecto no está delante), `SPLIT_FAILED` y `WRITES_DISABLED`.
 - **Deshacer:** **Edición > Deshacer** en Cubase lo revierte, como se verificó con cada acción. No se guarda el proyecto.
 - **No incluida:** «Process > Silence» abre un diálogo si el archivo de audio lo comparten varios eventos.
 

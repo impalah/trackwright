@@ -32,12 +32,13 @@ Con `verify_track`, compara los bordes del audio de esa pista antes y después: 
 | Borrar y dejar un hueco (para meter otra cosa) | «Borra el audio entre 1:10 y 1:25, sin mover nada» → `delete` |
 | Hacer sitio para una cuña | «Inserta 15 segundos de silencio en el minuto 5» → `insert_silence` del 5:00 al 5:15 |
 | Quedarte solo con un fragmento | «Deja solo del 10 al 70» → `crop` |
+| Quitar una tos en un solo micro | «Borra del 1:12.4 al 1:13.1 solo en la pista Invitado» → `delete` con `track: "Invitado"` |
 
 ## Si algo no sale como esperabas
 
 - **Edición > Deshacer** en Cubase lo revierte.
 - `NO_RANGE_SELECTION`: pon la ventana de proyecto de Cubase delante y repite.
-- **Una sola pista** (por ejemplo, una tos en un micro) todavía no se puede: está en estudio (TW-1212).
+- **Al deshacer una edición en una sola pista,** pulsa Deshacer las veces que indica `undo_steps`.
 
 ## Qué has aprendido
 

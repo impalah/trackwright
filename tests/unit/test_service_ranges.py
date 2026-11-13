@@ -175,3 +175,53 @@ def test_probe_truncates(service: CubaseService, fake: FakeCubase, monkeypatch: 
     out = service.edit_range("2", "30", "delete_time", verify_track="POC-TEST", dry_run=False)
     assert out.verified is True, out.mismatches
     assert len(out.edges_before) == 3
+
+
+# ---------------------------------------------------------------- one track (TW-1212)
+def test_single_track_delete(service: CubaseService, fake: FakeCubase) -> None:
+    instr = fake.channel_by_title("POC-INSTR").id
+    instr_before = list(fake.track_events[instr])
+    fake.transport["locator"] = "3. 1. 1.  0"
+    fake.selected = instr
+    plan = service.edit_range("2", "30", "delete", track="POC-TEST")
+    assert (plan.dry_run, plan.track, plan.scope) == (True, "POC-TEST", "only the track POC-TEST")
+    out = service.edit_range("2", "30", "delete", track="POC-TEST", dry_run=False)
+    assert out.verified is True, out.mismatches
+    assert edges(fake) == [0.0, 2.0, 30.0, 139.976]
+    assert fake.track_events[instr] == instr_before  # the other track is untouched
+    assert out.undo_steps == 2 + 4  # two splits; four deletions (the hidden 2.0-2.4 piece needs a second round)
+    assert any("Undo steps" in n for n in out.notes)
+    assert (fake.transport["locator"], fake.selected, fake.tool) == ("3. 1. 1.  0", instr, "select")
+    for _ in range(out.undo_steps):
+        fake.call("cmd.run", {"key": "edit.undo"})
+    assert edges(fake) == ORIGINAL
+
+
+def test_single_track_only_deletes(service: CubaseService) -> None:
+    with pytest.raises(PreconditionFailedError) as exc:
+        service.edit_range("2", "30", "delete_time", track="POC-TEST")
+    assert "out of sync" in str(exc.value)
+
+
+def test_single_track_stops_when_a_split_fails(service: CubaseService, fake: FakeCubase) -> None:
+    fake._split_selected = lambda at: None  # type: ignore[method-assign]
+    with pytest.raises(PreconditionFailedError) as exc:
+        service.edit_range("3", "30", "delete", track="POC-TEST", dry_run=False)
+    assert exc.value.code == "SPLIT_FAILED"
+    assert edges(fake) == ORIGINAL  # nothing was deleted
+
+
+def test_single_track_range_without_events(service: CubaseService, fake: FakeCubase) -> None:
+    out = service.edit_range("200", "210", "delete", track="POC-TEST", dry_run=False)
+    assert (out.applied, out.verified, out.undo_steps) == (True, True, 0)
+
+
+def test_range_mode_reports_one_undo_step(service: CubaseService) -> None:
+    assert service.edit_range("2", "30", "delete", dry_run=False).undo_steps == 1
+
+
+def test_single_track_without_auto_select(service: CubaseService, fake: FakeCubase) -> None:
+    fake.auto_select_under_cursor = False
+    out = service.edit_range("2", "30", "delete", track="POC-TEST", dry_run=False)
+    assert out.verified is True, out.mismatches
+    assert edges(fake) == [0.0, 2.0, 30.0, 139.976]
