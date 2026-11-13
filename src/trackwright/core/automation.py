@@ -5,8 +5,9 @@ surface faders bound to parameters of the *selected* track. Moving a *touched* c
 track's automation write (W) is on and the transport plays records automation in Touch mode, the way a
 hardware controller does. Writing the parameter through DirectAccess does **not** record (variant A).
 
-Positions are bar strings ("9. 1. 1. 0"). They are converted to beats assuming 4/4 and 480 ticks per
-beat; the cursor position reported by Cubase during playback drives the timing.
+Positions are bar strings ("9. 1. 1. 0"). They are converted to quarter notes with the project's time
+signature at the cursor (TW-1209; constant signature assumed) and 120 ticks per 16th; the cursor position
+reported by Cubase during playback drives the timing.
 """
 
 from __future__ import annotations
@@ -17,7 +18,7 @@ import time
 from collections.abc import Iterator
 from typing import Any
 
-from trackwright.core.base import MIXER, TAG_SELECTED, TAG_VOLUME, ServiceBase, operation
+from trackwright.core.base import MIXER, TAG_SELECTED, TAG_VOLUME, operation
 from trackwright.core.models import (
     AutomationPoint,
     AutomationRecordOut,
@@ -27,6 +28,7 @@ from trackwright.core.models import (
     ResolvedPoint,
     WrittenPoint,
 )
+from trackwright.core.project import ProjectMixin
 from trackwright.core.refs import TrackSelector
 from trackwright.core.writing import bars_tuple, format_bars
 from trackwright.errors import NotFoundError, PreconditionFailedError, TrackwrightError
@@ -46,18 +48,25 @@ STALL_SECONDS = 2.0
 JsonObject = dict[str, Any]
 
 
-def to_beats(position: tuple[int, int, int, int]) -> float:
-    """Bars/beats/16ths/ticks to beats from the project start (4/4 assumed)."""
+Meter = tuple[int, int]
+COMMON_TIME: Meter = (4, 4)
+
+
+def to_beats(position: tuple[int, int, int, int], meter: Meter = COMMON_TIME) -> float:
+    """Bars/beats/16ths/ticks to quarter notes from the project start, for a constant time signature."""
     bar, beat, sixteenth, ticks = position
-    return (bar - 1) * 4 + (beat - 1) + (sixteenth - 1) / 4 + ticks / TICKS_PER_BEAT
+    numerator, denominator = meter
+    beat_length = 4 / denominator
+    return (bar - 1) * numerator * beat_length + (beat - 1) * beat_length + (sixteenth - 1) / 4 + ticks / TICKS_PER_BEAT
 
 
-def from_beats(beats: float) -> tuple[int, int, int, int]:
-    beats = max(beats, 0.0)
-    bar, rest = divmod(beats, 4)
-    beat, rest = divmod(rest, 1)
-    sixteenth, rest = divmod(rest * 4, 1)
-    return int(bar) + 1, int(beat) + 1, int(sixteenth) + 1, round(rest * TICKS_PER_BEAT / 4)
+def from_beats(beats: float, meter: Meter = COMMON_TIME) -> tuple[int, int, int, int]:
+    numerator, denominator = meter
+    beat_length = 4 / denominator
+    bar, rest = divmod(max(beats, 0.0), numerator * beat_length)
+    beat, rest = divmod(rest, beat_length)
+    sixteenth, rest = divmod(rest, 0.25)
+    return int(bar) + 1, int(beat) + 1, int(sixteenth) + 1, round(rest * TICKS_PER_BEAT)
 
 
 def interpolate(points: list[tuple[float, float]], beat: float) -> float:
@@ -70,7 +79,7 @@ def interpolate(points: list[tuple[float, float]], beat: float) -> float:
     return points[-1][1]
 
 
-class AutomationMixin(ServiceBase):
+class AutomationMixin(ProjectMixin):
     # ------------------------------------------------------------------ helpers
     def _auto_controls(self) -> dict[str, JsonObject]:
         listed = self.call("auto.list")
@@ -90,7 +99,7 @@ class AutomationMixin(ServiceBase):
         position = bars_tuple(str(raw.get("time", "")))
         if position is None:
             raise TrackwrightError("the cursor position is not available", code="UNAVAILABLE")
-        return to_beats(position)
+        return to_beats(position, self._meter())
 
     def _is_playing(self) -> bool:
         first = self._cursor_beats()
@@ -116,6 +125,18 @@ class AutomationMixin(ServiceBase):
 
     def _flag_state(self, item: JsonObject, tag: int) -> bool:
         return float(self.read_parameter(int(item["id"]), tag).get("process") or 0) >= 0.5
+
+    # ------------------------------------------------------------------ time signature (TW-1209)
+    def _meter(self) -> Meter:
+        meter: Meter = getattr(self._local, "meter", COMMON_TIME)
+        return meter
+
+    def _read_meter(self) -> tuple[Meter, str]:
+        signature = self.current_signature()
+        if signature is None or signature.numerator is None or signature.denominator is None:
+            return COMMON_TIME, "time signature unknown: positions assume 4/4"
+        meter = (signature.numerator, signature.denominator)
+        return meter, f"positions use the time signature at the cursor ({signature.text}); changes are not followed"
 
     # ------------------------------------------------------------------ unit conversion (TW-1208)
     def _child_of_type(self, item: JsonObject, kind: str) -> JsonObject:
@@ -236,8 +257,10 @@ class AutomationMixin(ServiceBase):
         name = self.track_info(item).name
         control, target = self._bound_control(item, parameter)
         resolved = self._resolve_points(item, parameter, control, points)
-        curve = self._validate_points(resolved)
-        start_beats = max(curve[0][0] - 4 * pre_roll_bars, 0.0)
+        self._local.meter, signature_note = self._read_meter()
+        curve = self._validate_points(resolved, self._meter())
+        numerator, denominator = self._meter()
+        start_beats = max(curve[0][0] - numerator * 4 / denominator * pre_roll_bars, 0.0)
         out = AutomationRecordOut(
             dry_run=dry_run,
             track=name,
@@ -245,11 +268,11 @@ class AutomationMixin(ServiceBase):
             title=target.title,
             value_before=target.value,
             display_before=target.display,
-            start=format_bars(from_beats(start_beats)),
+            start=format_bars(from_beats(start_beats, self._meter())),
             points=resolved,
             written=[],
             verified=None,
-            notes=["positions assume 4/4", "playback is audible: lower the monitor level"],
+            notes=[signature_note, "playback is audible: lower the monitor level"],
         )
         if dry_run:
             return out
@@ -282,13 +305,13 @@ class AutomationMixin(ServiceBase):
         return resolved
 
     @staticmethod
-    def _validate_points(points: list[ResolvedPoint]) -> list[tuple[float, float]]:
+    def _validate_points(points: list[ResolvedPoint], meter: Meter) -> list[tuple[float, float]]:
         curve: list[tuple[float, float]] = []
         for point in points:
             position = bars_tuple(point.position)
             if position is None:
                 raise PreconditionFailedError(f"bad position {point.position!r}: use '9. 1. 1. 0'", code="BAD_TIME")
-            beats = to_beats(position)
+            beats = to_beats(position, meter)
             if curve and beats <= curve[-1][0]:
                 raise PreconditionFailedError("positions must be strictly increasing", code="BAD_TIME")
             curve.append((beats, point.value))
@@ -299,7 +322,7 @@ class AutomationMixin(ServiceBase):
     def _play_from(self, start_beats: float) -> None:
         self.call(
             "transport.setTime",
-            {"which": "locator", "display": "primary", "time": format_bars(from_beats(start_beats))},
+            {"which": "locator", "display": "primary", "time": format_bars(from_beats(start_beats, self._meter()))},
         )
         self.call("cmd.run", {"key": "transport.start"})
 
@@ -342,7 +365,7 @@ class AutomationMixin(ServiceBase):
                 value = interpolate(curve, beat)
                 result = self.call("auto.control", {"key": key, "value": value, **({} if touched else {"touch": True})})
                 touched = True
-                written.append(WrittenPoint(position=format_bars(from_beats(beat)), value=value,
+                written.append(WrittenPoint(position=format_bars(from_beats(beat, self._meter())), value=value,
                                             display=result.get("display")))  # fmt: skip
                 if beat >= curve[-1][0]:
                     break
@@ -376,7 +399,9 @@ class AutomationMixin(ServiceBase):
                 value = self._auto_controls()[key].get("value")
                 checked += 1
                 if not isinstance(value, int | float) or abs(value - expected) > VERIFY_TOLERANCE:
-                    mismatches.append(f"{format_bars(from_beats(beat))}: expected {expected:.3f}, read {value}")
+                    mismatches.append(
+                        f"{format_bars(from_beats(beat, self._meter()))}: expected {expected:.3f}, read {value}"
+                    )
                 while pending and pending[0][0] <= beat + 1e-9:
                     pending.pop(0)
         finally:

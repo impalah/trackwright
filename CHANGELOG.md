@@ -2,6 +2,9 @@
 
 ## Sin publicar
 
+- **Propiedades del proyecto** (TW-1209):
+  - herramienta `cubase_get_project`: compás, ciclo, punch, pre-roll y post-roll, metrónomo, precuenta, estado del transporte, modos de grabación y carpeta del proyecto;
+  - `cubase_record_automation` usa el compás del proyecto en lugar de suponer 4/4.
 - **Arranque automático** (TW-1201):
   - `trackwright serve` arranca el puente si no está en marcha (`[bridge] autostart`, activado por defecto), sin duplicarlo;
   - herramienta `cubase_launch`, que abre Cubase (opcionalmente con un proyecto) y espera al script;

@@ -261,7 +261,7 @@ def test_launch_errors(tmp_path: Path) -> None:
 
 
 def test_liveness_probe_gets_no_answer_and_no_warning(short_dir: Path) -> None:
-    from trackwright.bridge import _socket_is_alive  # noqa: PLC0415
+    from trackwright.bridge import _socket_is_alive
 
     config = BridgeConfig(socket_dir=short_dir)
     server = BridgeServer(Bridge(Backend()), config.socket_path)

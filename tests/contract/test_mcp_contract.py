@@ -18,6 +18,7 @@ pytestmark = pytest.mark.anyio
 
 READ_TOOLS = {
     "cubase_status",
+    "cubase_get_project",
     "cubase_list_tracks",
     "cubase_get_selected_channel",
     "cubase_list_inserts",
@@ -204,3 +205,10 @@ async def test_unit_conversion_tools(client: Client) -> None:
     assert plan["points"][0] == {"position": "2.1.1.0", "value": 0.5, "plain": 0}
     assert "exactly one" in await call_error(client, "cubase_record_automation", {"track": "POC-TEST",
                                              "parameter": "volume", "points": [{"position": "2.1.1.0"}]})  # fmt: skip
+
+
+async def test_get_project(client: Client) -> None:
+    out = await call(client, "cubase_get_project", {})
+    assert out["signature"] == {"text": "4/4", "numerator": 4, "denominator": 4}
+    assert out["transport"] == "stopped"
+    assert "sample_rate" in out["unavailable"]

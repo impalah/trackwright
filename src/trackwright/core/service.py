@@ -10,4 +10,4 @@ from trackwright.core.writing import WritingMixin
 
 
 class CubaseService(LifecycleMixin, AutomationMixin, CommandingMixin, WritingMixin, ReadingMixin):
-    """Read (E05), write and navigation (E06), commands (E07), automation (TW-1207) and launch (TW-1201)."""
+    """Read (E05), write (E06), commands (E07), automation (TW-1207), launch (TW-1201), project (TW-1209)."""

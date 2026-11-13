@@ -40,6 +40,8 @@ class AppLauncher(Protocol):
 
     def launch(self, project: Path | None = None) -> None: ...
 
+    def project_folders(self) -> list[str]: ...
+
 
 MIXER: JsonObject = {"scope": "mixer"}
 CHANNEL_TAGS = (1024, 4000, 1025, 1027, 1028, 4101, 4102)

@@ -56,9 +56,15 @@ Funciona, pero lo hace innecesario el paso 3.
 - **«Sistema de audio»:** su único hijo es la interfaz de audio, sin parámetros. **No se toca** (regla de no controlar interfaces de audio).
 - **Sin rastro en ningún objeto** (IDs 0–699) de la frecuencia de muestreo, la resolución, el frame rate, la longitud del proyecto o su nombre.
 
+## 4. Verificación con 3/4 (cambiado por el usuario en la barra de transporte)
+
+- **`signature`** (tag 4027) = **«3/4»**. El valor de proceso es 1966,12 (con 4/4 era 2621,48): una codificación interna, así que se usa el texto mostrado.
+- **Normalización del cursor:** `1. 4. 1. 0` → `2. 1. 1. 0` (3 tiempos), `1. 3. 1. 0` se mantiene y `1. 1. 5. 0` → `1. 2. 1. 0` (denominador 4). **Coincide.**
+- **Sin verificar:** el comportamiento con cambios de compás a mitad del proyecto, porque no hay pista de compás.
+
 ## Conclusiones
 
 1. **TW-1209 se puede implementar sin script nuevo,** con `da.params` sobre los objetos Transport y Metronome. Se localizan **por tipo** entre los hijos de Device Root, porque los IDs cambian entre sesiones.
-2. **Compás:** el parámetro `signature` lo da directamente. **Falta verificar** con un compás distinto de 4/4, y si refleja el compás en la posición del cursor cuando hay cambios de compás.
+2. **Compás:** el parámetro `signature` lo da directamente, verificado con 4/4 y 3/4. Queda por ver si sigue al cursor cuando hay cambios de compás.
 3. **TW-1210:** los parámetros del Transport (`cycle`, `metronomeOn`, `precountOn`, `punchIn`…) son candidatos a escribirse con `da.param.set` y releerse. **Sin probar:** escribir es parte de TW-1210.
 4. **Frecuencia de muestreo, longitud y nombre:** no accesibles por la API. Para la carpeta, `lsof`, con sus límites.

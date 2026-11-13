@@ -24,7 +24,7 @@ claude mcp add trackwright -- uv --directory "$PWD" run trackwright serve
 
 ## Qué puede hacer
 
-25 herramientas, todas con salida estructurada:
+26 herramientas, todas con salida estructurada:
 
 - **Lectura:** estado, pistas del mezclador, canal seleccionado, inserts, catálogo de plugins, parámetros, transporte y cambios recientes.
 - **Escritura**, siempre con ensayo previo (`dry_run`) y verificación por relectura: parámetros (en valor normalizado o en unidades reales), inserción de plugins, volumen, mute, solo, armado, nombre de pista y tempo.

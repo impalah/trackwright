@@ -261,3 +261,13 @@ Detalle en [experiments/tw1209/README.md](../experiments/tw1209/README.md).
 - **Compás deducido por normalización del cursor:** 4/4, coherente con lo anterior.
 - **`lsof`:** el `.cpr` no queda abierto; la carpeta del proyecto se deduce de los archivos de audio abiertos.
 - **No accesibles:** frecuencia de muestreo, longitud y nombre del proyecto.
+
+## 2026-11-13 — TW-1209: `cubase_get_project`
+
+- **Contra Cubase, en 0,96 s:**
+  - tempo 120 y compás **3/4** (cambiado por el usuario);
+  - ciclo desactivado, con los localizadores en `2. 2. 1. 0` y `5. 1. 1. 0`. Son los mismos instantes que antes en 4/4, renumerados por el cambio de compás;
+  - metrónomo activado (clic 127), precuenta desactivada y transporte parado;
+  - modos de grabación;
+  - carpeta del proyecto: `/Volumes/Data/Produccion/Cubase/X0001.test`.
+- **Consecuencia:** con 3/4, la automatización que suponía 4/4 habría calculado mal las posiciones. Ahora usa el compás leído; probado en el simulador con 3/4 y 6/8.

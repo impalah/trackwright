@@ -1,6 +1,6 @@
 # Referencia de herramientas MCP
 
-El servidor `trackwright` publica 25 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 26 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 ## Conceptos comunes
 
@@ -114,6 +114,23 @@ Posición del cursor, localizadores de ciclo y tempo, en compases. Si Cubase aú
 Cambios que Cubase ha notificado desde la última llamada; la llamada vacía el registro. Un evento `removed` es una **pista para volver a comprobar**, no una prueba de borrado: Cubase también lo emite al cambiar de pista seleccionada.
 
 Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan `still_valid: null`, y `unchecked` dice cuántos son.
+
+### `cubase_get_project` (lectura)
+
+- **Entrada:** `include_folders` (por defecto `true`).
+- **Salida:**
+  - tempo;
+  - **compás en la posición del cursor** (`signature`: texto, numerador y denominador);
+  - ciclo (activado y localizadores);
+  - punch in/out y su rango;
+  - pre-roll y post-roll;
+  - metrónomo (activado, nivel del clic, si suena al grabar y al reproducir) y precuenta;
+  - estado del transporte (`stopped`, `playing`, `recording`);
+  - formatos de las pantallas de tiempo y modos de grabación y reproducción, tal como los muestra Cubase.
+- **`project_folders`:** las carpetas de los proyectos abiertos. Se deducen de los archivos de audio que Cubase tiene abiertos (`lsof`), sin leer la carpeta ni el `.cpr`. Está vacía si el proyecto no tiene audio.
+- **`unavailable`:** lo que la API de Cubase no expone (frecuencia de muestreo, resolución, longitud y nombre del proyecto) y el motivo.
+- **Cómo funciona:** lee los objetos internos «Transporte» y «Metronome» de Cubase, que se localizan por tipo. Verificado con 4/4 y 3/4.
+- **Coste:** alrededor de 1 s.
 
 ## Herramientas de escritura y navegación
 
@@ -276,7 +293,7 @@ Mecanismo verificado en Cubase Elements 15.0.30: el script tiene en la superfici
 - **Salida:** la curva con el valor normalizado de cada punto (`points`), los valores escritos (`written`), `verified`, las discrepancias (`mismatches`) y notas.
 - **Errores:** `PARAM_NOT_FOUND`, `OUT_OF_RANGE`, `NO_UNIT_CONVERSION`, `NOT_AUTOMATABLE` (no hay nada enlazado: slot vacío o Quick Control sin asignar), `TRANSPORT_RUNNING`, `NOT_RECORDED`, `BAD_TIME` y `WRITES_DISABLED`.
 - **Limitaciones:**
-  - las posiciones suponen compás de 4/4;
+  - las posiciones usan el compás en la posición del cursor (`cubase_get_project`). Si hay cambios de compás a lo largo del proyecto, no se siguen; si Cubase no informa del compás, se supone 4/4;
   - hay un punto escrito cada ~0,1–0,3 s;
   - **suena**: baja el volumen del monitor;
   - con R activado, la curva grabada manda sobre el parámetro.

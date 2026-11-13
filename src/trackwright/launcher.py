@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import fcntl
+import re
 import subprocess
 import sys
 import time
@@ -24,6 +25,8 @@ from trackwright.errors import BridgeUnavailableError, PreconditionFailedError
 
 Spawn = Callable[[Sequence[str], Path], None]
 Run = Callable[[Sequence[str]], int]
+Output = Callable[[Sequence[str]], str]
+PROJECT_AUDIO = re.compile(r"^(/.+?)/Audio/[^/]+$")
 
 
 def _spawn_detached(argv: Sequence[str], log_path: Path) -> None:
@@ -41,6 +44,11 @@ def _spawn_detached(argv: Sequence[str], log_path: Path) -> None:
 
 def _run(argv: Sequence[str]) -> int:
     return subprocess.run(list(argv), capture_output=True, check=False).returncode  # noqa: S603
+
+
+def _output(argv: Sequence[str]) -> str:
+    result = subprocess.run(list(argv), capture_output=True, check=False, text=True, timeout=10)  # noqa: S603
+    return result.stdout
 
 
 class BridgeLauncher:
@@ -100,9 +108,10 @@ class BridgeLauncher:
 class CubaseLauncher:
     """Check and open the Cubase application (macOS)."""
 
-    def __init__(self, config: CubaseConfig, *, run: Run = _run) -> None:
+    def __init__(self, config: CubaseConfig, *, run: Run = _run, output: Output = _output) -> None:
         self.config = config
         self._run = run
+        self._output = output
 
     @property
     def app(self) -> str:
@@ -124,3 +133,18 @@ class CubaseLauncher:
                 f"macOS could not open {self.config.app!r}: check [cubase] app in the configuration",
                 code="LAUNCH_FAILED",
             )
+
+    def project_folders(self) -> list[str]:
+        """Folders of the open projects, deduced from the audio files Cubase keeps open (verified, TW-1209).
+
+        Cubase does not keep the .cpr open; its audio files live in ``<project folder>/Audio/``. Only the
+        list of open files is read (``lsof``), never the folder or the project file.
+        """
+        pids = self._output(["/usr/bin/pgrep", "-x", self.config.app]).split()
+        folders: list[str] = []
+        for pid in pids:
+            for line in self._output(["/usr/sbin/lsof", "-p", pid, "-Fn"]).splitlines():
+                match = PROJECT_AUDIO.match(line[1:]) if line.startswith("n") else None
+                if match and match.group(1) not in folders:
+                    folders.append(match.group(1))
+        return folders

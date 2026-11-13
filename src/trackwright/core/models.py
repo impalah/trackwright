@@ -306,3 +306,49 @@ class LaunchOut(_Out):
     script_version: str | None
     project: str | None
     instructions: str | None = None
+
+
+# ---------------------------------------------------------------------------- project properties (TW-1209)
+class Signature(_Out):
+    text: str = Field(description="as Cubase shows it, e.g. '3/4'")
+    numerator: int | None
+    denominator: int | None
+
+
+class Span(_Out):
+    active: bool | None
+    start: str | None
+    end: str | None
+
+
+class Roll(_Out):
+    active: bool | None
+    length: str | None
+
+
+class Metronome(_Out):
+    active: bool | None
+    click_level: str | None
+    in_record: bool | None
+    in_playback: bool | None
+
+
+class ProjectOut(_Out):
+    tempo_bpm: float | None
+    signature: Signature | None = Field(description="time signature at the cursor (verified with 4/4 and 3/4)")
+    cycle: Span
+    punch_in: bool | None
+    punch_out: bool | None
+    punch_range: Span
+    pre_roll: Roll
+    post_roll: Roll
+    metronome: Metronome
+    precount: bool | None
+    transport: Literal["stopped", "playing", "recording", "unknown"]
+    time_formats: list[str | None] = Field(description="primary and secondary time displays")
+    modes: dict[str, str | None] = Field(description="record and playback modes, as Cubase shows them")
+    project_folders: list[str] | None = Field(
+        description="folders of the open project(s), deduced from the audio files Cubase has open; "
+        "null when not requested, empty when Cubase has no audio file open"
+    )
+    unavailable: dict[str, str] = Field(description="properties the Cubase API does not expose, and why")

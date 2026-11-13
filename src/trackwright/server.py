@@ -33,6 +33,7 @@ from trackwright.core.models import (
     ParametersOut,
     PluginCatalogOut,
     PositionOut,
+    ProjectOut,
     SelectedChannelOut,
     SelectOut,
     StatusOut,
@@ -139,6 +140,19 @@ def build_server(service: CubaseService) -> MCPServer:
     @server.tool(annotations=READ, description="One parameter, by tag, with its display value and units.")
     async def cubase_get_parameter(target: TargetArg, tag: int, track: TrackArg = "selected") -> ParameterOut:
         return await run(lambda: service.get_parameter(track, target, tag))
+
+    @server.tool(
+        annotations=READ,
+        description="Properties of the open project: tempo, time signature at the cursor, cycle, punch, pre/post-roll, "
+        "metronome, precount, transport state, record modes and the project folder. Says which properties the "
+        "Cubase API does not expose (sample rate, length, name).",
+    )
+    async def cubase_get_project(
+        include_folders: Annotated[
+            bool, Field(description="find the project folder from the files Cubase has open (lsof)")
+        ] = True,
+    ) -> ProjectOut:
+        return await run(lambda: service.get_project(include_folders=include_folders))
 
     @server.tool(annotations=READ, description="Cursor position, cycle locators and tempo.")
     async def cubase_get_transport() -> TransportOut:

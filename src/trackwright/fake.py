@@ -87,6 +87,7 @@ class FakeCubase:
         self.objects: dict[int, Obj] = {}
         self.session = self._new_session()
         self.mixer = self._obj("VST Mixer", "VST Mixer")
+        self._studio()
         self.channels: list[int] = [self._channel("OutputChannel", "Stereo Out").id]
         for kind, title in tracks:
             self.channels.append(self._channel(kind, title).id)
@@ -132,6 +133,39 @@ class FakeCubase:
         )
         self.objects[oid] = obj
         return obj
+
+    def _studio(self) -> None:
+        """Device Root with the Transport and Metronome objects (TW-1209), as in Cubase 15."""
+        root = self._obj("Device Root", "Device Root")
+        del self.objects[root.id]  # id 1, as in Cubase 15
+        root.id = 1
+        self.objects[1] = root
+        transport = self._obj("Transport", "Transporte")
+        on_off = ("start", "record", "cycle", "punchIn", "punchOut", "usePreRoll", "usePostRoll", "metronomeOn",
+                  "precountOn", "returnOnStop")  # fmt: skip
+        transport.params = {4000 + i: Param(title, "discrete", 0) for i, title in enumerate(on_off)}
+        transport.params[4016] = Param("stop", "discrete", 1)
+        texts = {"signature": "4/4", "cycleLeftTime": "1. 1. 1.  0", "cycleRightTime": "1. 1. 1.  0",
+                 "punchInTime": "1. 1. 1.  0", "punchOutTime": "1. 1. 1.  0", "preRoll": "0. 0. 0.  0",
+                 "postRoll": "0. 0. 0.  0", "timeFormat": "Compases+Tiempos", "timeFormat2": "Segundos",
+                 "recordButtonMode": "Punch in/out", "audioRecordMode": "Mantener historial",
+                 "midiRecordMode": "Nuevas partes", "midiCycleRecordMode": "Mix",
+                 "recordStartMode": "Iniciar en cursor", "startPlayModes": "Inicio desde posición"}  # fmt: skip
+        for i, (title, value) in enumerate(texts.items()):
+            transport.params[4027 if title == "signature" else 4100 + i] = Param(title, "text", 0, value)
+        metronome = self._obj("Metronome", "Metronome")
+        metronome.params = {1: Param("clickLevel", "text", 1, "127"), 2: Param("tickInRecord", "discrete", 0),
+                            3: Param("tickInPlayback", "discrete", 0)}  # fmt: skip
+        root.children = [self._obj("MIDI System", "CoreMIDI").id, transport.id, metronome.id]
+        self.studio = {"root": root, "transport": transport, "metronome": metronome}
+
+    @property
+    def meter(self) -> tuple[int, int]:
+        numerator, denominator = (self.studio_param("transport", "signature").text or "4/4").split("/")
+        return int(numerator), int(denominator)
+
+    def studio_param(self, kind: str, title: str) -> Param:
+        return next(p for p in self.studio[kind].params.values() if p.title == title)
 
     def _channel(self, kind: str, title: str) -> Obj:
         ch = self._obj(kind, title)
@@ -403,7 +437,7 @@ class FakeCubase:
     def _op_transport_get(self, _p: JsonObject) -> JsonObject:
         if self.playing:  # verified: the cursor position is reported while playing
             self.position += self.beats_per_poll
-            self.transport["locator"] = _beats_to_bars(self.position)
+            self.transport["locator"] = _beats_to_bars(self.position, self.meter)
         # Verified quirk: the secondary display reports bar strings while declaring "Segundos".
         out: JsonObject = {"available": True, "tempoBPM": self.tempo, "updates": 1}
         for display in ("primary", "secondary"):
@@ -760,7 +794,7 @@ class FakeCubase:
         cursor = self.transport["locator"]
         if key == "transport.start":
             self.playing = True
-            self.position = _bars_to_beats(cursor)
+            self.position = _bars_to_beats(cursor, self.meter)
         elif key == "transport.stop":
             self.playing = False
         elif key == "transport.locate_prev_marker":
@@ -776,16 +810,18 @@ class FakeCubase:
                 self.transport["locator"] = self.last_event_end
 
 
-def _bars_to_beats(time: str) -> float:
+def _bars_to_beats(time: str, meter: tuple[int, int]) -> float:
     bar, beat, sixteenth, ticks = (int(part) for part in time.replace(".", " ").split())
-    return (bar - 1) * 4 + (beat - 1) + (sixteenth - 1) / 4 + ticks / 480
+    beat_length = 4 / meter[1]
+    return (bar - 1) * meter[0] * beat_length + (beat - 1) * beat_length + (sixteenth - 1) / 4 + ticks / 480
 
 
-def _beats_to_bars(beats: float) -> str:
-    bar, rest = divmod(beats, 4)
-    beat, rest = divmod(rest, 1)
-    sixteenth, rest = divmod(rest * 4, 1)
-    return f"{int(bar) + 1}. {int(beat) + 1}. {int(sixteenth) + 1}.{round(rest * 120):>3}"
+def _beats_to_bars(beats: float, meter: tuple[int, int]) -> str:
+    beat_length = 4 / meter[1]
+    bar, rest = divmod(beats, meter[0] * beat_length)
+    beat, rest = divmod(rest, beat_length)
+    sixteenth, rest = divmod(rest, 0.25)
+    return f"{int(bar) + 1}. {int(beat) + 1}. {int(sixteenth) + 1}.{round(rest * 480):>3}"
 
 
 def _bars(time: str) -> tuple[int, ...]:
@@ -814,6 +850,9 @@ class FakeLauncher:
 
     def is_running(self) -> bool:
         return self.running
+
+    def project_folders(self) -> list[str]:
+        return ["/Projects/Demo"] if self.running else []
 
     def launch(self, project: object = None) -> None:
         self.launched.append(project)
