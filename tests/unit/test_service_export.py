@@ -112,3 +112,13 @@ def test_inspector_reads_only_new_audio_files(tmp_path: Path) -> None:
     assert calls == [["/usr/bin/afinfo", str(new)]]
     assert ExportInspector(output=lambda _a: "garbage").duration(new) is None
     assert ExportInspector().find(tmp_path / "missing", 0) == []
+
+
+def test_lossy_files_get_a_wider_tolerance(exporter: CubaseService, exports: FakeExports) -> None:
+    exports.add("/Projects/Demo/Mixdown/Episode.mp3", 139.721, modified=1000.0)  # measured in Cubase
+    exports.add("/Projects/Demo/Mixdown/Episode.wav", 139.721, modified=999.5)
+    out = exporter.export_mix("confirm", since=999.0, expected_seconds=139.976)
+    by_name = {Path(f.path).suffix: f for f in out.files}
+    assert (by_name[".mp3"].duration_matches, by_name[".mp3"].difference_seconds) == (True, -0.255)
+    assert by_name[".wav"].duration_matches is False
+    assert out.verified is True  # the newest file

@@ -380,7 +380,10 @@ class ExportedFileOut(_Out):
     path: str
     size_bytes: int
     duration_seconds: float | None
-    duration_matches: bool | None = Field(description="the duration equals the exported range (±0.15 s)")
+    difference_seconds: float | None = Field(default=None, description="duration minus the expected one")
+    duration_matches: bool | None = Field(
+        description="the duration equals the range: ±0.15 s, or ±(0.5 s + 0.2 %) for MP3/AAC/OGG (estimated)"
+    )
 
 
 class ExportOut(_Out):

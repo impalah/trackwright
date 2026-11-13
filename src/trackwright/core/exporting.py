@@ -19,6 +19,17 @@ from trackwright.core.ranges import TAG_RECORD, TAG_START, RangeMixin
 from trackwright.errors import PreconditionFailedError, TrackwrightError
 
 DURATION_TOLERANCE = 0.15
+LOSSY_SUFFIXES = frozenset({".mp3", ".m4a", ".ogg"})
+
+
+def duration_tolerance(path: str, expected: float) -> float:
+    """Lossy files report an *estimated* duration and lose or gain a few frames at the end: an MP3 of a
+    139.976 s range measured 139.721 s (verified, TW-1204), a 28 s one 27.991 s."""
+    if Path(path).suffix.lower() in LOSSY_SUFFIXES:
+        return 0.5 + expected * 0.002
+    return DURATION_TOLERANCE
+
+
 INSTRUCTIONS = (
     "Cubase shows 'Export Audio Mixdown'. Check the channel (Stereo Out), the name, the folder and the format "
     "(WAV for archiving, MP3 for publishing), then click 'Export Audio'. Afterwards call this tool with "
@@ -114,12 +125,13 @@ class ExportMixin(RangeMixin):
             out.instructions = "the export folder is unknown: give 'folder' (the path shown in Cubase's dialog)"
             return out
         for found in self.exports.find(where, since):
-            matches = None
+            matches, difference = None, None
             if expected is not None and found.duration_seconds is not None:
-                matches = abs(found.duration_seconds - expected) <= DURATION_TOLERANCE
+                difference = round(found.duration_seconds - expected, 3)
+                matches = abs(difference) <= duration_tolerance(found.path, expected)
             out.files.append(ExportedFileOut(path=found.path, size_bytes=found.size_bytes,
                                              duration_seconds=found.duration_seconds,
-                                             duration_matches=matches))  # fmt: skip
+                                             difference_seconds=difference, duration_matches=matches))  # fmt: skip
         if out.files:
             out.status = "done"
             out.verified = out.files[0].duration_matches

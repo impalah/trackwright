@@ -278,7 +278,10 @@ Trackwright **nunca exporta por sí mismo**: coloca el rango y abre el diálogo 
 - **Fase `confirm`:**
   - **Entrada:** `since` y `expected_seconds` de la fase anterior; `folder` si se eligió otra carpeta.
   - **Qué hace:** busca en la carpeta los archivos de audio creados después de `since` y lee **solo** su nombre, tamaño, fecha y duración (con `afinfo` de macOS).
-  - **Salida:** `done` y `verified`, si la duración coincide con el rango (±0,15 s), o `not_found`.
+  - **Salida:** `done` y `verified`, con la diferencia de duración de cada archivo (`difference_seconds`), o `not_found`.
+  - **Tolerancia:**
+    - ±0,15 s en WAV y AIFF;
+    - ±(0,5 s + 0,2 %) en MP3, AAC y OGG, cuya duración es una estimación y que pierden o ganan tramas al final. Verificado: un MP3 del episodio de 139,976 s midió 139,721 s.
 - Los localizadores **se quedan** en el rango exportado.
 - **Errores:** `TRANSPORT_RUNNING`, `CANNOT_PERFORM` (hay otro diálogo abierto), `BAD_TIME` y `WRITES_DISABLED`.
 

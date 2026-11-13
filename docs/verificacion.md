@@ -307,3 +307,4 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
 - **`cubase_export_mix`, contra Cubase:**
   - el ensayo de `start` propone la carpeta `…/X0001.test/Mixdown`, deducida con `lsof`;
   - `confirm` encontró `X0001.mp3` (27,99 s), con `verified: true`.
+- **Prueba del usuario, episodio completo en MP3:** 139,721 s para 139,976 s. Se amplía la tolerancia para formatos comprimidos.

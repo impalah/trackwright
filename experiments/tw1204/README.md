@@ -27,3 +27,9 @@
   3. devolver `awaiting_user`, con la carpeta prevista (`<proyecto>/Mixdown`, deducida con `lsof`), la duración esperada y la marca de tiempo.
 - **Fase `confirm`:** buscar en la carpeta los archivos de audio creados después de esa marca y comprobar su duración (`afinfo`). Se leen solo nombre, tamaño, fecha y duración.
 - **Trackwright nunca exporta:** el usuario elige el formato y pulsa «Exportar audio».
+
+## Prueba del usuario con `cubase_export_mix` (episodio completo)
+
+- **Resultado:** `Mixdown/X0001.mp3` (sobrescrito), de 2 235 665 bytes y **139,721 s**, para un rango de 139,976 s (−0,255 s). El tamaño lo corrobora: 2 235 665 × 8 / 128 000 = 139,73 s.
+- **Causa:** la duración de un MP3 es una estimación y el codificador pierde o gana tramas al final. Con la tolerancia de ±0,15 s, la confirmación habría dado `verified: false`.
+- **Corrección:** tolerancia de ±(0,5 s + 0,2 %) para MP3, AAC y OGG, y `difference_seconds` en la salida.
