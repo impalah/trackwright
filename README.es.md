@@ -7,18 +7,23 @@
 [![License: AGPL v3+](https://img.shields.io/badge/License-AGPL%20v3%2B-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 ![Coverage 98%](https://img.shields.io/badge/coverage-98%25-brightgreen.svg)
 ![Platform: macOS](https://img.shields.io/badge/platform-macOS-lightgrey.svg)
-![Cubase 15.0.20+](https://img.shields.io/badge/Cubase-15.0.20+-red.svg)
+![DAW: Cubase 15.0.20+](https://img.shields.io/badge/DAW-Cubase%2015.0.20+-red.svg)
 [![MCP](https://img.shields.io/badge/MCP-server-8A2BE2.svg)](https://modelcontextprotocol.io)
 
-**Trackwright** es un servidor [MCP](https://modelcontextprotocol.io) que permite a Claude **inspeccionar y controlar Cubase**: pistas, mezcla, plugins y sus parámetros, transporte, marcadores, automatización y edición por rangos de tiempo, pensada para podcasts. Funciona con un script MIDI Remote que se ejecuta dentro de Cubase; no necesita controladores físicos ni puertos IAC.
+**Trackwright** es un servidor [MCP](https://modelcontextprotocol.io) independiente para controlar estaciones de trabajo de audio digital (DAW).
+
+Permite a un asistente de IA (Claude, GitHub Copilot o cualquier otro cliente MCP) **inspeccionar y controlar tu DAW**: pistas, mezcla, plugins y sus parámetros, transporte, marcadores, automatización y edición por rangos de tiempo, pensada para podcasts.
+
+La primera implementación es para **Cubase**. Funciona con un script MIDI Remote que se ejecuta dentro de Cubase y no necesita controladores físicos ni puertos IAC. Podrán llegar otros DAW: buena parte del núcleo (transporte MIDI, puente, política de escrituras, verificación por relectura) no depende de Cubase.
 
 | | |
 |---|---|
 | Paquete | `trackwright` |
 | Ejecutable | `trackwright` |
 | Servidor MCP | `trackwright` (stdio) |
+| Clientes MCP | Cualquiera que admita servidores stdio. Probado con Claude Code |
 | Plataforma | macOS. Verificado en macOS 27.2 (Apple Silicon) |
-| Cubase | 15.0.20 o posterior (API MIDI Remote 1.3). Verificado en Cubase Elements 15.0.30 |
+| DAW | Cubase 15.0.20 o posterior (API MIDI Remote 1.3). Verificado en Cubase Elements 15.0.30 |
 | Licencia | AGPL-3.0-or-later |
 
 > Trackwright es un proyecto independiente. No está afiliado a Steinberg ni respaldado por ella; Cubase es una marca de Steinberg Media Technologies GmbH.
@@ -27,7 +32,7 @@
 
 - **[uv](https://docs.astral.sh/uv/)** 0.13 o posterior (`brew install uv`). No hace falta instalar Python: uv descarga el adecuado. No hay nada que compilar.
 - **Cubase** 15.0.20 o posterior.
-- Un cliente MCP: **Claude Code** o Claude Desktop.
+- Un cliente MCP: **Claude Code** (probado), Claude Desktop, **GitHub Copilot** en VS Code o cualquier otro cliente que admita servidores stdio.
 
 ## Instalación
 
@@ -50,7 +55,7 @@ Nunca usa `sudo` ni cambia ajustes de Cubase o del sistema. Para no preguntar en
 ### Activar el script en Cubase
 
 1. **Reinicia Cubase** (no recarga los scripts por sí mismo) y abre un proyecto. Para las primeras pruebas, mejor uno desechable.
-2. En la pestaña **MIDI Remote** de la zona inferior debe aparecer la superficie **Trackwright – Bridge**. Los puertos virtuales los crea Trackwright al arrancar, y el servidor MCP lo arranca Claude. Si no aparece, pulsa **+ Añadir superficie de controlador MIDI** y elige `Trackwright` / `Bridge`, con entrada `Trackwright To Cubase` y salida `Trackwright From Cubase`.
+2. En la pestaña **MIDI Remote** de la zona inferior debe aparecer la superficie **Trackwright – Bridge**. Los puertos virtuales los crea Trackwright al arrancar, y el servidor MCP lo arranca tu cliente MCP. Si no aparece, pulsa **+ Añadir superficie de controlador MIDI** y elige `Trackwright` / `Bridge`, con entrada `Trackwright To Cubase` y salida `Trackwright From Cubase`.
 3. **Recomendado:** en *Estudio > Configuración de estudio > Configuración de puertos MIDI*, desmarca **«En 'All MIDI Inputs'»** para `Trackwright To Cubase`.
 
 ### Comprobar
@@ -59,7 +64,7 @@ Nunca usa `sudo` ni cambia ajustes de Cubase o del sistema. Para no preguntar en
 trackwright doctor   # revisa cada eslabón y dice qué hacer si algo falla
 ```
 
-Después, en Claude Code: «Comprueba el estado de Cubase con Trackwright».
+Después, en tu cliente MCP (por ejemplo, Claude Code): «Comprueba el estado de Cubase con Trackwright».
 
 ### Probar sin Cubase
 
@@ -68,6 +73,26 @@ Trackwright incluye un Cubase simulado. Para probarlo desde Claude Code sin inst
 ```sh
 claude mcp add trackwright-sim -- uvx trackwright serve --simulate
 ```
+
+### Otros clientes MCP
+
+`trackwright setup` registra el servidor en Claude Code. Cualquier otro cliente MCP necesita el mismo comando: `trackwright serve` por stdio. Las aplicaciones de escritorio no heredan el `PATH` del terminal, así que usa la ruta absoluta que muestra `which trackwright`.
+
+**GitHub Copilot en VS Code** (aún sin probar): ejecuta **MCP: Open User Configuration** y añade:
+
+```json
+{
+  "servers": {
+    "trackwright": {
+      "type": "stdio",
+      "command": "/Users/<tu-usuario>/.local/bin/trackwright",
+      "args": ["serve"]
+    }
+  }
+}
+```
+
+Después usa Copilot Chat en modo agente. Las herramientas de Trackwright aparecen en su lista de herramientas.
 
 ## Actualizar y desinstalar
 
@@ -78,7 +103,7 @@ claude mcp add trackwright-sim -- uvx trackwright serve --simulate
   3. `uv tool uninstall trackwright`;
   4. borra `~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/` y `~/.config/trackwright/`, y quita la superficie en la pestaña MIDI Remote de Cubase.
 
-## Qué puede hacer
+## Qué puede hacer (Cubase)
 
 32 herramientas, todas con salida estructurada:
 
@@ -100,7 +125,7 @@ Por defecto **solo lee**. Las escrituras se habilitan en la configuración y se 
 
 - **Solo lectura por defecto.** Las escrituras se habilitan en `~/.config/trackwright/config.toml` (`[writes] enabled = true`) y se pueden limitar a pistas concretas (`allowed_tracks`). Guardar el proyecto tiene su propio permiso (`[writes] save`).
 - Cada escritura admite un **ensayo** (`dry_run`) y se **verifica releyendo** el estado. Una escritura cuyo resultado es incierto no se reintenta.
-- **No abre puertos de red:** el servidor habla con Claude por stdio y con el puente por un socket Unix privado.
+- **No abre puertos de red:** el servidor habla con el cliente MCP por stdio y con el puente por un socket Unix privado.
 - No cierra Cubase, no graba audio y no guarda nada si no se le pide.
 
 ## Configuración
@@ -123,7 +148,7 @@ app = "Cubase 15"                # nombre de la aplicación para cubase_launch
 - **No es posible por la API** cambiar el enrutado (entradas, salidas o envíos), leer el contenido de las pistas (eventos, audio o automatización) ni completar diálogos de Cubase.
 - **Solo se ven** las pistas que tienen canal de mezclador.
 - Importar audio, exportar la mezcla y cambiar de preset usan diálogos o ventanas de Cubase: Trackwright los abre y prepara, y tú completas el diálogo.
-- Por ahora, **solo macOS** y solo Cubase.
+- Por ahora, **solo macOS** y **solo Cubase**.
 
 ## Estado
 

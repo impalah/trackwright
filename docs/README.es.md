@@ -4,7 +4,7 @@
 
 - **Manuales**
   - [Instalación](manual/01-installation.es.md)
-  - [Operación y conexión con Claude Code o Claude Desktop](manual/02-operation.es.md)
+  - [Operación y conexión de un cliente MCP (Claude Code, Claude Desktop, GitHub Copilot)](manual/02-operation.es.md)
   - [Configuración](manual/03-configuration.es.md)
   - [Referencia de herramientas](manual/04-tools.es.md)
   - [Resolución de problemas](manual/05-troubleshooting.es.md)

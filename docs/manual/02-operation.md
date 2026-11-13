@@ -6,7 +6,7 @@
 
 1. **Use your MCP client.**
    - It launches `trackwright serve`, which **starts the bridge** if it isn't running (`[bridge] autostart`).
-   - If Cubase is closed, ask Claude to open it ("open Cubase", or with a `.cpr` project). It uses `cubase_launch`.
+   - If Cubase is closed, ask your assistant to open it ("open Cubase", or with a `.cpr` project). It uses `cubase_launch`.
 2. **If Cubase shows a dialog** at startup (Steinberg Hub, project selection, audio device), answer it yourself and open a project. The script starts responding once a project is open.
 3. **When you're done,** close Cubase yourself; Trackwright never closes it. An automatically started bridge keeps running in the background. To stop it:
    ```sh
@@ -25,10 +25,11 @@ uv run trackwright doctor          # full diagnostics with fixes
 
 ## Connect an MCP client
 
-The server is called **`trackwright`** and uses the **stdio** transport. The command the client must launch is:
+Trackwright works with any MCP client that supports **stdio** servers. It has been tested with Claude Code. The server is called **`trackwright`**, and the command the client must launch is:
 
 ```sh
-uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve
+trackwright serve                                                          # installed from PyPI (uv tool)
+uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve   # from source
 ```
 
 ### Claude Code
@@ -59,6 +60,29 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` and add:
 
 - Claude Desktop doesn't inherit your terminal's `PATH`, so use the **absolute path** of uv (the one shown by `which uv`).
 - Restart Claude Desktop after saving the file.
+
+### GitHub Copilot in VS Code
+
+Not tested yet. In VS Code, run **MCP: Open User Configuration** (or create `.vscode/mcp.json` in a workspace) and add:
+
+```json
+{
+  "servers": {
+    "trackwright": {
+      "type": "stdio",
+      "command": "/Users/<you>/.local/bin/trackwright",
+      "args": ["serve"]
+    }
+  }
+}
+```
+
+- Use the absolute path shown by `which trackwright` (installed with `uv tool`). From source, use `"command": "/opt/homebrew/bin/uv"` with `"args": ["--directory", "/Volumes/Data/projects/sound/trackwright", "run", "trackwright", "serve"]`.
+- Open Copilot Chat in **agent** mode: the Trackwright tools appear in its tool list.
+
+### Other MCP clients
+
+Any client that can launch a stdio MCP server works the same way: give it the command above, with absolute paths if it is a desktop app.
 
 ### Try it without Cubase: the simulator
 

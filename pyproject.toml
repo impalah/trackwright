@@ -1,7 +1,7 @@
 [project]
 name = "trackwright"
 version = "0.3.0"
-description = "MCP server to inspect and control Cubase from Claude through a MIDI Remote script"
+description = "Independent MCP server for controlling digital audio workstations (DAWs). First implementation: Cubase, through a MIDI Remote script"
 readme = "README.md"
 authors = [
     { name = "impalah", email = "impalah@gmail.com" }
@@ -9,7 +9,7 @@ authors = [
 license = "AGPL-3.0-or-later"
 license-files = ["LICENSE"]
 requires-python = ">=3.14"
-keywords = ["mcp", "cubase", "midi-remote", "daw", "podcast", "claude"]
+keywords = ["mcp", "daw", "cubase", "midi-remote", "audio", "podcast", "claude", "copilot"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",

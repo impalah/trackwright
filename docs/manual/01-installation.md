@@ -2,18 +2,18 @@
 
 **English** · [Español](01-installation.es.md)
 
-By the end of this manual you will have Trackwright installed, the script loaded in Cubase and a check that Python and Cubase are talking to each other. Allow about 15 minutes.
+Trackwright is an MCP server for DAWs; this first version supports Cubase. By the end of this manual you will have Trackwright installed, the script loaded in Cubase and a check that Python and Cubase are talking to each other. Allow about 15 minutes.
 
 > **Verification status.** The script's protocol and operations were verified against Cubase Elements 15.0.30 in the proof of concept (`cubase-mcp-poc`). The `Trackwright_Bridge.js` script derives from that version. Before using it for real work, run the integration tests in step 9.
 
 ## How the pieces fit together
 
 ```text
-MCP client (Claude) ──stdio──► trackwright serve ──local socket──► trackwright bridge ──virtual MIDI──► Cubase (MIDI Remote script)
+MCP client (Claude, Copilot…) ──stdio──► trackwright serve ──local socket──► trackwright bridge ──virtual MIDI──► Cubase (MIDI Remote script)
 ```
 
 - **`trackwright bridge`:** the bridge. It creates the virtual MIDI ports through which it talks to Cubase. `trackwright serve` starts it automatically if it isn't running; you can also launch it by hand in a terminal.
-- **`trackwright serve`:** the MCP server. You don't start it yourself: your MCP client (Claude Code or Claude Desktop) launches it when needed.
+- **`trackwright serve`:** the MCP server. You don't start it yourself: your MCP client (Claude Code, Claude Desktop, GitHub Copilot…) launches it when needed.
 - **The `Trackwright_Bridge.js` script:** runs inside Cubase and answers the requests.
 
 ## 1. Requirements
