@@ -33,6 +33,9 @@ dependencies = [
     # "python-rtmidi>=1.5.8",
 ]
 
+[project.urls]
+Author = "https://pressanykey.tech"
+
 [project.scripts]
 trackwright = "trackwright.cli:main"
 
