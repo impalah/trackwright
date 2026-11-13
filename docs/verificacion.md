@@ -81,5 +81,5 @@ El proyecto no se ha guardado.
 - **Sesión nueva de Claude Code,** sin el contexto del desarrollo. Según el usuario funcionaron:
   - `cubase_status`;
   - el listado de pistas;
-  - silenciar y volver a activar una pista.
+  - silenciar y volver a activar una pista. El modelo **ensayó primero** (`dry_run`) y **pidió confirmación** antes de aplicar, siguiendo las instrucciones del servidor.
 - **Conclusión:** la cadena completa cliente MCP → `trackwright serve` → puente → Cubase funciona en uso real, y un modelo sin conocimiento previo del proyecto usa las herramientas a partir de sus descripciones.
