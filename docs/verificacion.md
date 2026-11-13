@@ -280,3 +280,13 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
 - **Con diálogo:** `Process / Silence`.
 - **Localizadores en segundos:** fallan directamente; funcionan poniendo el cursor en segundos y usando `Set Left/Right Locator`.
 - **Alcance:** `Select in Loop` solo crea un rango con la herramienta de rango, y lo hace en todas las pistas.
+
+## 2026-11-13 — TW-1211: `cubase_edit_range` desde Claude Code
+
+- **Prueba:** script 1.5.1, desde otra sesión de Claude Code, con el proyecto de pruebas guardado. Se pidió «quita el tramo entre el segundo 2 y el 30 cerrando el hueco; comprueba con POC-TEST».
+- **Resultado, según el usuario, todo correcto:**
+  - ensayo previo;
+  - aplicación con `verified: true`;
+  - localizadores, cursor y pista seleccionada restaurados;
+  - herramienta de objetos activa al terminar;
+  - **Deshacer** en Cubase devolvió el audio.

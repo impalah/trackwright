@@ -177,7 +177,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1211 Edición por rangos en segundos (podcast)
 
-- **Estado:** implementada (`cubase_edit_range`, script 1.5.1); falta verificarla en Cubase con la herramienta definitiva
+- **Estado:** cerrada. Verificada en Cubase el 2026-11-13 desde Claude Code (`delete_time` 2–30 s, `verified: true`, estado restaurado y deshecho con Undo)
 - **Origen:** el usuario edita podcasts, donde el compás no importa. Quiere dar órdenes como «borra el audio de la pista X entre el segundo 2 y el 30».
 - **Qué hay:**
   - `cubase_set_position` con `unit: "seconds"` para el cursor y los localizadores. Su verificación supone 4/4 y tempo constante: hay que pasar a releer `time2` del objeto Transport (TW-1209);
