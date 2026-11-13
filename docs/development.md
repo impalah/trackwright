@@ -16,6 +16,23 @@
 
 ## Commands
 
+The `Makefile` wraps the usual tasks, always through uv; `make help` lists them:
+
+| Target | Does |
+|---|---|
+| `make sync` | `uv sync` |
+| `make check` | lint, format check, mypy and tests with coverage (same as `scripts/check.sh`) |
+| `make lint`, `make format`, `make typecheck` | ruff check, ruff fix + format, mypy |
+| `make test`, `make test-cov`, `make test-node` | tests, with coverage, only the Cubase script tests |
+| `make test-integration`, `make test-integration-write TEST_TRACK=…` | against the real Cubase (opt-in; writes are reversible, default track `POC-TEST`) |
+| `make build`, `make dist-check` | `uv build` into a clean `dist/`, and `uvx twine check --strict` |
+| `make publish-test`, `make publish` | upload to TestPyPI or PyPI with `uv publish` (needs `UV_PUBLISH_TOKEN`) |
+| `make doctor`, `make ping`, `make bridge`, `make bridge-status`, `make serve-sim` | run Trackwright |
+| `make script-status`, `make script-install`, `make script-install-apply`, `make setup` | the Cubase script and the guided installation |
+| `make clean` | remove `dist/`, caches and coverage files |
+
+The underlying commands:
+
 ```sh
 uv sync                         # environment
 scripts/check.sh                # everything: lint, format, types and tests with coverage

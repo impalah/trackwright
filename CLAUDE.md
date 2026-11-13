@@ -14,6 +14,8 @@ Chain: `MCP client ──stdio──► trackwright serve ──Unix socket─�
 
 ## Commands
 
+The `Makefile` wraps the usual tasks through uv (`make help`): `make check`, `make test`, `make build`, `make dist-check`, `make doctor`, `make clean`… The underlying commands:
+
 ```sh
 uv sync
 scripts/check.sh                 # ruff check + ruff format --check + mypy strict + pytest with coverage (>= 85 %)

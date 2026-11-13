@@ -4,6 +4,7 @@
 
 ## 0.3.0 — preparada, pendiente de publicar en PyPI
 
+- **`Makefile`** con las tareas habituales (comprobaciones, tests, build, publicación, doctor, script de Cubase…), siempre a través de uv; `make help` las lista.
 - **Publicación en PyPI** (TW-1303): el paquete pasa a llamarse **`trackwright`** (antes `trackwright-mcp`) y se instala con `uv tool install trackwright`.
   - Licencia **AGPL-3.0-or-later** (archivo `LICENSE`, metadatos según PEP 639).
   - README reescrito para el usuario final; el índice de la documentación pasa a `docs/README.md`.
