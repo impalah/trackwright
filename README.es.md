@@ -5,7 +5,7 @@
 [![PyPI version](https://badge.fury.io/py/trackwright.svg)](https://pypi.org/project/trackwright/)
 [![Python 3.14+](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/)
 [![License: AGPL v3+](https://img.shields.io/badge/License-AGPL%20v3%2B-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-![Coverage 98%](https://img.shields.io/badge/coverage-98%25-brightgreen.svg)
+[![Coverage 98%](https://img.shields.io/badge/coverage-98%25-brightgreen.svg)](https://github.com/impalah/trackwright)
 ![Platform: macOS](https://img.shields.io/badge/platform-macOS-lightgrey.svg)
 ![DAW: Cubase 15.0.20+](https://img.shields.io/badge/DAW-Cubase%2015.0.20+-red.svg)
 [![MCP](https://img.shields.io/badge/MCP-server-8A2BE2.svg)](https://modelcontextprotocol.io)
@@ -156,10 +156,10 @@ Versión alfa. Todas las herramientas se han ejecutado contra Cubase Elements 15
 
 ## Documentación
 
-Manuales y tutoriales en la carpeta `docs/` del código fuente: en inglés, con traducción al castellano en los archivos `*.es.md` (índice en `docs/README.es.md`).
+Manuales y tutoriales en la [carpeta `docs/`](docs/README.es.md) del repositorio: en inglés, con traducción al castellano en los archivos `*.es.md`. Código e incidencias: [github.com/impalah/trackwright](https://github.com/impalah/trackwright).
 
 ## Licencia
 
 Copyright (C) 2026 impalah.
 
-Este programa es software libre: puedes redistribuirlo o modificarlo según los términos de la **GNU Affero General Public License** publicada por la Free Software Foundation, versión 3 o, a tu elección, cualquier versión posterior (`AGPL-3.0-or-later`). Se distribuye sin ninguna garantía. Consulta el archivo `LICENSE`.
+Este programa es software libre: puedes redistribuirlo o modificarlo según los términos de la **GNU Affero General Public License** publicada por la Free Software Foundation, versión 3 o, a tu elección, cualquier versión posterior (`AGPL-3.0-or-later`). Se distribuye sin ninguna garantía. Consulta el archivo [`LICENSE`](LICENSE).

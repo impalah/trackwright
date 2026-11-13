@@ -9,7 +9,7 @@
 ## 1. Project folder with `lsof` (with the user's permission)
 
 - **Cubase does not keep the `.cpr` open** (0 matches): it reads it on opening and closes it.
-- **The project's audio files do stay open**, in `<project folder>/Audio/`. The folder comes from there: `/Volumes/Data/Produccion/Cubase/X0001.test`.
+- **The project's audio files do stay open**, in `<project folder>/Audio/`. The folder comes from there: `/path/to/projects/TEST`.
 - **Limits:**
   - it does not give the exact name of the `.cpr`;
   - in a project without audio nothing is seen;

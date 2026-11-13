@@ -13,12 +13,12 @@
    - con el diálogo abierto, el script sigue respondiendo y `Undo` informa `canPerform = false`.
 2. **Diálogo, en Elements y según la captura del usuario:**
    - **canal:** Stereo Out;
-   - **nombre:** el del proyecto (`X0001`);
+   - **nombre:** el del proyecto (`TEST`);
    - **ruta:** `<carpeta del proyecto>/Mixdown`;
    - **formato propuesto:** MP3, 44,1 kHz, 128 kB/s;
    - **conflictos:** «Preguntar siempre»;
    - **no hay campo de rango:** se exporta entre los localizadores.
-3. **Exportación con los localizadores en 2–30 s** (puestos por Trackwright en segundos): `Mixdown/X0001.mp3`, de 447 986 bytes y **27,99 s** (`afinfo`), que son los 28 s del rango ✅.
+3. **Exportación con los localizadores en 2–30 s** (puestos por Trackwright en segundos): `Mixdown/TEST.mp3`, de 447 986 bytes y **27,99 s** (`afinfo`), que son los 28 s del rango ✅.
 4. **Proyecto completo:** `Edit / Select All`, `Transport / Locators to Selection` y `Select None` dejan los localizadores en `1. 1. 1. 0` – `70. 4. 4. 97`, es decir, 0 → 2:19,976 s, el final del último evento ✅. Sin cambios en el proyecto.
 
 ## Conclusiones para `cubase_export_mix`
@@ -32,6 +32,6 @@
 
 ## Prueba del usuario con `cubase_export_mix` (episodio completo)
 
-- **Resultado:** `Mixdown/X0001.mp3` (sobrescrito), de 2 235 665 bytes y **139,721 s**, para un rango de 139,976 s (−0,255 s). El tamaño lo corrobora: 2 235 665 × 8 / 128 000 = 139,73 s.
+- **Resultado:** `Mixdown/TEST.mp3` (sobrescrito), de 2 235 665 bytes y **139,721 s**, para un rango de 139,976 s (−0,255 s). El tamaño lo corrobora: 2 235 665 × 8 / 128 000 = 139,73 s.
 - **Causa:** la duración de un MP3 es una estimación y el codificador pierde o gana tramas al final. Con la tolerancia de ±0,15 s, la confirmación habría dado `verified: false`.
 - **Corrección:** tolerancia de ±(0,5 s + 0,2 %) para MP3, AAC y OGG, y `difference_seconds` en la salida.

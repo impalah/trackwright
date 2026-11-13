@@ -29,7 +29,7 @@ Trackwright works with any MCP client that supports **stdio** servers. It has be
 
 ```sh
 trackwright serve                                                          # installed from PyPI (uv tool)
-uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve   # from source
+uv --directory /path/to/trackwright run trackwright serve   # from source
 ```
 
 ### Claude Code
@@ -37,7 +37,7 @@ uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve   
 `uv run trackwright setup` registers it for you (see the [installation manual](01-installation.md#guided-installation-recommended)). By hand:
 
 ```sh
-claude mcp add trackwright -- uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve
+claude mcp add trackwright -- uv --directory /path/to/trackwright run trackwright serve
 ```
 
 - Add `--scope user` to have it in all your projects.
@@ -52,7 +52,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` and add:
   "mcpServers": {
     "trackwright": {
       "command": "/opt/homebrew/bin/uv",
-      "args": ["--directory", "/Volumes/Data/projects/sound/trackwright", "run", "trackwright", "serve"]
+      "args": ["--directory", "/path/to/trackwright", "run", "trackwright", "serve"]
     }
   }
 }
@@ -77,7 +77,7 @@ Not tested yet. In VS Code, run **MCP: Open User Configuration** (or create `.vs
 }
 ```
 
-- Use the absolute path shown by `which trackwright` (installed with `uv tool`). From source, use `"command": "/opt/homebrew/bin/uv"` with `"args": ["--directory", "/Volumes/Data/projects/sound/trackwright", "run", "trackwright", "serve"]`.
+- Use the absolute path shown by `which trackwright` (installed with `uv tool`). From source, use `"command": "/opt/homebrew/bin/uv"` with `"args": ["--directory", "/path/to/trackwright", "run", "trackwright", "serve"]`.
 - Open Copilot Chat in **agent** mode: the Trackwright tools appear in its tool list.
 
 ### Other MCP clients
@@ -87,7 +87,7 @@ Any client that can launch a stdio MCP server works the same way: give it the co
 ### Try it without Cubase: the simulator
 
 ```sh
-uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve --simulate
+uv --directory /path/to/trackwright run trackwright serve --simulate
 ```
 
 It responds from an in-memory simulated Cubase with two tracks: `POC-INSTR` and `POC-TEST`. It is useful for learning the tools or debugging the client. `cubase_status` returns `simulated: true`, and nothing it returns says anything about the real Cubase.

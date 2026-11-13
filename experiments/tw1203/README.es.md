@@ -3,7 +3,7 @@
 [English](README.md) · **Español**
 
 **Fecha:** 2026-11-13.
-**Entorno:** Cubase Elements 15.0.30, script 1.5.4 y proyecto de pruebas (`X0001-02.cpr`).
+**Entorno:** Cubase Elements 15.0.30, script 1.5.4 y proyecto de pruebas (`TEST-02.cpr`).
 **Archivo de prueba:** un tono de 440 Hz, mono, de 48 kHz y 16 bits y **3,000 s**, generado por Claude en su directorio temporal. No es audio del usuario.
 
 ## Pasos y resultados

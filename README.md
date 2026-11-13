@@ -1,11 +1,11 @@
 # Trackwright
 
-**English** · Español: `README.es.md` in the source repository
+**English** · [Español](https://github.com/impalah/trackwright/blob/main/README.es.md)
 
 [![PyPI version](https://badge.fury.io/py/trackwright.svg)](https://pypi.org/project/trackwright/)
 [![Python 3.14+](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/)
 [![License: AGPL v3+](https://img.shields.io/badge/License-AGPL%20v3%2B-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-![Coverage 98%](https://img.shields.io/badge/coverage-98%25-brightgreen.svg)
+[![Coverage 98%](https://img.shields.io/badge/coverage-98%25-brightgreen.svg)](https://github.com/impalah/trackwright)
 ![Platform: macOS](https://img.shields.io/badge/platform-macOS-lightgrey.svg)
 ![DAW: Cubase 15.0.20+](https://img.shields.io/badge/DAW-Cubase%2015.0.20+-red.svg)
 [![MCP](https://img.shields.io/badge/MCP-server-8A2BE2.svg)](https://modelcontextprotocol.io)
@@ -156,10 +156,10 @@ Alpha version. Every tool has been run against Cubase Elements 15.0.30 on macOS 
 
 ## Documentation
 
-Manuals and tutorials, in English with Spanish translations in `*.es.md` files, are in the `docs/` folder of the source code (index in `docs/README.md`; Spanish in `docs/README.es.md`).
+Manuals and tutorials are in the [`docs/` folder of the repository](https://github.com/impalah/trackwright/blob/main/docs/README.md), in English with Spanish translations ([Spanish index](https://github.com/impalah/trackwright/blob/main/docs/README.es.md)). Source code and issues: [github.com/impalah/trackwright](https://github.com/impalah/trackwright).
 
 ## License
 
 Copyright (C) 2026 impalah.
 
-This program is free software: you can redistribute it and/or modify it under the terms of the **GNU Affero General Public License** as published by the Free Software Foundation, either version 3 or, at your option, any later version (`AGPL-3.0-or-later`). It is distributed without any warranty. See the `LICENSE` file.
+This program is free software: you can redistribute it and/or modify it under the terms of the **GNU Affero General Public License** as published by the Free Software Foundation, either version 3 or, at your option, any later version (`AGPL-3.0-or-later`). It is distributed without any warranty. See the [`LICENSE`](https://github.com/impalah/trackwright/blob/main/LICENSE) file.

@@ -29,7 +29,7 @@ Trackwright funciona con cualquier cliente MCP que admita servidores **stdio**. 
 
 ```sh
 trackwright serve                                                          # instalado desde PyPI (uv tool)
-uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve   # desde el código fuente
+uv --directory /ruta/a/trackwright run trackwright serve   # desde el código fuente
 ```
 
 ### Claude Code
@@ -37,7 +37,7 @@ uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve   
 `uv run trackwright setup` lo registra por ti (ver el [manual de instalación](01-installation.es.md#instalación-guiada-recomendada)). A mano:
 
 ```sh
-claude mcp add trackwright -- uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve
+claude mcp add trackwright -- uv --directory /ruta/a/trackwright run trackwright serve
 ```
 
 - Añade `--scope user` para tenerlo en todos tus proyectos.
@@ -52,7 +52,7 @@ Edita `~/Library/Application Support/Claude/claude_desktop_config.json` y añade
   "mcpServers": {
     "trackwright": {
       "command": "/opt/homebrew/bin/uv",
-      "args": ["--directory", "/Volumes/Data/projects/sound/trackwright", "run", "trackwright", "serve"]
+      "args": ["--directory", "/ruta/a/trackwright", "run", "trackwright", "serve"]
     }
   }
 }
@@ -77,7 +77,7 @@ Aún sin probar. En VS Code, ejecuta **MCP: Open User Configuration** (o crea `.
 }
 ```
 
-- Usa la ruta absoluta que muestra `which trackwright` (instalado con `uv tool`). Desde el código fuente, usa `"command": "/opt/homebrew/bin/uv"` con `"args": ["--directory", "/Volumes/Data/projects/sound/trackwright", "run", "trackwright", "serve"]`.
+- Usa la ruta absoluta que muestra `which trackwright` (instalado con `uv tool`). Desde el código fuente, usa `"command": "/opt/homebrew/bin/uv"` con `"args": ["--directory", "/ruta/a/trackwright", "run", "trackwright", "serve"]`.
 - Abre Copilot Chat en modo **agente**: las herramientas de Trackwright aparecen en su lista de herramientas.
 
 ### Otros clientes MCP
@@ -87,7 +87,7 @@ Cualquier cliente que sepa lanzar un servidor MCP stdio funciona igual: dale el 
 ### Probar sin Cubase: el simulador
 
 ```sh
-uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve --simulate
+uv --directory /ruta/a/trackwright run trackwright serve --simulate
 ```
 
 Responde desde un Cubase simulado en memoria, con dos pistas: `POC-INSTR` y `POC-TEST`. Sirve para aprender las herramientas o depurar el cliente. `cubase_status` devuelve `simulated: true`, y nada de lo que responde dice nada sobre el Cubase real.

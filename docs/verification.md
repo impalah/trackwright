@@ -78,7 +78,7 @@ The project was not saved.
 
 ## 2026-11-13 — real use from Claude Code
 
-- **Registration:** `claude mcp add --scope user trackwright -- uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve`. `claude mcp list` → `✔ Connected`.
+- **Registration:** `claude mcp add --scope user trackwright -- uv --directory /path/to/trackwright run trackwright serve`. `claude mcp list` → `✔ Connected`.
 - **Configuration:** `~/.config/trackwright/config.toml` with `[writes] enabled = true`, with no track restriction.
 - **New Claude Code session,** without the development context. According to the user, the following worked:
   - `cubase_status`;
@@ -271,7 +271,7 @@ Details in [experiments/tw1209/README.md](../experiments/tw1209/README.md).
   - cycle off, with the locators at `2. 2. 1. 0` and `5. 1. 1. 0`. These are the same instants as before in 4/4, renumbered by the time signature change;
   - metronome on (click 127), precount off and transport stopped;
   - record modes;
-  - project folder: `/Volumes/Data/Produccion/Cubase/X0001.test`.
+  - project folder: `/path/to/projects/TEST`.
 - **Consequence:** with 3/4, automation that assumed 4/4 would have computed the positions incorrectly. It now uses the time signature it reads; tested in the simulator with 3/4 and 6/8.
 
 ## 2026-11-13 — TW-1211: range editing experiment
@@ -304,16 +304,16 @@ Details in [experiments/tw1211/README.md](../experiments/tw1211/README.md).
 ## 2026-11-13 — TW-1204: exporting the mix
 
 - **Experiment** ([experiments/tw1204](../experiments/tw1204/README.md)):
-  - the dialog opens and exports between the locators: `X0001.mp3` lasts 27.99 s for a 2–30 s range;
+  - the dialog opens and exports between the locators: `TEST.mp3` lasts 27.99 s for a 2–30 s range;
   - Select All + Locators to Selection put the locators at 0 → 2:19.976 s.
 - **`cubase_export_mix`, against Cubase:**
-  - the `start` dry run proposes the folder `…/X0001.test/Mixdown`, deduced with `lsof`;
-  - `confirm` found `X0001.mp3` (27.99 s), with `verified: true`.
+  - the `start` dry run proposes the folder `…/TEST/Mixdown`, deduced with `lsof`;
+  - `confirm` found `TEST.mp3` (27.99 s), with `verified: true`.
 - **User test, full episode in MP3:** 139.721 s for 139.976 s. The tolerance is widened for compressed formats.
 
 ## 2026-11-13 — TW-1202: saving
 
-- **Experiment,** with the user's authorization: `File / Save` rewrote `X0001.cpr` and `Save New Version` created `X0001-01.cpr`, both without a dialog. Details in [experiments/tw1202](../experiments/tw1202/README.md).
+- **Experiment,** with the user's authorization: `File / Save` rewrote `TEST.cpr` and `Save New Version` created `TEST-01.cpr`, both without a dialog. Details in [experiments/tw1202](../experiments/tw1202/README.md).
 - **`cubase_save_project`:** as a dry run, against Cubase, it listed both `.cpr` files; without `[writes] save`, the real save gives `SAVE_DISABLED`.
 - **User test from Claude Code,** with `[writes] save = true`: it works.
 

@@ -78,7 +78,7 @@ El proyecto no se ha guardado.
 
 ## 2026-11-13 — uso real desde Claude Code
 
-- **Registro:** `claude mcp add --scope user trackwright -- uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve`. `claude mcp list` → `✔ Connected`.
+- **Registro:** `claude mcp add --scope user trackwright -- uv --directory /ruta/a/trackwright run trackwright serve`. `claude mcp list` → `✔ Connected`.
 - **Configuración:** `~/.config/trackwright/config.toml` con `[writes] enabled = true`, sin limitar pistas.
 - **Sesión nueva de Claude Code,** sin el contexto del desarrollo. Según el usuario funcionaron:
   - `cubase_status`;
@@ -271,7 +271,7 @@ Detalle en [experiments/tw1209/README.md](../experiments/tw1209/README.es.md).
   - ciclo desactivado, con los localizadores en `2. 2. 1. 0` y `5. 1. 1. 0`. Son los mismos instantes que antes en 4/4, renumerados por el cambio de compás;
   - metrónomo activado (clic 127), precuenta desactivada y transporte parado;
   - modos de grabación;
-  - carpeta del proyecto: `/Volumes/Data/Produccion/Cubase/X0001.test`.
+  - carpeta del proyecto: `/ruta/a/proyectos/TEST`.
 - **Consecuencia:** con 3/4, la automatización que suponía 4/4 habría calculado mal las posiciones. Ahora usa el compás leído; probado en el simulador con 3/4 y 6/8.
 
 ## 2026-11-13 — TW-1211: experimento de edición por rangos
@@ -304,16 +304,16 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.es.md).
 ## 2026-11-13 — TW-1204: exportar la mezcla
 
 - **Experimento** ([experiments/tw1204](../experiments/tw1204/README.es.md)):
-  - el diálogo se abre y exporta entre los localizadores: `X0001.mp3` dura 27,99 s para un rango de 2–30 s;
+  - el diálogo se abre y exporta entre los localizadores: `TEST.mp3` dura 27,99 s para un rango de 2–30 s;
   - Select All + Locators to Selection dejan los localizadores en 0 → 2:19,976 s.
 - **`cubase_export_mix`, contra Cubase:**
-  - el ensayo de `start` propone la carpeta `…/X0001.test/Mixdown`, deducida con `lsof`;
-  - `confirm` encontró `X0001.mp3` (27,99 s), con `verified: true`.
+  - el ensayo de `start` propone la carpeta `…/TEST/Mixdown`, deducida con `lsof`;
+  - `confirm` encontró `TEST.mp3` (27,99 s), con `verified: true`.
 - **Prueba del usuario, episodio completo en MP3:** 139,721 s para 139,976 s. Se amplía la tolerancia para formatos comprimidos.
 
 ## 2026-11-13 — TW-1202: guardar
 
-- **Experimento,** con autorización del usuario: `File / Save` reescribió `X0001.cpr` y `Save New Version` creó `X0001-01.cpr`, ambos sin diálogo. Detalle en [experiments/tw1202](../experiments/tw1202/README.es.md).
+- **Experimento,** con autorización del usuario: `File / Save` reescribió `TEST.cpr` y `Save New Version` creó `TEST-01.cpr`, ambos sin diálogo. Detalle en [experiments/tw1202](../experiments/tw1202/README.es.md).
 - **`cubase_save_project`:** en ensayo, contra Cubase, listó los dos `.cpr`; sin `[writes] save`, el guardado real da `SAVE_DISABLED`.
 - **Prueba del usuario desde Claude Code,** con `[writes] save = true`: funciona.
 

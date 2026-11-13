@@ -314,7 +314,7 @@ Designed for podcast editing: it works in **seconds** and the time signature doe
 - **Dry run:** shows the project folder (inferred from the open audio files) and its `.cpr` files with date and size, so you know what will be overwritten.
 - **Verification:** some `.cpr` in the folder with a date later than the command; with `new_version`, a new one. Only names, sizes and dates are read.
 - **States:** `saved` or `awaiting_user`. The latter if nothing was written within 10 s: there is probably a dialog, such as "Save As" on a project that was never saved.
-- **Verified in Cubase Elements:** `Save` rewrote `X0001.cpr` in 1 s, and `Save New Version` created `X0001-01.cpr`. Neither opened a dialog.
+- **Verified in Cubase Elements:** `Save` rewrote `TEST.cpr` in 1 s, and `Save New Version` created `TEST-01.cpr`. Neither opened a dialog.
 - Closing, reverting and quitting are **not offered**.
 
 ## Importing audio

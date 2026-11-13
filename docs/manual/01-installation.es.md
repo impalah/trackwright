@@ -45,10 +45,11 @@ Sigue en la [instalación guiada](#instalación-guiada-recomendada).
 ### Desde el código fuente (desarrollo)
 
 ```sh
-cd /Volumes/Data/projects/sound/trackwright
+git clone https://github.com/impalah/trackwright.git
+cd trackwright
 ```
 
-Si lo copias a otra ubicación, sustituye esa ruta en el resto de los manuales.
+Los manuales escriben `/ruta/a/trackwright` para la carpeta donde lo clonaste: sustitúyela por la tuya.
 
 ## 3. Crear el entorno (solo desde el código fuente)
 
@@ -117,7 +118,7 @@ Cubase **no recarga** los scripts cambiados por sí mismo. Si estaba abierto, re
 **Normalmente no hace falta:** el servidor MCP arranca el puente cuando lo necesita (`[bridge] autostart`). Arrancarlo a mano sirve para hacer las comprobaciones del paso 7 antes de conectar tu cliente MCP, o para ver su log en directo. En una terminal que dejarás abierta:
 
 ```sh
-cd /Volumes/Data/projects/sound/trackwright
+cd /ruta/a/trackwright
 uv run trackwright bridge
 ```
 

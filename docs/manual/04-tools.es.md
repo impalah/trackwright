@@ -314,7 +314,7 @@ Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
 - **Ensayo:** muestra la carpeta del proyecto (deducida de los archivos de audio abiertos) y sus `.cpr` con fecha y tamaño, para saber qué se va a sobrescribir.
 - **Verificación:** algún `.cpr` de la carpeta con fecha posterior a la orden; con `new_version`, uno nuevo. Solo se leen nombres, tamaños y fechas.
 - **Estados:** `saved` o `awaiting_user`. El segundo, si en 10 s no se escribió nada: probablemente hay un diálogo, como «Guardar como» en un proyecto que nunca se guardó.
-- **Verificado en Cubase Elements:** `Save` reescribió `X0001.cpr` en 1 s, y `Save New Version` creó `X0001-01.cpr`. Ninguno abrió diálogo.
+- **Verificado en Cubase Elements:** `Save` reescribió `TEST.cpr` en 1 s, y `Save New Version` creó `TEST-01.cpr`. Ninguno abrió diálogo.
 - **No se ofrecen** cerrar, revertir ni salir.
 
 ## Importar audio

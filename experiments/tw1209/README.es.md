@@ -9,7 +9,7 @@
 ## 1. Carpeta del proyecto con `lsof` (con permiso del usuario)
 
 - **Cubase no mantiene abierto el `.cpr`** (0 coincidencias): lo lee al abrir y lo cierra.
-- **Sí quedan abiertos los archivos de audio** del proyecto, en `<carpeta del proyecto>/Audio/`. De ahí sale la carpeta: `/Volumes/Data/Produccion/Cubase/X0001.test`.
+- **Sí quedan abiertos los archivos de audio** del proyecto, en `<carpeta del proyecto>/Audio/`. De ahí sale la carpeta: `/ruta/a/proyectos/TEST`.
 - **Límites:**
   - no da el nombre exacto del `.cpr`;
   - en un proyecto sin audio no se ve nada;

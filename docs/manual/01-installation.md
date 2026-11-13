@@ -45,10 +45,11 @@ Continue with the [guided installation](#guided-installation-recommended).
 ### From source (development)
 
 ```sh
-cd /Volumes/Data/projects/sound/trackwright
+git clone https://github.com/impalah/trackwright.git
+cd trackwright
 ```
 
-If you copy it to another location, replace that path in the rest of the manuals.
+The manuals write `/path/to/trackwright` for the folder where you cloned it: replace it with yours.
 
 ## 3. Create the environment (from source only)
 
@@ -117,7 +118,7 @@ Cubase **does not reload** changed scripts on its own. If it was open, restart i
 **Normally you don't need to:** the MCP server starts the bridge when it needs it (`[bridge] autostart`). Starting it by hand is useful for running the checks in step 7 before connecting your MCP client, or for watching its log live. In a terminal that you will leave open:
 
 ```sh
-cd /Volumes/Data/projects/sound/trackwright
+cd /path/to/trackwright
 uv run trackwright bridge
 ```
 

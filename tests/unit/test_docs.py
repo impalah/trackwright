@@ -49,6 +49,7 @@ def test_every_configuration_key_is_documented() -> None:
 ROOT = DOCS.parent
 LINK = re.compile(r"\]\(([^)\s]+)\)")
 EXTERNAL = ("http://", "https://", "mailto:")
+GITHUB = "https://github.com/impalah/trackwright"
 
 
 def doc_pages() -> list[Path]:
@@ -100,7 +101,7 @@ def test_every_document_links_to_its_translation() -> None:
         head = "\n".join(page.read_text(encoding="utf-8").splitlines()[:4])
         name = counterpart(page).name
         linked = f"]({name})" in head
-        if not linked and not (page == ROOT / "README.md" and f"`{name}`" in head):  # PyPI page: no relative links
+        if not linked and not (page == ROOT / "README.md" and f"{GITHUB}/blob/main/{name})" in head):
             missing.append(str(page.relative_to(ROOT)))
     assert missing == []
 
@@ -123,3 +124,11 @@ def test_links_resolve_and_stay_in_their_language() -> None:
             if anchor and path.suffix == ".md" and anchor not in anchors(path):
                 broken.append(f"anchor: {where}")
     assert broken == []
+
+
+def test_pypi_readme_has_only_absolute_links() -> None:
+    """README.md is also the PyPI page, where relative links break."""
+    relative = [
+        link for link in LINK.findall((ROOT / "README.md").read_text(encoding="utf-8")) if not link.startswith(EXTERNAL)
+    ]
+    assert relative == []
