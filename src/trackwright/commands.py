@@ -222,6 +222,17 @@ _SPECS = [
         "not observed (TW-1203)",
     ),
     CommandSpec(
+        "preset.next", "Preset", "Next", "unknown", "Next preset of the focused plugin", "not observed (TW-1205)"
+    ),
+    CommandSpec(
+        "preset.previous",
+        "Preset",
+        "Previous",
+        "unknown",
+        "Previous preset of the focused plugin",
+        "not observed (TW-1205)",
+    ),
+    CommandSpec(
         "edit.delete_time",
         "Edit",
         "Delete Time",

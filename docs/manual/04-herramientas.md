@@ -239,6 +239,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `process.silence` | dialog (verificado, TW-1211: pregunta si el archivo de audio está compartido) |
 | `edit.select_events_under_cursor`, `transport.locate_prev_event`, `transport.to_left_locator`, `tool.range`, `tool.select` | unknown |
 | `file.save`, `file.save_new_version` | direct (verificado, TW-1202, en un proyecto ya guardado) |
+| `preset.next`, `preset.previous` | unknown (experimento TW-1205) |
 
 ## Edición por rangos en segundos
 
