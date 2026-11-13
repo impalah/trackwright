@@ -33,6 +33,7 @@ WRITE_OPS = frozenset(
         "transport.setTime",
         "transport.setTempo",
         "cmd.run",
+        "auto.fader",
     }
 )
 """Change Cubase state. Never retried after a timeout: the outcome is unknown."""

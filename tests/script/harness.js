@@ -78,6 +78,7 @@ function displayOf(p) {
 var logs = []
 var fired = []
 var surfaceElements = []
+var valueBindings = []
 var panelLog = []
 var listeners = { remove: [], change: [], param: [] }
 
@@ -200,6 +201,16 @@ var api = {
 					surfaceElements.push(field)
 					return field
 				},
+				makeFader: function (x, y, w, h) {
+					var fader = { kind: 'fader', x: x, y: y, w: w, h: h, value: 0, touchBoundTo: null }
+					fader.mSurfaceValue = {
+						setProcessValue: function (dev, v) { fader.value = v; panelLog.push({ fader: v }) },
+						getProcessValue: function () { return fader.value },
+						mTouchState: { bindTo: function (variable) { fader.touchBoundTo = variable.name; return {} } }
+					}
+					surfaceElements.push(fader)
+					return fader
+				},
 				makeLamp: function (x, y, w, h) {
 					var lamp = { kind: 'lamp', x: x, y: y, w: w, h: h, shape: 'rectangle' }
 					lamp.setShapeCircle = function () { lamp.shape = 'circle'; return lamp }
@@ -211,7 +222,7 @@ var api = {
 					return lamp
 				},
 				makeCustomValueVariable: function (name) {
-					return { name: name, setProcessValue: function (dev, v) { if (v > 0) fired.push(name) } }
+					return { name: name, setProcessValue: function (dev, v) { if (v > 0) fired.push(name); if (name === 'autoFaderTouch') panelLog.push({ touch: v }) } }
 				}
 			},
 			mMapping: {
@@ -220,7 +231,7 @@ var api = {
 						mHostAccess: {
 							makeDirectAccess: function (hostObject) { return makeDirectAccess(hostObject) },
 							mTrackSelection: {
-								mMixerChannel: 'selected',
+								mMixerChannel: { toString: function () { return 'selected' }, mValue: { mVolume: 'selected.volume' } },
 								mAction: {
 									mNextTrack: { trigger: function () { var i = mixer.children.indexOf(selectedId); if (i < 2) selectedId = mixer.children[i + 1] } },
 									mPrevTrack: { trigger: function () { var i = mixer.children.indexOf(selectedId); if (i > 0) selectedId = mixer.children[i - 1] } }
@@ -230,6 +241,7 @@ var api = {
 							mTransport: { mTimeDisplay: timeDisplay }
 						},
 						setLabelFieldText: function (field, text) { field.text = text; return page },
+						makeValueBinding: function (surfaceValue, hostValue) { valueBindings.push(String(hostValue)); return {} },
 						setLabelFieldHostObject: function (field, hostObject) { field.hostObject = String(hostObject); return page },
 						makeCommandBinding: function (variable, category, name) {
 							return { canPerform: function () { return category !== 'Add Track' && !(category === 'Edit' && name === 'Undo') } }
@@ -281,9 +293,10 @@ rl.on('line', function (line) {
 	if (step.state) {
 		reply.state = { fired: fired.slice(), selectedId: selectedId, ids: { mixer: mixer.id, out: out.id, instr: instr.id, audio: audio.id } }
 		reply.state.surface = surfaceElements.map(function (e) {
-			return { kind: e.kind, x: e.x, y: e.y, w: e.w, h: e.h, text: e.text, hostObject: e.hostObject, related: e.related, shape: e.shape }
+			return { kind: e.kind, x: e.x, y: e.y, w: e.w, h: e.h, text: e.text, hostObject: e.hostObject, related: e.related, shape: e.shape, touchBoundTo: e.touchBoundTo }
 		})
 		reply.state.panelLog = panelLog.splice(0)
+		reply.state.valueBindings = valueBindings.slice()
 	}
 	process.stdout.write(JSON.stringify(reply) + '\n')
 })

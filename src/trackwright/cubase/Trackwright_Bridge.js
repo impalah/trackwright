@@ -16,7 +16,7 @@
 
 var midiremote_api = require('midiremote_api_v1')
 
-var SCRIPT_VERSION = '1.2.0'
+var SCRIPT_VERSION = '1.2.1'
 var PROTOCOL_VERSION = 1
 var MANUFACTURER = 0x7D
 var MAGIC_A = 0x54
@@ -48,6 +48,12 @@ deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
 // fixed label text, a label bound to the selected track and a lamp driven by the script. Dynamic text
 // through relateTo + setDisplayValue did NOT display (experiment of 2026-11-13) and is not used.
 var PANEL_ENABLED = true
+
+// TW-1206 experiment (variant B2): a surface fader bound to the selected track's volume, whose touch
+// state is driven by the script, to find out whether Cubase records automation in Touch mode the way
+// it does for a touch-sensitive hardware fader. Off in released builds; experiments/tw1206/build.py
+// switches it on.
+var AUTOMATION_FADER_ENABLED = false
 
 // Without the panel a single element is still needed for Cubase to show the surface.
 if (!PANEL_ENABLED) deviceDriver.mSurface.makeLabelField(0, 0, 4, 1)
@@ -136,6 +142,29 @@ function panelIdle(activeDevice) {
 	if (panel && panel.lampOn && state.queue.length === 0 && state.idleTicks >= panel.lampOffAt) panelLamp(activeDevice, false)
 }
 buildPanel()
+
+// ---------------------------------------------------------------- automation fader (TW-1206, experimental)
+var autoFader = null
+function buildAutomationFader() {
+	if (!AUTOMATION_FADER_ENABLED) return
+	try {
+		autoFader = { errors: [], touched: false }
+		autoFader.fader = deviceDriver.mSurface.makeFader(10, 0, 1, 2)
+		autoFader.touch = deviceDriver.mSurface.makeCustomValueVariable('autoFaderTouch')
+	} catch (e) {
+		state.lastError = 'automation fader build: ' + String(e)
+		autoFader = null
+		return
+	}
+	try {
+		page.makeValueBinding(autoFader.fader.mSurfaceValue, page.mHostAccess.mTrackSelection.mMixerChannel.mValue.mVolume)
+	} catch (e1) { autoFader.errors.push('value binding: ' + String(e1)) }
+	try {
+		if (autoFader.fader.mSurfaceValue.mTouchState) autoFader.fader.mSurfaceValue.mTouchState.bindTo(autoFader.touch)
+		else autoFader.errors.push('mTouchState not available')
+	} catch (e2) { autoFader.errors.push('touch binding: ' + String(e2)) }
+}
+buildAutomationFader()
 
 var hasJSON = (typeof JSON !== 'undefined' && typeof JSON.parse === 'function' && typeof JSON.stringify === 'function')
 
@@ -469,6 +498,7 @@ function capabilities() {
 		commandErrors: commandErrors.length,
 		writePolicy: 'open',
 		panel: panel ? { enabled: true, errors: panel.errors.slice(-10) } : { enabled: false },
+		automationFader: autoFader ? { enabled: true, errors: autoFader.errors.slice(-10) } : { enabled: false },
 		pageMOnIdle: true,
 		methods: {}
 	}
@@ -626,7 +656,7 @@ function guardTarget(am, targetId, p) {
 	return { base: base, baseTitle: title, path: null, policy: 'open', outsideBase: true }
 }
 
-var NO_DA_OPS = { 'sel.step': true, 'transport.setTime': true, 'transport.setTempo': true, 'cmd.canPerform': true, 'cmd.run': true }
+var NO_DA_OPS = { 'auto.fader': true, 'sel.step': true, 'transport.setTime': true, 'transport.setTempo': true, 'cmd.canPerform': true, 'cmd.run': true }
 
 var IDLE_OPS = {
 	'da.base': function (am, p) {
@@ -755,6 +785,28 @@ var IDLE_OPS = {
 		var before = transport.tempoBPM
 		timeDisplay.setTempoBPM(am, bpm)
 		return { requested: bpm, before: before }
+	},
+	// TW-1206: touch / move / release the automation fader (bound to the selected track's volume).
+	'auto.fader': function (am, p, activeDevice) {
+		if (!autoFader) throw { code: 'UNSUPPORTED', msg: 'automation fader is not enabled in this script build' }
+		var out = { touchedBefore: autoFader.touched }
+		if (p.touch === true && !autoFader.touched) {
+			autoFader.touch.setProcessValue(activeDevice, 1)
+			autoFader.touched = true
+		}
+		if (p.value !== undefined) {
+			var value = num(p, 'value')
+			if (value < 0 || value > 1) throw { code: 'BAD_REQUEST', msg: 'value must be in [0,1]' }
+			autoFader.fader.mSurfaceValue.setProcessValue(activeDevice, value)
+			out.value = autoFader.fader.mSurfaceValue.getProcessValue(activeDevice)
+		}
+		if (p.touch === false && autoFader.touched) {
+			autoFader.touch.setProcessValue(activeDevice, 0)
+			autoFader.touched = false
+		}
+		out.touched = autoFader.touched
+		out.errors = autoFader.errors.slice(-5)
+		return out
 	},
 	'sel.step': function (am, p) {
 		var dir = p.direction

@@ -3,6 +3,7 @@
 Steps (see docs/issues/E12-funcionalidades-ampliadas.md, TW-1206):
     uv run python experiments/tw1206/automation.py prepare    # A0 + A1: record state, enable write, cursor to bar 1
     uv run python experiments/tw1206/automation.py record     # A2: waits for Play, writes a volume ramp
+    uv run python experiments/tw1206/automation.py record-b2  # A2, variant B2: ramp through the touched surface fader
     uv run python experiments/tw1206/automation.py readback   # A3 + A4: read mode, waits for Play, samples volume
     uv run python experiments/tw1206/automation.py cleanup    # A6: restore read/write flags and volume
 
@@ -91,6 +92,27 @@ def record() -> None:
     save("A2_record", {"playback_detected_at_cursor": first, "steps": written})
 
 
+def record_b2() -> None:
+    """Variant B2: drive the experiment build's surface fader (bound to the selected track's volume) with touch."""
+    s = service()
+    t = track(s)
+    selected = s.select_track(t)
+    first, started = wait_for_play(s)
+    steps = int(RAMP_SECONDS / STEP_SECONDS)
+    written = []
+    touched = s.call("auto.fader", {"touch": True, "value": RAMP_FROM})
+    for i in range(steps + 1):
+        value = RAMP_FROM + (RAMP_TO - RAMP_FROM) * i / steps
+        out = s.call("auto.fader", {"value": value})
+        written.append({"t": round(time.monotonic() - started, 2), "requested": round(value, 4),
+                        "fader": out.get("value"), "volume": param(s, t, TAG_VOLUME)["display"],
+                        "cursor": s.get_transport().cursor.time})  # fmt: skip
+        time.sleep(max(0.0, started + (i + 1) * STEP_SECONDS - time.monotonic()))
+    released = s.call("auto.fader", {"touch": False})
+    save("A2_record_b2", {"selected": selected.selected_after, "playback_detected_at_cursor": first,
+                          "touch": touched, "release": released, "steps": written})  # fmt: skip
+
+
 def readback() -> None:
     s = service()
     t = track(s)
@@ -123,4 +145,6 @@ def cleanup() -> None:
 
 
 if __name__ == "__main__":
-    {"prepare": prepare, "record": record, "readback": readback, "cleanup": cleanup}[sys.argv[1]]()
+    {"prepare": prepare, "record": record, "record-b2": record_b2, "readback": readback, "cleanup": cleanup}[
+        sys.argv[1]
+    ]()
