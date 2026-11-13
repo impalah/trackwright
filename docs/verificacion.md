@@ -330,3 +330,9 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
 - **Experimento** ([experiments/tw1210](../experiments/tw1210/README.md)): los 9 interruptores del Transporte y el Metronome y el nivel del clic se escriben, se releen y se restauran.
 - **`cubase_set_project`** contra Cubase: metrónomo, nivel 100 y ciclo, con `verified: true`; restaurados con `verified: true`.
 - **Prueba del usuario desde Claude Code** (metrónomo y precuenta): funciona.
+
+## 2026-11-13 — TW-1205: presets de plugins
+
+- **Next y Previous** cambian y devuelven los parámetros del Compressor cuando su editor tiene el foco de teclado, que se consigue con un clic del usuario la primera vez. Sin foco o sin preset cargado, no hacen nada.
+- **El nombre del preset** no es accesible.
+- Detalle en [experiments/tw1205](../experiments/tw1205/README.md).

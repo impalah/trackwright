@@ -41,6 +41,7 @@ WRITE_TOOLS = {
     "cubase_export_mix",
     "cubase_import_audio",
     "cubase_set_project",
+    "cubase_plugin_preset",
 }
 NAVIGATION_TOOLS = {
     "cubase_select_track",

@@ -451,3 +451,17 @@ class ProjectSettingsOut(_Out):
     changes: list[SettingChange]
     verified: bool | None
     notes: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------- plugin presets (TW-1205)
+class PresetStepOut(_Out):
+    dry_run: bool
+    track: str
+    slot: int
+    plugin: str
+    direction: Literal["next", "previous"]
+    status: Literal["planned", "done", "awaiting_user"] = "planned"
+    changed: dict[str, str] = Field(default_factory=dict, description="parameter: 'before -> after'")
+    instructions: str | None = None
+    verified: bool | None = Field(description="some parameter changed (the preset was applied)")
+    notes: list[str] = Field(default_factory=list)

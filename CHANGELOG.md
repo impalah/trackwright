@@ -2,6 +2,9 @@
 
 ## Sin publicar
 
+- **Presets de plugins** (TW-1205):
+  - herramienta `cubase_plugin_preset` (siguiente o anterior), verificada por el cambio de parámetros; pide un clic en la ventana del plugin la primera vez;
+  - **script 1.5.5**, con `Preset / Next` y `Previous`.
 - **Ajustes del proyecto** (TW-1210):
   - herramienta `cubase_set_project`: ciclo, metrónomo, precuenta, punch, uso del pre-roll y post-roll, clic al reproducir y al grabar, y nivel del clic, con relectura;
   - `cubase_get_project` da el nivel del clic como 0–127.

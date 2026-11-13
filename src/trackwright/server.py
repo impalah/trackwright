@@ -35,6 +35,7 @@ from trackwright.core.models import (
     ParametersOut,
     PluginCatalogOut,
     PositionOut,
+    PresetStepOut,
     ProjectOut,
     ProjectSettingsOut,
     RangeEditOut,
@@ -313,6 +314,21 @@ def build_server(service: CubaseService) -> MCPServer:
                 start, end, action, unit=unit, verify_track=verify_track, track=track, dry_run=dry_run
             )
         )
+
+    # ------------------------------------------------------------------ plugin presets (TW-1205)
+    @server.tool(
+        annotations=WRITE,
+        description="Step to the next or previous preset of the plugin in an insert slot (opens its editor for the "
+        "command). Verified by comparing the plugin's parameters. Presets cannot be chosen or read by name, and a "
+        "preset must already be loaded in the plugin. Dry run by default.",
+    )
+    async def cubase_plugin_preset(
+        track: TrackArg,
+        slot: Annotated[int, Field(ge=1, le=16, description="insert slot number")],
+        direction: Literal["next", "previous"],
+        dry_run: DryRunArg = True,
+    ) -> PresetStepOut:
+        return await run(lambda: service.plugin_preset(track, slot, direction, dry_run=dry_run))
 
     # ------------------------------------------------------------------ project settings (TW-1210)
     @server.tool(

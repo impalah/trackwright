@@ -58,7 +58,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1205 Experimento: presets de los plugins
 
-- **Estado:** pendiente
+- **Estado:** implementada (`cubase_plugin_preset`, script 1.5.5). Experimento en [experiments/tw1205](../../experiments/tw1205/README.md). Requiere un preset cargado y un clic del usuario en la ventana del plugin la primera vez; el nombre del preset no es accesible. Falta que el usuario la pruebe
 - **Hipótesis:** `Preset / Next` y `Previous` actúan sobre el editor del plugin que tiene el foco.
 - **Experimento:**
   1. abrir el editor del plugin desde la API, con el parámetro de edición del slot;

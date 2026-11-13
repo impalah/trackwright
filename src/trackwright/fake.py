@@ -117,6 +117,10 @@ class FakeCubase:
         self.history: list[dict[int, list[tuple[float, float]]]] = []
         self.clipboard_seconds = 0.0
         self.selected_events: list[tuple[int, tuple[float, float]]] = []  # object selection (TW-1212)
+        self.editor_focused = True
+        """The user has clicked on the plugin window once (Preset Next/Previous need it, TW-1205)."""
+        self.preset_loaded = True
+        """The plugin shows a preset (Preset Next/Previous do nothing without one, TW-1205)."""
         self.auto_select_under_cursor = True
         """Cubase preference seen on the user's system (TW-1212): moving the cursor selects the events under it."""
         # Automation simulation (TW-1207): playback advances the cursor on every transport.get.
@@ -225,6 +229,7 @@ class FakeCubase:
         for i in range(1, 9):
             slot = self._obj("Slot", str(i), unique_name="Slot")
             slot.params[4125] = Param("Tipo de efecto", "discrete", 0, "Ningún efecto")
+            slot.params[4101] = Param("Edición", "discrete", 0)  # opens the plugin editor (verified, TW-1205)
             inserts.children.append(slot.id)
         strips = self._obj("Strips", "Strip")
         for i in range(1, 7):
@@ -920,7 +925,21 @@ class FakeCubase:
     def edges(self, track_id: int) -> list[float]:
         return sorted({round(edge, 3) for event in self.track_events.get(track_id, []) for edge in event})
 
+    def _apply_preset(self, key: str) -> bool:
+        """Preset Next/Previous: act on the plugin whose editor is open, only when a preset is loaded."""
+        if key not in ("preset.next", "preset.previous"):
+            return False
+        open_slots = [o for o in self.objects.values() if o.type == "Slot" and 4101 in o.params
+                      and o.params[4101].value >= 0.5 and o.children]  # fmt: skip
+        if len(open_slots) == 1 and self.preset_loaded and self.editor_focused:
+            step = 0.1 if key == "preset.next" else -0.1
+            for param in self.objects[open_slots[0].children[0]].params.values():
+                param.value = round((param.value + step) % 1.0, 6)
+        return True
+
     def _apply_project(self, key: str) -> None:
+        if self._apply_preset(key):
+            return
         tracks = self.channels[1:]
         if key == "addtrack.marker":
             self.non_mixer_tracks.append("Marker")

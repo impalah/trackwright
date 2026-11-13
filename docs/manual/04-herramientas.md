@@ -1,6 +1,6 @@
 # Referencia de herramientas MCP
 
-El servidor `trackwright` publica 31 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 32 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 ## Conceptos comunes
 
@@ -189,6 +189,22 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 - **Entrada:** `bpm` (de 20 a 300) y `dry_run`.
 - **Verificación:** relectura, con una tolerancia de 0,01.
 
+### `cubase_plugin_preset` (escritura, con ensayo; a veces con el usuario)
+
+- **Entrada:** `track`, `slot`, `direction` (`next` o `previous`) y `dry_run`.
+- **Qué hace:**
+  1. abre el editor del plugin (parámetro «Edición» del slot) si está cerrado;
+  2. lanza `Preset / Next` o `Previous`;
+  3. compara los parámetros del plugin antes y después, sin contar los medidores;
+  4. cierra el editor si lo abrió.
+- **Salida:** `changed` (parámetro: antes → después), `verified` y `status`.
+- **Requisitos verificados en Cubase Elements** (experimento TW-1205):
+  - **un preset cargado** en el plugin; sin él, los comandos no hacen nada;
+  - **el foco de teclado en su ventana:** hace falta **un clic del usuario la primera vez**. Después funciona aunque Trackwright cierre y reabra el editor.
+- **`awaiting_user`:** si no cambia nada, deja el editor abierto y pide ese clic (y un preset cargado). La siguiente llamada ya funciona.
+- **No se puede** elegir un preset por nombre **ni leer su nombre**: la API no lo expone. Solo se sabe que cambió, por sus parámetros.
+- **Deshacer:** el paso contrario (`previous` tras `next`) devuelve exactamente los valores anteriores.
+
 ## Herramientas basadas en comandos
 
 ### `cubase_markers`
@@ -239,7 +255,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `process.silence` | dialog (verificado, TW-1211: pregunta si el archivo de audio está compartido) |
 | `edit.select_events_under_cursor`, `transport.locate_prev_event`, `transport.to_left_locator`, `tool.range`, `tool.select` | unknown |
 | `file.save`, `file.save_new_version` | direct (verificado, TW-1202, en un proyecto ya guardado) |
-| `preset.next`, `preset.previous` | unknown (experimento TW-1205) |
+| `preset.next`, `preset.previous` | ui_selection (verificado, TW-1205: actúan sobre el editor de plugin con el foco) |
 
 ## Edición por rangos en segundos
 
