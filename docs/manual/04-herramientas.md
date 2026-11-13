@@ -203,6 +203,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `project.remove_selected_tracks` | confirm |
 | `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.set_left_locator`, `transport.set_right_locator`, `transport.locators_to_selection` | unknown |
 | `automation.mode_touch`, `automation.mode_auto_latch`, `automation.mode_cross_over`, `automation.next_mode`, `automation.toggle_write_selected` | unknown (experimento TW-1206) |
+| `transport.start`, `transport.stop` | unknown (pendiente de verificar) |
 
 ## Lo que no se puede hacer
 

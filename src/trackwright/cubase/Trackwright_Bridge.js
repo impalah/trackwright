@@ -16,7 +16,7 @@
 
 var midiremote_api = require('midiremote_api_v1')
 
-var SCRIPT_VERSION = '1.2.1'
+var SCRIPT_VERSION = '1.2.2'
 var PROTOCOL_VERSION = 1
 var MANUFACTURER = 0x7D
 var MAGIC_A = 0x54
@@ -271,7 +271,10 @@ var COMMANDS = [
 	['automation.mode_auto_latch', 'Automation', 'Automation Mode - Auto-Latch'],
 	['automation.mode_cross_over', 'Automation', 'Automation Mode - Cross-Over'],
 	['automation.next_mode', 'Automation', 'Next Automation Mode'],
-	['automation.toggle_write_selected', 'Automation', 'Toggle Write Enable Selected Tracks']
+	['automation.toggle_write_selected', 'Automation', 'Toggle Write Enable Selected Tracks'],
+	// Transport playback (never Record). Needed to record automation without the user pressing Play.
+	['transport.start', 'Transport', 'Start'],
+	['transport.stop', 'Transport', 'Stop']
 ]
 var commands = {}
 var commandErrors = []

@@ -241,6 +241,22 @@ _SPECS = [
         "Toggle automation write on the selected tracks",
         "used by factory scripts; not observed",
     ),
+    CommandSpec(
+        "transport.start",
+        "Transport",
+        "Start",
+        "unknown",
+        "Start playback (never records)",
+        "not observed yet",
+    ),
+    CommandSpec(
+        "transport.stop",
+        "Transport",
+        "Stop",
+        "unknown",
+        "Stop playback",
+        "not observed yet",
+    ),
 ]
 
 COMMANDS: dict[str, CommandSpec] = {spec.key: spec for spec in _SPECS}
