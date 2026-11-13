@@ -197,6 +197,14 @@ _SPECS = [
     CommandSpec("tool.range", "Tool", "Range Tool", "direct", "Activate the Range Selection tool", "not observed"),
     CommandSpec("tool.select", "Tool", "Select Tool", "direct", "Activate the Object Selection tool", "not observed"),
     CommandSpec(
+        "file.export_audio_mixdown",
+        "File",
+        "Export Audio Mixdown",
+        "dialog",
+        "Open the Export Audio Mixdown dialog",
+        "not observed (TW-1204)",
+    ),
+    CommandSpec(
         "edit.delete_time",
         "Edit",
         "Delete Time",
