@@ -352,3 +352,22 @@ class ProjectOut(_Out):
         "null when not requested, empty when Cubase has no audio file open"
     )
     unavailable: dict[str, str] = Field(description="properties the Cubase API does not expose, and why")
+
+
+# ---------------------------------------------------------------------------- range editing (TW-1211)
+class RangeEditOut(_Out):
+    dry_run: bool
+    action: str
+    start: str = Field(description="h:mm:ss.mmm")
+    end: str
+    length_seconds: float
+    effect: str
+    scope: str
+    verify_track: str | None = Field(description="track whose event edges were probed to verify")
+    applied: bool = False
+    locators: list[str] = Field(default_factory=list, description="the range as bars, while editing")
+    edges_before: list[str] = Field(default_factory=list, description="event edges (starts and ends) probed")
+    edges_after: list[str] = Field(default_factory=list)
+    verified: bool | None = None
+    mismatches: list[str] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)

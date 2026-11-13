@@ -177,7 +177,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1211 Edición por rangos en segundos (podcast)
 
-- **Estado:** en curso (experimento)
+- **Estado:** implementada (`cubase_edit_range`, script 1.5.1); falta verificarla en Cubase con la herramienta definitiva
 - **Origen:** el usuario edita podcasts, donde el compás no importa. Quiere dar órdenes como «borra el audio de la pista X entre el segundo 2 y el 30».
 - **Qué hay:**
   - `cubase_set_position` con `unit: "seconds"` para el cursor y los localizadores. Su verificación supone 4/4 y tempo constante: hay que pasar a releer `time2` del objeto Transport (TW-1209);
@@ -203,3 +203,15 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
   - `Delete Time` y `Split Loop` afectan a todas las pistas;
   - sin sondeo de eventos no hay relectura;
   - por eso el experimento se hace con el proyecto guardado y con el usuario mirando.
+
+## TW-1212 Edición por rangos en una sola pista
+
+- **Estado:** pendiente (investigación)
+- **Origen:** `cubase_edit_range` actúa sobre todas las pistas, porque `Select in Loop` con la herramienta de rango selecciona todas (TW-1211). Para un podcast hace falta también quitar, por ejemplo, una tos del micro de un invitado sin tocar los demás.
+- **Vías a investigar:**
+  1. **Objeto en vez de rango:** `Split Loop` corta en los localizadores (en todas las pistas, sin cambiar el sonido); después, seleccionar solo los eventos de la pista dentro del rango (con `Select All on Tracks`, `Select Events under Cursor` o `Select from Cursor to End` con la pista seleccionada) y aplicar `Delete`. Hay que verificar qué alcance tiene cada selección.
+  2. **Ocultar o bloquear las demás pistas** durante la edición, si la API o los comandos lo permiten, y si `Select in Loop` respeta pistas bloqueadas u ocultas.
+  3. **Comandos de la lista oficial** que limiten el rango a las pistas seleccionadas.
+  4. **Silenciar en lugar de borrar** con el volumen automatizado (TW-1207). No toca los eventos, así que es otra semántica.
+- **Verificación:** el sondeo de eventos (TW-1211), que ya funciona por pista seleccionada, en la pista editada y en otra que no debe cambiar.
+- **Entregable:** un parámetro `tracks` en `cubase_edit_range`, o una herramienta aparte, si alguna vía funciona.

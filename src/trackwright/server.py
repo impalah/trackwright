@@ -34,6 +34,7 @@ from trackwright.core.models import (
     PluginCatalogOut,
     PositionOut,
     ProjectOut,
+    RangeEditOut,
     SelectedChannelOut,
     SelectOut,
     StatusOut,
@@ -58,6 +59,7 @@ Rules for using these tools:
   never claim it is done. "ui_selection" commands act on the Cubase window selection, which these tools
   cannot see: ask the user to check the result.
 - Routing (inputs, outputs, send destinations) cannot be changed through this API.
+- Podcast-style editing: cubase_edit_range works in seconds and acts on every track in the range.
 - Automation: list the parameters with cubase_list_automation_targets, then record a curve with
   cubase_record_automation. Recording plays the project (audible) and writes the track's automation.
   Give points in real units ("plain": -20 for -20 dB, 1000 for 1 kHz, pan -100 left..0..+100 right):
@@ -274,6 +276,31 @@ def build_server(service: CubaseService) -> MCPServer:
         force: Annotated[bool, Field(description="fire even if Cubase says it cannot be performed")] = False,
     ) -> CommandOut:
         return await run(lambda: service.run_command(key, dry_run=dry_run, force=force))
+
+    # ------------------------------------------------------------------ range editing (TW-1211)
+    @server.tool(
+        annotations=DESTRUCTIVE,
+        description="Edit a time range of the project, in seconds (or bars), on EVERY track with events in it: "
+        "delete (leave a gap), delete_time or cut_time (remove and close the gap), insert_silence, crop. "
+        "With verify_track (a track with audio), checks the result by probing its event edges before and after. "
+        "Undo in Cubase reverts it. Dry run by default.",
+    )
+    async def cubase_edit_range(
+        start: Annotated[str, Field(description="range start: seconds ('2', '1:30', '0:01:30.250') or bars")],
+        end: Annotated[str, Field(description="range end, same unit")],
+        action: Annotated[
+            Literal["delete", "delete_time", "cut_time", "insert_silence", "crop"],
+            Field(description="what to do with the range"),
+        ],
+        unit: Annotated[Literal["seconds", "bars"], Field(description="unit of start and end")] = "seconds",
+        verify_track: Annotated[
+            str | None, Field(description="track whose audio edges are probed to verify (recommended)")
+        ] = None,
+        dry_run: DryRunArg = True,
+    ) -> RangeEditOut:
+        return await run(
+            lambda: service.edit_range(start, end, action, unit=unit, verify_track=verify_track, dry_run=dry_run)
+        )
 
     # ------------------------------------------------------------------ lifecycle (TW-1201)
     @server.tool(

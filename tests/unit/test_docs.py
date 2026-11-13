@@ -22,7 +22,7 @@ CONFIG_DOC = (DOCS / "manual" / "03-configuracion.md").read_text(encoding="utf-8
 async def test_every_tool_is_documented() -> None:
     server = build_server(CubaseService(FakeCubase(), WritePolicy()))
     names = {tool.name for tool in await server.list_tools()}
-    assert len(names) == 26
+    assert len(names) == 27
     missing = sorted(n for n in names if f"### `{n}`" not in TOOLS_DOC)
     assert missing == []
 

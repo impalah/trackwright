@@ -1,6 +1,6 @@
 # Referencia de herramientas MCP
 
-El servidor `trackwright` publica 26 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 27 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 ## Conceptos comunes
 
@@ -168,8 +168,8 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 
 - **Entrada:** `which` (`cursor`, `cycle_left` o `cycle_right`), `time`, `unit` (`bars` o `seconds`) y `dry_run`.
 - **Formato de compases:** `"3. 1. 1. 0"` (compás, tiempo, semicorchea, tick).
-- **Formato de segundos:** `"0:00:02.000"`.
-- La verificación en segundos asume compás de 4/4 y tempo constante.
+- **Formato de segundos:** `"2.5"`, `"1:30"` o `"0:00:02.000"`.
+- **En segundos,** la posición se relee con la pantalla de segundos de Cubase, sin suponer compás ni tempo. Los localizadores no se pueden mover con la pantalla de segundos (verificado), así que se colocan llevando el cursor allí y usando «Set Left/Right Locator»; luego el cursor vuelve a su sitio.
 
 ### `cubase_set_tempo` (escritura)
 
@@ -218,10 +218,43 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `addtrack.audio`, `addtrack.group`, `addtrack.folder`, `audio.detect_silence` | dialog |
 | `addtrack.marker`, `marker.insert`, `project.select_track_next`, `project.select_track_prev`, `transport.locate_next_marker`, `transport.locate_prev_marker` | direct |
 | `project.remove_selected_tracks` | confirm |
-| `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.set_left_locator`, `transport.set_right_locator`, `transport.locators_to_selection` | unknown |
+| `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.locators_to_selection` | unknown |
 | `automation.mode_touch`, `automation.mode_auto_latch`, `automation.mode_cross_over`, `automation.next_mode`, `automation.toggle_write_selected` | unknown (experimento TW-1206) |
 | `transport.start`, `transport.stop` | direct (verificado: reproduce y para; nunca graba) |
-| `edit.delete_time`, `edit.cut_time`, `edit.insert_silence`, `edit.crop_range`, `process.silence`, `edit.select_all_on_tracks`, `edit.select_events_under_cursor`, `transport.locate_next_event`, `transport.locate_prev_event`, `transport.locate_selection`, `transport.locate_selection_end`, `transport.to_left_locator` | unknown (experimento TW-1211) |
+| `edit.delete_time`, `edit.cut_time`, `edit.insert_silence`, `edit.crop_range`, `edit.select_all_on_tracks` | ui_selection (verificado, TW-1211: actúan sobre la selección de rango) |
+| `transport.set_left_locator`, `transport.set_right_locator`, `transport.locate_next_event`, `transport.locate_selection`, `transport.locate_selection_end` | direct (verificado, TW-1211) |
+| `process.silence` | dialog (verificado, TW-1211: pregunta si el archivo de audio está compartido) |
+| `edit.select_events_under_cursor`, `transport.locate_prev_event`, `transport.to_left_locator`, `tool.range`, `tool.select` | unknown |
+
+## Edición por rangos en segundos
+
+### `cubase_edit_range` (destructiva, con ensayo)
+
+Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
+
+- **Entrada:**
+  - `start` y `end`: segundos (`"2"`, `"2.5"`, `"1:30"`, `"0:01:30.250"`) o compases con `unit: "bars"`;
+  - `action`:
+
+    | Acción | Efecto |
+    |---|---|
+    | `delete` | Borra el audio del rango y deja el hueco; nada se mueve |
+    | `delete_time` | Borra el rango y adelanta todo lo posterior, cerrando el hueco |
+    | `cut_time` | Como `delete_time`, y además copia el rango |
+    | `insert_silence` | Inserta un silencio tan largo como el rango, en su inicio |
+    | `crop` | Deja solo el rango |
+  - `verify_track`: una pista con audio cuyos bordes de eventos se sondean antes y después para comprobar el resultado. **Recomendado.**
+  - `dry_run`.
+- **Alcance: todas las pistas con eventos en el rango.** Es lo que hace Cubase con «Seleccionar en ciclo». Para un podcast, `delete_time` corta el tramo en todas las pistas a la vez. Editar una sola pista es la issue TW-1212.
+- **Qué hace:**
+  1. pone los localizadores en el rango: lleva el cursor a cada extremo, en segundos, y usa «Set Left/Right Locator»;
+  2. activa la herramienta de **Selección de rango**, lanza «Select in Loop» y ejecuta la acción;
+  3. vuelve a la herramienta de **Selección de objetos** (no puede saber cuál tenías antes);
+  4. deja como estaban los localizadores, el cursor y la pista seleccionada.
+- **Verificación:** con `verify_track`, recorre los bordes de los eventos de esa pista con «Locate Next Event» (inicios y finales, sin distinguirlos) y comprueba que coinciden con lo esperado. Revisa hasta 48 bordes a partir de 1 s antes del rango.
+- **Errores:** `BAD_TIME`, `TRANSPORT_RUNNING`, `NO_RANGE_SELECTION` (Cubase no creó la selección, por ejemplo porque la ventana de proyecto no está delante) y `WRITES_DISABLED`.
+- **Deshacer:** **Edición > Deshacer** en Cubase lo revierte, como se verificó con cada acción. No se guarda el proyecto.
+- **No incluida:** «Process > Silence» abre un diálogo si el archivo de audio lo comparten varios eventos.
 
 ## Abrir Cubase
 

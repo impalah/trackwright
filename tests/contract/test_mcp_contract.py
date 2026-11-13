@@ -45,7 +45,12 @@ NAVIGATION_TOOLS = {
     "cubase_list_automation_targets",
     "cubase_convert_value",
 }
-DESTRUCTIVE_TOOLS = {"cubase_remove_selected_tracks", "cubase_split_at_locators", "cubase_run_command"}
+DESTRUCTIVE_TOOLS = {
+    "cubase_edit_range",
+    "cubase_remove_selected_tracks",
+    "cubase_split_at_locators",
+    "cubase_run_command",
+}
 ALL_TOOLS = READ_TOOLS | WRITE_TOOLS | NAVIGATION_TOOLS | DESTRUCTIVE_TOOLS
 STUDIO_EQ = "946051208E29496E804F64A825C8A047"
 
@@ -212,3 +217,14 @@ async def test_get_project(client: Client) -> None:
     assert out["signature"] == {"text": "4/4", "numerator": 4, "denominator": 4}
     assert out["transport"] == "stopped"
     assert "sample_rate" in out["unavailable"]
+
+
+async def test_edit_range(client: Client) -> None:
+    plan = await call(client, "cubase_edit_range", {"start": "2", "end": "30", "action": "delete_time"})
+    assert (plan["dry_run"], plan["length_seconds"]) == (True, 28.0)
+    done = await call(
+        client,
+        "cubase_edit_range",
+        {"start": "2", "end": "30", "action": "delete", "verify_track": "POC-TEST", "dry_run": False},
+    )
+    assert done["verified"] is True

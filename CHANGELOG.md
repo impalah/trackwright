@@ -2,6 +2,10 @@
 
 ## Sin publicar
 
+- **Edición por rangos en segundos** (TW-1211):
+  - herramienta `cubase_edit_range` (`delete`, `delete_time`, `cut_time`, `insert_silence`, `crop`), con verificación por sondeo de los bordes de los eventos;
+  - **script 1.5.1**, con 14 comandos de edición, herramienta y sondeo.
+- **`cubase_set_position` en segundos:** verifica con la pantalla de segundos de Cubase y coloca los localizadores mediante el cursor. **Corrige** los localizadores en segundos, que antes quedaban en otra posición.
 - **Propiedades del proyecto** (TW-1209):
   - herramienta `cubase_get_project`: compás, ciclo, punch, pre-roll y post-roll, metrónomo, precuenta, estado del transporte, modos de grabación y carpeta del proyecto;
   - `cubase_record_automation` usa el compás del proyecto en lugar de suponer 4/4.

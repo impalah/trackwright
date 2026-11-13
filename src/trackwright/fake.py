@@ -101,6 +101,20 @@ class FakeCubase:
         }
         self.tempo = 120.0
         self.online = True  # False simulates Cubase closed or still starting (TW-1201)
+        # Range editing (TW-1211): audio events per channel in seconds, the active tool, the range selection
+        # and an undo history, as observed in Cubase 15 (experiments/tw1211).
+        self.track_events: dict[int, list[tuple[float, float]]] = {
+            self.channel_by_title(title).id: list(events)
+            for title, events in (
+                ("POC-TEST", [(0.0, 2.4), (2.0, 6.8), (6.0, 18.0), (18.0, 22.0), (22.0, 139.976)]),
+                ("POC-INSTR", [(0.0, 2.0), (2.0, 4.0), (4.0, 6.0), (6.0, 8.0)]),
+            )
+            if any(self.objects[c].title == title for c in self.channels)
+        }
+        self.tool = "select"
+        self.range: tuple[float, float] | None = None
+        self.history: list[dict[int, list[tuple[float, float]]]] = []
+        self.clipboard_seconds = 0.0
         # Automation simulation (TW-1207): playback advances the cursor on every transport.get.
         self.automation_controls = True
         self.playing = False
@@ -143,7 +157,19 @@ class FakeCubase:
         transport = self._obj("Transport", "Transporte")
         on_off = ("start", "record", "cycle", "punchIn", "punchOut", "usePreRoll", "usePostRoll", "metronomeOn",
                   "precountOn", "returnOnStop")  # fmt: skip
-        transport.params = {4000 + i: Param(title, "discrete", 0) for i, title in enumerate(on_off)}
+        tags = {
+            "start": 4015,
+            "record": 4019,
+            "cycle": 4022,
+            "punchIn": 4020,
+            "punchOut": 4021,
+            "usePreRoll": 4037,
+            "usePostRoll": 4038,
+            "metronomeOn": 4099,
+            "precountOn": 4100,
+            "returnOnStop": 4150,
+        }  # as in Cubase 15
+        transport.params = {tags[title]: Param(title, "discrete", 0) for title in on_off}
         transport.params[4016] = Param("stop", "discrete", 1)
         texts = {"signature": "4/4", "cycleLeftTime": "1. 1. 1.  0", "cycleRightTime": "1. 1. 1.  0",
                  "punchInTime": "1. 1. 1.  0", "punchOutTime": "1. 1. 1.  0", "preRoll": "0. 0. 0.  0",
@@ -152,7 +178,7 @@ class FakeCubase:
                  "midiRecordMode": "Nuevas partes", "midiCycleRecordMode": "Mix",
                  "recordStartMode": "Iniciar en cursor", "startPlayModes": "Inicio desde posición"}  # fmt: skip
         for i, (title, value) in enumerate(texts.items()):
-            transport.params[4027 if title == "signature" else 4100 + i] = Param(title, "text", 0, value)
+            transport.params[4027 if title == "signature" else 4200 + i] = Param(title, "text", 0, value)
         metronome = self._obj("Metronome", "Metronome")
         metronome.params = {1: Param("clickLevel", "text", 1, "127"), 2: Param("tickInRecord", "discrete", 0),
                             3: Param("tickInPlayback", "discrete", 0)}  # fmt: skip
@@ -161,7 +187,7 @@ class FakeCubase:
 
     @property
     def meter(self) -> tuple[int, int]:
-        numerator, denominator = (self.studio_param("transport", "signature").text or "4/4").split("/")
+        numerator, denominator = (self.studio["transport"].params[4027].text or "4/4").split("/")
         return int(numerator), int(denominator)
 
     def studio_param(self, kind: str, title: str) -> Param:
@@ -343,6 +369,13 @@ class FakeCubase:
         return f"{param.value:.2f}"
 
     def _describe_param(self, obj: Obj, tag: int) -> JsonObject:
+        if obj is self.studio["transport"]:  # cursor position, live (verified: time and time2 follow the cursor)
+            try:
+                seconds_text = _format_seconds(self._seconds(self.transport["locator"]))
+            except ValueError:
+                seconds_text = ""
+            obj.params[4023] = Param("time", "text", 0, self.transport["locator"])
+            obj.params[4101] = Param("time2", "text", 0, seconds_text)
         param = obj.params.get(tag)
         if param is None:
             return {
@@ -568,7 +601,21 @@ class FakeCubase:
 
     def _op_cmd_canPerform(self, p: JsonObject) -> JsonObject:  # noqa: N802 - mirrors the op name
         keys = [p["key"]] if p.get("key") else list(COMMANDS)
-        return {"canPerform": {k: k not in self.can_perform_false for k in keys if k in COMMANDS}}
+        return {"canPerform": {k: self._can(k) for k in keys if k in COMMANDS}}
+
+    RANGE_ACTIONS = ("edit.delete", "edit.delete_time", "edit.cut_time", "edit.insert_silence", "edit.crop_range")
+
+    def _can(self, key: str) -> bool:
+        """canPerform as observed: undo needs history and no open dialog, range actions need a range."""
+        if key == "edit.undo":
+            return bool(self.history) and self.pending_dialog is None
+        if key in self.RANGE_ACTIONS and key != "edit.delete":
+            return self.range is not None  # verified: Crop Range needs a range selection
+        if key == "edit.delete" and self.tool == "range":
+            return self.range is not None
+        if key == "edit.select_in_loop":
+            return self._seconds(self.transport["cycleLeft"]) < self._seconds(self.transport["cycleRight"])
+        return key not in self.can_perform_false
 
     # ------------------------------------------------------------------ writes
     def _op_da_param_set(self, p: JsonObject) -> JsonObject:
@@ -736,7 +783,12 @@ class FakeCubase:
         if not isinstance(time, str) or not 0 < len(time) <= 32:
             raise HostError("time must be a non-empty string", code="BAD_REQUEST")
         before = self._time(self.transport[which], display)
-        self.transport[which] = time if display == "primary" else _seconds_to_bars(time, self.tempo)
+        if display == "primary":
+            self.transport[which] = time
+        elif which == "locator":
+            self.transport[which] = self._bars_at(_parse_seconds(time))
+        else:  # verified bug (TW-1211): locators set through the seconds display land elsewhere
+            self.transport[which] = "1. 1. 1.  0"
         return {"which": which, "display": display, "requested": time, "before": before}
 
     def _op_transport_setTempo(self, p: JsonObject) -> JsonObject:  # noqa: N802 - mirrors the op name
@@ -751,7 +803,7 @@ class FakeCubase:
         spec = COMMANDS.get(str(key))
         if spec is None:
             raise HostError(f"unknown command key {key}", code="NOT_FOUND")
-        can = spec.key not in self.can_perform_false
+        can = self._can(spec.key)
         if not can and p.get("force") is not True:
             raise HostError(f"canPerform=false for {spec.category}/{spec.name}", code="CANNOT_PERFORM")
         self.fired.append(spec.key)
@@ -769,8 +821,42 @@ class FakeCubase:
             self.pending_dialog = key
         elif key.startswith("transport."):
             self._apply_transport(key)
+        elif key.startswith(("tool.", "edit.")) and self._apply_edit(key):
+            return
         else:
             self._apply_project(key)
+
+    # ------------------------------------------------------------------ range editing (TW-1211)
+    def _seconds(self, bars: str) -> float:
+        return _bars_to_beats(bars, self.meter) * 60 / self.tempo
+
+    def _bars_at(self, seconds: float) -> str:
+        return _beats_to_bars(seconds * self.tempo / 60, self.meter)
+
+    def _apply_edit(self, key: str) -> bool:
+        """Tool and range commands; ``False`` lets other edit commands fall through."""
+        if key in ("tool.range", "tool.select"):
+            self.tool = key.split(".")[1]
+            self.range = None
+        elif key == "edit.select_in_loop":
+            start, end = self._seconds(self.transport["cycleLeft"]), self._seconds(self.transport["cycleRight"])
+            self.range = (start, end) if self.tool == "range" and start < end else None
+        elif key == "edit.select_none":
+            self.range = None
+        elif key in self.RANGE_ACTIONS and self.range is not None:
+            self.history.append({tid: list(events) for tid, events in self.track_events.items()})
+            for tid, events in self.track_events.items():
+                self.track_events[tid] = _edit_events(events, key, *self.range)
+            if key == "edit.cut_time":
+                self.clipboard_seconds = self.range[1] - self.range[0]
+        elif key == "edit.undo" and self.history:
+            self.track_events = self.history.pop()
+        else:
+            return False
+        return True
+
+    def edges(self, track_id: int) -> list[float]:
+        return sorted({round(edge, 3) for event in self.track_events.get(track_id, []) for edge in event})
 
     def _apply_project(self, key: str) -> None:
         tracks = self.channels[1:]
@@ -792,7 +878,16 @@ class FakeCubase:
 
     def _apply_transport(self, key: str) -> None:
         cursor = self.transport["locator"]
-        if key == "transport.start":
+        if key in ("transport.set_left_locator", "transport.set_right_locator"):
+            self.transport["cycleLeft" if "left" in key else "cycleRight"] = cursor
+        elif key == "transport.locate_next_event":
+            here = self._seconds(cursor)
+            following = [edge for edge in self.edges(self.selected) if edge > here + 1e-6]
+            if following:
+                self.transport["locator"] = self._bars_at(following[0])
+        elif key in ("transport.locate_selection", "transport.locate_selection_end") and self.range is not None:
+            self.transport["locator"] = self._bars_at(self.range[0 if key.endswith("selection") else 1])
+        elif key == "transport.start":
             self.playing = True
             self.position = _bars_to_beats(cursor, self.meter)
         elif key == "transport.stop":
@@ -828,12 +923,40 @@ def _bars(time: str) -> tuple[int, ...]:
     return tuple(int(part) for part in time.replace(".", " ").split())
 
 
-def _seconds_to_bars(time: str, tempo: float) -> str:
-    """Convert ``h:mm:ss.mmm`` to a 4/4 bar string (the simulator assumes 4/4)."""
+def _parse_seconds(time: str) -> float:
     hours, minutes, seconds = time.split(":")
-    total = int(hours) * 3600 + int(minutes) * 60 + float(seconds)
-    beats = total * tempo / 60
-    return f"{int(beats // 4) + 1}. {int(beats % 4) + 1}. 1.  0"
+    return int(hours) * 3600 + int(minutes) * 60 + float(seconds)
+
+
+def _format_seconds(seconds: float) -> str:
+    millis = round(seconds * 1000)
+    hours, rest = divmod(millis, 3_600_000)
+    minutes, rest = divmod(rest, 60_000)
+    return f"{hours}:{minutes:02d}:{rest // 1000:02d}.{rest % 1000:03d}"
+
+
+def _edit_events(events: list[tuple[float, float]], key: str, start: float, end: float) -> list[tuple[float, float]]:
+    """What each range command does to one track's events (verified in Cubase, TW-1211)."""
+    gap = end - start
+    out: list[tuple[float, float]] = []
+    for a, b in events:
+        if key == "edit.crop_range":
+            if b > start and a < end:
+                out.append((max(a, start), min(b, end)))
+        elif key == "edit.insert_silence":
+            if b <= start:
+                out.append((a, b))
+            elif a >= start:
+                out.append((a + gap, b + gap))
+            else:
+                out += [(a, start), (start + gap, b + gap)]
+        else:  # delete keeps a hole; delete_time / cut_time close it
+            shift = gap if key != "edit.delete" else 0.0
+            if a < start:
+                out.append((a, min(b, start)))
+            if b > end:
+                out.append((max(a, end) - shift, b - shift))
+    return out
 
 
 class FakeLauncher:

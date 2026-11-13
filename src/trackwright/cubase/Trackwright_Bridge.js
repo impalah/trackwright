@@ -16,7 +16,7 @@
 
 var midiremote_api = require('midiremote_api_v1')
 
-var SCRIPT_VERSION = '1.5.0'
+var SCRIPT_VERSION = '1.5.1'
 var PROTOCOL_VERSION = 1
 var MANUFACTURER = 0x7D
 var MAGIC_A = 0x54
@@ -309,7 +309,9 @@ var COMMANDS = [
 	['edit.select_all', 'Edit', 'Select All'],
 	['edit.select_none', 'Edit', 'Select None'],
 	['edit.select_in_loop', 'Edit', 'Select in Loop'],
-	// TW-1211: range editing and event probing (classes not verified yet)
+	// TW-1211: range editing and event probing (experiments/tw1211)
+	['tool.range', 'Tool', 'Range Tool'],
+	['tool.select', 'Tool', 'Select Tool'],
 	['edit.delete_time', 'Edit', 'Delete Time'],
 	['edit.cut_time', 'Edit', 'Cut Time'],
 	['edit.insert_silence', 'Edit', 'Insert Silence'],

@@ -24,12 +24,13 @@ claude mcp add trackwright -- uv --directory "$PWD" run trackwright serve
 
 ## Qué puede hacer
 
-26 herramientas, todas con salida estructurada:
+27 herramientas, todas con salida estructurada:
 
 - **Lectura:** estado, pistas del mezclador, canal seleccionado, inserts, catálogo de plugins, parámetros, transporte y cambios recientes.
 - **Escritura**, siempre con ensayo previo (`dry_run`) y verificación por relectura: parámetros (en valor normalizado o en unidades reales), inserción de plugins, volumen, mute, solo, armado, nombre de pista y tempo.
 - **Navegación:** seleccionar pistas y mover el cursor y los localizadores.
 - **Automatización:** graba curvas de volumen, panorama, envíos, EQ del canal, pre-filtro y parámetros de plugins, reproduciendo el proyecto, con valores en unidades reales (dB, Hz) que convierte Cubase. Verificado en Cubase Elements.
+- **Edición de podcasts:** borrar, cortar o insertar silencio en un rango en segundos, con verificación del resultado.
 - **Comandos de Cubase:** marcadores, borrado de pistas, división en los localizadores, creación de pistas con ayuda del usuario y una lista de comandos permitidos. Cada comando indica cómo se comporta: si actúa directamente, si abre un diálogo o si pide confirmación.
 
 Por defecto **solo lee**. Las escrituras se habilitan en la configuración y se pueden limitar a pistas concretas.
@@ -50,6 +51,7 @@ Por defecto **solo lee**. Las escrituras se habilitan en la configuración y se 
   5. [Marcadores y cursor](docs/tutoriales/05-marcadores-cursor.md)
   6. [Pista con diálogo](docs/tutoriales/06-pista-con-dialogo.md)
   7. [Grabar automatización](docs/tutoriales/07-automatizacion.md)
+  8. [Editar un podcast por segundos](docs/tutoriales/08-podcast.md)
 - **Proyecto**
   - [Arquitectura](docs/arquitectura.md)
   - [Desarrollo](docs/desarrollo.md)

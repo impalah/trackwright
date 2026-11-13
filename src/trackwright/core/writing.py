@@ -23,7 +23,6 @@ from trackwright.core.base import (
     TAG_SOLO,
     TAG_VOLUME,
     JsonObject,
-    ServiceBase,
     operation,
 )
 from trackwright.core.models import (
@@ -36,11 +35,11 @@ from trackwright.core.models import (
     Value,
     WriteOut,
 )
+from trackwright.core.project import SECONDS_TOLERANCE, ProjectMixin, format_seconds, parse_seconds
 from trackwright.core.refs import TrackSelector
 from trackwright.errors import NotFoundError, PreconditionFailedError, RequestTimeoutError, TrackwrightError
 
 BARS_RE = re.compile(r"^\s*(\d+)\s*\.\s*(\d+)\s*\.\s*(\d+)\s*\.\s*(\d+)\s*$")
-SECONDS_RE = re.compile(r"^\s*(\d+):(\d{2}):(\d{2}(?:\.\d{1,3})?)\s*$")
 TEMPO_TOLERANCE = 0.01
 
 
@@ -58,16 +57,7 @@ def format_bars(position: tuple[int, int, int, int]) -> str:
     return f"{bar}. {beat}. {sixteenth}.{ticks:>3}"
 
 
-def seconds_to_bars(text: str, tempo: float) -> tuple[int, int, int, int]:
-    """Convert ``h:mm:ss.mmm`` to bars assuming 4/4 and a constant tempo (used only to verify)."""
-    match = SECONDS_RE.match(text)
-    assert match is not None
-    seconds = int(match.group(1)) * 3600 + int(match.group(2)) * 60 + float(match.group(3))
-    beats = seconds * tempo / 60
-    return int(beats // 4) + 1, int(beats % 4) + 1, 1, 0
-
-
-class WritingMixin(ServiceBase):
+class WritingMixin(ProjectMixin):
     # ------------------------------------------------------------------ helpers
     def _value(self, raw: JsonObject | None) -> Value | None:
         return None if raw is None else Value(process=raw.get("process"), display=raw.get("display"))
@@ -324,15 +314,17 @@ class WritingMixin(ServiceBase):
         field = {"cursor": "locator", "cycle_left": "cycleLeft", "cycle_right": "cycleRight"}.get(which)
         if field is None:
             raise PreconditionFailedError("which must be cursor, cycle_left or cycle_right", code="BAD_REQUEST")
+        seconds: float | None = None
         if unit == "bars":
             position = bars_tuple(time)
             if position is None:
                 raise PreconditionFailedError("bars look like '3. 1. 1. 0' (bar. beat. 16th. tick)", code="BAD_TIME")
-            display, text = "primary", format_bars(position)
+            text = format_bars(position)
         elif unit == "seconds":
-            if not SECONDS_RE.match(time):
-                raise PreconditionFailedError("seconds look like '0:00:02.000' (h:mm:ss.mmm)", code="BAD_TIME")
-            display, text = "secondary", time.strip()
+            seconds = parse_seconds(time)
+            if seconds is None:
+                raise PreconditionFailedError("seconds look like '2.5', '1:30' or '0:01:30.000'", code="BAD_TIME")
+            text = format_seconds(seconds)
         else:
             raise PreconditionFailedError("unit must be 'bars' or 'seconds'", code="BAD_REQUEST")
         transport = self.call("transport.get")
@@ -340,13 +332,10 @@ class WritingMixin(ServiceBase):
         before = TimePosition(time=before_raw["time"], format=before_raw.get("format")) if before_raw else None
         if dry_run:
             return PositionOut(dry_run=True, which=which, requested=text, before=before, after=None, verified=None)
-        self.call("transport.setTime", {"which": field, "display": display, "time": text})
-        if unit == "bars":
-            expected = bars_tuple(text)
-            note = None
-        else:
-            expected = seconds_to_bars(text, float(transport.get("tempoBPM") or 120.0))
-            note = "seconds verified assuming 4/4 and a constant tempo"
+        if seconds is not None:
+            return self._set_position_seconds(which, field, text, seconds, before)
+        self.call("transport.setTime", {"which": field, "display": "primary", "time": text})
+        expected = bars_tuple(text)
 
         def read() -> JsonObject:
             raw = (self.call("transport.get").get("primary") or {}).get(field) or {}
@@ -355,14 +344,34 @@ class WritingMixin(ServiceBase):
         after_raw = self.wait_until(read, lambda raw: bars_tuple(str(raw.get("time", ""))) == expected)
         after = TimePosition(time=str(after_raw.get("time", "")), format=after_raw.get("format"))
         return PositionOut(
-            dry_run=False,
-            which=which,
-            requested=text,
-            before=before,
-            after=after,
+            dry_run=False, which=which, requested=text, before=before, after=after,
             verified=bars_tuple(after.time) == expected,
-            note=note,
-        )
+        )  # fmt: skip
+
+    def _set_position_seconds(
+        self, which: str, field: str, text: str, seconds: float, before: TimePosition | None
+    ) -> PositionOut:
+        """Seconds, verified with the Transport's own seconds display (TW-1211): no tempo or meter assumed."""
+        transport = self._transport_id()
+        if which == "cursor":
+            landed = self._move_cursor_seconds(transport, seconds)
+            after = TimePosition(time=self._cursor_bars(), format="Compases+Tiempos")
+            return PositionOut(dry_run=False, which=which, requested=text, before=before, after=after,
+                               verified=abs(landed - seconds) <= SECONDS_TOLERANCE,
+                               note=f"cursor at {format_seconds(landed)} (read back in seconds)")  # fmt: skip
+        cursor = self._cursor_seconds(transport)
+        try:
+            locator = self._set_locator_seconds(transport, "left" if which == "cycle_left" else "right", seconds)
+        finally:
+            self._move_cursor_seconds(transport, cursor)  # the cursor was only a means: put it back
+        expected = bars_tuple(locator)
+        raw = (self.call("transport.get").get("primary") or {}).get(field) or {}
+        after = TimePosition(time=str(raw.get("time", "")), format=raw.get("format"))
+        return PositionOut(
+            dry_run=False, which=which, requested=text, before=before, after=after,
+            verified=expected is not None and bars_tuple(after.time) == expected,
+            note="set at the cursor with Set Left/Right Locator (the seconds display cannot move the locators)",
+        )  # fmt: skip
 
     @operation
     def set_tempo(self, bpm: float, *, dry_run: bool = True) -> TempoOut:

@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from trackwright.core.service import CubaseService
-from trackwright.core.writing import bars_tuple, format_bars, seconds_to_bars
+from trackwright.core.writing import bars_tuple, format_bars
 from trackwright.errors import (
     NotFoundError,
     PolicyError,
@@ -34,11 +34,6 @@ def test_bars_tuple(text: str, expected: tuple[int, int, int, int] | None) -> No
 def test_format_bars_matches_cubase() -> None:
     assert format_bars((1, 1, 1, 0)) == "1. 1. 1.  0"
     assert format_bars((3, 2, 4, 120)) == "3. 2. 4.120"
-
-
-def test_seconds_to_bars() -> None:
-    assert seconds_to_bars("0:00:02.000", 120) == (2, 1, 1, 0)
-    assert seconds_to_bars("0:00:00.5", 120) == (1, 2, 1, 0)
 
 
 # ---------------------------------------------------------------- set_parameter
@@ -244,8 +239,19 @@ def test_set_position_bars(service: CubaseService, fake: FakeCubase) -> None:
 def test_set_position_seconds(service: CubaseService, fake: FakeCubase) -> None:
     out = service.set_position("cursor", "0:00:02.000", unit="seconds")
     assert out.verified is True
-    assert out.note is not None
+    assert out.note == "cursor at 0:00:02.000 (read back in seconds)"
     assert fake.transport["locator"] == "2. 1. 1.  0"
+    assert service.set_position("cursor", "1:30", unit="seconds").requested == "0:01:30.000"
+
+
+def test_set_locators_in_seconds_go_through_the_cursor(service: CubaseService, fake: FakeCubase) -> None:
+    service.set_position("cursor", "5", unit="seconds")
+    left = service.set_position("cycle_left", "2", unit="seconds")
+    right = service.set_position("cycle_right", "0:00:30", unit="seconds")
+    assert (left.verified, right.verified) == (True, True)
+    assert (fake.transport["cycleLeft"], fake.transport["cycleRight"]) == ("2. 1. 1.  0", "16. 1. 1.  0")
+    assert fake.transport["locator"] == "3. 3. 1.  0"  # the cursor is back at 5 s
+    assert fake.fired.count("transport.set_left_locator") == 1
 
 
 def test_set_position_dry_run_and_errors(service: CubaseService, fake: FakeCubase) -> None:

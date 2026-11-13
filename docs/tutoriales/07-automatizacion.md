@@ -38,3 +38,7 @@ Claude buscará la clave (`insert1.p1`) y pasará los puntos como `plain: -20` y
 
 - Trackwright graba automatización reproduciendo el proyecto, igual que tú con un controlador.
 - La curva se define con puntos (posición en compases y valor) y se verifica con una segunda pasada.
+
+## Para seguir
+
+- [Tutorial 8 — Editar un podcast por segundos](08-podcast.md).

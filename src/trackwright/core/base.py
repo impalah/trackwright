@@ -9,7 +9,7 @@ import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Concatenate, Protocol
+from typing import Any, Concatenate, Protocol, TypeVar
 
 from trackwright.core.models import ParameterInfo, TrackInfo, Value
 from trackwright.core.policy import WritePolicy
@@ -25,6 +25,7 @@ from trackwright.hostport import HostPort
 from trackwright.ops import WRITE_OPS
 
 JsonObject = dict[str, Any]
+T = TypeVar("T")
 
 
 class AppLauncher(Protocol):
@@ -139,7 +140,7 @@ class ServiceBase:
             raise TrackwrightError("the Cubase script did not report a session", code="NO_SESSION")
         return session
 
-    def wait_until(self, read: Callable[[], JsonObject], done: Callable[[JsonObject], bool]) -> JsonObject:
+    def wait_until(self, read: Callable[[], T], done: Callable[[T], bool]) -> T:
         """Re-read until ``done`` or the settle timeout (values that arrive through callbacks lag a little)."""
         deadline = time.monotonic() + self._settle_timeout
         value = read()
