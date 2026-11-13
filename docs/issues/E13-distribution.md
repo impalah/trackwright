@@ -4,6 +4,8 @@
 
 Origin: the user's question of 2026-11-13. Today Trackwright is used from the source code (`uv --directory … run trackwright`); the goal is to install it with **uv as the only requirement**.
 
+**Status:** closed (2026-11-13). TW-1301, TW-1302 and TW-1303 done; Trackwright 0.3.0 is published on PyPI (tag `v0.3.0`).
+
 **Checked before opening the epic** (2026-11-13, without publishing anything; tests in a temporary directory, since deleted):
 - `uv build` produces `trackwright_mcp-0.2.0-py3-none-any.whl`, with `trackwright/cubase/Trackwright_Bridge.js` inside and the `trackwright` executable;
 - `uvx --from <wheel> trackwright version` and `script status` work outside the repository;
@@ -47,7 +49,7 @@ Origin: the user's question of 2026-11-13. Today Trackwright is used from the so
 
 ## TW-1303 Distribution channel
 
-- **Status:** prepared (2026-11-13); the upload remains, which the user does with their token
+- **Status:** done (2026-11-13). The user published 0.3.0 on PyPI with `make publish`; tag `v0.3.0`. Details in [verification.md](../verification.md)
 - **User decision (2026-11-13):** publish on **PyPI** under the name **`trackwright`** (available on PyPI and TestPyPI that day), license **AGPL-3.0-or-later** (`-only` was chosen first; changed before publishing), author «impalah» with their email.
 - **Done:**
   - package renamed (`trackwright-mcp` → `trackwright`), version 0.3.0, `LICENSE` with the official text, and classifiers;
@@ -55,7 +57,8 @@ Origin: the user's question of 2026-11-13. Today Trackwright is used from the so
   - `setup` chooses the registration command: the `uv tool` path, the repository, or `uvx` pinned to the version;
   - README for the end user, installation manual with PyPI as the main route, and tutorial 1 updated;
   - `twine check --strict` passes; isolated installation of the wheel with `uv tool install` (`version`, `doctor`, `setup`) and `uvx` checked.
-- **Pending:** upload to TestPyPI and PyPI (`uv publish`) and, after publishing, the `v0.3.0` tag.
+- **Published (2026-11-13):** https://pypi.org/project/trackwright/ — the uploaded files are identical (SHA-256) to the local build of the tagged commit.
+- **Lesson about credentials:** the first upload failed with `403 Invalid or non-existent authentication information` because the interactive prompt of `security add-generic-password -w` keeps only 128 characters, and PyPI tokens are longer. The token must be stored from the clipboard (`-w "$(pbpaste)"`); see the release procedure in [development.md](../development.md).
 - **Goal:** document and implement the way to install without the repository.
 - **Scope:**
   1. **local wheel:** `uv build` and `uv tool install dist/trackwright_mcp-<version>-py3-none-any.whl`; update with `--reinstall`;

@@ -114,6 +114,28 @@ Las escrituras se restauran al terminar. Estos tests usan tu configuración real
 7. **Documentación:** una sección en `docs/manual/04-tools.md` y la misma en su traducción, `docs/manual/04-tools.es.md`. `tests/unit/test_docs.py` falla si falta. Todo documento se escribe en inglés (`X.md`) con su traducción al castellano (`X.es.md`), y se actualizan a la vez.
 8. `scripts/check.sh` en verde y commit que cite la issue.
 
+## Publicar una versión
+
+1. Actualiza `version` en `pyproject.toml` y el registro de cambios (`CHANGELOG.md` y `CHANGELOG.es.md`); `uv sync` actualiza `uv.lock`.
+2. `make check` y commit.
+3. Publica (lo hace el usuario, con su propio token):
+   ```sh
+   UV_PUBLISH_TOKEN="$(security find-generic-password -a "$USER" -s pypi-token -w)" make publish
+   ```
+   `make publish-test` hace lo mismo contra TestPyPI (entrada del Llavero `testpypi-token`).
+4. Etiqueta el commit publicado: `git tag -a vX.Y.Z -m "Trackwright X.Y.Z"`.
+
+Una versión nunca se puede volver a subir, aunque se borre de PyPI.
+
+**Guardar el token en el Llavero de macOS.** Copia el token desde la página de PyPI y ejecuta:
+
+```sh
+security add-generic-password -U -a "$USER" -s pypi-token -w "$(pbpaste)"
+pbcopy < /dev/null
+```
+
+No uses la petición interactiva (`-w` sin valor): solo conserva 128 caracteres y los tokens de PyPI son más largos, así que la subida falla con `403 Invalid or non-existent authentication information`. Tras la primera publicación, usa un token limitado al proyecto `trackwright`.
+
 ## Cambiar el script de Cubase
 
 - Incrementa `SCRIPT_VERSION` en el script; los tests comprueban la versión.

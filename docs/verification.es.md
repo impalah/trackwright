@@ -370,3 +370,9 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.es.md).
 - El sdist solo contiene `src/trackwright`, `pyproject.toml`, `README.md` y `LICENSE`.
 - **`uv tool install` del wheel en directorios temporales:** `version` da 0.3.0 y `doctor` 5/5 contra el Cubase real. `setup` sin entrada se salta los tres pasos y no escribe nada.
 - **`uvx --from <wheel>`:** el ejecutable está en la caché de uv (`archive-v0`), y `setup` propone `uvx --from trackwright==0.3.0 trackwright serve` en vez de esa ruta temporal.
+
+## 2026-11-13 — TW-1303: 0.3.0 publicada en PyPI
+
+- El usuario publicó con `make publish` (construcción, `twine check --strict`, `uv publish`) desde el commit etiquetado `v0.3.0`.
+- El primer intento se rechazó con `403 Invalid or non-existent authentication information`: el token guardado en el Llavero tenía exactamente 128 caracteres, cortado por la petición interactiva de `security add-generic-password -w`. Con un token nuevo guardado desde el portapapeles la subida funcionó. El intento fallido no subió nada.
+- **Comprobado después:** la API JSON de PyPI da `trackwright` 0.3.0, `License-Expression: AGPL-3.0-or-later`, `Requires-Python: >=3.14` y la URL `Author`; el SHA-256 del wheel y del sdist en PyPI coincide con el `dist/` local; `uvx trackwright@0.3.0 version` desde otra carpeta lo descarga de PyPI y responde `0.3.0`.

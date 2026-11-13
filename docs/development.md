@@ -114,6 +114,28 @@ Writes are restored at the end. These tests use your real configuration: they do
 7. **Documentation:** a section in `docs/manual/04-tools.md` and the same in its Spanish translation, `docs/manual/04-tools.es.md`. `tests/unit/test_docs.py` fails if it is missing. Every document is written in English (`X.md`) with its Spanish translation (`X.es.md`), updated together.
 8. `scripts/check.sh` green and a commit that cites the issue.
 
+## Releasing a version
+
+1. Update `version` in `pyproject.toml` and the changelog (`CHANGELOG.md` and `CHANGELOG.es.md`); `uv sync` updates `uv.lock`.
+2. `make check`, then commit.
+3. Publish (the user does it, with their own token):
+   ```sh
+   UV_PUBLISH_TOKEN="$(security find-generic-password -a "$USER" -s pypi-token -w)" make publish
+   ```
+   `make publish-test` does the same against TestPyPI (Keychain entry `testpypi-token`).
+4. Tag the published commit: `git tag -a vX.Y.Z -m "Trackwright X.Y.Z"`.
+
+A version can never be uploaded twice, even if it is deleted from PyPI.
+
+**Storing the token in the macOS Keychain.** Copy the token from the PyPI page and run:
+
+```sh
+security add-generic-password -U -a "$USER" -s pypi-token -w "$(pbpaste)"
+pbcopy < /dev/null
+```
+
+Do not use the interactive prompt (`-w` with no value): it keeps only 128 characters and PyPI tokens are longer, so the upload fails with `403 Invalid or non-existent authentication information`. After the first release, use a token scoped to the `trackwright` project.
+
 ## Changing the Cubase script
 
 - Bump `SCRIPT_VERSION` in the script; the tests check the version.

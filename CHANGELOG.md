@@ -2,7 +2,9 @@
 
 **English** · [Español](CHANGELOG.es.md)
 
-## 0.3.0 — prepared, pending publication on PyPI
+## 0.3.0 — 2026-11-13
+
+First release on PyPI: `uv tool install trackwright`.
 
 - **`Makefile`** with the usual tasks (check, tests, build, publish, doctor, Cubase script…), all through uv; `make help` lists them.
 - **Publication on PyPI** (TW-1303): the package is renamed **`trackwright`** (formerly `trackwright-mcp`) and is installed with `uv tool install trackwright`.
