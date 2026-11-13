@@ -136,3 +136,41 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
   3. **Herramienta `cubase_convert_value(track, parameter, plain | value)`:** solo lectura, convierte en los dos sentidos. Sustituye a la calibración: es exacta y no mueve nada.
   4. **`cubase_list_automation_targets`:** el campo `display` ya está en unidades reales. Se documenta así en lugar de convertir los 45 parámetros, que costaría varios segundos.
 - **Pruebas:** simulador con los objetos Panner, slots de envío, InputFilter, EQ con 12 parámetros y plugins con parámetros nombrados; tests de correspondencia, conversión, errores (`NO_UNIT_CONVERSION` en los Quick Controls, `OUT_OF_RANGE`) y contrato MCP.
+
+## TW-1209 Leer las propiedades del proyecto abierto
+
+- **Estado:** pendiente; requiere un experimento previo
+- **Objetivo:** que el modelo conozca el contexto del proyecto antes de actuar: nombre, tempo, compás, frecuencia de muestreo, longitud, ciclo y metrónomo. Hoy supone 4/4 y no conoce el nombre ni la frecuencia.
+- **Qué hay hoy:** `cubase_get_transport` ya lee el cursor, los localizadores del ciclo y el tempo.
+- **Qué ofrece la API de MIDI Remote** (según `midiremote_api_v1.d.ts` de Cubase 15; **sin verificar**):
+
+  | Propiedad | Vía candidata | Lectura |
+  |---|---|---|
+  | Ciclo activado | `mHostAccess.mTransport.mValue.mCycleActive` (valor de host, enlazable a un control de superficie) | Probable, como los controles de automatización |
+  | Metrónomo activado y nivel del clic | `mTransport.mValue.mMetronomeActive` y `mMetronomeClickLevel` | Probable |
+  | Tempo, cursor, localizadores | `mTimeDisplay` | **Verificado** |
+  | Nombre y ruta del proyecto | No aparece en la API. Alternativa: el `.cpr` abierto por el proceso de Cubase (`lsof`), sin abrir el archivo | Por explorar; **requiere permiso del usuario** |
+  | Compás (numerador/denominador) | No aparece en la API. Alternativas: un objeto DirectAccess fuera del mezclador (por explorar) o deducirlo de la relación entre las pantallas de tiempo primaria y secundaria | Incierto |
+  | Frecuencia de muestreo, resolución, frame rate, inicio y longitud del proyecto | No aparecen en la API (son de «Configuración del proyecto», un diálogo) | Probablemente imposible desde el script |
+  | Precuenta, uso de la pista de tempo | Solo como comandos que alternan el estado (`Transport / Precount On`, `Tempo Track Rehearsal Mode On/Off`), sin lectura | Imposible leer el estado |
+- **Experimento previo (TW-1209a):**
+  1. añadir al script, en una compilación de experimento, controles de superficie enlazados a `mCycleActive`, `mMetronomeActive` y `mMetronomeClickLevel`, y comprobar que sus valores llegan;
+  2. explorar con DirectAccess los objetos del proyecto fuera del mezclador, en solo lectura, buscando compás o frecuencia;
+  3. con permiso del usuario, comprobar si `lsof` identifica el `.cpr` abierto.
+- **Entregable:** herramienta `cubase_get_project`, que devuelve lo verificado y marca como `null`, con su motivo, lo que no se puede leer.
+- **Consecuencia:** si el compás se puede leer, `cubase_record_automation` y la conversión de segundos dejan de suponer 4/4.
+
+## TW-1210 Modificar las propiedades del proyecto
+
+- **Estado:** pendiente; depende de TW-1209
+- **Objetivo:** cambiar desde el MCP las propiedades del proyecto que la API permita, con ensayo, confirmación y relectura, como el resto de escrituras.
+- **Qué hay hoy:** `cubase_set_tempo` (verificado) y `cubase_set_position` (cursor y localizadores del ciclo, verificado).
+- **Candidatas:**
+
+  | Propiedad | Vía candidata | Relectura |
+  |---|---|---|
+  | Ciclo activado/desactivado | Valor de host `mCycleActive` desde un control de superficie, o el comando `Transport / Cycle` (alterna) | Depende de TW-1209 |
+  | Metrónomo activado y nivel del clic | `mMetronomeActive` y `mMetronomeClickLevel` | Depende de TW-1209 |
+  | Precuenta, uso de la pista de tempo | Comandos que alternan, sin lectura: solo serían seguros si se pudiera leer el estado | Sin relectura: **no se implementan** salvo que TW-1209 encuentre cómo leerlos |
+  | Compás, frecuencia de muestreo, longitud | Solo en el diálogo «Configuración del proyecto» (comando `Project / Setup`, clase `dialog`) | Herramienta interactiva como `cubase_add_track_interactive`: Trackwright abre el diálogo, el usuario lo cambia y Trackwright relee lo que pueda |
+- **Reglas:** toda escritura comprueba la política (`check_project_write`), ensaya por defecto y relee. Nada sin relectura se presenta como verificado.

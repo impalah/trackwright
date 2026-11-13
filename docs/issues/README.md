@@ -21,7 +21,7 @@ Las issues documentan cada unidad de trabajo **antes** de implementarla. Al cerr
 | E09 | Calidad y pruebas | [E09-calidad-pruebas.md](E09-calidad-pruebas.md) |
 | E10 | Endurecimiento tras la revisión independiente | [E10-endurecimiento.md](E10-endurecimiento.md) |
 | E11 | Panel de estado en la superficie MIDI Remote | [E11-panel-estado.md](E11-panel-estado.md) |
-| E12 | Funcionalidades ampliadas (arranque, guardar, importar y exportar, presets, automatización) | [E12-funcionalidades-ampliadas.md](E12-funcionalidades-ampliadas.md) |
+| E12 | Funcionalidades ampliadas (arranque, guardar, importar y exportar, presets, automatización, propiedades del proyecto) | [E12-funcionalidades-ampliadas.md](E12-funcionalidades-ampliadas.md) |
 
 ## Criterios comunes a todas las issues
 
