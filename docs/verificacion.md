@@ -313,3 +313,4 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
 
 - **Experimento,** con autorización del usuario: `File / Save` reescribió `X0001.cpr` y `Save New Version` creó `X0001-01.cpr`, ambos sin diálogo. Detalle en [experiments/tw1202](../experiments/tw1202/README.md).
 - **`cubase_save_project`:** en ensayo, contra Cubase, listó los dos `.cpr`; sin `[writes] save`, el guardado real da `SAVE_DISABLED`.
+- **Prueba del usuario desde Claude Code,** con `[writes] save = true`: funciona.
