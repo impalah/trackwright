@@ -18,7 +18,7 @@ def test_wheel_contains_script_and_entry_point(tmp_path: Path) -> None:
     uv = shutil.which("uv")
     assert uv is not None
     subprocess.run([uv, "build", "--wheel", "-q", "-o", str(tmp_path)], cwd=ROOT, check=True)
-    wheel = next(tmp_path.glob("trackwright_mcp-*.whl"))
+    wheel = next(tmp_path.glob("trackwright-*.whl"))
     with zipfile.ZipFile(wheel) as archive:
         names = set(archive.namelist())
         entry_points = next(n for n in names if n.endswith("entry_points.txt"))

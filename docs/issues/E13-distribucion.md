@@ -45,7 +45,15 @@ Origen: pregunta del usuario del 2026-11-13. Hoy Trackwright se usa desde el có
 
 ## TW-1303 Canal de distribución
 
-- **Estado:** pendiente; depende de TW-1302
+- **Estado:** preparada (2026-11-13); falta la subida, que hace el usuario con su token
+- **Decisión del usuario (2026-11-13):** publicar en **PyPI** con el nombre **`trackwright`** (libre en PyPI y en TestPyPI ese día), licencia **AGPL-3.0-only**, autor «impalah» con su email.
+- **Hecho:**
+  - paquete renombrado (`trackwright-mcp` → `trackwright`), versión 0.3.0, `LICENSE` con el texto oficial y clasificadores;
+  - el alias `trackwright-mcp` del punto 3 ya no hace falta: `uvx trackwright serve` funciona con el nombre nuevo;
+  - `setup` elige el comando de registro: la ruta de `uv tool`, el repositorio, o `uvx` fijado a la versión;
+  - README para el usuario final, manual de instalación con PyPI como vía principal y tutorial 1 actualizado;
+  - `twine check --strict` correcto; instalación aislada del wheel con `uv tool install` (`version`, `doctor`, `setup`) y `uvx` comprobados.
+- **Pendiente:** subir a TestPyPI y a PyPI (`uv publish`) y, tras publicarla, la etiqueta `v0.3.0`.
 - **Objetivo:** documentar e implementar la forma de instalar sin el repositorio.
 - **Alcance:**
   1. **wheel local:** `uv build` y `uv tool install dist/trackwright_mcp-<versión>-py3-none-any.whl`; actualizar con `--reinstall`;

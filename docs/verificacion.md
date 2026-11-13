@@ -361,3 +361,10 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
   - configuración creada con `enabled = true`, `save = false` y permisos `600`;
   - el paso de Claude Code mostró el comando para registrarlo a mano;
   - `doctor`: solo «bridge running» en rojo, como se espera sin servidor MCP. Directorios temporales borrados.
+
+## 2026-11-13 — TW-1303: paquete 0.3.0 para PyPI
+
+- `uv build`: `trackwright-0.3.0-py3-none-any.whl` y `trackwright-0.3.0.tar.gz`, con `License-Expression: AGPL-3.0-only` y el `LICENSE` incluido. `twine check --strict`: correcto en los dos.
+- El sdist solo contiene `src/trackwright`, `pyproject.toml`, `README.md` y `LICENSE`.
+- **`uv tool install` del wheel en directorios temporales:** `version` da 0.3.0 y `doctor` 5/5 contra el Cubase real. `setup` sin entrada se salta los tres pasos y no escribe nada.
+- **`uvx --from <wheel>`:** el ejecutable está en la caché de uv (`archive-v0`), y `setup` propone `uvx --from trackwright==0.3.0 trackwright serve` en vez de esa ruta temporal.

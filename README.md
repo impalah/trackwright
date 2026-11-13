@@ -1,25 +1,72 @@
 # Trackwright
 
-**Trackwright** es un servidor [MCP](https://modelcontextprotocol.io) que permite a un asistente como Claude **inspeccionar y controlar Cubase**: pistas, mezcla, plugins de inserción y sus parámetros, transporte, marcadores y comandos. Funciona a través de un script MIDI Remote que se ejecuta dentro de Cubase.
+**Trackwright** es un servidor [MCP](https://modelcontextprotocol.io) que permite a Claude **inspeccionar y controlar Cubase**: pistas, mezcla, plugins y sus parámetros, transporte, marcadores, automatización y edición por rangos de tiempo, pensada para podcasts. Funciona con un script MIDI Remote que se ejecuta dentro de Cubase; no necesita controladores físicos ni puertos IAC.
 
 | | |
 |---|---|
-| Paquete | `trackwright-mcp` |
+| Paquete | `trackwright` |
 | Ejecutable | `trackwright` |
 | Servidor MCP | `trackwright` (stdio) |
-| Plataforma | macOS, Cubase 15.0.20 o posterior (verificado en Elements 15.0.30) |
+| Plataforma | macOS. Verificado en macOS 27.2 (Apple Silicon) |
+| Cubase | 15.0.20 o posterior (API MIDI Remote 1.3). Verificado en Cubase Elements 15.0.30 |
+| Licencia | AGPL-3.0-only |
 
-## Inicio rápido
+> Trackwright es un proyecto independiente. No está afiliado a Steinberg ni respaldado por ella; Cubase es una marca de Steinberg Media Technologies GmbH.
+
+## Requisitos
+
+- **[uv](https://docs.astral.sh/uv/)** 0.13 o posterior (`brew install uv`). No hace falta instalar Python: uv descarga el adecuado. No hay nada que compilar.
+- **Cubase** 15.0.20 o posterior.
+- Un cliente MCP: **Claude Code** o Claude Desktop.
+
+## Instalación
 
 ```sh
-cd /Volumes/Data/projects/sound/trackwright
-uv sync
-uv run trackwright setup   # instalación guiada: script de Cubase, configuración, Claude Code y diagnóstico
+uv tool install trackwright
+trackwright setup
 ```
 
-`setup` muestra cada paso y pide confirmación antes de aplicarlo. Después, reinicia Cubase y activa la superficie (ver el [manual de instalación](docs/manual/01-instalacion.md)). El puente arranca solo con el servidor MCP.
+Si el terminal no encuentra `trackwright`, ejecuta `uv tool update-shell` y abre otro terminal.
 
-¿Sin Cubase a mano? `uv run trackwright serve --simulate` responde desde un Cubase simulado.
+`trackwright setup` es una instalación guiada. En cada paso **muestra lo que va a hacer y pregunta** antes de aplicarlo (la respuesta por defecto es «no»):
+
+1. copia el script `Trackwright_Bridge.js` en la carpeta MIDI Remote de Cubase (`~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/bridge/`);
+2. crea `~/.config/trackwright/config.toml` si no existe, preguntando si se permiten las escrituras y el guardado del proyecto (por defecto, no);
+3. registra el servidor en Claude Code (`claude mcp add --scope user trackwright …`) o, si no encuentra `claude`, te muestra el comando;
+4. comprueba todo con `trackwright doctor`.
+
+Nunca usa `sudo` ni cambia ajustes de Cubase o del sistema. Para no preguntar en un paso: `--yes script`, `--yes config` o `--yes claude`.
+
+### Activar el script en Cubase
+
+1. **Reinicia Cubase** (no recarga los scripts por sí mismo) y abre un proyecto. Para las primeras pruebas, mejor uno desechable.
+2. En la pestaña **MIDI Remote** de la zona inferior debe aparecer la superficie **Trackwright – Bridge**. Los puertos virtuales los crea Trackwright al arrancar, y el servidor MCP lo arranca Claude. Si no aparece, pulsa **+ Añadir superficie de controlador MIDI** y elige `Trackwright` / `Bridge`, con entrada `Trackwright To Cubase` y salida `Trackwright From Cubase`.
+3. **Recomendado:** en *Estudio > Configuración de estudio > Configuración de puertos MIDI*, desmarca **«En 'All MIDI Inputs'»** para `Trackwright To Cubase`.
+
+### Comprobar
+
+```sh
+trackwright doctor   # revisa cada eslabón y dice qué hacer si algo falla
+```
+
+Después, en Claude Code: «Comprueba el estado de Cubase con Trackwright».
+
+### Probar sin Cubase
+
+Trackwright incluye un Cubase simulado. Para probarlo desde Claude Code sin instalar nada más:
+
+```sh
+claude mcp add trackwright-sim -- uvx trackwright serve --simulate
+```
+
+## Actualizar y desinstalar
+
+- **Actualizar:** `uv tool upgrade trackwright` y después `trackwright setup`, que actualiza el script si cambió. Reinicia Cubase.
+- **Desinstalar:**
+  1. `claude mcp remove trackwright -s user`;
+  2. `pkill -f "trackwright bridge"`;
+  3. `uv tool uninstall trackwright`;
+  4. borra `~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/` y `~/.config/trackwright/`, y quita la superficie en la pestaña MIDI Remote de Cubase.
 
 ## Qué puede hacer
 
@@ -39,36 +86,45 @@ uv run trackwright setup   # instalación guiada: script de Cubase, configuraci�
 
 Por defecto **solo lee**. Las escrituras se habilitan en la configuración y se pueden limitar a pistas concretas.
 
-## Documentación
+## Seguridad
 
-- **Manuales**
-  - [Instalación](docs/manual/01-instalacion.md)
-  - [Operación y conexión con Claude Code o Claude Desktop](docs/manual/02-operacion.md)
-  - [Configuración](docs/manual/03-configuracion.md)
-  - [Referencia de herramientas](docs/manual/04-herramientas.md)
-  - [Resolución de problemas](docs/manual/05-problemas.md)
-- **Tutoriales**
-  1. [Primera conexión](docs/tutoriales/01-primera-conexion.md)
-  2. [Inspeccionar una pista](docs/tutoriales/02-inspeccionar-pista.md)
-  3. [Primer cambio seguro](docs/tutoriales/03-primer-cambio-seguro.md)
-  4. [Insertar un EQ](docs/tutoriales/04-insertar-eq.md)
-  5. [Marcadores y cursor](docs/tutoriales/05-marcadores-cursor.md)
-  6. [Pista con diálogo](docs/tutoriales/06-pista-con-dialogo.md)
-  7. [Grabar automatización](docs/tutoriales/07-automatizacion.md)
-  8. [Editar un podcast por segundos](docs/tutoriales/08-podcast.md)
-- **Proyecto**
-  - [Arquitectura](docs/arquitectura.md)
-  - [Desarrollo](docs/desarrollo.md)
-  - [Épicas e issues](docs/issues/README.md)
-  - [Investigación de funcionalidades ampliadas](docs/investigacion.md)
+- **Solo lectura por defecto.** Las escrituras se habilitan en `~/.config/trackwright/config.toml` (`[writes] enabled = true`) y se pueden limitar a pistas concretas (`allowed_tracks`). Guardar el proyecto tiene su propio permiso (`[writes] save`).
+- Cada escritura admite un **ensayo** (`dry_run`) y se **verifica releyendo** el estado. Una escritura cuyo resultado es incierto no se reintenta.
+- **No abre puertos de red:** el servidor habla con Claude por stdio y con el puente por un socket Unix privado.
+- No cierra Cubase, no graba audio y no guarda nada si no se le pide.
 
-## Estado
+## Configuración
 
-- El diseño procede de la prueba de concepto `cubase-mcp-poc`, cuyas capacidades se verificaron contra Cubase Elements 15.0.30.
-- El script `Trackwright_Bridge.js` deriva de esa versión. La verificación se hizo con la 1.0.0; la 1.1.0 añade el panel de estado de la superficie, verificado a la vista el 2026-11-13. Su verificación contra Cubase real se anota en el [registro de verificación](docs/verificacion.md). A 2026-11-12, **las 21 herramientas** se han ejecutado contra Cubase Elements 15.0.30, con confirmación visual del usuario donde la API no puede observar el resultado.
-- El resto se prueba con tests unitarios, de contrato MCP, del script con Node.js y de extremo a extremo, con una cobertura superior al 95 %.
+```toml
+# ~/.config/trackwright/config.toml
+[writes]
+enabled = true                   # permitir cambios en el proyecto abierto
+save = false                     # permitir guardar el proyecto a petición
+# allowed_tracks = ["Voz"]       # limitar las escrituras a estas pistas
+
+[cubase]
+app = "Cubase 15"                # nombre de la aplicación para cubase_launch
+```
+
+`trackwright config` muestra la configuración efectiva.
 
 ## Limitaciones conocidas
 
 - **No es posible por la API** cambiar el enrutado (entradas, salidas o envíos), leer el contenido de las pistas (eventos, audio o automatización) ni completar diálogos de Cubase.
 - **Solo se ven** las pistas que tienen canal de mezclador.
+- Importar audio, exportar la mezcla y cambiar de preset usan diálogos o ventanas de Cubase: Trackwright los abre y prepara, y tú completas el diálogo.
+- Por ahora, **solo macOS** y solo Cubase.
+
+## Estado
+
+Versión alfa. Todas las herramientas se han ejecutado contra Cubase Elements 15.0.30 en macOS 27.2, con confirmación visual donde la API no puede observar el resultado. Además, tiene tests unitarios, de contrato MCP, del script con Node.js y de extremo a extremo, con una cobertura del 98 %.
+
+## Documentación
+
+Manuales y tutoriales, en español, en la carpeta `docs/` del código fuente (índice en `docs/README.md`).
+
+## Licencia
+
+Copyright (C) 2026 impalah.
+
+Este programa es software libre: puedes redistribuirlo o modificarlo según los términos de la **GNU Affero General Public License, versión 3** (`AGPL-3.0-only`), publicada por la Free Software Foundation. Se distribuye sin ninguna garantía. Consulta el archivo `LICENSE`.

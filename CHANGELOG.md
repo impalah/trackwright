@@ -1,7 +1,11 @@
 # Cambios
 
-## Sin publicar
+## 0.3.0 — preparada, pendiente de publicar en PyPI
 
+- **Publicación en PyPI** (TW-1303): el paquete pasa a llamarse **`trackwright`** (antes `trackwright-mcp`) y se instala con `uv tool install trackwright`.
+  - Licencia **AGPL-3.0-only** (archivo `LICENSE`, metadatos según PEP 639).
+  - README reescrito para el usuario final; el índice de la documentación pasa a `docs/README.md`.
+  - `setup` registra en Claude Code la ruta absoluta de `trackwright` (instalado con `uv tool`), o `uvx --from trackwright==<versión> trackwright serve` cuando se ejecuta con `uvx`, fijado a la versión del script que instala.
 - **Instalación guiada** (TW-1301): `trackwright setup` instala el script de Cubase, crea la configuración si no existe (escrituras y guardado desactivados por defecto) y registra el servidor en Claude Code. Cada paso se muestra y se confirma; `--yes PASO` para no preguntar. Termina con `doctor`.
 - `doctor` muestra también `[writes] save` y, con `autostart`, explica que el puente arranca con el servidor MCP.
 - **Transporte MIDI con CoreMIDI vía `ctypes`** (TW-1302), por defecto en macOS:

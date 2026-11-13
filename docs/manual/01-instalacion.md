@@ -10,7 +10,7 @@ Al terminar este manual tendrás Trackwright instalado, el script cargado en Cub
 Cliente MCP (Claude) ──stdio──► trackwright serve ──socket local──► trackwright bridge ──MIDI virtual──► Cubase (script MIDI Remote)
 ```
 
-- **`trackwright bridge`:** un proceso que dejas abierto en una terminal. Crea los puertos MIDI virtuales por los que habla con Cubase.
+- **`trackwright bridge`:** el puente. Crea los puertos MIDI virtuales por los que habla con Cubase. `trackwright serve` lo arranca solo si no está en marcha; también puedes lanzarlo a mano en una terminal.
 - **`trackwright serve`:** el servidor MCP. No lo arrancas tú: lo lanza tu cliente MCP (Claude Code o Claude Desktop) cuando lo necesita.
 - **El script `Trackwright_Bridge.js`:** se ejecuta dentro de Cubase y responde a las peticiones.
 
@@ -21,13 +21,26 @@ Cliente MCP (Claude) ──stdio──► trackwright serve ──socket local�
 | macOS | Verificado en 27.2 (Apple Silicon) | ` > Acerca de este Mac` |
 | Cubase | 15.0.20 o posterior (API MIDI Remote 1.3). Verificado en Elements 15.0.30 | `Ayuda > Acerca de Cubase` |
 | uv | 0.13 o posterior | `uv --version` |
-| git | cualquiera | `git --version` |
+| git | cualquiera (solo para instalar desde el código fuente) | `git --version` |
 
-Si no tienes uv, instálalo con Homebrew: `brew install uv`. **No hace falta instalar Python**: uv descarga la versión adecuada (3.14) la primera vez.
+Si no tienes uv, instálalo con Homebrew: `brew install uv`. **No hace falta instalar Python**: uv descarga la versión adecuada (3.14) la primera vez. Tampoco hay nada que compilar.
 
-## 2. Obtener el código
+## 2. Instalar Trackwright
 
-El repositorio es local, sin remoto todavía:
+### Desde PyPI (recomendado)
+
+```sh
+uv tool install trackwright
+trackwright version
+```
+
+uv instala el ejecutable `trackwright` en `~/.local/bin`. Si el terminal no lo encuentra, ejecuta `uv tool update-shell` y abre otro terminal. Con esta instalación, **escribe los comandos de los manuales sin `uv run`**: `trackwright setup`, `trackwright doctor`…
+
+Para actualizar: `uv tool upgrade trackwright`, después `trackwright setup` (actualiza el script de Cubase si cambió) y reinicia Cubase.
+
+Sigue en la [instalación guiada](#instalación-guiada-recomendada).
+
+### Desde el código fuente (desarrollo)
 
 ```sh
 cd /Volumes/Data/projects/sound/trackwright
@@ -35,7 +48,7 @@ cd /Volumes/Data/projects/sound/trackwright
 
 Si lo copias a otra ubicación, sustituye esa ruta en el resto de los manuales.
 
-## 3. Crear el entorno
+## 3. Crear el entorno (solo desde el código fuente)
 
 ```sh
 uv sync
@@ -54,8 +67,11 @@ Debe responder algo como `{"trackwright": "0.2.0"}`.
 Un solo comando hace los pasos 4 y 8 y la comprobación del 7:
 
 ```sh
-uv run trackwright setup
+trackwright setup          # instalado desde PyPI
+uv run trackwright setup   # desde el código fuente
 ```
+
+El servidor queda registrado en Claude Code con el comando que corresponde a cada caso: la ruta absoluta de `trackwright` si lo instalaste con `uv tool`, o `uv --directory <repositorio> run trackwright serve` desde el código fuente.
 
 Recorre tres pasos. En cada uno **muestra lo que va a hacer y pregunta** antes de aplicarlo (la respuesta por defecto es «no»):
 
@@ -96,7 +112,7 @@ Cubase **no recarga** los scripts cambiados por sí mismo. Si estaba abierto, re
 
 ## 5. Arrancar el puente
 
-En una terminal que dejarás abierta:
+**Normalmente no hace falta:** el servidor MCP arranca el puente cuando lo necesita (`[bridge] autostart`). Arrancarlo a mano sirve para hacer las comprobaciones del paso 7 antes de conectar Claude, o para ver su log en directo. En una terminal que dejarás abierta:
 
 ```sh
 cd /Volumes/Data/projects/sound/trackwright
@@ -143,7 +159,7 @@ uv run trackwright doctor
 
 Sigue el [manual de operación](02-operacion.md#conectar-un-cliente-mcp).
 
-## 9. Verificación contra tu Cubase (recomendado)
+## 9. Verificación contra tu Cubase (desde el código fuente)
 
 Con el puente en marcha y Cubase abierto:
 
@@ -164,4 +180,5 @@ Cada escritura se deshace al terminar la prueba.
 
 1. Borra la carpeta `~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/`.
 2. En Cubase, elimina la superficie **Trackwright – Bridge** de la pestaña MIDI Remote.
-3. Borra el directorio del repositorio y, si lo creaste, `~/.config/trackwright/`.
+3. Quita el servidor de Claude Code (`claude mcp remove trackwright -s user`), para el puente (`pkill -f "trackwright bridge"`) y desinstala Trackwright: `uv tool uninstall trackwright`, o borra el repositorio si lo instalaste desde el código fuente.
+4. Si lo creaste, borra `~/.config/trackwright/`.

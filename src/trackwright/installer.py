@@ -97,23 +97,31 @@ def source_checkout() -> Path | None:
     """The repository root when Trackwright runs from its source tree (``uv run``), else ``None``."""
     root = Path(trackwright.__file__).resolve().parents[2]
     pyproject = root / "pyproject.toml"
-    if pyproject.is_file() and 'name = "trackwright-mcp"' in pyproject.read_text(encoding="utf-8"):
+    if pyproject.is_file() and 'name = "trackwright"' in pyproject.read_text(encoding="utf-8"):
         return root
     return None
 
 
-def server_command(which: Callable[[str], str | None] = shutil.which) -> list[str] | None:
-    """The command Claude Code must run to start the MCP server, or ``None`` if there is no stable one.
+def server_command(which: Callable[[str], str | None] = shutil.which) -> list[str]:
+    """The command Claude Code must run to start the MCP server.
 
-    From a source checkout: ``uv --directory <repo> run trackwright serve``. Installed as a tool
-    (``uv tool install``): the absolute path of the ``trackwright`` executable. A temporary ``uvx`` run has
-    neither.
+    - From a source checkout: ``uv --directory <repo> run trackwright serve``.
+    - Installed as a tool (``uv tool install trackwright``): the absolute path of the ``trackwright`` executable.
+    - Otherwise (a temporary ``uvx`` run): ``uvx --from trackwright==<this version> trackwright serve``, pinned so
+      the server always matches the Cubase script this version installs.
     """
     root = source_checkout()
     if root is not None:
         return ["uv", "--directory", str(root), "run", "trackwright", "serve"]
     executable = which("trackwright")
-    return [str(Path(executable).absolute()), "serve"] if executable else None
+    if executable and not is_ephemeral(Path(executable)):
+        return [str(Path(executable).absolute()), "serve"]
+    return ["uvx", "--from", f"trackwright=={trackwright.__version__}", "trackwright", "serve"]
+
+
+def is_ephemeral(executable: Path) -> bool:
+    """``True`` for an executable inside uv's cache (a ``uvx`` run), which uv may delete at any time."""
+    return any(part.startswith("archive-v") for part in executable.resolve().parts)
 
 
 @dataclass
@@ -244,10 +252,6 @@ class Setup:
     def step_claude(self) -> StepResult:
         self.prompter.say("\n[3/3] Claude Code")
         command = server_command(self.which)
-        if command is None:
-            self.prompter.say("  no stable 'trackwright' executable: install it with 'uv tool install' first")
-            self.next_steps.append("install Trackwright with 'uv tool install' and run 'trackwright setup' again")
-            return StepResult("claude", "manual", {"reason": "no_executable"})
         add = ["mcp", "add", "--scope", "user", SERVER_NAME, "--", *command]
         claude = self.which("claude")
         if claude is None:

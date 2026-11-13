@@ -922,8 +922,8 @@ wheels = [
 ]
 
 [[package]]
-name = "trackwright-mcp"
-version = "0.2.0"
+name = "trackwright"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "loguru" },

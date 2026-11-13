@@ -185,14 +185,6 @@ def test_claude_not_on_path_shows_the_command(tmp_path: Path) -> None:
     assert runner.calls == []
 
 
-def test_no_stable_executable(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(installer, "source_checkout", lambda: None)
-    setup, _, runner = make(tmp_path, Prompter())
-    result = setup.step_claude()
-    assert (result.status, result.detail) == ("manual", {"reason": "no_executable"})
-    assert runner.calls == []
-
-
 def test_registration_failure(tmp_path: Path) -> None:
     setup, _, _ = make(tmp_path, Prompter(True, False, False, True), runner=Runner(add_code=1))
     result = setup.run()
@@ -236,7 +228,10 @@ def test_server_command_variants(monkeypatch: pytest.MonkeyPatch) -> None:
     assert server_command(lambda _n: None) == ["uv", "--directory", str(REPO), "run", "trackwright", "serve"]
     monkeypatch.setattr(installer, "source_checkout", lambda: None)
     assert server_command(lambda _n: "/opt/bin/trackwright") == ["/opt/bin/trackwright", "serve"]
-    assert server_command(lambda _n: None) is None
+    uvx = ["uvx", "--from", f"trackwright=={installer.trackwright.__version__}", "trackwright", "serve"]
+    assert server_command(lambda _n: None) == uvx
+    cached = "/Users/x/.cache/uv/archive-v0/abc/bin/trackwright"
+    assert server_command(lambda _n: cached) == uvx
 
 
 def test_source_checkout_outside_the_repository(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
