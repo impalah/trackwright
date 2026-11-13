@@ -41,7 +41,7 @@ Integration tests against the real Cubase are opt-in: `TRACKWRIGHT_INTEGRATION=1
 - **Documentation is bilingual:** every document is English `X.md` plus Spanish `X.es.md`, updated together, each linking to its counterpart near the top; links stay in their language. `README.md` is also the PyPI page: no relative links there. `tests/unit/test_docs.py` enforces this, and that every tool, command key and config key is documented.
 - **Issues** live in `docs/issues/` (epics E01–E13, issues TW-NNNN); every change starts from an issue and its commit cites it. Results observed in real Cubase go to `docs/verification.md` (+ `.es.md`).
 - **Git:** local repository, no remote, never push. Commit only when asked, with
-  `git -c user.name="impalah" -c user.email="impalah@gmail.com" commit`, ending the message with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`. Commit messages in English (since 2026-11-13; older ones are in Spanish).
+  `git -c user.name="impalah" -c user.email="impalah@gmail.com" commit`. **Never add `Co-Authored-By` lines (or any AI attribution) to commits or PRs.** Commit messages in English (since 2026-11-13; older ones are in Spanish).
 - **Never invent results.** Do not claim a test ran, a Cubase behavior, a version or a measurement that was not observed. Keep "tested with Claude Code and Cubase" statements truthful; untested things (e.g. GitHub Copilot) are marked as such.
 - **YAGNI on multi-DAW:** no DAW abstraction until a second DAW is real; the planned route is in `docs/architecture.md` ("Extension to other DAWs").
 
