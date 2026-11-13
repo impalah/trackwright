@@ -241,4 +241,4 @@ Medido sobre POC-TEST con el código de TW-1208, a través del puente. Solo lect
 | `insert1.p2` | Compressor / Ratio | 4:1 → 0,4286 |
 
 - `qc1` e `insert2.p1` aparecen como no disponibles: no hay nada asignado ni plugin en el slot 2.
-- **Queda pendiente** la grabación con `plain` desde la otra sesión de Claude Code.
+- **Grabación con `plain` desde la otra sesión de Claude Code:** según el usuario, funcionó correctamente.

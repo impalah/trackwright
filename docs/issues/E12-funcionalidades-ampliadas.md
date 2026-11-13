@@ -96,7 +96,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1207 Herramienta de automatización y ampliación a otros parámetros
 
-- **Estado:** implementada (script 1.4.0, herramientas `cubase_list_automation_targets` y `cubase_record_automation`, 20 tests de servicio y de contrato). Falta verificarla en Cubase con la herramienta definitiva
+- **Estado:** cerrada. Verificada en Cubase el 2026-11-13: fundido de volumen grabado desde Claude Code con el script 1.4.0
 - **Objetivo:** la herramienta `cubase_record_automation` y la automatización de más parámetros que el volumen.
 - **Base verificada:**
   - fader de la superficie con toque (TW-1206 B2);
@@ -116,7 +116,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1208 Unidades reales en la automatización (conversión exacta de Cubase)
 
-- **Estado:** implementada (servicio, herramienta `cubase_convert_value`, tests de servicio y de contrato). Falta verificarla en Cubase con la herramienta definitiva
+- **Estado:** cerrada. Verificada en Cubase el 2026-11-13: conversión de 12 parámetros y grabación con `plain` desde Claude Code
 - **Origen:** en el uso real (2026-11-13), el modelo no conocía la correspondencia entre el valor normalizado y los dB. Estimó −20 dB ≈ 0,36 (es 0,2551) y propuso calibrar moviendo el fader.
 - **Evidencia:** `da.convert` (`convertParameterPlainToProcessValue`) convierte con exactitud y en los dos sentidos el volumen, los envíos, el EQ (ganancia y frecuencia), el pre-filtro y los parámetros de plugin ([verificacion.md](../verificacion.md)).
 - **Alcance:**
