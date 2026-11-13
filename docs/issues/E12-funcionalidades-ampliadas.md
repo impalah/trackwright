@@ -93,3 +93,23 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
   - *(B2, preparación)* script 1.2.1 con el fader detrás de `AUTOMATION_FADER_ENABLED`; versión de prueba `1.2.1+tw1206` con `experiments/tw1206/build.py`; paso `record-b2` en `experiments/tw1206/automation.py`; tests con el arnés en `tests/script/test_automation_fader.py`. Protocolo en `experiments/tw1206/README.md`.
   - *(B2, planteamiento)* **Con cambios en el script:** un fader de la superficie enlazado (`makeValueBinding`) al volumen de la pista seleccionada (`mTrackSelection.mMixerChannel.mValue.mVolume`). El script movería el fader con su estado de toque (`mTouchState`), como un controlador físico, que es como los controladores graban automatización.
 - **Si alguna variante funciona:** diseñar `cubase_record_automation(track, parameter, points)`. Requeriría iniciar el transporte desde Trackwright, con `Transport / Start` o `mTransport.mValue.mStart`, que habría que verificar.
+
+## TW-1207 Herramienta de automatización y ampliación a otros parámetros
+
+- **Estado:** en curso
+- **Objetivo:** la herramienta `cubase_record_automation` y la automatización de más parámetros que el volumen.
+- **Base verificada:**
+  - fader de la superficie con toque (TW-1206 B2);
+  - `Transport / Start` y `Stop` desde Trackwright (2026-11-13).
+- **Experimento B3** (script `1.3.0`, controles detrás de `AUTOMATION_CONTROLS_ENABLED`; prueba automática en `experiments/tw1206/controls.py`):
+  - **controles enlazados a la pista seleccionada (45):** volumen, panorama, nivel de los envíos 1 a 4, EQ del canal (ganancia, frecuencia y Q de las bandas 1 a 4), pre-filtro (ganancia, corte de graves y de agudos), Quick Controls 1 a 8, y parámetros 1 a 8 de los slots de inserción 1 y 2 (bancos de parámetros del plugin);
+  - **identificación:** cada control informa del título del parámetro que tiene enlazado (`auto.list`), para saber qué parámetro del plugin cae en cada posición del banco;
+  - **criterio:** un control «graba» si en la reproducción con lectura su valor sigue la rampa sin que nadie lo toque.
+- **Diseño previsto de la herramienta, tras el experimento:** `cubase_record_automation(track, parameter, points[(posición, valor)])`:
+  1. selecciona la pista;
+  2. activa W;
+  3. coloca el cursor antes del primer punto y arranca la reproducción;
+  4. toca el control, escribe los valores sincronizados con la posición del cursor y lo suelta;
+  5. para la reproducción y desactiva W;
+  6. verifica con una reproducción en lectura (opcional).
+  - Exigirá escrituras habilitadas y confirmación, porque reproduce audio y modifica el proyecto.

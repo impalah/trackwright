@@ -562,9 +562,12 @@ class FakeCubase:
             slot.params[4125] = Param("Tipo de efecto", "discrete", 1, entry["name"])
         return {"guard": guard, "result": entry is not None, "before": before, "after": self._describe(slot)}
 
-    def _op_auto_fader(self, _p: JsonObject) -> JsonObject:
-        # Mirrors released scripts: the TW-1206 automation fader only exists in the experiment build.
-        raise HostError("automation fader is not enabled in this script build", code="UNSUPPORTED")
+    def _op_auto_control(self, _p: JsonObject) -> JsonObject:
+        # Mirrors released scripts: the automation controls only exist in the experiment build (TW-1206).
+        raise HostError("automation controls are not enabled in this script build", code="UNSUPPORTED")
+
+    def _op_auto_list(self, _p: JsonObject) -> JsonObject:
+        return {"enabled": False, "controls": []}
 
     def _op_sel_step(self, p: JsonObject) -> JsonObject:
         direction = p.get("direction")

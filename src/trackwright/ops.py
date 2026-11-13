@@ -5,7 +5,9 @@ Kept in one place so that the bridge allowlist, the host client and the tests ag
 
 from __future__ import annotations
 
-DIRECT_READ_OPS = frozenset({"hello", "ping", "status", "capabilities", "events", "transport.get", "cmd.list"})
+DIRECT_READ_OPS = frozenset(
+    {"hello", "ping", "status", "capabilities", "events", "transport.get", "cmd.list", "auto.list"}
+)
 """Answered inside ``mOnSysex`` (milliseconds)."""
 
 IDLE_READ_OPS = frozenset(
@@ -33,7 +35,7 @@ WRITE_OPS = frozenset(
         "transport.setTime",
         "transport.setTempo",
         "cmd.run",
-        "auto.fader",
+        "auto.control",
     }
 )
 """Change Cubase state. Never retried after a timeout: the outcome is unknown."""

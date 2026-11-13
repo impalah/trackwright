@@ -78,6 +78,27 @@ function displayOf(p) {
 var logs = []
 var fired = []
 var surfaceElements = []
+// Host values of the selected channel, named by path so that tests can check every binding.
+function eqBand(n) { return { mGain: 'selected.eq' + n + '.gain', mFreq: 'selected.eq' + n + '.freq', mQ: 'selected.eq' + n + '.q' } }
+var selectedChannel = {
+	toString: function () { return 'selected' },
+	mValue: { mVolume: 'selected.volume', mPan: 'selected.pan' },
+	mSends: { getByIndex: function (i) { return { mLevel: 'selected.send' + (i + 1) + '.level' } } },
+	mChannelEQ: { mBand1: eqBand(1), mBand2: eqBand(2), mBand3: eqBand(3), mBand4: eqBand(4) },
+	mPreFilter: { mGain: 'selected.prefilter.gain', mLowCutFreq: 'selected.prefilter.lowcut', mHighCutFreq: 'selected.prefilter.highcut' },
+	mQuickControls: { getByIndex: function (i) { return 'selected.qc' + (i + 1) } },
+	mInsertAndStripEffects: {
+		makeInsertEffectViewer: function () {
+			var viewer = {}
+			viewer.accessSlotAtIndex = function (slot) {
+				var n = 0
+				viewer.mParameterBankZone = { makeParameterValue: function () { n++; return 'selected.insert' + (slot + 1) + '.p' + n } }
+				return viewer
+			}
+			return viewer
+		}
+	}
+}
 var valueBindings = []
 var panelLog = []
 var listeners = { remove: [], change: [], param: [] }
@@ -222,7 +243,7 @@ var api = {
 					return lamp
 				},
 				makeCustomValueVariable: function (name) {
-					return { name: name, setProcessValue: function (dev, v) { if (v > 0) fired.push(name); if (name === 'autoFaderTouch') panelLog.push({ touch: v }) } }
+					return { name: name, setProcessValue: function (dev, v) { if (v > 0) fired.push(name); if (name.indexOf('autoTouch.') === 0) panelLog.push({ touch: v, control: name }) } }
 				}
 			},
 			mMapping: {
@@ -231,7 +252,7 @@ var api = {
 						mHostAccess: {
 							makeDirectAccess: function (hostObject) { return makeDirectAccess(hostObject) },
 							mTrackSelection: {
-								mMixerChannel: { toString: function () { return 'selected' }, mValue: { mVolume: 'selected.volume' } },
+								mMixerChannel: selectedChannel,
 								mAction: {
 									mNextTrack: { trigger: function () { var i = mixer.children.indexOf(selectedId); if (i < 2) selectedId = mixer.children[i + 1] } },
 									mPrevTrack: { trigger: function () { var i = mixer.children.indexOf(selectedId); if (i > 0) selectedId = mixer.children[i - 1] } }

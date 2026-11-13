@@ -7,6 +7,7 @@ Issue: [TW-1206](../../docs/issues/E12-funcionalidades-ampliadas.md). Resultados
 | A | Escribir el parámetro de volumen por DirectAccess con la escritura activada | **No graba** (2026-11-13) |
 | B1 | Cambiar el modo a Auto-Latch o Cross-Over por comando | **No disponible en Elements** (`canPerform=false`) |
 | B2 | Fader de la superficie enlazado al volumen de la pista seleccionada, con su estado de toque controlado por el script | **Graba y se reproduce** (2026-11-13) |
+| B3 (TW-1207) | Lo mismo, generalizado: 45 controles (volumen, panorama, envíos, EQ, pre-filtro, Quick Controls, parámetros de los slots de inserción 1 y 2). Reproducción con `Transport / Start` y `Stop` desde Trackwright | En preparación: `controls.py` |
 
 ## Variante B2
 
@@ -20,7 +21,16 @@ uv run python experiments/tw1206/automation.py cleanup
 uv run trackwright script install --apply                  # vuelta al script publicado, y reiniciar Cubase
 ```
 
-**Qué observar:**
+## Variante B3 (automática)
+
+```sh
+uv run python experiments/tw1206/build.py                                                    # 1.3.0+tw1206
+uv run trackwright script install --file experiments/tw1206/Trackwright_Bridge.js --apply    # reiniciar el puente y Cubase
+uv run python experiments/tw1206/controls.py list    # controles, valor actual y parámetro enlazado
+uv run python experiments/tw1206/controls.py run     # graba, comprueba y restaura cada control (sin pulsar nada)
+```
+
+**Qué observar en la variante B2:**
 - en la superficie MIDI Remote aparece un fader a la derecha del panel;
 - durante la grabación, el fader y el volumen de la pista se mueven;
 - después, ¿aparece una curva en el carril de automatización?;

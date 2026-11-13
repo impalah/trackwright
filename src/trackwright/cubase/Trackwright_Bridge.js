@@ -16,7 +16,7 @@
 
 var midiremote_api = require('midiremote_api_v1')
 
-var SCRIPT_VERSION = '1.2.2'
+var SCRIPT_VERSION = '1.3.0'
 var PROTOCOL_VERSION = 1
 var MANUFACTURER = 0x7D
 var MAGIC_A = 0x54
@@ -49,11 +49,11 @@ deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
 // through relateTo + setDisplayValue did NOT display (experiment of 2026-11-13) and is not used.
 var PANEL_ENABLED = true
 
-// TW-1206 experiment (variant B2): a surface fader bound to the selected track's volume, whose touch
-// state is driven by the script, to find out whether Cubase records automation in Touch mode the way
-// it does for a touch-sensitive hardware fader. Off in released builds; experiments/tw1206/build.py
-// switches it on.
-var AUTOMATION_FADER_ENABLED = false
+// Automation controls (TW-1206/TW-1207). Surface faders bound to parameters of the selected track, whose
+// touch state the script drives: moving a *touched* surface control is how hardware controllers write
+// automation in Touch mode (verified for volume, variant B2, 2026-11-13). Off in released builds;
+// experiments/tw1206/build.py switches them on.
+var AUTOMATION_CONTROLS_ENABLED = false
 
 // Without the panel a single element is still needed for Cubase to show the surface.
 if (!PANEL_ENABLED) deviceDriver.mSurface.makeLabelField(0, 0, 4, 1)
@@ -143,28 +143,73 @@ function panelIdle(activeDevice) {
 }
 buildPanel()
 
-// ---------------------------------------------------------------- automation fader (TW-1206, experimental)
-var autoFader = null
-function buildAutomationFader() {
-	if (!AUTOMATION_FADER_ENABLED) return
-	try {
-		autoFader = { errors: [], touched: false }
-		autoFader.fader = deviceDriver.mSurface.makeFader(10, 0, 1, 2)
-		autoFader.touch = deviceDriver.mSurface.makeCustomValueVariable('autoFaderTouch')
-	} catch (e) {
-		state.lastError = 'automation fader build: ' + String(e)
-		autoFader = null
-		return
+// ---------------------------------------------------------------- automation controls (TW-1206/1207)
+// One surface fader per bindable parameter of the selected channel. Each control caches the value,
+// display text and titles that Cubase reports for it, so the bound parameter can be identified (the
+// titles name it, which matters for plugin parameter banks whose order is decided by Cubase).
+var autoControls = null
+var AUTO_INSERT_SLOTS = 2
+var AUTO_BANK_SIZE = 8
+function buildAutomationControls() {
+	if (!AUTOMATION_CONTROLS_ENABLED) return
+	autoControls = { list: [], byKey: {}, errors: [] }
+	var ch = null
+	try { ch = page.mHostAccess.mTrackSelection.mMixerChannel } catch (e) { autoControls.errors.push('channel: ' + String(e)); return }
+	var targets = [
+		['volume', function () { return ch.mValue.mVolume }],
+		['pan', function () { return ch.mValue.mPan }]
+	]
+	for (var si = 0; si < 4; si++) {
+		(function (i) { targets.push(['send' + (i + 1) + '.level', function () { return ch.mSends.getByIndex(i).mLevel }]) })(si)
 	}
-	try {
-		page.makeValueBinding(autoFader.fader.mSurfaceValue, page.mHostAccess.mTrackSelection.mMixerChannel.mValue.mVolume)
-	} catch (e1) { autoFader.errors.push('value binding: ' + String(e1)) }
-	try {
-		if (autoFader.fader.mSurfaceValue.mTouchState) autoFader.fader.mSurfaceValue.mTouchState.bindTo(autoFader.touch)
-		else autoFader.errors.push('mTouchState not available')
-	} catch (e2) { autoFader.errors.push('touch binding: ' + String(e2)) }
+	var bands = ['mBand1', 'mBand2', 'mBand3', 'mBand4']
+	for (var bi = 0; bi < bands.length; bi++) {
+		(function (b, n) {
+			targets.push(['eq' + n + '.gain', function () { return ch.mChannelEQ[b].mGain }])
+			targets.push(['eq' + n + '.freq', function () { return ch.mChannelEQ[b].mFreq }])
+			targets.push(['eq' + n + '.q', function () { return ch.mChannelEQ[b].mQ }])
+		})(bands[bi], bi + 1)
+	}
+	targets.push(['prefilter.gain', function () { return ch.mPreFilter.mGain }])
+	targets.push(['prefilter.lowcut', function () { return ch.mPreFilter.mLowCutFreq }])
+	targets.push(['prefilter.highcut', function () { return ch.mPreFilter.mHighCutFreq }])
+	for (var qi = 0; qi < 8; qi++) {
+		(function (i) { targets.push(['qc' + (i + 1), function () { return ch.mQuickControls.getByIndex(i) }]) })(qi)
+	}
+	for (var slot = 0; slot < AUTO_INSERT_SLOTS; slot++) {
+		var bank = null
+		try {
+			bank = ch.mInsertAndStripEffects.makeInsertEffectViewer('trackwright-insert-' + (slot + 1)).accessSlotAtIndex(slot).mParameterBankZone
+		} catch (e1) { autoControls.errors.push('insert viewer ' + (slot + 1) + ': ' + String(e1)) }
+		for (var pi = 0; pi < AUTO_BANK_SIZE && bank; pi++) {
+			(function (z, s1, p1) { targets.push(['insert' + s1 + '.p' + p1, function () { return z.makeParameterValue() }]) })(bank, slot + 1, pi + 1)
+		}
+	}
+	for (var ti = 0; ti < targets.length; ti++) addAutomationControl(targets[ti][0], targets[ti][1], ti)
 }
-buildAutomationFader()
+function addAutomationControl(key, hostValue, index) {
+	var c = { key: key, touched: false, value: null, display: null, title: null, errors: [] }
+	try {
+		c.fader = deviceDriver.mSurface.makeFader(10 + (index % 16), 2 * Math.floor(index / 16), 1, 2)
+		c.touch = deviceDriver.mSurface.makeCustomValueVariable('autoTouch.' + key)
+	} catch (e) { autoControls.errors.push(key + ' element: ' + String(e)); return }
+	try { page.makeValueBinding(c.fader.mSurfaceValue, hostValue()) } catch (e1) { c.errors.push('binding: ' + String(e1)) }
+	try {
+		if (c.fader.mSurfaceValue.mTouchState) c.fader.mSurfaceValue.mTouchState.bindTo(c.touch)
+		else c.errors.push('mTouchState not available')
+	} catch (e2) { c.errors.push('touch binding: ' + String(e2)) }
+	try {
+		c.fader.mSurfaceValue.mOnProcessValueChange = function (activeDevice, value) { c.value = value }
+		c.fader.mSurfaceValue.mOnDisplayValueChange = function (activeDevice, value, units) { c.display = units ? value + ' ' + units : value }
+		c.fader.mSurfaceValue.mOnTitleChange = function (activeDevice, objectTitle, valueTitle) { c.title = objectTitle + ' / ' + valueTitle }
+	} catch (e3) { c.errors.push('callbacks: ' + String(e3)) }
+	autoControls.list.push(c)
+	autoControls.byKey[key] = c
+}
+function describeControl(c) {
+	return { key: c.key, value: c.value, display: c.display, title: c.title, touched: c.touched, errors: c.errors.slice(-3) }
+}
+buildAutomationControls()
 
 var hasJSON = (typeof JSON !== 'undefined' && typeof JSON.parse === 'function' && typeof JSON.stringify === 'function')
 
@@ -428,7 +473,7 @@ function expireAssemblies() {
 }
 
 // ---------------------------------------------------------------- request dispatch
-var DIRECT_OPS = { hello: true, ping: true, status: true, capabilities: true, events: true, 'transport.get': true, 'cmd.list': true }
+var DIRECT_OPS = { hello: true, ping: true, status: true, capabilities: true, events: true, 'transport.get': true, 'cmd.list': true, 'auto.list': true }
 
 function handleText(activeDevice, text) {
 	var req
@@ -501,7 +546,7 @@ function capabilities() {
 		commandErrors: commandErrors.length,
 		writePolicy: 'open',
 		panel: panel ? { enabled: true, errors: panel.errors.slice(-10) } : { enabled: false },
-		automationFader: autoFader ? { enabled: true, errors: autoFader.errors.slice(-10) } : { enabled: false },
+		automationControls: autoControls ? { enabled: true, count: autoControls.list.length, errors: autoControls.errors.slice(-10) } : { enabled: false },
 		pageMOnIdle: true,
 		methods: {}
 	}
@@ -562,6 +607,12 @@ function runDirect(req) {
 	}
 	if (req.op === 'transport.get') {
 		return { available: !!timeDisplay, primary: transport.primary, secondary: transport.secondary, tempoBPM: transport.tempoBPM, updates: transport.updates }
+	}
+	if (req.op === 'auto.list') {
+		if (!autoControls) return { enabled: false, controls: [] }
+		var controls = []
+		for (var i = 0; i < autoControls.list.length; i++) controls.push(describeControl(autoControls.list[i]))
+		return { enabled: true, controls: controls, errors: autoControls.errors.slice(-10) }
 	}
 	if (req.op === 'cmd.list') {
 		var list = []
@@ -659,7 +710,7 @@ function guardTarget(am, targetId, p) {
 	return { base: base, baseTitle: title, path: null, policy: 'open', outsideBase: true }
 }
 
-var NO_DA_OPS = { 'auto.fader': true, 'sel.step': true, 'transport.setTime': true, 'transport.setTempo': true, 'cmd.canPerform': true, 'cmd.run': true }
+var NO_DA_OPS = { 'auto.control': true, 'sel.step': true, 'transport.setTime': true, 'transport.setTempo': true, 'cmd.canPerform': true, 'cmd.run': true }
 
 var IDLE_OPS = {
 	'da.base': function (am, p) {
@@ -789,26 +840,28 @@ var IDLE_OPS = {
 		timeDisplay.setTempoBPM(am, bpm)
 		return { requested: bpm, before: before }
 	},
-	// TW-1206: touch / move / release the automation fader (bound to the selected track's volume).
-	'auto.fader': function (am, p, activeDevice) {
-		if (!autoFader) throw { code: 'UNSUPPORTED', msg: 'automation fader is not enabled in this script build' }
-		var out = { touchedBefore: autoFader.touched }
-		if (p.touch === true && !autoFader.touched) {
-			autoFader.touch.setProcessValue(activeDevice, 1)
-			autoFader.touched = true
+	// TW-1206/1207: touch / move / release one automation control (bound to a parameter of the selected track).
+	'auto.control': function (am, p, activeDevice) {
+		if (!autoControls) throw { code: 'UNSUPPORTED', msg: 'automation controls are not enabled in this script build' }
+		var c = autoControls.byKey[p.key]
+		if (!c) throw { code: 'NOT_FOUND', msg: 'unknown automation control ' + p.key }
+		var touchedBefore = c.touched
+		if (p.touch === true && !c.touched) {
+			c.touch.setProcessValue(activeDevice, 1)
+			c.touched = true
 		}
 		if (p.value !== undefined) {
 			var value = num(p, 'value')
 			if (value < 0 || value > 1) throw { code: 'BAD_REQUEST', msg: 'value must be in [0,1]' }
-			autoFader.fader.mSurfaceValue.setProcessValue(activeDevice, value)
-			out.value = autoFader.fader.mSurfaceValue.getProcessValue(activeDevice)
+			c.fader.mSurfaceValue.setProcessValue(activeDevice, value)
+			c.value = c.fader.mSurfaceValue.getProcessValue(activeDevice)
 		}
-		if (p.touch === false && autoFader.touched) {
-			autoFader.touch.setProcessValue(activeDevice, 0)
-			autoFader.touched = false
+		if (p.touch === false && c.touched) {
+			c.touch.setProcessValue(activeDevice, 0)
+			c.touched = false
 		}
-		out.touched = autoFader.touched
-		out.errors = autoFader.errors.slice(-5)
+		var out = describeControl(c)
+		out.touchedBefore = touchedBefore
 		return out
 	},
 	'sel.step': function (am, p) {
