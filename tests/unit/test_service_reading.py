@@ -119,7 +119,7 @@ def test_list_available_plugins_without_collection(service: CubaseService, fake:
 
 def test_list_parameters_channel_and_filter(service: CubaseService) -> None:
     out = service.list_parameters("selected", "channel")
-    assert out.total == 8
+    assert out.total == 10
     assert {p.tag for p in out.items} >= {1024, 1025, 1027}
     filtered = service.list_parameters("selected", "channel", filter_text="vol")
     assert [p.title for p in filtered.items] == ["Volumen"]

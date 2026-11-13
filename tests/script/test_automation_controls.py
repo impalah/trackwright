@@ -1,15 +1,12 @@
-"""TW-1206/1207: automation controls are off in released scripts and drivable in the experiment build.
+"""TW-1207: the automation controls of the released script (emulated surface).
 
-These tests use an emulated surface. Whether Cubase records automation from each control is what the
-experiment in Cubase must find out (verified for volume, variant B2).
+Recording automation through them was verified in Cubase (docs/verificacion.md, 2026-11-13); these
+tests check every binding, the touch wiring and the auto.control / auto.list operations.
 """
 
 from __future__ import annotations
 
-import importlib.util
 from collections.abc import Iterator
-from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -17,7 +14,6 @@ from tests.script.test_script_node import Harness
 from trackwright.cubase import SCRIPT_VERSION
 
 pytestmark = pytest.mark.node
-BUILD = Path(__file__).resolve().parents[2] / "experiments" / "tw1206" / "build.py"
 EXPECTED_KEYS = (
     ["volume", "pan"]
     + [f"send{i}.level" for i in range(1, 5)]
@@ -28,38 +24,18 @@ EXPECTED_KEYS = (
 )
 
 
-def builder() -> Any:
-    spec = importlib.util.spec_from_file_location("tw1206_build", BUILD)
-    assert spec is not None
-    assert spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-def started(script: Path | None = None) -> Harness:
-    harness = Harness(script) if script else Harness()
+def started() -> Harness:
+    harness = Harness()
     harness.sid = harness.call("hello")["r"]["sessionId"]
     return harness
 
 
 @pytest.fixture
-def experiment(tmp_path: Path) -> Iterator[Harness]:
-    harness = started(builder().build(target=tmp_path / "Trackwright_Bridge.js"))
+def experiment() -> Iterator[Harness]:
+    harness = started()
     harness.step(state=True)  # drain logs
     yield harness
     harness.close()
-
-
-def test_released_script_has_no_controls() -> None:
-    harness = started()
-    try:
-        assert harness.call("auto.control", {"key": "volume", "touch": True})["err"]["code"] == "UNSUPPORTED"
-        assert harness.call("auto.list")["r"] == {"enabled": False, "controls": []}
-        assert harness.call("capabilities")["r"]["capabilities"]["automationControls"] == {"enabled": False}
-        assert all(e["kind"] != "fader" for e in harness.step(state=True)["state"]["surface"])
-    finally:
-        harness.close()
 
 
 def test_experiment_binds_every_parameter(experiment: Harness) -> None:
@@ -74,7 +50,7 @@ def test_experiment_binds_every_parameter(experiment: Harness) -> None:
     assert len({(f["x"], f["y"]) for f in faders}) == len(faders), "faders must not overlap"
     caps = experiment.call("capabilities")["r"]["capabilities"]["automationControls"]
     assert caps == {"enabled": True, "count": len(EXPECTED_KEYS), "errors": []}
-    assert experiment.call("hello")["r"]["scriptVersion"] == f"{SCRIPT_VERSION}+tw1206"
+    assert experiment.call("hello")["r"]["scriptVersion"] == SCRIPT_VERSION
 
 
 def test_touch_move_release_sequence(experiment: Harness) -> None:
@@ -90,7 +66,3 @@ def test_touch_move_release_sequence(experiment: Harness) -> None:
 def test_errors(experiment: Harness) -> None:
     assert experiment.call("auto.control", {"key": "volume", "value": 2})["err"]["code"] == "BAD_REQUEST"
     assert experiment.call("auto.control", {"key": "nope"})["err"]["code"] == "NOT_FOUND"
-
-
-def test_source_keeps_the_controls_off() -> None:
-    assert "var AUTOMATION_CONTROLS_ENABLED = false" in builder().SOURCE.read_text(encoding="utf-8")

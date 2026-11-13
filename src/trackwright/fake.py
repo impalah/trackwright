@@ -99,6 +99,14 @@ class FakeCubase:
             "cycleRight": "1. 1. 1.  0",
         }
         self.tempo = 120.0
+        # Automation simulation (TW-1207): playback advances the cursor on every transport.get.
+        self.automation_controls = True
+        self.playing = False
+        self.position = 0.0  # beats from the project start
+        self.beats_per_poll = 0.25
+        self.auto_values: dict[tuple[int, str], float] = {}
+        self.auto_touched: set[str] = set()
+        self.automation: dict[tuple[int, str], list[tuple[float, float]]] = {}
         self.markers: list[str] = []
         self.last_event_end: str | None = "9. 1. 1.  0"
         """End of the last event in the project (``None`` = no events). Used by "Locate Next Marker"."""
@@ -133,6 +141,8 @@ class FakeCubase:
             1027: Param("Enmudecer", "discrete", 0, automatable=True),
             1028: Param("Solo", "discrete", 0),
             4002: Param("Habilitar grabación", "discrete", 0),
+            4013: Param("Escribir automatización", "discrete", 0),
+            4014: Param("Leer automatización", "discrete", 0),
             4101: Param(
                 "Entrada",
                 "discrete",
@@ -371,6 +381,9 @@ class FakeCubase:
         return {"time": value, "format": BARS if display == "primary" else SECONDS, "ms": 0}
 
     def _op_transport_get(self, _p: JsonObject) -> JsonObject:
+        if self.playing:  # verified: the cursor position is reported while playing
+            self.position += self.beats_per_poll
+            self.transport["locator"] = _beats_to_bars(self.position)
         # Verified quirk: the secondary display reports bar strings while declaring "Segundos".
         out: JsonObject = {"available": True, "tempoBPM": self.tempo, "updates": 1}
         for display in ("primary", "secondary"):
@@ -562,12 +575,86 @@ class FakeCubase:
             slot.params[4125] = Param("Tipo de efecto", "discrete", 1, entry["name"])
         return {"guard": guard, "result": entry is not None, "before": before, "after": self._describe(slot)}
 
-    def _op_auto_control(self, _p: JsonObject) -> JsonObject:
-        # Mirrors released scripts: the automation controls only exist in the experiment build (TW-1206).
-        raise HostError("automation controls are not enabled in this script build", code="UNSUPPORTED")
+    # ------------------------------------------------------------------ automation controls (TW-1207)
+    AUTO_KEYS: tuple[str, ...] = (
+        "volume",
+        "pan",
+        *(f"send{i}.level" for i in range(1, 5)),
+        *(f"eq{b}.{p}" for b in range(1, 5) for p in ("gain", "freq", "q")),
+        "prefilter.gain",
+        "prefilter.lowcut",
+        "prefilter.highcut",
+        *(f"qc{i}" for i in range(1, 9)),
+        *(f"insert{s}.p{n}" for s in (1, 2) for n in range(1, 9)),
+    )
+
+    def _auto_title(self, key: str) -> str:
+        """Title of the parameter bound to a control on the selected track (' / ' when nothing is bound)."""
+        if key.startswith("qc"):
+            return " / "
+        if key.startswith("insert"):
+            slot_index, param_index = int(key[6]) - 1, int(key.split(".p")[1])
+            inserts = self.objects[self.objects[self.selected].children[1]]
+            slot = self.objects[inserts.children[slot_index]]
+            if not slot.children:
+                return " / "
+            return f"{self.objects[slot.children[0]].title} / Param {param_index}"
+        return {"volume": f"{self.objects[self.selected].title} / Volumen", "pan": "Panner / Izquierda-derecha"}.get(
+            key, f"Channel / {key}"
+        )
+
+    def _auto_value(self, key: str) -> float:
+        recorded = self.automation.get((self.selected, key))
+        reading = self.objects[self.selected].params[4014].value >= 0.5
+        if self.playing and reading and recorded and key not in self.auto_touched:
+            earlier = [value for beat, value in recorded if beat <= self.position]
+            if earlier:
+                return earlier[-1]
+        if key == "volume":
+            return self.objects[self.selected].params[1025].value
+        return self.auto_values.get((self.selected, key), 0.5)
+
+    def _require_controls(self) -> None:
+        if not self.automation_controls:
+            raise HostError("automation controls are not enabled in this script build", code="UNSUPPORTED")
+        if self.selected < 0:
+            raise HostError("no selected channel", code="NO_BASE_OBJECT")
+
+    def _describe_control(self, key: str) -> JsonObject:
+        value = self._auto_value(key)
+        bound = self._auto_title(key).strip(" /") != ""
+        return {"key": key, "value": value if bound else None, "display": f"{value:.2f}" if bound else "",
+                "title": self._auto_title(key), "touched": key in self.auto_touched, "errors": []}  # fmt: skip
+
+    def _op_auto_control(self, p: JsonObject) -> JsonObject:
+        self._require_controls()
+        key = p.get("key")
+        if key not in self.AUTO_KEYS:
+            raise HostError(f"unknown automation control {key}", code="NOT_FOUND")
+        touched_before = key in self.auto_touched
+        if p.get("touch") is True:
+            self.auto_touched.add(key)
+        if "value" in p:
+            value = self._num(p, "value")
+            if not 0 <= value <= 1:
+                raise HostError("value must be in [0,1]", code="BAD_REQUEST")
+            if key == "volume":
+                self.objects[self.selected].params[1025].value = value
+            else:
+                self.auto_values[(self.selected, key)] = value
+            writing = self.objects[self.selected].params[4013].value >= 0.5
+            if writing and self.playing and key in self.auto_touched:  # verified: touched + W + playing records
+                self.automation.setdefault((self.selected, key), []).append((self.position, value))
+        if p.get("touch") is False:
+            self.auto_touched.discard(key)
+        return self._describe_control(key) | {"touchedBefore": touched_before}
 
     def _op_auto_list(self, _p: JsonObject) -> JsonObject:
-        return {"enabled": False, "controls": []}
+        if not self.automation_controls:
+            return {"enabled": False, "controls": []}
+        if self.selected < 0:
+            return {"enabled": True, "controls": [], "errors": ["no selected channel"]}
+        return {"enabled": True, "controls": [self._describe_control(k) for k in self.AUTO_KEYS], "errors": []}
 
     def _op_sel_step(self, p: JsonObject) -> JsonObject:
         direction = p.get("direction")
@@ -620,10 +707,16 @@ class FakeCubase:
         }
 
     def _apply_command(self, key: str) -> None:
-        tracks = self.channels[1:]
         if COMMANDS[key].command_class == "dialog" and key != "audio.detect_silence":
             self.pending_dialog = key
-        elif key == "addtrack.marker":
+        elif key.startswith("transport."):
+            self._apply_transport(key)
+        else:
+            self._apply_project(key)
+
+    def _apply_project(self, key: str) -> None:
+        tracks = self.channels[1:]
+        if key == "addtrack.marker":
             self.non_mixer_tracks.append("Marker")
             self.selected = -1
         elif key == "marker.insert":
@@ -638,17 +731,37 @@ class FakeCubase:
             else:
                 self.remove(self.selected)
                 self.selected = -1
+
+    def _apply_transport(self, key: str) -> None:
+        cursor = self.transport["locator"]
+        if key == "transport.start":
+            self.playing = True
+            self.position = _bars_to_beats(cursor)
+        elif key == "transport.stop":
+            self.playing = False
         elif key == "transport.locate_prev_marker":
-            earlier = [m for m in self.markers if _bars(m) < _bars(self.transport["locator"])]
+            earlier = [m for m in self.markers if _bars(m) < _bars(cursor)]
             self.transport["locator"] = max(earlier, key=_bars) if earlier else "1. 1. 1.  0"
         elif key == "transport.locate_next_marker":
-            later = [m for m in self.markers if _bars(m) > _bars(self.transport["locator"])]
+            later = [m for m in self.markers if _bars(m) > _bars(cursor)]
             if later:
                 self.transport["locator"] = min(later, key=_bars)
-            elif self.last_event_end is not None and _bars(self.last_event_end) > _bars(self.transport["locator"]):
+            elif self.last_event_end is not None and _bars(self.last_event_end) > _bars(cursor):
                 # Verified on Cubase 15 (2026-11-12): without a next marker the cursor goes to the end of the
                 # last event of the project (the POC had seen it stay put).
                 self.transport["locator"] = self.last_event_end
+
+
+def _bars_to_beats(time: str) -> float:
+    bar, beat, sixteenth, ticks = (int(part) for part in time.replace(".", " ").split())
+    return (bar - 1) * 4 + (beat - 1) + (sixteenth - 1) / 4 + ticks / 480
+
+
+def _beats_to_bars(beats: float) -> str:
+    bar, rest = divmod(beats, 4)
+    beat, rest = divmod(rest, 1)
+    sixteenth, rest = divmod(rest * 4, 1)
+    return f"{int(bar) + 1}. {int(beat) + 1}. {int(sixteenth) + 1}.{round(rest * 120):>3}"
 
 
 def _bars(time: str) -> tuple[int, ...]:

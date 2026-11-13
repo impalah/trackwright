@@ -49,6 +49,7 @@ La evidencia está en `cubase-mcp-poc/docs/findings.md` y `progress.md`.
 | Escrituras sin reintento y plazo único | Tras un timeout, la escritura pudo ejecutarse (verificado con respuestas tardías). El tiempo de espera del cerrojo de escritura y la renegociación cuentan dentro del plazo; si el cerrojo no se libera a tiempo, `BUSY` sin enviar. |
 | Supresión de duplicados en curso, en el script | Un duplicado en ráfaga se ejecutaba dos veces; corregido y verificado. |
 | Rechazo de escrituras fuera de [0, 1] | Cubase las limita a ese rango; el enrutado (22) no se puede volver a escribir (verificado, con un incidente). |
+| Automatización con controles de superficie «tocados» | Escribir el parámetro por DirectAccess mueve el valor pero no graba. Un fader de la superficie enlazado al parámetro, con su estado de toque controlado por el script, sí graba en modo Touch, como un controlador físico (TW-1206 y TW-1207, verificado en Elements). |
 | Clases de comando | Los comandos no devuelven resultado; unos abren diálogos y otros actúan sobre la selección de la interfaz (verificado). |
 | Política de escritura con solo lectura por defecto | El modelo puede cometer errores: el usuario decide qué se puede tocar. |
 | Simulador `FakeCubase` | Tests rápidos y reproducibles; un modo `--simulate` para aprender sin riesgo. Nunca cuenta como evidencia sobre Cubase. |

@@ -2,6 +2,10 @@
 
 ## Sin publicar
 
+- **Automatización** (TW-1207):
+  - herramientas `cubase_list_automation_targets` y `cubase_record_automation`: graban curvas de volumen, panorama, envíos, EQ del canal, pre-filtro y parámetros de plugins de inserción, reproduciendo el proyecto, con verificación opcional;
+  - **script 1.4.0**, con 45 controles de automatización activos en la superficie y las operaciones `auto.control` y `auto.list`;
+  - el simulador reproduce y graba automatización.
 - **Script 1.2.2:** comandos `Transport / Start` y `Stop` (`transport.start`, `transport.stop`), para reproducir sin intervención del usuario. Nunca graba.
 - **Script 1.2.1:** fader de automatización experimental (TW-1206, variante B2), **desactivado** (`AUTOMATION_FADER_ENABLED = false`), y la operación `auto.fader`, que responde `UNSUPPORTED` mientras esté desactivado. La versión de prueba se genera con `experiments/tw1206/build.py`.
 - **Script 1.2.0:** comandos de automatización (modos Touch, Auto-Latch y Cross-Over, siguiente modo y escritura en las pistas seleccionadas) para el experimento TW-1206. Clase `unknown` hasta observarlos.

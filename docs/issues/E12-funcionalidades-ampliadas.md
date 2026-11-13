@@ -96,7 +96,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1207 Herramienta de automatización y ampliación a otros parámetros
 
-- **Estado:** en curso
+- **Estado:** implementada (script 1.4.0, herramientas `cubase_list_automation_targets` y `cubase_record_automation`, 20 tests de servicio y de contrato). Falta verificarla en Cubase con la herramienta definitiva
 - **Objetivo:** la herramienta `cubase_record_automation` y la automatización de más parámetros que el volumen.
 - **Base verificada:**
   - fader de la superficie con toque (TW-1206 B2);

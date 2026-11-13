@@ -226,3 +226,49 @@ class CommandOut(_Out):
     verified: bool | Literal["not_observable"] | None
     instructions: str | None = None
     details: dict[str, str | int | float | bool | None] = Field(default_factory=dict)
+
+
+# ---------------------------------------------------------------------------- automation (TW-1207)
+class AutomationPoint(BaseModel):
+    """One point of an automation curve (input)."""
+
+    model_config = ConfigDict(extra="forbid")
+    position: str = Field(description="bar position, e.g. '9. 1. 1. 0' (bar. beat. 16th. tick); 4/4 assumed")
+    value: float = Field(
+        ge=0, le=1, description="normalized value 0..1 (read current values with list_automation_targets)"
+    )
+
+
+class AutomationTarget(_Out):
+    parameter: str = Field(description="key to pass to cubase_record_automation, e.g. 'volume' or 'insert1.p1'")
+    title: str | None = Field(description="the Cubase parameter bound to it, e.g. 'Compressor / Threshold'")
+    value: float | None
+    display: str | None
+    available: bool = Field(description="false when nothing is bound (empty insert slot, unassigned quick control)")
+
+
+class AutomationTargetsOut(_Out):
+    track: str
+    targets: list[AutomationTarget]
+    note: str = "the track was selected: automation controls follow the selected track"
+
+
+class WrittenPoint(_Out):
+    position: str
+    value: float
+    display: str | None
+
+
+class AutomationRecordOut(_Out):
+    dry_run: bool
+    track: str
+    parameter: str
+    title: str | None
+    value_before: float | None
+    display_before: str | None
+    start: str = Field(description="where playback starts (pre-roll before the first point)")
+    points: list[AutomationPoint]
+    written: list[WrittenPoint]
+    verified: bool | None = Field(description="a read-back pass followed the curve (null when not verified)")
+    mismatches: list[str] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)

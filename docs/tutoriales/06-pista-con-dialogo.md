@@ -45,5 +45,6 @@ Respuestas posibles:
 
 ## Para seguir
 
+- [Tutorial 7 — Grabar automatización](07-automatizacion.md).
 - [Referencia de herramientas](../manual/04-herramientas.md): todas las herramientas y sus limitaciones.
 - [Resolución de problemas](../manual/05-problemas.md).

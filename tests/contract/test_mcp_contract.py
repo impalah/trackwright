@@ -35,8 +35,9 @@ WRITE_TOOLS = {
     "cubase_set_tempo",
     "cubase_markers",
     "cubase_add_track_interactive",
+    "cubase_record_automation",
 }
-NAVIGATION_TOOLS = {"cubase_select_track", "cubase_set_position"}
+NAVIGATION_TOOLS = {"cubase_select_track", "cubase_set_position", "cubase_list_automation_targets"}
 DESTRUCTIVE_TOOLS = {"cubase_remove_selected_tracks", "cubase_split_at_locators", "cubase_run_command"}
 ALL_TOOLS = READ_TOOLS | WRITE_TOOLS | NAVIGATION_TOOLS | DESTRUCTIVE_TOOLS
 STUDIO_EQ = "946051208E29496E804F64A825C8A047"
@@ -160,3 +161,30 @@ async def test_writes_disabled_by_default() -> None:
         assert plan["dry_run"] is True
         text = await call_error(client, "cubase_set_track_mix", {"track": "POC-TEST", "solo": True, "dry_run": False})
         assert "WRITES_DISABLED" in text
+
+
+async def test_automation_tools(client: Client, fake: FakeCubase) -> None:
+    targets = await call(client, "cubase_list_automation_targets", {"track": "POC-TEST"})
+    assert {t["parameter"] for t in targets["targets"]} >= {"volume", "pan", "insert1.p1"}
+    plan = await call(
+        client,
+        "cubase_record_automation",
+        {"track": "POC-TEST", "parameter": "volume", "points": [{"position": "2.1.1.0", "value": 0.7}]},
+    )
+    assert plan["dry_run"] is True
+    done = await call(
+        client,
+        "cubase_record_automation",
+        {
+            "track": "POC-TEST",
+            "parameter": "volume",
+            "points": [{"position": "2.1.1.0", "value": 0.79}, {"position": "3.1.1.0", "value": 0.5}],
+            "dry_run": False,
+        },
+    )
+    assert done["verified"] is True
+    assert "NOT_AUTOMATABLE" in await call_error(
+        client,
+        "cubase_record_automation",
+        {"track": "POC-TEST", "parameter": "qc1", "points": [{"position": "2.1.1.0", "value": 0.5}], "dry_run": False},
+    )

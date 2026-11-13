@@ -1,6 +1,6 @@
 # Referencia de herramientas MCP
 
-El servidor `trackwright` publica 21 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 23 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 ## Conceptos comunes
 
@@ -204,6 +204,44 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.set_left_locator`, `transport.set_right_locator`, `transport.locators_to_selection` | unknown |
 | `automation.mode_touch`, `automation.mode_auto_latch`, `automation.mode_cross_over`, `automation.next_mode`, `automation.toggle_write_selected` | unknown (experimento TW-1206) |
 | `transport.start`, `transport.stop` | direct (verificado: reproduce y para; nunca graba) |
+
+## Herramientas de automatización
+
+Mecanismo verificado en Cubase Elements 15.0.30: el script tiene en la superficie MIDI Remote un control por parámetro, enlazado a la **pista seleccionada**. Moverlo «tocado» mientras la pista tiene activada la escritura de automatización (W) y el proyecto se reproduce graba automatización, como un controlador físico en modo Touch. Escribir el parámetro directamente **no** graba.
+
+### `cubase_list_automation_targets` (navegación)
+
+- **Entrada:** `track`.
+- **Salida:** cada parámetro automatizable con su clave (`parameter`), el parámetro de Cubase al que está enlazado (`title`, por ejemplo «Compressor / Threshold»), su valor actual y si está disponible (`available`).
+- **Claves:**
+  - `volume`, `pan`;
+  - `send1.level` a `send4.level`;
+  - `eq1.gain`, `eq1.freq` y `eq1.q`, hasta la banda 4;
+  - `prefilter.gain`, `prefilter.lowcut` y `prefilter.highcut`;
+  - `qc1` a `qc8` (Quick Controls);
+  - `insert1.p1` a `insert2.p8`: los parámetros del plugin de los slots 1 y 2, en el orden de banco que decide Cubase.
+- **Selecciona la pista,** porque los controles siguen la selección.
+
+### `cubase_record_automation` (escritura, reproduce audio)
+
+- **Entrada:**
+  - `track` y `parameter`;
+  - `points`: de 1 a 64 puntos `{position: "9. 1. 1. 0", value: 0..1}`, en orden creciente;
+  - `verify` (por defecto `true`) y `dry_run`.
+- **Qué hace:**
+  1. selecciona la pista;
+  2. activa W y desactiva R;
+  3. reproduce desde un compás antes del primer punto;
+  4. «toca» el control, recorre la curva (lineal entre puntos) siguiendo la posición del cursor y lo «suelta»;
+  5. para la reproducción y deja W y R como estaban.
+  - Con `verify`, vuelve a reproducir con R activado y compara el valor leído con la curva (tolerancia 0,05).
+- **Salida:** los valores escritos (`written`), `verified`, las discrepancias (`mismatches`) y notas.
+- **Errores:** `PARAM_NOT_FOUND`, `NOT_AUTOMATABLE` (no hay nada enlazado: slot vacío o Quick Control sin asignar), `TRANSPORT_RUNNING`, `NOT_RECORDED`, `BAD_TIME` y `WRITES_DISABLED`.
+- **Limitaciones:**
+  - las posiciones suponen compás de 4/4;
+  - hay un punto escrito cada ~0,1–0,3 s;
+  - **suena**: baja el volumen del monitor;
+  - con R activado, la curva grabada manda sobre el parámetro.
 
 ## Lo que no se puede hacer
 

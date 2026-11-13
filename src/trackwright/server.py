@@ -20,6 +20,9 @@ from pydantic import Field
 
 from trackwright import SERVER_NAME, __version__
 from trackwright.core.models import (
+    AutomationPoint,
+    AutomationRecordOut,
+    AutomationTargetsOut,
     ChangesOut,
     CommandOut,
     InsertPluginOut,
@@ -52,6 +55,8 @@ Rules for using these tools:
   never claim it is done. "ui_selection" commands act on the Cubase window selection, which these tools
   cannot see: ask the user to check the result.
 - Routing (inputs, outputs, send destinations) cannot be changed through this API.
+- Automation: list the parameters with cubase_list_automation_targets, then record a curve with
+  cubase_record_automation. Recording plays the project (audible) and writes the track's automation.
 - If a tool fails with WRITES_DISABLED, writes are disabled in the user's Trackwright configuration.
 """
 
@@ -250,5 +255,29 @@ def build_server(service: CubaseService) -> MCPServer:
         force: Annotated[bool, Field(description="fire even if Cubase says it cannot be performed")] = False,
     ) -> CommandOut:
         return await run(lambda: service.run_command(key, dry_run=dry_run, force=force))
+
+    # ------------------------------------------------------------------ automation tools (TW-1207)
+    @server.tool(
+        annotations=NAVIGATE,
+        description="Parameters of a track that can be automated (volume, pan, sends, channel EQ, pre-filter, "
+        "quick controls, insert plugin parameters), with the Cubase parameter bound to each. Selects the track.",
+    )
+    async def cubase_list_automation_targets(track: TrackArg) -> AutomationTargetsOut:
+        return await run(lambda: service.list_automation_targets(track))
+
+    @server.tool(
+        annotations=WRITE,
+        description="Record an automation curve on a track parameter: plays the project from just before the "
+        "first point and moves the parameter through the points (linear in between). Audible. Optionally "
+        "verifies with a read-back pass. Positions assume 4/4.",
+    )
+    async def cubase_record_automation(
+        track: TrackArg,
+        parameter: Annotated[str, Field(description="key from cubase_list_automation_targets, e.g. 'volume'")],
+        points: Annotated[list[AutomationPoint], Field(min_length=1, max_length=64)],
+        verify: Annotated[bool, Field(description="play again with read automation to check the curve")] = True,
+        dry_run: DryRunArg = True,
+    ) -> AutomationRecordOut:
+        return await run(lambda: service.record_automation(track, parameter, points, dry_run=dry_run, verify=verify))
 
     return server

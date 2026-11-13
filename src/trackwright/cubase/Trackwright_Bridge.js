@@ -16,7 +16,7 @@
 
 var midiremote_api = require('midiremote_api_v1')
 
-var SCRIPT_VERSION = '1.3.0'
+var SCRIPT_VERSION = '1.4.0'
 var PROTOCOL_VERSION = 1
 var MANUFACTURER = 0x7D
 var MAGIC_A = 0x54
@@ -51,9 +51,9 @@ var PANEL_ENABLED = true
 
 // Automation controls (TW-1206/TW-1207). Surface faders bound to parameters of the selected track, whose
 // touch state the script drives: moving a *touched* surface control is how hardware controllers write
-// automation in Touch mode (verified for volume, variant B2, 2026-11-13). Off in released builds;
-// experiments/tw1206/build.py switches them on.
-var AUTOMATION_CONTROLS_ENABLED = false
+// automation in Touch mode (verified for volume, pan, sends, channel EQ, pre-filter and insert plugin
+// parameters, experiments TW-1206 B2 and TW-1207 B3, 2026-11-13). Used by cubase_record_automation.
+var AUTOMATION_CONTROLS_ENABLED = true
 
 // Without the panel a single element is still needed for Cubase to show the surface.
 if (!PANEL_ENABLED) deviceDriver.mSurface.makeLabelField(0, 0, 4, 1)

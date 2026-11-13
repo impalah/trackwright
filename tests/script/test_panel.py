@@ -31,7 +31,7 @@ def lamp_values(h: Harness) -> list[int]:
 
 
 def test_layout_uses_only_verified_mechanisms(h: Harness) -> None:
-    surface = h.step(state=True)["state"]["surface"]
+    surface = [e for e in h.step(state=True)["state"]["surface"] if e["kind"] != "fader"]  # faders: automation
     assert [(e["kind"], e["x"], e["y"], e["w"]) for e in surface] == [
         ("label", 0, 0, 8),
         ("lamp", 8, 0, 1),

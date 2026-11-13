@@ -45,7 +45,7 @@ def test_tw1003_unfiltered_paging(service: CubaseService) -> None:
     assert [p.tag for p in first.items] == [1024, 4000, 1025]
     assert (first.next_offset, first.truncated) == (3, True)
     rest = service.list_parameters("selected", "channel", offset=first.next_offset, limit=25)
-    assert len(rest.items) == 5
+    assert len(rest.items) == 7
     assert rest.truncated is False
 
 

@@ -89,6 +89,8 @@ Verás `virtual MIDI ports open` y `bridge listening on …/bridge.sock`. Mientr
    - **Fila 1:** «Trackwright» con la versión del script cargado, y una **lámpara** a la derecha. La lámpara se enciende un instante cada vez que Trackwright envía una petición a Cubase.
    - **Fila 2:** el nombre de la pista seleccionada. Muestra «-» si la seleccionada no tiene canal de mezclador (marcadores, carpetas) o si no hay ninguna seleccionada.
 
+   - **A la derecha:** decenas de faders. Son los controles de automatización (volumen, panorama, envíos, EQ, pre-filtro, Quick Controls y parámetros de plugins de la pista seleccionada) que usa `cubase_record_automation`. No los asignes a otras funciones en el asistente de asignación.
+
    Con el puente parado, solo se ve la lámpara: los textos aparecen cuando la página «Bridge» se activa.
 5. **Recomendado:** en *Estudio > Configuración de estudio > Configuración de puertos MIDI* (*Studio > Studio Setup > MIDI Port Setup*), desmarca la columna **«En 'All MIDI Inputs'»** de `Trackwright To Cubase`. Así los mensajes de control no llegan nunca a una pista.
 
