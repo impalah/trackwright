@@ -1,38 +1,40 @@
-# Issues y épicas de Trackwright
+# Trackwright issues and epics
 
-Las issues documentan cada unidad de trabajo **antes** de implementarla. Al cerrarla se actualiza su estado y se enlaza el commit.
+**English** · [Español](README.es.md)
 
-- **Fuente de requisitos:** `docs/mcp-design.md` y `docs/findings.md` de la POC (`../cubase-mcp-poc/`). Cada issue de herramienta cita la evidencia de runtime en la que se apoya.
-- **Estados:** `pendiente` → `en curso` → `hecha` (con commit) · `bloqueada` (con motivo).
-- **Identificadores:** `TW-<épica><número>`, por ejemplo `TW-0203` (épica 02, issue 03).
+Issues document each unit of work **before** it is implemented. When an issue is closed, its status is updated and the commit is linked.
 
-## Épicas
+- **Source of requirements:** `docs/mcp-design.md` and `docs/findings.md` from the POC (`../cubase-mcp-poc/`). Each tool issue cites the runtime evidence it relies on.
+- **Statuses:** `pending` → `in progress` → `done` (with commit) · `blocked` (with reason).
+- **Identifiers:** `TW-<epic><number>`, for example `TW-0203` (epic 02, issue 03).
 
-| Épica | Título | Archivo |
+## Epics
+
+| Epic | Title | File |
 |---|---|---|
-| E01 | Fundaciones del proyecto | [E01-fundaciones.md](E01-fundaciones.md) |
-| E02 | Comunicación con Cubase (protocolo, transporte, cliente, puente) | [E02-comunicacion.md](E02-comunicacion.md) |
-| E03 | Script MIDI Remote de Trackwright | [E03-script-midi-remote.md](E03-script-midi-remote.md) |
-| E04 | Núcleo del servidor MCP | [E04-nucleo-mcp.md](E04-nucleo-mcp.md) |
-| E05 | Herramientas de lectura | [E05-herramientas-lectura.md](E05-herramientas-lectura.md) |
-| E06 | Herramientas de escritura | [E06-herramientas-escritura.md](E06-herramientas-escritura.md) |
-| E07 | Herramientas basadas en comandos de Cubase | [E07-herramientas-comandos.md](E07-herramientas-comandos.md) |
-| E08 | Documentación de usuario: manuales y tutoriales | [E08-documentacion.md](E08-documentacion.md) |
-| E09 | Calidad y pruebas | [E09-calidad-pruebas.md](E09-calidad-pruebas.md) |
-| E10 | Endurecimiento tras la revisión independiente | [E10-endurecimiento.md](E10-endurecimiento.md) |
-| E11 | Panel de estado en la superficie MIDI Remote | [E11-panel-estado.md](E11-panel-estado.md) |
-| E12 | Funcionalidades ampliadas (arranque, guardar, importar y exportar, presets, automatización, propiedades del proyecto, edición por rangos). **Cerrada** (TW-1201 a TW-1212) | [E12-funcionalidades-ampliadas.md](E12-funcionalidades-ampliadas.md) |
-| E13 | Distribución: instalación guiada, transporte CoreMIDI sin compilación y canal de distribución | [E13-distribucion.md](E13-distribucion.md) |
+| E01 | Project foundations | [E01-foundations.md](E01-foundations.md) |
+| E02 | Communication with Cubase (protocol, transport, client, bridge) | [E02-communication.md](E02-communication.md) |
+| E03 | Trackwright MIDI Remote script | [E03-midi-remote-script.md](E03-midi-remote-script.md) |
+| E04 | MCP server core | [E04-mcp-core.md](E04-mcp-core.md) |
+| E05 | Read tools | [E05-read-tools.md](E05-read-tools.md) |
+| E06 | Write tools | [E06-write-tools.md](E06-write-tools.md) |
+| E07 | Tools based on Cubase commands | [E07-command-tools.md](E07-command-tools.md) |
+| E08 | User documentation: manuals and tutorials | [E08-documentation.md](E08-documentation.md) |
+| E09 | Quality and testing | [E09-quality-testing.md](E09-quality-testing.md) |
+| E10 | Hardening after the independent review | [E10-hardening.md](E10-hardening.md) |
+| E11 | Status panel on the MIDI Remote surface | [E11-status-panel.md](E11-status-panel.md) |
+| E12 | Extended features (startup, save, import and export, presets, automation, project properties, range editing). **Closed** (TW-1201 to TW-1212) | [E12-extended-features.md](E12-extended-features.md) |
+| E13 | Distribution: guided installation, CoreMIDI transport without compilation, and distribution channel | [E13-distribution.md](E13-distribution.md) |
 
-## Criterios comunes a todas las issues
+## Criteria common to all issues
 
-- **Herramientas:** solo `uv`.
-  - Dependencias con `uv add`; ejecución con `uv run`.
-  - Prohibidos `pip`, `uv pip`, `venv`, `virtualenv`, `pipx`, `conda`, `poetry` y `requirements.txt`.
-- **Logs:** con `loguru`. El módulo `logging` de la biblioteca estándar solo se toca para redirigir los logs de dependencias hacia loguru (E01).
-- **Calidad:**
-  - `uv run ruff check` y `uv run ruff format --check` sin errores;
-  - `uv run mypy` en modo `strict` sin errores;
-  - cobertura de tests unitarios ≥ 85 % (`fail_under` en `pyproject.toml`).
-- **Documentación:** cada funcionalidad visible para el usuario se refleja en los manuales (E08).
-- **Honestidad de la evidencia:** lo que solo se ha probado con el simulador se marca así; no se declara verificado contra Cubase sin una ejecución real registrada.
+- **Tooling:** `uv` only.
+  - Dependencies with `uv add`; execution with `uv run`.
+  - `pip`, `uv pip`, `venv`, `virtualenv`, `pipx`, `conda`, `poetry` and `requirements.txt` are forbidden.
+- **Logs:** with `loguru`. The standard library `logging` module is only touched to redirect dependency logs to loguru (E01).
+- **Quality:**
+  - `uv run ruff check` and `uv run ruff format --check` with no errors;
+  - `uv run mypy` in `strict` mode with no errors;
+  - unit test coverage ≥ 85 % (`fail_under` in `pyproject.toml`).
+- **Documentation:** every user-visible feature is reflected in the manuals (E08).
+- **Honesty of evidence:** anything tested only with the simulator is marked as such; nothing is declared verified against Cubase without a recorded real run.

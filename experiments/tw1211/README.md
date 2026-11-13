@@ -1,70 +1,72 @@
-# Experimento TW-1211: edición por rangos en segundos
+# Experiment TW-1211: range editing in seconds
 
-**Requisitos:**
-- script **1.5.0**, que añade 12 comandos de edición de rangos y de sondeo de eventos;
-- el proyecto de pruebas **guardado**;
-- el usuario mirando Cubase.
+**English** · [Español](README.es.md)
 
-**Herramienta:** `uv run python experiments/tw1211/probe.py <paso>` (ver la ayuda del script). Los pasos destructivos solo actúan con `--apply`.
+**Requirements:**
+- script **1.5.0**, which adds 12 commands for range editing and event probing;
+- the test project **saved**;
+- the user watching Cubase.
+
+**Tool:** `uv run python experiments/tw1211/probe.py <step>` (see the script's help). The destructive steps only act with `--apply`.
 
 ## Plan
 
-1. **Segundos:** `seconds cursor 0:00:02.000` y `seconds cycle_left/right`. Se relee `time2` del Transport.
-2. **Sondeo de eventos:** `events`. ¿`Locate Next Event` recorre los bordes de los eventos? ¿Los de todas las pistas o solo los de las seleccionadas?
-3. **Alcance de `Select in Loop`:** con POC-TEST seleccionada y el ciclo en 2–30 s, ¿qué pistas quedan con selección de rango? Lo observa el usuario.
-4. **Acciones**, una cada vez, y deshaciendo entre una y otra:
-   - `Delete` sobre la selección;
-   - `Delete Time`, `Cut Time`, `Process / Silence`, `Insert Silence` y `Crop Range`.
+1. **Seconds:** `seconds cursor 0:00:02.000` and `seconds cycle_left/right`. `time2` is read back from the Transport.
+2. **Event probing:** `events`. Does `Locate Next Event` walk through the event edges? Those of all tracks or only those of the selected ones?
+3. **Scope of `Select in Loop`:** with POC-TEST selected and the cycle at 2–30 s, which tracks end up with a range selection? The user observes it.
+4. **Actions**, one at a time, undoing between each one:
+   - `Delete` on the selection;
+   - `Delete Time`, `Cut Time`, `Process / Silence`, `Insert Silence` and `Crop Range`.
 
-   Para cada una: si actúa sin diálogo, qué cambia (lo observa el usuario, y con `events` si el sondeo funciona) y si `Undo` lo deshace.
+   For each one: whether it acts without a dialog, what changes (observed by the user, and with `events` if probing works) and whether `Undo` undoes it.
 
-## Resultados (2026-11-13, Cubase Elements 15.0.30, script 1.5.0, con el usuario mirando)
+## Results (2026-11-13, Cubase Elements 15.0.30, script 1.5.0, with the user watching)
 
-**Estado de partida:**
-- POC-TEST con 5 eventos de audio, algunos solapados y compartiendo archivo;
-- POC-INSTR con 4 partes MIDI en los compases 1–5;
-- 120 BPM, 4/4 y proyecto guardado.
+**Starting state:**
+- POC-TEST with 5 audio events, some overlapping and sharing a file;
+- POC-INSTR with 4 MIDI parts in bars 1–5;
+- 120 BPM, 4/4 and project saved.
 
-### 1. Posiciones en segundos
+### 1. Positions in seconds
 
-- **Cursor:** `set_position(cursor, 0:00:02.000, seconds)` funciona. `time2` del Transport lo relee exacto (`0:00:02.000`, `0:00:30.000`).
-- **Localizadores, directamente: ❌ falla.** Al pedir `0:00:02.000` y `0:00:30.000` por la pantalla secundaria quedaron en `1. 1. 1. 0` y `1. 3. 2. 0`.
-- **Localizadores, con rodeo: ✅ funciona.** Se pone el cursor en segundos y se lanza `Transport / Set Left Locator` o `Set Right Locator` (clase *direct*). El ciclo quedó en `2. 1. 1. 0` – `16. 1. 1. 0` (2–30 s).
+- **Cursor:** `set_position(cursor, 0:00:02.000, seconds)` works. `time2` of the Transport reads it back exactly (`0:00:02.000`, `0:00:30.000`).
+- **Locators, directly: ❌ fails.** When requesting `0:00:02.000` and `0:00:30.000` through the secondary display they ended up at `1. 1. 1. 0` and `1. 3. 2. 0`.
+- **Locators, with a workaround: ✅ works.** The cursor is set in seconds and `Transport / Set Left Locator` or `Set Right Locator` (class *direct*) is run. The cycle ended up at `2. 1. 1. 0` – `16. 1. 1. 0` (2–30 s).
 
-### 2. Sondeo de eventos
+### 2. Event probing
 
-- **`Locate Next Event`** recorre los bordes (inicios y finales mezclados) de los eventos de las **pistas seleccionadas**. Sin pista seleccionada no se mueve.
+- **`Locate Next Event`** walks through the edges (starts and ends mixed) of the events on the **selected tracks**. With no track selected it does not move.
   - POC-TEST: `2.0, 2.4, 6.0, 6.8, 18.0, 22.0, 2:19.976` s.
-  - Coincide con la captura del usuario: eventos solapados que empiezan en 0, 2, 6, 18 y 22 s.
-- **`Locate Selection` / `Locate Selection End`** dan el inicio y el final de la selección completa. Con `Select All on Tracks`: 0 → 2:19,976.
+  - It matches the user's screenshot: overlapping events starting at 0, 2, 6, 18 and 22 s.
+- **`Locate Selection` / `Locate Selection End`** give the start and end of the whole selection. With `Select All on Tracks`: 0 → 2:19.976.
 
-### 3. Selección
+### 3. Selection
 
-- **Herramienta Objeto:** `Select in Loop` seleccionó solo el primer evento (0–2,4 s). No sirve.
-- **Herramienta Selección de rango** (tecla 2, cambiada por el usuario): `Select in Loop` crea un **rango 2,000–30,000 s en todas las pistas**, no solo en la seleccionada (lo observó el usuario). Con rango, `Crop Range` pasa a poderse ejecutar.
-- **El ciclo sigue a la selección de rango:** un clic con la herramienta de rango dejó los localizadores en `1. 3. 1. 0` – `1. 3. 1. 0`, y entonces `Select in Loop` no se podía ejecutar.
+- **Object tool:** `Select in Loop` selected only the first event (0–2.4 s). Not useful.
+- **Range Selection tool** (key 2, switched by the user): `Select in Loop` creates a **2.000–30.000 s range on all tracks**, not only on the selected one (observed by the user). With a range, `Crop Range` becomes executable.
+- **The cycle follows the range selection:** a click with the range tool left the locators at `1. 3. 1. 0` – `1. 3. 1. 0`, and then `Select in Loop` could not be executed.
 
-### 4. Acciones sobre el rango 2–30 s
+### 4. Actions on the 2–30 s range
 
-Medidas con el sondeo de POC-TEST, y cada una deshecha antes de la siguiente:
+Measured with the POC-TEST probe, each one undone before the next:
 
-| Acción | Clase | Bordes después | Interpretación | `Undo` |
+| Action | Class | Edges afterwards | Interpretation | `Undo` |
 |---|---|---|---|---|
-| `Edit / Delete` | direct | `2.0, 30.0, 2:19.976` | Hueco entre 2 y 30 s; nada se mueve | ✅ exacto |
-| `Edit / Delete Time` | direct | `2.0, 1:51.976` | Quita 28 s y adelanta lo posterior | ✅ exacto |
-| `Edit / Cut Time` | direct | `2.0, 1:51.976` | Igual que Delete Time, y lo copia al portapapeles | ✅ exacto |
-| `Edit / Insert Silence` | direct | todo +28 s, final `2:47.976` | Inserta 28 s de silencio en 2 s | ✅ exacto |
-| `Edit / Crop Range` | direct | `2.0 … 30.0` | Deja solo el rango. El borde de 2,4 s no apareció: sin explicar | ✅ exacto |
-| `Process / Silence` | **dialog** | sin cambios | Avisa de que hay eventos que comparten archivo («Continuar / Nueva versión / Cancelar», con «No volver a preguntar»). El usuario canceló sin marcar la casilla | — |
+| `Edit / Delete` | direct | `2.0, 30.0, 2:19.976` | Gap between 2 and 30 s; nothing moves | ✅ exact |
+| `Edit / Delete Time` | direct | `2.0, 1:51.976` | Removes 28 s and moves everything after it earlier | ✅ exact |
+| `Edit / Cut Time` | direct | `2.0, 1:51.976` | Same as Delete Time, and copies it to the clipboard | ✅ exact |
+| `Edit / Insert Silence` | direct | everything +28 s, end `2:47.976` | Inserts 28 s of silence at 2 s | ✅ exact |
+| `Edit / Crop Range` | direct | `2.0 … 30.0` | Keeps only the range. The 2.4 s edge did not appear: unexplained | ✅ exact |
+| `Process / Silence` | **dialog** | no changes | Warns that there are events sharing a file («Continuar / Nueva versión / Cancelar» (*Continue / New Version / Cancel*), with «No volver a preguntar» (*Don't ask again*)). The user canceled without ticking the box | — |
 
-- Todas actúan sobre las **pistas incluidas en el rango**, que con `Select in Loop` son todas.
-- Mientras hay un diálogo abierto, `Undo` informa `canPerform = false`. Sirve para detectar un diálogo pendiente.
-- La selección de rango sobrevive a `Undo`.
+- All of them act on the **tracks included in the range**, which with `Select in Loop` are all of them.
+- While a dialog is open, `Undo` reports `canPerform = false`. This serves to detect a pending dialog.
+- The range selection survives `Undo`.
 
-## Conclusiones para `cubase_edit_range`
+## Conclusions for `cubase_edit_range`
 
-1. **Rango:** cursor en segundos o en compases, `Set Left/Right Locator`, herramienta de rango (`Tool / Range Tool`, que hay que añadir al script), `Select in Loop`, acción y vuelta a la herramienta anterior (`Tool / Select Tool`).
-2. **Verificación:** sondeo con `Locate Next Event` sobre las pistas seleccionadas, antes y después, comparado con lo esperado para cada acción.
-3. **Alcance:** todas las pistas. Es lo natural para cortar un podcast (`Delete Time`). Borrar solo en una pista necesita otra vía (por investigar).
-4. **`Process / Silence`:** interactivo, porque el diálogo depende de que el archivo esté compartido.
-5. **Deshacer:** `Undo` funciona como red de seguridad. Un `Undo` fallido (`canPerform = false`) indica un diálogo abierto.
+1. **Range:** cursor in seconds or in bars, `Set Left/Right Locator`, range tool (`Tool / Range Tool`, which must be added to the script), `Select in Loop`, action, and back to the previous tool (`Tool / Select Tool`).
+2. **Verification:** probing with `Locate Next Event` on the selected tracks, before and after, compared with what is expected for each action.
+3. **Scope:** all tracks. This is the natural choice for cutting a podcast (`Delete Time`). Deleting on only one track needs another route (to be investigated).
+4. **`Process / Silence`:** interactive, because the dialog depends on whether the file is shared.
+5. **Undo:** `Undo` works as a safety net. A failed `Undo` (`canPerform = false`) indicates an open dialog.

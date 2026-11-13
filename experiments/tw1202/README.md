@@ -1,22 +1,24 @@
-# Experimento TW-1202: guardar el proyecto
+# Experiment TW-1202: saving the project
 
-**Fecha:** 2026-11-13.
-**Entorno:** Cubase Elements 15.0.30, script 1.5.3 y proyecto de pruebas `X0001`, con autorización expresa del usuario para guardarlo.
-**Verificación:** nombres, tamaños y fechas de los `.cpr` de la carpeta del proyecto (deducida con `lsof`). No se abrió ningún archivo.
+**English** · [Español](README.es.md)
 
-| Paso | Antes | Después |
+**Date:** 2026-11-13.
+**Environment:** Cubase Elements 15.0.30, script 1.5.3 and test project `X0001`, with the user's explicit authorization to save it.
+**Verification:** names, sizes and dates of the `.cpr` files in the project folder (deduced with `lsof`). No file was opened.
+
+| Step | Before | After |
 |---|---|---|
-| `File / Save` (13:58:16) | `X0001.cpr`, 227 194 bytes, 2026-11-12 20:54:01 | `X0001.cpr`, 228 091 bytes, **13:58:17**. Sin `.bak` (el Cubase del usuario no hace copia al guardar) |
-| `File / Save New Version` (13:58:26) | — | **`X0001-01.cpr`** nuevo, 228 094 bytes, 13:58:27. `X0001.cpr` sin cambios |
+| `File / Save` (13:58:16) | `X0001.cpr`, 227 194 bytes, 2026-11-12 20:54:01 | `X0001.cpr`, 228 091 bytes, **13:58:17**. No `.bak` (the user's Cubase does not make a backup copy on save) |
+| `File / Save New Version` (13:58:26) | — | New **`X0001-01.cpr`**, 228 094 bytes, 13:58:27. `X0001.cpr` unchanged |
 
-- **`canPerform`** de los dos comandos: `true`. Actúan sin que el script deje de responder (clase *direct* en un proyecto ya guardado).
-- **Tras `Save New Version`,** Cubase trabaja sobre el archivo nuevo: los siguientes `Save` irán a `X0001-01.cpr`.
-- **No probado:** `Save` en un proyecto **nunca guardado**. Previsiblemente abre «Guardar como» (diálogo).
+- **`canPerform`** for both commands: `true`. They act without the script stopping responding (class *direct* on an already saved project).
+- **After `Save New Version`,** Cubase works on the new file: subsequent `Save` operations will go to `X0001-01.cpr`.
+- **Not tested:** `Save` on a project that has **never been saved**. Presumably it opens «Guardar como» (*Save As*) (a dialog).
 
-## Diseño de `cubase_save_project`
+## Design of `cubase_save_project`
 
-- **Modos:** `save` y `new_version`.
-- **Permiso propio** (`[writes] save = true`, desactivado por defecto) además de las escrituras, y `dry_run` por defecto.
-- **Verificación:** algún `.cpr` de la carpeta del proyecto con fecha posterior a la orden. Con `new_version`, uno nuevo.
-- **Si no aparece en unos segundos:** `awaiting_user`, porque puede haber un diálogo, como en un proyecto sin guardar.
-- **Fuera de alcance:** `Close`, `Revert` y `Quit`. No se ofrecen.
+- **Modes:** `save` and `new_version`.
+- **Its own permission** (`[writes] save = true`, disabled by default) in addition to writes, and `dry_run` by default.
+- **Verification:** some `.cpr` in the project folder with a date later than the command. With `new_version`, a new one.
+- **If none appears within a few seconds:** `awaiting_user`, because there may be a dialog, as in an unsaved project.
+- **Out of scope:** `Close`, `Revert` and `Quit`. They are not offered.

@@ -1,6 +1,6 @@
 """TW-1101: the status panel of the released script (emulated surface).
 
-What Cubase draws was verified by hand (docs/verificacion.md, 2026-11-13). These tests prove the
+What Cubase draws was verified by hand (docs/verification.md, 2026-11-13). These tests prove the
 script builds the panel with the verified mechanisms only and drives the activity lamp correctly.
 """
 

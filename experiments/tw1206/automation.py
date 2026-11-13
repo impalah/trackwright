@@ -1,6 +1,6 @@
 """TW-1206 experiment: can volume automation be recorded through the API?
 
-Steps (see docs/issues/E12-funcionalidades-ampliadas.md, TW-1206):
+Steps (see docs/issues/E12-extended-features.md, TW-1206):
     uv run python experiments/tw1206/automation.py prepare    # A0 + A1: record state, enable write, cursor to bar 1
     uv run python experiments/tw1206/automation.py record     # A2: waits for Play, writes a volume ramp
     uv run python experiments/tw1206/automation.py record-b2  # A2, variant B2: ramp through the touched surface fader

@@ -1,81 +1,84 @@
-# Cambios
+# Changelog
 
-## 0.3.0 — preparada, pendiente de publicar en PyPI
+**English** · [Español](CHANGELOG.es.md)
 
-- **Publicación en PyPI** (TW-1303): el paquete pasa a llamarse **`trackwright`** (antes `trackwright-mcp`) y se instala con `uv tool install trackwright`.
-  - Licencia **AGPL-3.0-or-later** (archivo `LICENSE`, metadatos según PEP 639).
-  - README reescrito para el usuario final; el índice de la documentación pasa a `docs/README.md`.
-  - `setup` registra en Claude Code la ruta absoluta de `trackwright` (instalado con `uv tool`), o `uvx --from trackwright==<versión> trackwright serve` cuando se ejecuta con `uvx`, fijado a la versión del script que instala.
-- **Instalación guiada** (TW-1301): `trackwright setup` instala el script de Cubase, crea la configuración si no existe (escrituras y guardado desactivados por defecto) y registra el servidor en Claude Code. Cada paso se muestra y se confirma; `--yes PASO` para no preguntar. Termina con `doctor`.
-- `doctor` muestra también `[writes] save` y, con `autostart`, explica que el puente arranca con el servidor MCP.
-- **Transporte MIDI con CoreMIDI vía `ctypes`** (TW-1302), por defecto en macOS:
-  - el paquete es Python puro y no necesita compilar nada (ni Xcode);
-  - `mido` y `python-rtmidi` quedan comentados en `pyproject.toml`; el transporte basado en ellos se conserva y se elige con `[bridge] backend = "rtmidi"`.
+## 0.3.0 — prepared, pending publication on PyPI
+
+- **Publication on PyPI** (TW-1303): the package is renamed **`trackwright`** (formerly `trackwright-mcp`) and is installed with `uv tool install trackwright`.
+  - **AGPL-3.0-or-later** license (`LICENSE` file, metadata per PEP 639).
+  - README rewritten for end users; the documentation index moves to `docs/README.md`.
+  - `setup` registers in Claude Code the absolute path of `trackwright` (installed with `uv tool`), or `uvx --from trackwright==<version> trackwright serve` when run with `uvx`, pinned to the version of the script it installs.
+- **Documentation in English** with a Spanish translation of every document in a sibling `*.es.md` file. English file and folder names (`docs/tutorials`, `docs/reference`, `docs/manual/01-installation.md`…). `tests/unit/test_docs.py` checks that every document has its translation and that links and anchors stay in their language.
+- **Guided installation** (TW-1301): `trackwright setup` installs the Cubase script, creates the configuration if it doesn't exist (writes and saving disabled by default) and registers the server in Claude Code. Each step is shown and confirmed; `--yes STEP` skips the question. It ends with `doctor`.
+- `doctor` also shows `[writes] save` and, with `autostart`, explains that the bridge starts with the MCP server.
+- **MIDI transport with CoreMIDI via `ctypes`** (TW-1302), the default on macOS:
+  - the package is pure Python and needs nothing compiled (no Xcode);
+  - `mido` and `python-rtmidi` are commented out in `pyproject.toml`; the transport based on them is kept and is selected with `[bridge] backend = "rtmidi"`.
 
 ## 0.2.0 — 2026-11-13
 
-Épica E12 cerrada (TW-1201 a TW-1212): 32 herramientas, script Cubase 1.5.5.
+Epic E12 closed (TW-1201 to TW-1212): 32 tools, Cubase script 1.5.5.
 
-- **Presets de plugins** (TW-1205):
-  - herramienta `cubase_plugin_preset` (siguiente o anterior), verificada por el cambio de parámetros; pide un clic en la ventana del plugin la primera vez;
-  - **script 1.5.5**, con `Preset / Next` y `Previous`.
-- **Ajustes del proyecto** (TW-1210):
-  - herramienta `cubase_set_project`: ciclo, metrónomo, precuenta, punch, uso del pre-roll y post-roll, clic al reproducir y al grabar, y nivel del clic, con relectura;
-  - `cubase_get_project` da el nivel del clic como 0–127.
-- **Importar audio** (TW-1203):
-  - herramienta `cubase_import_audio` en dos fases: pista, posición y selector de Cubase; después, la confirmación por sondeo de bordes y la copia en el proyecto;
-  - **script 1.5.4**, con `File / Import Audio File`.
-- **Guardar el proyecto** (TW-1202):
-  - herramienta `cubase_save_project` (`save` o `new_version`), con permiso propio `[writes] save`, desactivado por defecto, y verificación por la fecha de los `.cpr`;
-  - **script 1.5.3**, con `File / Save` y `Save New Version`.
-- **Exportar la mezcla** (TW-1204):
-  - herramienta `cubase_export_mix` en dos fases: el rango (o todo el audio) y el diálogo de Cubase; después, la confirmación del archivo y de su duración;
-  - **script 1.5.2**, con `File / Export Audio Mixdown`.
-- **Borrado en una sola pista** (TW-1212): `cubase_edit_range` con `track` y `action: "delete"`. Corta, borra los trozos uno a uno, verifica e informa de los pasos de deshacer.
-- **Edición por rangos en segundos** (TW-1211):
-  - herramienta `cubase_edit_range` (`delete`, `delete_time`, `cut_time`, `insert_silence`, `crop`), con verificación por sondeo de los bordes de los eventos;
-  - **script 1.5.1**, con 14 comandos de edición, herramienta y sondeo.
-- **`cubase_set_position` en segundos:** verifica con la pantalla de segundos de Cubase y coloca los localizadores mediante el cursor. **Corrige** los localizadores en segundos, que antes quedaban en otra posición.
-- **Propiedades del proyecto** (TW-1209):
-  - herramienta `cubase_get_project`: compás, ciclo, punch, pre-roll y post-roll, metrónomo, precuenta, estado del transporte, modos de grabación y carpeta del proyecto;
-  - `cubase_record_automation` usa el compás del proyecto en lugar de suponer 4/4.
-- **Arranque automático** (TW-1201):
-  - `trackwright serve` arranca el puente si no está en marcha (`[bridge] autostart`, activado por defecto), sin duplicarlo;
-  - herramienta `cubase_launch`, que abre Cubase (opcionalmente con un proyecto) y espera al script;
-  - sección de configuración `[cubase]`.
-- **Unidades reales en la automatización** (TW-1208):
-  - los puntos de `cubase_record_automation` aceptan `plain` (dB, Hz…), que Cubase convierte con exactitud;
-  - herramienta nueva `cubase_convert_value`, de solo lectura;
-  - `cubase_list_automation_targets` indica si cada parámetro admite unidades reales (`converts_units`).
-- **Automatización** (TW-1207):
-  - herramientas `cubase_list_automation_targets` y `cubase_record_automation`: graban curvas de volumen, panorama, envíos, EQ del canal, pre-filtro y parámetros de plugins de inserción, reproduciendo el proyecto, con verificación opcional;
-  - **script 1.4.0**, con 45 controles de automatización activos en la superficie y las operaciones `auto.control` y `auto.list`;
-  - el simulador reproduce y graba automatización.
-- **Script 1.2.2:** comandos `Transport / Start` y `Stop` (`transport.start`, `transport.stop`), para reproducir sin intervención del usuario. Nunca graba.
-- **Script 1.2.1:** fader de automatización experimental (TW-1206, variante B2), **desactivado** (`AUTOMATION_FADER_ENABLED = false`), y la operación `auto.fader`, que responde `UNSUPPORTED` mientras esté desactivado. La versión de prueba se genera con `experiments/tw1206/build.py`.
-- **Script 1.2.0:** comandos de automatización (modos Touch, Auto-Latch y Cross-Over, siguiente modo y escritura en las pistas seleccionadas) para el experimento TW-1206. Clase `unknown` hasta observarlos.
-- **Script 1.1.0:** panel de estado en la superficie MIDI Remote (TW-1101): título con la versión, pista seleccionada y lámpara de actividad. Solo usa mecanismos verificados en Cubase 15. Las operaciones no cambian.
-- **Experimento TW-1101** (`experiments/tw1101/README.md`): protocolo y resultados, en `docs/verificacion.md`.
-- **`trackwright script install --file <script>`:** instala otro script, como el del experimento.
-- **Simulador:** «Locate Next Marker» sin marcador siguiente va al final del último evento, como en Cubase 15.
+- **Plugin presets** (TW-1205):
+  - `cubase_plugin_preset` tool (next or previous), verified by the change in parameters; asks for a click in the plugin window the first time;
+  - **script 1.5.5**, with `Preset / Next` and `Previous`.
+- **Project settings** (TW-1210):
+  - `cubase_set_project` tool: cycle, metronome, count-in, punch, use of pre-roll and post-roll, click during playback and recording, and click level, with read-back;
+  - `cubase_get_project` reports the click level as 0–127.
+- **Import audio** (TW-1203):
+  - `cubase_import_audio` tool in two phases: track, position and the Cubase file picker; then confirmation by probing the edges and the copy into the project;
+  - **script 1.5.4**, with `File / Import Audio File`.
+- **Save the project** (TW-1202):
+  - `cubase_save_project` tool (`save` or `new_version`), with its own `[writes] save` permission, disabled by default, and verification by the timestamp of the `.cpr` files;
+  - **script 1.5.3**, with `File / Save` and `Save New Version`.
+- **Export the mix** (TW-1204):
+  - `cubase_export_mix` tool in two phases: the range (or all the audio) and the Cubase dialog; then confirmation of the file and its duration;
+  - **script 1.5.2**, with `File / Export Audio Mixdown`.
+- **Deletion on a single track** (TW-1212): `cubase_edit_range` with `track` and `action: "delete"`. It splits, deletes the pieces one by one, verifies and reports the undo steps.
+- **Range editing in seconds** (TW-1211):
+  - `cubase_edit_range` tool (`delete`, `delete_time`, `cut_time`, `insert_silence`, `crop`), with verification by probing the event edges;
+  - **script 1.5.1**, with 14 edit, tool and probing commands.
+- **`cubase_set_position` in seconds:** verifies with the Cubase seconds display and places the locators via the cursor. **Fixes** locators in seconds, which previously ended up at a different position.
+- **Project properties** (TW-1209):
+  - `cubase_get_project` tool: time signature, cycle, punch, pre-roll and post-roll, metronome, count-in, transport state, record modes and project folder;
+  - `cubase_record_automation` uses the project's time signature instead of assuming 4/4.
+- **Autostart** (TW-1201):
+  - `trackwright serve` starts the bridge if it isn't running (`[bridge] autostart`, enabled by default), without duplicating it;
+  - `cubase_launch` tool, which opens Cubase (optionally with a project) and waits for the script;
+  - `[cubase]` configuration section.
+- **Real units in automation** (TW-1208):
+  - `cubase_record_automation` points accept `plain` (dB, Hz…), which Cubase converts exactly;
+  - new read-only tool `cubase_convert_value`;
+  - `cubase_list_automation_targets` states whether each parameter supports real units (`converts_units`).
+- **Automation** (TW-1207):
+  - `cubase_list_automation_targets` and `cubase_record_automation` tools: record volume, pan, send, channel EQ, pre-filter and insert plugin parameter curves by playing the project, with optional verification;
+  - **script 1.4.0**, with 45 active automation controls on the surface and the `auto.control` and `auto.list` operations;
+  - the simulator plays back and records automation.
+- **Script 1.2.2:** `Transport / Start` and `Stop` commands (`transport.start`, `transport.stop`), to play without user intervention. It never records.
+- **Script 1.2.1:** experimental automation fader (TW-1206, variant B2), **disabled** (`AUTOMATION_FADER_ENABLED = false`), and the `auto.fader` operation, which answers `UNSUPPORTED` while disabled. The test version is generated with `experiments/tw1206/build.py`.
+- **Script 1.2.0:** automation commands (Touch, Auto-Latch and Cross-Over modes, next mode and write on the selected tracks) for the TW-1206 experiment. Class `unknown` until observed.
+- **Script 1.1.0:** status panel on the MIDI Remote surface (TW-1101): title with the version, selected track and activity lamp. It only uses mechanisms verified in Cubase 15. The operations don't change.
+- **TW-1101 experiment** (`experiments/tw1101/README.md`): protocol and results, in `docs/verification.md`.
+- **`trackwright script install --file <script>`:** installs another script, such as the experiment's.
+- **Simulator:** "Locate Next Marker" with no next marker goes to the end of the last event, as in Cubase 15.
 
 ## 0.1.0 — 2026-11-12
 
-Primera versión, basada en el diseño verificado en la prueba de concepto `cubase-mcp-poc`.
+First version, based on the design verified in the `cubase-mcp-poc` proof of concept.
 
-- **Servidor MCP `trackwright`** con 21 herramientas: 9 de lectura, 7 de escritura y navegación, y 5 basadas en comandos.
-- **Script MIDI Remote** `Trackwright_Bridge.js` 1.0.0, con su instalador (`trackwright script install`).
-- **Puente** con puertos virtuales CoreMIDI e IPC por socket Unix privado.
-- **Seguridad:** solo lectura por defecto, ensayo (`dry_run`) en todas las escrituras, verificación por relectura, sin reintentos y referencias opacas validadas.
-- **Simulador** `FakeCubase` y modo `trackwright serve --simulate`.
-- **Diagnóstico** `trackwright doctor`.
-- **Pruebas:** unitarias, de contrato MCP, del script con Node.js, de extremo a extremo y de integración opcionales contra Cubase.
-- **Documentación:** manuales, tutoriales, arquitectura, desarrollo e issues.
-- **Endurecimiento** tras una revisión independiente (épica E10):
-  - sesión fijada durante cada herramienta;
-  - borrado solo con selección única;
-  - paginación del filtro de parámetros sin pérdidas;
-  - plazo único con `BUSY` en el puente;
-  - `INTERNAL_ERROR` con resultado desconocido;
-  - cambios ya aplicados en los errores parciales;
-  - `expectTitle` comprobado en el script.
+- **`trackwright` MCP server** with 21 tools: 9 read tools, 7 write and navigation tools, and 5 command-based tools.
+- **MIDI Remote script** `Trackwright_Bridge.js` 1.0.0, with its installer (`trackwright script install`).
+- **Bridge** with CoreMIDI virtual ports and IPC over a private Unix socket.
+- **Security:** read-only by default, dry run (`dry_run`) on every write, verification by read-back, no retries and validated opaque references.
+- **Simulator** `FakeCubase` and `trackwright serve --simulate` mode.
+- **Diagnostics** `trackwright doctor`.
+- **Tests:** unit, MCP contract, script tests with Node.js, end-to-end and optional integration tests against Cubase.
+- **Documentation:** manuals, tutorials, architecture, development and issues.
+- **Hardening** after an independent review (epic E10):
+  - session pinned for the duration of each tool;
+  - deletion only with a single selection;
+  - lossless pagination of the parameter filter;
+  - single deadline with `BUSY` in the bridge;
+  - `INTERNAL_ERROR` with unknown result;
+  - already-applied changes reported in partial errors;
+  - `expectTitle` checked in the script.

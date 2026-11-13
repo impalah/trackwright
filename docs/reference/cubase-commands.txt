@@ -1,0 +1,1457 @@
+# Cubase commands for makeCommandBinding (category, name | visible label)
+# Source: https://steinbergmedia.github.io/midiremote_api_doc/examples/commandbindings/ ("Cubase / Nuendo 13"),
+# "click to copy" snippets. Extracted on 2026-11-13. Not verified in Cubase 15 except as noted in docs/verification.md.
+'ADM Editor', 'ADM Editor...' | ADM Authoring...
+'ADM Editor', 'Add Bed' | Add Bed
+'ADM Editor', 'Add Object' | Add Object
+'ADM Editor', 'Apply Source Track Name' | Apply Source Track Name
+'ADM Editor', 'Create objects from selected tracks' | Create objects from selected tracks
+'ADM Editor', 'Open Group Editor' | Open Group Editor
+'ADM Editor', 'Open Trim and Downmix Editor' | Open Trim and Downmix Editor
+'ADM Editor', 'Remove Selected Audio Object' | Remove Selected Audio Object
+'AddTrack', 'Arranger' | Arranger
+'AddTrack', 'Audio Mono' | Audio Mono
+'AddTrack', 'Audio' | Audio
+'AddTrack', 'Chord' | Chord
+'AddTrack', 'FX Channel' | Effect
+'AddTrack', 'Folder' | Folder
+'AddTrack', 'From Track Presets' | Using Track Preset...
+'AddTrack', 'Group Channel' | Group
+'AddTrack', 'Instrument' | Instrument
+'AddTrack', 'MIDI' | MIDI
+'AddTrack', 'Marker' | Marker
+'AddTrack', 'OpenDialog' | Add Track...
+'AddTrack', 'Ruler' | Ruler
+'AddTrack', 'Sampler' | Sampler
+'AddTrack', 'Signature' | Signature
+'AddTrack', 'Tempo' | Tempo
+'AddTrack', 'TransposeTrack' | Transpose
+'AddTrack', 'VCA Fader' | VCA
+'AddTrack', 'Video' | Video
+'Analyze', 'Spectrum Analyzer' | Spectrum Analyzer
+'Analyze', 'Statistics' | Statistics
+'Arranger', 'Activate' | Activate
+'Arranger', 'First Chain Step' | First Chain Step
+'Arranger', 'First Repeat' | First Repeat
+'Arranger', 'Last Chain Step' | Last Chain Step
+'Arranger', 'Last Repeat' | Last Repeat
+'Arranger', 'Next Chain Step' | Next Chain Step
+'Arranger', 'Previous Chain Step' | Previous Chain Step
+'Arranger', 'Trigger Arranger Event 1' | Trigger Arranger Event 1
+'Arranger', 'Trigger Arranger Event 10' | Trigger Arranger Event 10
+'Arranger', 'Trigger Arranger Event 11' | Trigger Arranger Event 11
+'Arranger', 'Trigger Arranger Event 12' | Trigger Arranger Event 12
+'Arranger', 'Trigger Arranger Event 13' | Trigger Arranger Event 13
+'Arranger', 'Trigger Arranger Event 14' | Trigger Arranger Event 14
+'Arranger', 'Trigger Arranger Event 15' | Trigger Arranger Event 15
+'Arranger', 'Trigger Arranger Event 16' | Trigger Arranger Event 16
+'Arranger', 'Trigger Arranger Event 17' | Trigger Arranger Event 17
+'Arranger', 'Trigger Arranger Event 18' | Trigger Arranger Event 18
+'Arranger', 'Trigger Arranger Event 19' | Trigger Arranger Event 19
+'Arranger', 'Trigger Arranger Event 2' | Trigger Arranger Event 2
+'Arranger', 'Trigger Arranger Event 20' | Trigger Arranger Event 20
+'Arranger', 'Trigger Arranger Event 3' | Trigger Arranger Event 3
+'Arranger', 'Trigger Arranger Event 4' | Trigger Arranger Event 4
+'Arranger', 'Trigger Arranger Event 5' | Trigger Arranger Event 5
+'Arranger', 'Trigger Arranger Event 6' | Trigger Arranger Event 6
+'Arranger', 'Trigger Arranger Event 7' | Trigger Arranger Event 7
+'Arranger', 'Trigger Arranger Event 8' | Trigger Arranger Event 8
+'Arranger', 'Trigger Arranger Event 9' | Trigger Arranger Event 9
+'Audio Alignment', 'Add Selection as Alignment Reference' | Add Selection as Alignment Reference
+'Audio Alignment', 'Add Selection as Alignment Target' | Add Selection as Alignment Target
+'Audio Alignment', 'Align Audio' | Align Audio
+'Audio Alignment', 'Open Audio Alignment Panel' | Open Audio Alignment Panel
+'Audio Alignment', 'Remove Alignment Reference' | Remove Alignment Reference
+'Audio Alignment', 'Remove All Alignment Targets' | Remove All Alignment Targets
+'Audio Export', 'Increase Counter Start Value' | Increase Counter Start Value
+'Audio Export', 'Perform Audio Export' | Perform Audio Export
+'Audio Export', 'Reset Counter Start Value' | Reset Counter Start Value
+'Audio Export', 'Sync Channel Selection with Mixer' | Sync Channel Selection with MixConsole
+'Audio Performance', 'Reset Processing Overload Indicator' | Reset Processing Overload Indicator
+'Audio Realtime Processing', 'Create Warp Tabs from Hitpoints' | Create Warp Markers from Hitpoints
+'Audio Realtime Processing', 'Flatten Realtime Processing' | Flatten Real Time Processing
+'Audio Realtime Processing', 'Unstretch Audio' | Unstretch Audio
+'Audio', 'Adjust Fades to Range' | Adjust Fades to Range
+'Audio', 'Apply Standard Fade In' | Apply Standard Fade In
+'Audio', 'Apply Standard Fade Out' | Apply Standard Fade Out
+'Audio', 'Auto-Grid' | Auto-Grid
+'Audio', 'Bounce' | Bounce Selection
+'Audio', 'Close Gaps (Crossfade)' | Close Gaps (Crossfade)
+'Audio', 'Close Gaps' | Close Gaps (Time Stretch)
+'Audio', 'Constrain Delay Compensation' | Constrain Delay Compensation
+'Audio', 'Convert Tracks: Mono to Multi-Channel' | Mono to Multi-Channel...
+'Audio', 'Convert Tracks: Multi-Channel to Mono' | Multi-Channel to Mono...
+'Audio', 'Copy Warp Markers from Selected Event' | Copy Warp Markers from Selected Event
+'Audio', 'Create Sampler Track' | Create Sampler Track
+'Audio', 'Crossfade' | Crossfade
+'Audio', 'Decrement Event Volume' | Decrement Event Volume
+'Audio', 'Decrement Fade In Length' | Decrement Fade-In Length
+'Audio', 'Decrement Fade Out Length' | Decrement Fade-Out Length
+'Audio', 'Delete Overlaps' | Delete Overlaps
+'Audio', 'Detect Silence' | Detect Silence
+'Audio', 'Disable/Enable Track' | Disable/Enable Track
+'Audio', 'Dissolve Part' | Dissolve Part
+'Audio', 'Event or Range as Region' | Event or Range as Region
+'Audio', 'Events from Regions' | Events from Regions
+'Audio', 'Events to Part' | Events to Part
+'Audio', 'Fade In to Cursor' | Fade In to Cursor
+'Audio', 'Fade In to Range Start' | Fade In to Range Start
+'Audio', 'Fade Out from Range End' | Fade Out from Range End
+'Audio', 'Fade Out to Cursor' | Fade Out from Cursor
+'Audio', 'Find Selected in Pool' | Find Selected in Pool
+'Audio', 'Generate Harmony Voices' | Generate Harmony Voices...
+'Audio', 'Increment Event Volume' | Increment Event Volume
+'Audio', 'Increment Fade In Length' | Increment Fade-In Length
+'Audio', 'Increment Fade Out Length' | Increment Fade-Out Length
+'Audio', 'Invert Phase On/Off' | Invert Phase On/Off
+'Audio', 'Make Extension from Selected Events Permanent' | Make Extension Permanent
+'Audio', 'Minimize File' | Minimize File
+'Audio', 'Open Fade Editors' | Open Fade Editor(s)
+'Audio', 'Paste Warp Markers to Selected Events' | Paste Warp Markers to Selected Events
+'Audio', 'Remove Extension from Selected Events' | Remove Extension from Selected Events
+'Audio', 'Remove Fade In' | Remove Fade In
+'Audio', 'Remove Fade Out' | Remove Fade Out
+'Audio', 'Remove Fades' | Remove Fades
+'Audio', 'Remove Volume Curve' | Remove Volume Curve
+'Audio', 'Set Definition From Tempo' | Set Definition From Tempo...
+'Audio', 'Set Tempo From Event' | Set Tempo From Event
+'Audio', 'Snap Point to Cursor' | Snap Point to Cursor
+'Audio', 'Stretch to Project Tempo' | Stretch to Project Tempo
+'Audio', 'To Origin' | Events to Origin
+'Audio', 'Update Origin' | Update Origin
+'Automation', 'Automation Mode - Auto-Latch' | Automation Mode - Auto-Latch
+'Automation', 'Automation Mode - Cross-Over' | Automation Mode - Cross-Over
+'Automation', 'Automation Mode - Touch' | Automation Mode - Touch
+'Automation', 'Automation Mode - Trim' | Automation Mode - Trim
+'Automation', 'Delete All Automation in Project' | Delete All Automation in Project
+'Automation', 'Delete Automation in Range' | Delete Automation in Range
+'Automation', 'Delete Automation of Selected Tracks' | Delete Automation of Selected Tracks
+'Automation', 'Fill Gaps on Selected Tracks' | Fill Gaps on Selected Tracks
+'Automation', 'Fill Gaps with Current Value (Selected Tracks)' | Fill Gaps with Current Value (Selected Tracks)
+'Automation', 'Fill Gaps' | Fill Gaps
+'Automation', 'Fill Loop' | Fill Loop
+'Automation', 'Fill To End' | Fill To End
+'Automation', 'Fill To Punch' | Fill To Punch
+'Automation', 'Fill To Start' | Fill To Start
+'Automation', 'Freeze All Trim Automation in Project' | Freeze All Trim Automation in Project
+'Automation', 'Freeze Trim Automation of Selected Tracks' | Freeze Trim Automation of Selected Tracks
+'Automation', 'Hide All Automation' | Hide All Automation
+'Automation', 'Hide Automation' | Hide Automation
+'Automation', 'Next Automation Mode' | Next Automation Mode
+'Automation', 'Open Panel' | Automation Panel
+'Automation', 'Punch Out of Latch Automation' | Punch Out of Latch Automation
+'Automation', 'Show All - Used Only' | Show All - Used Only
+'Automation', 'Show All EQ Automation' | Show All EQ Automation
+'Automation', 'Show All Insert Automation' | Show All Insert Automation
+'Automation', 'Show All Pan Automation' | Show All Pan Automation
+'Automation', 'Show All Send Automation' | Show All Send Automation
+'Automation', 'Show All Used Automation' | Show All Used Automation
+'Automation', 'Show All Volume Automation' | Show All Volume Automation
+'Automation', 'Show Automation' | Show Automation
+'Automation', 'Show Used Automation (Selected Tracks)' | Show Used Automation (Selected Tracks)
+'Automation', 'Suspend Reading All' | Suspend Reading All
+'Automation', 'Suspend Reading Dynamics' | Suspend Reading Dynamics
+'Automation', 'Suspend Reading EQ' | Suspend Reading EQ
+'Automation', 'Suspend Reading Inserts' | Suspend Reading Inserts
+'Automation', 'Suspend Reading Mute' | Suspend Reading Mute
+'Automation', 'Suspend Reading Others' | Suspend Reading Others
+'Automation', 'Suspend Reading Pan' | Suspend Reading Pan
+'Automation', 'Suspend Reading Sends' | Suspend Reading Sends
+'Automation', 'Suspend Reading Volume' | Suspend Reading Volume
+'Automation', 'Suspend Reading/Writing All' | Suspend Reading/Writing All
+'Automation', 'Suspend Writing All' | Suspend Writing All
+'Automation', 'Suspend Writing Dynamics' | Suspend Writing Dynamics
+'Automation', 'Suspend Writing EQ' | Suspend Writing EQ
+'Automation', 'Suspend Writing Inserts' | Suspend Writing Inserts
+'Automation', 'Suspend Writing Mute' | Suspend Writing Mute
+'Automation', 'Suspend Writing Others' | Suspend Writing Others
+'Automation', 'Suspend Writing Pan' | Suspend Writing Pan
+'Automation', 'Suspend Writing Sends' | Suspend Writing Sends
+'Automation', 'Suspend Writing Volume' | Suspend Writing Volume
+'Automation', 'Toggle Read Enable All Tracks' | Read Automation for All Tracks On/Off
+'Automation', 'Toggle Read Enable Selected Tracks' | Read Automation for Selected Tracks On/Off
+'Automation', 'Toggle Write Enable All Tracks' | Write Automation for All Tracks On/Off
+'Automation', 'Toggle Write Enable Selected Tracks' | Write Automation for Selected Tracks On/Off
+'Automation', 'Use Virgin Territories' | Use Virgin Territories
+'Beat Designer', 'Fill Loop with Pattern' | Fill Loop with Pattern
+'Beat Designer', 'Insert Pattern at Cursor' | Insert Pattern at Cursor
+'Beat Designer', 'Insert Pattern at Left Locator' | Insert Pattern at Left Locator
+'Beat Designer', 'Insert Subbank at Cursor' | Insert Subbank at Cursor
+'Beat Designer', 'Insert Subbank at Left Locator' | Insert Subbank at Left Locator
+'Channel & Track Visibility', 'Channel and Rack Configuration 1' | Visibility Configuration 1
+'Channel & Track Visibility', 'Channel and Rack Configuration 2' | Visibility Configuration 2
+'Channel & Track Visibility', 'Channel and Rack Configuration 3' | Visibility Configuration 3
+'Channel & Track Visibility', 'Channel and Rack Configuration 4' | Visibility Configuration 4
+'Channel & Track Visibility', 'Channel and Rack Configuration 5' | Visibility Configuration 5
+'Channel & Track Visibility', 'Channel and Rack Configuration 6' | Visibility Configuration 6
+'Channel & Track Visibility', 'Channel and Rack Configuration 7' | Visibility Configuration 7
+'Channel & Track Visibility', 'Channel and Rack Configuration 8' | Visibility Configuration 8
+'Channel & Track Visibility', 'Create Track Visibility Configuration' | Create Visibility Configuration
+'Channel & Track Visibility', 'HideMuted' | Agents: Hide Muted Tracks
+'Channel & Track Visibility', 'HideSelected' | Agents: Hide Selected Channels/Tracks
+'Channel & Track Visibility', 'ShowAll' | Agents: Show All Channels/Tracks
+'Channel & Track Visibility', 'ShowConnected' | Agents: Show Channels that are Connected to the First Selected Channel
+'Channel & Track Visibility', 'ShowCycle' | Agents: Show Channels/Tracks with Data between the Locators
+'Channel & Track Visibility', 'ShowMarked' | Agents: Show Tracks with Selected Events
+'Channel & Track Visibility', 'ShowPlaying' | Agents: Show Channels/Tracks with Data at the Cursor Position
+'Channel & Track Visibility', 'ShowSelected' | Agents: Show Only Selected Channels/Tracks
+'Channel & Track Visibility', 'ShowUsed' | Agents: Show Channels/Tracks with Data
+'Channel & Track Visibility', 'Sync Visibility of Project and MixConsole: On/Off' | Sync Visibility of Project and MixConsole: On/Off
+'Channel & Track Visibility', 'Update Track Visibility Configuration' | Update Visibility Configuration
+'Channel & Track Visibility', 'channelOrganizerRedo' | Agents: Redo Visibility Change
+'Channel & Track Visibility', 'channelOrganizerUndo' | Agents: Undo Visibility Change
+'Channel Settings', 'Show/Hide Direct Routing' | Show/Hide Direct Routing
+'Channel Settings', 'Show/Hide Output Chain' | Show/Hide Output Chain
+'Chords', 'Chord Editing - Add to Chord Track' | Chord Editing - Add to Chord Track
+'Chords', 'Chord Editing - Drop 2 + 4' | Chord Editing - Drop 2 + 4
+'Chords', 'Chord Editing - Drop 2' | Chord Editing - Drop 2
+'Chords', 'Chord Editing - Drop 3' | Chord Editing - Drop 3
+'Chords', 'Chord Editing - Inversions: Move Down' | Chord Editing - Inversions: Move Down
+'Chords', 'Chord Editing - Inversions: Move Up' | Chord Editing - Inversions: Move Up
+'Chords', 'Chord Editing - Match with Chord Track' | Chord Editing - Match with Chord Track
+'Chords', 'Chord Pads - Fewer Tensions' | Chord Pads - Fewer Tensions
+'Chords', 'Chord Pads - Latch Chords On/Off' | Chord Pads - Latch Chords On/Off
+'Chords', 'Chord Pads - More Tensions' | Chord Pads - More Tensions
+'Chords', 'Chord Pads - Next Voicing' | Chord Pads - Next Voicing
+'Chords', 'Chord Pads - Previous Voicing' | Chord Pads - Previous Voicing
+'Chords', 'Chord Pads - Show/Hide Editor/Assistant' | Chord Pads - Show/Hide Editor/Assistant
+'Chords', 'Chord Pads - Transpose Down' | Chord Pads - Transpose Down
+'Chords', 'Chord Pads - Transpose Up' | Chord Pads - Transpose Up
+'Chords', 'ChordPad' | Show/Hide Chord Pads
+'Chords', 'ChordPadSetup' | Chord Pads  - Open Remote Settings
+'Chords', 'Chords to MIDI' | Chords to MIDI
+'Chords', 'Make Chords' | Create Chord Events
+'Chords', 'Map to Chord Track' | Map to Chord Track
+'Chords', 'Notes To Voices' | Assign Voices to Notes
+'Chords', 'Set up Scales' | Set up Musical Scales...
+'Control Room', 'Speaker Solo: Bottom Front Center' | Speaker Solo: Bottom Front Center
+'Control Room', 'Speaker Solo: Bottom Front Left' | Speaker Solo: Bottom Front Left
+'Control Room', 'Speaker Solo: Bottom Front Right' | Speaker Solo: Bottom Front Right
+'Control Room', 'Speaker Solo: Cancel' | Speaker Solo: Cancel
+'Control Room', 'Speaker Solo: Center' | Speaker Solo: Center
+'Control Room', 'Speaker Solo: Front' | Speaker Solo: Front
+'Control Room', 'Speaker Solo: LFE' | Speaker Solo: LFE
+'Control Room', 'Speaker Solo: Left of Center' | Speaker Solo: Left of Center
+'Control Room', 'Speaker Solo: Left' | Speaker Solo: Left
+'Control Room', 'Speaker Solo: Left-Right' | Speaker Solo: Left-Right
+'Control Room', 'Speaker Solo: Rear to Front' | Speaker Solo: Rear to Front
+'Control Room', 'Speaker Solo: Rear' | Speaker Solo: Rear
+'Control Room', 'Speaker Solo: Right of Center' | Speaker Solo: Right of Center
+'Control Room', 'Speaker Solo: Right' | Speaker Solo: Right
+'Control Room', 'Speaker Solo: Side Left' | Speaker Solo: Side Left
+'Control Room', 'Speaker Solo: Side Right' | Speaker Solo: Side Right
+'Control Room', 'Speaker Solo: Side' | Speaker Solo: Side
+'Control Room', 'Speaker Solo: Solo to Center' | Speaker Solo: Solo to Center
+'Control Room', 'Speaker Solo: Surround Left' | Speaker Solo: Surround Left
+'Control Room', 'Speaker Solo: Surround Right' | Speaker Solo: Surround Right
+'Control Room', 'Speaker Solo: Top Back Center' | Speaker Solo: Top Back Center
+'Control Room', 'Speaker Solo: Top Back Left' | Speaker Solo: Top Back Left
+'Control Room', 'Speaker Solo: Top Back Right' | Speaker Solo: Top Back Right
+'Control Room', 'Speaker Solo: Top Center' | Speaker Solo: Top Center
+'Control Room', 'Speaker Solo: Top Front Center' | Speaker Solo: Top Front Center
+'Control Room', 'Speaker Solo: Top Front Left' | Speaker Solo: Top Front Left
+'Control Room', 'Speaker Solo: Top Front Right' | Speaker Solo: Top Front Right
+'Control Room', 'Speaker Solo: Top Side Left' | Speaker Solo: Top Side Left
+'Control Room', 'Speaker Solo: Top Side Right' | Speaker Solo: Top Side Right
+'Control Room', 'Switch: AFL/PFL' | AFL/PFL
+'Control Room', 'Switch: Activate Phones' | Phones Channel On/Off
+'Control Room', 'Switch: Activate Speakers' | Control Room On/Off
+'Control Room', 'Switch: Activate Studio 1' | Cue 1 On/Off
+'Control Room', 'Switch: Activate Studio 2' | Cue 2 On/Off
+'Control Room', 'Switch: Activate Studio 3' | Cue 3 On/Off
+'Control Room', 'Switch: Activate Studio 4' | Cue 4 On/Off
+'Control Room', 'Switch: Click Active' | Click On/Off
+'Control Room', 'Switch: Dim Active' | Dim Signal On/Off
+'Control Room', 'Switch: Folddown Select 1' | Select Downmix Preset 1
+'Control Room', 'Switch: Folddown Select 2' | Select Downmix Preset 2
+'Control Room', 'Switch: Folddown Select 3' | Select Downmix Preset 3
+'Control Room', 'Switch: Folddown Select 4' | Select Downmix Preset 4
+'Control Room', 'Switch: Folddown Select' | Select Next Downmix Preset
+'Control Room', 'Switch: Listen Cancel' | Deactivate All Listen States
+'Control Room', 'Switch: Listen Enable' | Enable/Disable Listen for Output (LE)
+'Control Room', 'Switch: Reference Level Active' | Reference Level On/Off
+'Control Room', 'Switch: Source Select' | Select Control Room Source
+'Control Room', 'Switch: Speakers Select 1' | Select Monitor 1
+'Control Room', 'Switch: Speakers Select 2' | Select Monitor 2
+'Control Room', 'Switch: Speakers Select 3' | Select Monitor 3
+'Control Room', 'Switch: Speakers Select 4' | Select Monitor 4
+'Control Room', 'Switch: Speakers Select' | Select Next Monitor
+'Control Room', 'Switch: Talkback Active' | Talkback On/Off
+'Crossfade Editor', 'Play Crossfade' | Play Crossfade
+'Crossfade Editor', 'Play Fade In' | Play Fade In
+'Crossfade Editor', 'Play Fade Out' | Play Fade Out
+'Devices', 'Control Room Mixer' | Control Room
+'Devices', 'Generic Remote' | Generic Remote
+'Devices', 'MIDI Device Manager' | MIDI Device Manager...
+'Devices', 'MIDI Remote Manager' | MIDI Remote Manager
+'Devices', 'MMC Master' | MMC Master Panel
+'Devices', 'MixConsole Lower Zone' | MixConsole in Project Window
+'Devices', 'Mixer 2' | MixConsole 2
+'Devices', 'Mixer 3' | MixConsole 3
+'Devices', 'Mixer 4' | MixConsole 4
+'Devices', 'Mixer' | MixConsole
+'Devices', 'Plug-in Information' | System Component Information
+'Devices', 'Plug-in Manager' | VST Plug-in Manager
+'Devices', 'Record Time Max' | Max. Record Time
+'Devices', 'Setup' | Studio Setup...
+'Devices', 'Show Panel' | Studio Panel
+'Devices', 'TestMixerFDH' | Test Track Mixer - FDH in Standard Window
+'Devices', 'Time Display' | Time Display
+'Devices', 'VST Channel Load' | VST Channel Load
+'Devices', 'VST Connections' | Audio Connections...
+'Devices', 'VST Instruments' | VST Instruments
+'Devices', 'VST Network Monitor' | VST Network Monitor
+'Devices', 'VST Performance' | Audio Performance
+'Devices', 'VST Routing' | VST Routing
+'Devices', 'Video' | Video Player
+'Devices', 'Virtual Keyboard' | On-Screen Keyboard
+'Direct Offline Processing', 'Add Plug-in' | Add Plug-in
+'Direct Offline Processing', 'Add Process' | Add Process
+'Direct Offline Processing', 'Apply' | Apply
+'Direct Offline Processing', 'Bank 1' | Bank 1
+'Direct Offline Processing', 'Bank 2' | Bank 2
+'Direct Offline Processing', 'Bank 3' | Bank 3
+'Direct Offline Processing', 'Bank 4' | Bank 4
+'Direct Offline Processing', 'Bypass Selected Process' | Bypass Selected Process
+'Direct Offline Processing', 'Direct Offline Processing' | Direct Offline Processing
+'Direct Offline Processing', 'Discard' | Discard
+'Direct Offline Processing', 'Favorite 1' | Favorite 1
+'Direct Offline Processing', 'Favorite 2' | Favorite 2
+'Direct Offline Processing', 'Favorite 3' | Favorite 3
+'Direct Offline Processing', 'Favorite 4' | Favorite 4
+'Direct Offline Processing', 'Favorite 5' | Favorite 5
+'Direct Offline Processing', 'Favorite 6' | Favorite 6
+'Direct Offline Processing', 'Favorite 7' | Favorite 7
+'Direct Offline Processing', 'Favorite 8' | Favorite 8
+'Direct Offline Processing', 'Favorite 9' | Favorite 9
+'Direct Offline Processing', 'Make All Permanent' | Make Direct Offline Processing Permanent
+'Direct Offline Processing', 'Toggle Auto Apply' | Toggle Auto Apply
+'Edit', 'Acoustic Feedback On/Off' | Acoustic Feedback On/Off
+'Edit', 'Activate Next Part' | Activate Next Part
+'Edit', 'Activate Previous Part' | Activate Previous Part
+'Edit', 'Activate/Deactivate' | Activate/Deactivate Focused Object
+'Edit', 'Apply Project Logical Preset' | Apply Preset...
+'Edit', 'Auto Select Events under Cursor' | Auto Select Events under Cursor
+'Edit', 'Automation follows Events' | Automation Follows Events
+'Edit', 'Autoscroll' | Auto-Scroll On/Off
+'Edit', 'Clean Up Lanes' | Clean Up Lanes
+'Edit', 'Click Pattern Copy' | Apply Click Pattern to Equal Signatures
+'Edit', 'Click Pattern Visible' | Show Click Patterns
+'Edit', 'Click Pattern to Default' | Reset Click Pattern to Default
+'Edit', 'Copy A<->B Setting' | Copy A<->B Setting
+'Edit', 'Copy Click Pattern' | Copy Click Pattern to Clipboard
+'Edit', 'Copy' | Copy
+'Edit', 'Create Audio Click Track' | Render Audio Click between Locators
+'Edit', 'Create MIDI Click Track' | Render MIDI Click between Locators
+'Edit', 'Create Tracks from Lanes' | Create Tracks from Lanes
+'Edit', 'Crop Range' | Crop
+'Edit', 'Cut Head' | Cut Head
+'Edit', 'Cut Tail' | Cut Tail
+'Edit', 'Cut Time' | Cut Time
+'Edit', 'Cut' | Cut
+'Edit', 'Deactivate All Solo' | Deactivate All Solo States
+'Edit', 'Delete Time' | Delete Time
+'Edit', 'Delete' | Delete
+'Edit', 'Duplicate' | Duplicate
+'Edit', 'Edit Active Part Only' | Part/Clip Editing Mode: Toggle All & Active Parts/Clips
+'Edit', 'Edit Channel Panner' | Edit Channel Panner
+'Edit', 'Edit Channel Settings' | Edit Channel Settings
+'Edit', 'Edit Info Line' | Edit Info Line
+'Edit', 'Edit VST Instrument' | Edit VST Instrument
+'Edit', 'Enlarge Range to Next Event' | Enlarge Range to Next Event
+'Edit', 'Enlarge Range to Next Hitpoint' | Enlarge Range to Next Hitpoint
+'Edit', 'Enlarge Range to Previous Event' | Enlarge Range to Previous Event
+'Edit', 'Enlarge Range to Previous Hitpoint' | Enlarge Range to Previous Hitpoint
+'Edit', 'Enlarge Selected Track' | Enlarge Selected Track
+'Edit', 'Expand/Reduce' | Expand/Reduce
+'Edit', 'Fill Loop' | Fill Loop
+'Edit', 'Find Track/Channel' | Find Track/Channel
+'Edit', 'Flip/Invert' | Invert
+'Edit', 'Freeze/Unfreeze Selected Tracks (with Current Settings)' | Selected Tracks (with Current Settings)
+'Edit', 'Freeze/Unfreeze Selected Tracks' | Selected Tracks...
+'Edit', 'Global Copy' | Global Copy
+'Edit', 'Glue' | Glue
+'Edit', 'Grid Type: Adapt to Zoom' | Grid Type: Adapt to Zoom
+'Edit', 'Grid Type: Bar' | Grid Type: Bar
+'Edit', 'Grid Type: Beat' | Grid Type: Beat
+'Edit', 'Grid Type: Use Quantize' | Grid Type: Use Quantize
+'Edit', 'Group' | Group
+'Edit', 'History' | History...
+'Edit', 'Insert Bars' | Process Bars Dialog...
+'Edit', 'Insert Silence' | Insert Silence
+'Edit', 'Invert Selection' | Invert
+'Edit', 'Key Commands' | Key Commands...
+'Edit', 'Lane Display Type' | Show Lanes
+'Edit', 'Left Selection Side to Cursor' | Left Selection Side to Cursor
+'Edit', 'Listen' | Listen
+'Edit', 'Lock' | Lock...
+'Edit', 'Lock/Unlock Track' | Lock/Unlock Track
+'Edit', 'Monitor' | Monitor
+'Edit', 'Move End to Cursor' | Event Ends to Cursor
+'Edit', 'Move Insert Cursor To Part Start' | Move Insert Cursor To Part Start
+'Edit', 'Move to Back' | Events to Back 
+'Edit', 'Move to Cursor' | Event Starts to Cursor
+'Edit', 'Move to Front' | Events to Front
+'Edit', 'Move to Selected Track' | Events to Selected Track
+'Edit', 'Mute Events' | Mute
+'Edit', 'Mute' | Mute
+'Edit', 'Mute/Unmute Objects' | Mute/Unmute Objects
+'Edit', 'Open Device Panel' | Open Device Panel
+'Edit', 'Open' | Open
+'Edit', 'Part/Clip Editing Mode: Active Part/Clip' | Part/Clip Editing Mode: Active Part/Clip
+'Edit', 'Part/Clip Editing Mode: All Parts/Clips on Active Track' | Part/Clip Editing Mode: All Parts/Clips on Active Track
+'Edit', 'Part/Clip Editing Mode: All Parts/Clips' | Part/Clip Editing Mode: All Parts/Clips
+'Edit', 'Paste Click Pattern to similar Selected' | Paste Click Pattern to Selected Signatures
+'Edit', 'Paste Relative to Cursor' | Paste Relative to Cursor
+'Edit', 'Paste Time at Origin' | Paste Time at Origin
+'Edit', 'Paste Time' | Paste Time
+'Edit', 'Paste at Origin' | Paste at Origin
+'Edit', 'Paste to Matching Track Name' | Paste to Matching Track Name
+'Edit', 'Paste' | Paste
+'Edit', 'Preferences' | Preferences...
+'Edit', 'Primary Parameter: Decrease' | Primary Parameter: Decrease
+'Edit', 'Primary Parameter: Fine Decrease' | Primary Parameter: Fine Decrease
+'Edit', 'Primary Parameter: Fine Increase' | Primary Parameter: Fine Increase
+'Edit', 'Primary Parameter: Increase' | Primary Parameter: Increase
+'Edit', 'Process Tempo' | Process Tempo
+'Edit', 'ProfileManager' | Profile Manager...
+'Edit', 'Project Logical Editor' | Setup...
+'Edit', 'Range to Next Event' | Range to Next Event
+'Edit', 'Range to Next Hitpoint' | Range to Next Hitpoint
+'Edit', 'Range to Previous Event' | Range to Previous Event
+'Edit', 'Range to Previous Hitpoint' | Range to Previous Hitpoint
+'Edit', 'Read' | Read
+'Edit', 'Record Enable' | Record Enable
+'Edit', 'Redo' | Redo
+'Edit', 'Rename First Selected Track' | Rename First Selected Track
+'Edit', 'Rename Selected Events' | Rename Selected Events
+'Edit', 'Rename' | Rename Media Files
+'Edit', 'Repeat' | Repeat...
+'Edit', 'Reset to Default' | Reset to Default
+'Edit', 'Right Selection Side to Cursor' | Right Selection Side to Cursor
+'Edit', 'Ruler Display Format' | Ruler Display Format
+'Edit', 'Ruler Mode: Bars+Beats Linear' | Ruler Mode: Bars+Beats Linear
+'Edit', 'Ruler Mode: Time Linear' | Ruler Mode: Time Linear
+'Edit', 'Save as Default' | Save as Default
+'Edit', 'Scale Assistant: Quantize Pitches' | Scale Assistant: Quantize Pitches
+'Edit', 'Scale Assistant: Toggle Show Scale Note Guides' | Scale Assistant: Toggle Show Scale Note Guides
+'Edit', 'Scale Assistant: Toggle Snap Live Input' | Scale Assistant: Toggle Snap Live Input
+'Edit', 'Scale Assistant: Toggle Snap Pitch Editing' | Scale Assistant: Toggle Snap Pitch Editing
+'Edit', 'Secondary Parameter: Decrease' | Secondary Parameter: Decrease
+'Edit', 'Secondary Parameter: Fine Decrease' | Secondary Parameter: Fine Decrease
+'Edit', 'Secondary Parameter: Fine Increase' | Secondary Parameter: Fine Increase
+'Edit', 'Secondary Parameter: Increase' | Secondary Parameter: Increase
+'Edit', 'Select All on Tracks' | All on Selected Tracks
+'Edit', 'Select All' | All
+'Edit', 'Select Controllers in Note Range' | Select Controllers in Note Range
+'Edit', 'Select Equal Pitch' | Equal Pitch - all Octaves
+'Edit', 'Select Event' | Select Event
+'Edit', 'Select Events under Cursor' | Events under Cursor
+'Edit', 'Select Next Grid Type' | Select Next Grid Type
+'Edit', 'Select Next Snap Type' | Select Next Snap Type
+'Edit', 'Select None' | None
+'Edit', 'Select Prev Grid Type' | Select Prev Grid Type
+'Edit', 'Select Prev Snap Type' | Select Prev Snap Type
+'Edit', 'Select Same Pitch' | Equal Pitch - same Octave
+'Edit', 'Select from Cursor to End' | From Cursor to End
+'Edit', 'Select from Start to Cursor' | From Start to Cursor
+'Edit', 'Select in Loop' | In Loop
+'Edit', 'Set Spacer between Selected Events' | Set Spacer between Selected Events
+'Edit', 'Slip Event Content Left' | Slip Event Content Left
+'Edit', 'Slip Event Content Right' | Slip Event Content Right
+'Edit', 'Snap Off' | Snap Off
+'Edit', 'Snap On' | Snap On
+'Edit', 'Snap On/Off' | Snap On/Off
+'Edit', 'Snap Type: Events + Cursor' | Snap Type: Events + Cursor
+'Edit', 'Snap Type: Events + Grid + Cursor' | Snap Type: Events + Grid + Cursor
+'Edit', 'Snap Type: Events' | Snap Type: Events
+'Edit', 'Snap Type: Grid + Cursor' | Snap Type: Grid + Cursor
+'Edit', 'Snap Type: Grid Relative' | Snap Type: Grid Relative
+'Edit', 'Snap Type: Grid' | Snap Type: Grid
+'Edit', 'Snap Type: Magnetic Cursor' | Snap Type: Magnetic Cursor
+'Edit', 'Snap Type: Shuffle' | Snap Type: Shuffle
+'Edit', 'Solo Defeat' | Solo Defeat
+'Edit', 'Solo Editor Mode: Solo All Parts/Clips' | Solo Editor Mode: Solo All Parts/Clips
+'Edit', 'Solo Editor Mode: Solo follows \'Part/Clip Editing Mode\'' | Solo Editor Mode: Solo follows 'Part/Clip Editing Mode'
+'Edit', 'Solo Editor Mode: Toggle Modes' | Solo Editor Mode: Toggle Modes
+'Edit', 'Solo Lane' | Solo Lane
+'Edit', 'Solo' | Solo
+'Edit', 'Split Loop' | Split Loop
+'Edit', 'Split Range' | Split
+'Edit', 'Split at Cursor' | Split at Cursor
+'Edit', 'Stationary Cursor' | Stationary Cursor
+'Edit', 'Switch MIDI Editor Grid Type' | Switch MIDI Editor Grid Type
+'Edit', 'To Real Copy' | Convert to Real Copy
+'Edit', 'Toggle A/B Setting' | Toggle A/B Setting
+'Edit', 'Toggle Group Tracks' | Group Editing on Selected Tracks On/Off
+'Edit', 'Toggle Link Project and Lower Zone Editor Cursors' | Toggle Link Project and Lower Zone Editor Cursors
+'Edit', 'Undo' | Undo
+'Edit', 'Ungroup' | Ungroup
+'Edit', 'Unlock' | Unlock
+'Edit', 'Unmute All' | Deactivate All Mute States
+'Edit', 'Unmute Events' | Unmute
+'Edit', 'Write' | Write
+'Editors', 'Edit Inplace' | Edit In-Place
+'Editors', 'Open Audio Part Editor in Lower Zone' | Open Audio Part Editor in Lower Zone
+'Editors', 'Open Audio Part Editor in Window' | Open Audio Part Editor in Window
+'Editors', 'Open Audio Part Editor' | Open Audio Part Editor
+'Editors', 'Open Drum Editor in Lower Zone' | Open Drum Editor in Lower Zone
+'Editors', 'Open Drum Editor in Window' | Open Drum Editor in Window
+'Editors', 'Open Drum Editor' | Open Drum Editor
+'Editors', 'Open In-Place Editor' | Open In-Place Editor
+'Editors', 'Open Key Editor in Lower Zone' | Open Key Editor in Lower Zone
+'Editors', 'Open Key Editor in Window' | Open Key Editor in Window
+'Editors', 'Open Key Editor' | Open Key Editor
+'Editors', 'Open List Editor' | Open List Editor
+'Editors', 'Open Sample Editor in Lower Zone' | Open Sample Editor in Lower Zone
+'Editors', 'Open Sample Editor in Window' | Open Sample Editor in Window
+'Editors', 'Open Sample Editor' | Open Sample Editor
+'Editors', 'Open Score Editor in Lower Zone' | Open Score Editor in Lower Zone
+'Editors', 'Open Score Editor in Window' | Open Score Editor in Window
+'Editors', 'Open Score Editor' | Open Score Editor
+'Editors', 'Open in separate Window/Lower Zone' | Open in separate Window/Lower Zone
+'Editors', 'Open/Close Editor' | Open/Close Editor
+'Editors', 'Set up Editor Preferences' | Set up Editor Preferences
+'Editors', 'Show/Hide Global Tracks in Editor' | Show/Hide Global Tracks in Editor
+'Editors', 'Track Display Settings: Active Track Only' | Track Display Settings: Active Track Only
+'Editors', 'Track Display Settings: All Visible Tracks' | Track Display Settings: All Visible Tracks
+'Editors', 'Track Display Settings: Show/Hide Tracks in Editor' | Track Display Settings: Show/Hide Tracks in Editor
+'Editors', 'Track Display Settings: Toggle Modes' | Track Display Settings: Toggle Modes
+'Editors', 'Visibility: Keep Editor Contents on/off' | Visibility: Keep Editor Contents on/off
+'Export', 'AAF' | AAF...
+'File', 'Back up Project' | Back up Project...
+'File', 'Close' | Close
+'File', 'Export Audio Mixdown' | Audio Mixdown...
+'File', 'Export Key Command Assignments' | Key Command Assignments...
+'File', 'Export MIDI File' | MIDI File...
+'File', 'Export MIDI Loop' | MIDI Loop...
+'File', 'Export Master Track' | Tempo Track...
+'File', 'Export MusicXML' | MusicXML...
+'File', 'Export Notepad Data' | Notepad Data...
+'File', 'Export Pool' | Export Pool...
+'File', 'Export Scores' | Scores...
+'File', 'Export Selected Events' | Selected Events...
+'File', 'Export Selected Tracks' | Selected Tracks...
+'File', 'Export Video' | Video...
+'File', 'Import Audio File' | Audio File...
+'File', 'Import Audio from Video' | Audio from Video File...
+'File', 'Import MIDI File' | MIDI File...
+'File', 'Import Master Track' | Tempo Track...
+'File', 'Import MusicXML' | MusicXML...
+'File', 'Import Pool' | Import Pool...
+'File', 'Import Track Archive' | Track Archive...
+'File', 'Import Tracks from Project' | Tracks from Project...
+'File', 'Import Video File' | Video File...
+'File', 'Import from Audio CD' | Audio CD...
+'File', 'New Empty' | New Empty Project
+'File', 'New Library' | New Library...
+'File', 'New' | New
+'File', 'Open Library' | Open Library...
+'File', 'Open' | Open
+'File', 'PageSetup' | Page Setup...
+'File', 'Perform Export Selected Events' | Perform Export Selected Events
+'File', 'Print' | Print...
+'File', 'Quit' | Quit
+'File', 'Revert' | Revert
+'File', 'Save As' | Save As
+'File', 'Save New Version' | Save New Version
+'File', 'Save Pool' | Save Library...
+'File', 'Save as Template' | Save as Template...
+'File', 'Save' | Save
+'File', 'Write MIDI File to Project Folder' | Write MIDI File to Project Folder
+'Focus', 'Back' | Back
+'Focus', 'Escape' | Escape
+'Focus', 'Fore' | Forward
+'Focus', 'Hit' | Confirm
+'Game Audio Connect', 'Trigger Export to Game Audio Engine' | Trigger Export to Game Audio Engine
+'HeadTracking', 'Show Dialog' | Head Tracking
+'Hitpoints', 'Calculate' | Calculate Hitpoints
+'Hitpoints', 'Create Audio Slices from Hitpoints' | Create Audio Slices from Hitpoints
+'Hitpoints', 'Create Markers from Hitpoints' | Create Markers from Hitpoints
+'Hitpoints', 'Divide Audio Events at Hitpoints' | Divide Audio Events at Hitpoints
+'Hitpoints', 'Remove Hitpoints' | Remove Hitpoints
+'Hub', 'Steinberg Hub' | Open Hub
+'Import', 'AAF' | AAF...
+'Inspector', 'Toggle Channel Section' | Open/Close Fader Section
+'Inspector', 'Toggle Chords Section' | Open/Close Chords Section
+'Inspector', 'Toggle Cue Sends Section' | Open/Close Cue Sends Section
+'Inspector', 'Toggle Direct Routing Section' | Open/Close Direct Routing Section
+'Inspector', 'Toggle EQs Section' | Open/Close Equalizer Section
+'Inspector', 'Toggle Expression Map Section' | Open/Close Expression Map Section
+'Inspector', 'Toggle Filters Section' | Open/Close Pre Section
+'Inspector', 'Toggle Inserts Section' | Open/Close Inserts Section
+'Inspector', 'Toggle MIDI Inserts Section' | Open/Close MIDI Inserts Section
+'Inspector', 'Toggle MIDI Modifiers Section' | Open/Close MIDI Modifiers Section
+'Inspector', 'Toggle MIDI Sends Section' | Open/Close MIDI Sends Section
+'Inspector', 'Toggle Note Expression Section' | Open/Close Note Expression Section
+'Inspector', 'Toggle Notepad Section' | Open/Close Notepad Section
+'Inspector', 'Toggle Quick Controls Section' | Open/Close Quick Controls Section
+'Inspector', 'Toggle Routing Section' | Open/Close Routing Section
+'Inspector', 'Toggle Sends Section' | Open/Close Sends Section
+'Inspector', 'Toggle Standard Section' | Open/Close Basics Section
+'Inspector', 'Toggle Strip Section' | Open/Close Strip Section
+'Inspector', 'Toggle Surround Pan Section' | Open/Close Surround Pan Section
+'Inspector', 'Toggle Track Variations Section' | Open/Close Track Versions Section
+'Inspector', 'Toggle User Panel Section' | Open/Close Device Panel Section
+'Key Commands', 'Open Key Commands Launcher' | Open Key Commands Launcher
+'MIDI Remote', 'Open MIDI Remote Mapping Assistant' | Open MIDI Remote Mapping Assistant
+'MIDI Remote', 'Scripting Tools: Highlight Bounding Rects' | Scripting Tools: Highlight Bounding Rects
+'MIDI Remote', 'Scripting Tools: Open Console' | Scripting Tools: Open Console
+'MIDI Remote', 'Scripting Tools: Open ReadMe' | Scripting Tools: Open ReadMe
+'MIDI Remote', 'Scripting Tools: Open Script Folder' | Scripting Tools: Open Script Folder
+'MIDI Remote', 'Scripting Tools: Reload Scripts' | Scripting Tools: Reload Scripts
+'MIDI Remote', 'Show/Hide Functions Browser in MIDI Remote Mapping Assistant' | Show/Hide Functions Browser in MIDI Remote Mapping Assistant
+'MIDI', 'Apply Logical Preset' | Apply Preset...
+'MIDI', 'Auto Select Controllers' | Auto Select Controllers
+'MIDI', 'Bounce' | Bounce MIDI
+'MIDI', 'Controller Lane Setup 1' | Controller Lane Setup 1
+'MIDI', 'Controller Lane Setup 10' | Controller Lane Setup 10
+'MIDI', 'Controller Lane Setup 11' | Controller Lane Setup 11
+'MIDI', 'Controller Lane Setup 12' | Controller Lane Setup 12
+'MIDI', 'Controller Lane Setup 13' | Controller Lane Setup 13
+'MIDI', 'Controller Lane Setup 14' | Controller Lane Setup 14
+'MIDI', 'Controller Lane Setup 15' | Controller Lane Setup 15
+'MIDI', 'Controller Lane Setup 16' | Controller Lane Setup 16
+'MIDI', 'Controller Lane Setup 2' | Controller Lane Setup 2
+'MIDI', 'Controller Lane Setup 3' | Controller Lane Setup 3
+'MIDI', 'Controller Lane Setup 4' | Controller Lane Setup 4
+'MIDI', 'Controller Lane Setup 5' | Controller Lane Setup 5
+'MIDI', 'Controller Lane Setup 6' | Controller Lane Setup 6
+'MIDI', 'Controller Lane Setup 7' | Controller Lane Setup 7
+'MIDI', 'Controller Lane Setup 8' | Controller Lane Setup 8
+'MIDI', 'Controller Lane Setup 9' | Controller Lane Setup 9
+'MIDI', 'Delete Continuous Controllers' | Delete Continuous Controllers
+'MIDI', 'Delete Controllers' | Delete Controllers
+'MIDI', 'Delete Doubles' | Delete Doubles
+'MIDI', 'Delete Notes' | Delete Notes...
+'MIDI', 'Delete Overlaps (mono)' | Delete Overlaps (mono)
+'MIDI', 'Delete Overlaps (poly)' | Delete Overlaps (poly)
+'MIDI', 'Dissolve Part' | Dissolve Part
+'MIDI', 'Drum Editor Length Display' | Drum Editor: Show Note Length On/Off
+'MIDI', 'Drummap Setup' | Drum Map Setup...
+'MIDI', 'Extract MIDI' | Extract MIDI Automation
+'MIDI', 'Fixed Lengths' | Fixed Lengths
+'MIDI', 'Fixed Velocity' | Fixed Velocity
+'MIDI', 'Freeze Length' | Freeze Length
+'MIDI', 'Freeze Track Params' | Freeze MIDI Modifiers
+'MIDI', 'Insert Velocity 1' | Insert Velocity 1
+'MIDI', 'Insert Velocity 2' | Insert Velocity 2
+'MIDI', 'Insert Velocity 3' | Insert Velocity 3
+'MIDI', 'Insert Velocity 4' | Insert Velocity 4
+'MIDI', 'Insert Velocity 5' | Insert Velocity 5
+'MIDI', 'InstrumentMap Setup' | Expression Map Setup...
+'MIDI', 'Legato' | Legato
+'MIDI', 'List Editor: Show/Hide Filters' | List Editor: Show/Hide Filters
+'MIDI', 'Logical Editor' | Setup...
+'MIDI', 'Merge MIDI' | Merge MIDI in Loop...
+'MIDI', 'Merge Tempo from Tapping' | Calculate Tempo from MIDI Events...
+'MIDI', 'Mirror' | Mirror
+'MIDI', 'ONote Conversion' | O-Note Conversion
+'MIDI', 'Open CC Automation Setup Dialog' | CC Automation Setup...
+'MIDI', 'Open Insert Velocities Dialog' | Insert Velocities...
+'MIDI', 'Pedals to Note Length' | Pedals to Note Length
+'MIDI', 'Pitch Visibility: On/Off' | Pitch Visibility: On/Off
+'MIDI', 'Pitch Visibility: Select Next Option' | Pitch Visibility: Select Next Option
+'MIDI', 'Pitchbend: Snap Pitchbend Events On/Off' | Pitchbend: Snap Pitchbend Events On/Off
+'MIDI', 'Project Input Transformer' | Project Input Transformer...
+'MIDI', 'Record In Editor' | Record In Editor
+'MIDI', 'Repeat Loop' | Repeat Loop
+'MIDI', 'Reset' | Reset
+'MIDI', 'Restrict Polyphony' | Restrict Polyphony...
+'MIDI', 'Reverse' | Reverse
+'MIDI', 'Send All Notes Off Message' | Send All Notes Off Message
+'MIDI', 'Show Used Controllers' | Show Used Controllers
+'MIDI', 'Show/Hide Controller Lanes' | Show/Hide Controller Lanes
+'MIDI', 'Thin Out' | Thin Out Data
+'MIDI', 'Toggle Computer Keyboard Input' | Toggle Computer Keyboard Input
+'MIDI', 'Toggle MIDI Input' | Toggle MIDI Input
+'MIDI', 'Toggle Step Input' | Toggle Step Input
+'MIDI', 'Transpose Notes' | Transpose Notes
+'MIDI', 'Transpose' | Transpose Setup...
+'MIDI', 'Type of New Controller Events: Toggle Step/Ramp' | Type of New Controller Events: Toggle Step/Ramp
+'MIDI', 'Velocity' | Velocity...
+'Marker', 'Activate Marker Track' | Activate Marker Track
+'Marker', 'Add Cycle Marker on Selected Track' | Add Cycle Marker on Selected Track
+'Marker', 'Add Position Marker on Selected Track' | Add Position Marker on Selected Track
+'Marker', 'Add and Edit Cycle Marker on Selected Track' | Add and Edit Cycle Marker on Selected Track
+'Marker', 'Add and Edit Cycle Marker' | Add and Edit Cycle Marker on Active Track
+'Marker', 'Add and Edit Position Marker on Selected Track' | Add and Edit Position Marker on Selected Track
+'Marker', 'Add and Edit Position Marker' | Add and Edit Position Marker on Active Track
+'Marker', 'Insert Cycle Marker' | Add Cycle Marker on Active Track
+'Marker', 'Insert Marker' | Add Position Marker on Active Track
+'Media', 'Add Favorite' | Add Favorite
+'Media', 'Browse: Back' | Browse: Back
+'Media', 'Browse: Forward' | Browse: Forward
+'Media', 'Browse: Up' | Browse: Up
+'Media', 'Check Files' | Find Missing Files...
+'Media', 'Converter' | Convert Files...
+'Media', 'Create Folder' | Create Folder
+'Media', 'Create New Folder' | Create New Folder
+'Media', 'Create Sampler Track' | Create Sampler Track
+'Media', 'Empty Trash' | Empty Trash
+'Media', 'Generate Thumbnail Cache' | Generate Thumbnail Cache
+'Media', 'Hide Folders That Are Not Scanned' | Hide Folders That Are Not Scanned
+'Media', 'Import Medium' | Import Medium...
+'Media', 'Import from Audio CD' | Import Audio CD...
+'Media', 'Insert into Project at Cursor' | At Cursor
+'Media', 'Insert into Project at Left Locator' | At Left Locator
+'Media', 'Insert into Project at Origin' | At Origin
+'Media', 'New Version' | New Version
+'Media', 'Open Debug Browser' | Debug Browser
+'Media', 'Open Loop Browser' | Loop Browser
+'Media', 'Open MediaBay' | MediaBay
+'Media', 'Open Remote Browser' | Open Remote Browser
+'Media', 'Open Sound Browser' | Sound Browser
+'Media', 'Open/Close Attribute Inspector' | Open/Close Attribute Inspector
+'Media', 'Open/Close Favorites' | Open/Close Favorites
+'Media', 'Open/Close File Browser' | Open/Close File Browser
+'Media', 'Open/Close Filters' | Open/Close Filters
+'Media', 'Open/Close Previewer' | Open/Close Previewer
+'Media', 'OpenInExplorer' | Reveal in Finder
+'Media', 'Prepare Archive' | Prepare Archive...
+'Media', 'Preview Active On/Off' | Preview Active On/Off
+'Media', 'Preview AutoPlay On/Off' | Preview AutoPlay On/Off
+'Media', 'Preview Cycle On/Off' | Preview Cycle On/Off
+'Media', 'Preview Pause On/Off' | Preview Pause On/Off
+'Media', 'Preview Start' | Preview Start
+'Media', 'Preview Stop' | Preview Stop
+'Media', 'Preview Sync On/Off' | Preview Sync On/Off
+'Media', 'Preview in Context On/Off' | Preview in Context On/Off
+'Media', 'Reconstruct' | Reconstruct
+'Media', 'Refresh Views' | Refresh Views
+'Media', 'Remove Favorite' | Remove Favorite
+'Media', 'Remove Missing Files' | Remove Missing Files
+'Media', 'Remove Unused Media' | Remove Unused Media
+'Media', 'Rescan Disk' | Rescan Disk
+'Media', 'Reset All Filters' | Reset All Filters
+'Media', 'Reset Result Filters' | Reset Result Filters
+'Media', 'Reset Search' | Reset Search
+'Media', 'Results: Include Folders and Subfolders' | Results: Include Folders and Subfolders
+'Media', 'Revert' | Revert
+'Media', 'Search MediaBay' | Search MediaBay
+'Media', 'Select In Project' | Select in Project
+'Media', 'Select Media Types' | Select Media Types
+'Media', 'Set Record Folder' | Set Pool Record Folder
+'Media', 'Show Only Selected Folder' | Show Only Selected Folder
+'Media', 'Shuffle Results' | Shuffle Results
+'Media', 'Stop Updating Results' | Stop Updating Results
+'Media', 'Update Results' | Update Results
+'Media', 'Write Attributes to File' | Write Attributes to File
+'MediaInspector', 'RemoveAttribute' | RemoveAttribute
+'MediaList', 'CommitTags' | CommitTags
+'MediaList', 'RemoveWriteProtection' | RemoveWriteProtection
+'MediaList', 'SetWriteProtection' | SetWriteProtection
+'MixConsole History', 'Redo MixConsole Step' | Redo MixConsole Step
+'MixConsole History', 'Undo MixConsole Step' | Undo MixConsole Step
+'MixConsole Snapshots', 'Save MixConsole Snapshot' | Save MixConsole Snapshot
+'Mixer', 'Add Track To Selected: FX Channel' | Add Track To Selected: FX Channel
+'Mixer', 'Add Track To Selected: Group Channel' | Add Track To Selected: Group Channel
+'Mixer', 'Add Track To Selected: VCA Fader' | Add Track To Selected: VCA Fader
+'Mixer', 'Arm All Audio Tracks' | Activate Record Enable for All Audio Tracks
+'Mixer', 'Bypass: Channel Strip on Main Mix' | Bypass: Channel Strip on Main Mix
+'Mixer', 'Bypass: Channel Strip' | Bypass: Channel Strip
+'Mixer', 'Bypass: EQs on Main Mix' | Bypass: EQs on Main Mix
+'Mixer', 'Bypass: EQs' | Bypass: EQs
+'Mixer', 'Bypass: Inserts on Main Mix' | Bypass: Inserts on Main Mix
+'Mixer', 'Bypass: Inserts' | Bypass: Inserts
+'Mixer', 'Bypass: Sends' | Bypass: Sends
+'Mixer', 'Channels: Listen On/Off' | Listen for All Visible Channels On/Off
+'Mixer', 'Control Link: Edit Control Link Settings' | Link Group: Edit Link Group Settings
+'Mixer', 'Control Link: Next Control Link Group' | Link Group: Next Link Group
+'Mixer', 'Control Link: Previous Control Link Group' | Link Group: Previous Link Group
+'Mixer', 'Direct Routing: Summing Mode On/Off' | Direct Routing: Summing Mode On/Off
+'Mixer', 'Disarm All Audio Tracks' | Deactivate Record Enable for All Audio Tracks
+'Mixer', 'EQ/Filter Transition: Quick' | EQ/Filter Transition: Quick
+'Mixer', 'EQ/Filter Transition: Soft' | EQ/Filter Transition: Soft
+'Mixer', 'Expand: Channel Strip' | Expand: Channel Strip
+'Mixer', 'Expand: Cue Sends' | Expand: Cue Sends
+'Mixer', 'Expand: Device Panels' | Expand: Device Panels
+'Mixer', 'Expand: Direct Routing' | Expand: Direct Routing
+'Mixer', 'Expand: EQs' | Expand: EQs
+'Mixer', 'Expand: Filters/Gain' | Expand: Filters/Gain
+'Mixer', 'Expand: Inserts' | Expand: Inserts
+'Mixer', 'Expand: Quick Controls' | Expand: Quick Controls
+'Mixer', 'Expand: Routing' | Expand: Routing
+'Mixer', 'Expand: Sends' | Expand: Sends
+'Mixer', 'Expand: VCA' | Expand: VCA
+'Mixer', 'File: Load Selected Channels' | File: Load Selected Channels
+'Mixer', 'File: Save Selected Channels' | File: Save Selected Channels
+'Mixer', 'Hide: Audio' | Hide: Audio
+'Mixer', 'Hide: Groups' | Hide: Groups
+'Mixer', 'Hide: Inputs' | Hide: Inputs
+'Mixer', 'Hide: Instruments' | Hide: Instruments
+'Mixer', 'Hide: MIDI' | Hide: MIDI
+'Mixer', 'Hide: Outputs' | Hide: Outputs
+'Mixer', 'Hide: Returns' | Hide: Returns
+'Mixer', 'Hide: Reveal All' | Show All
+'Mixer', 'Hide: VCAs' | Hide: VCAs
+'Mixer', 'Link Channels' | Link Channels
+'Mixer', 'Loudness: Enable' | Loudness: Enable
+'Mixer', 'Loudness: Reset' | Loudness: Reset
+'Mixer', 'Loudness: Switch between +9dB and +18dB Scale' | Loudness: Switch between +9dB and +18dB Scale
+'Mixer', 'Loudness: Switch between LU and LUFS' | Loudness: Switch between LU and LUFS
+'Mixer', 'Master Meter: AES17 (+3dB)' | Master Meter: AES17 (+3dB)
+'Mixer', 'Meters: Hold Forever' | Meters: Hold Forever
+'Mixer', 'Meters: Hold Peaks' | Meters: Hold Peaks
+'Mixer', 'Meters: Input' | Meters: Input
+'Mixer', 'Meters: Post Fader' | Meters: Post Fader
+'Mixer', 'Meters: Post Panner' | Meters: Post Panner
+'Mixer', 'Meters: Reset' | Meters: Reset
+'Mixer', 'Panner: Open/Close Selected' | Edit Channel Panner for selected
+'Mixer', 'Pre/Post' | Pre/Post
+'Mixer', 'Q-Link' | Q-Link
+'Mixer', 'Settings: Open/Close Selected' | Edit Channel Settings for selected
+'Mixer', 'Show/Hide Channel Name' | Show/Hide Channel Name
+'Mixer', 'Show/Hide Channel Overview' | Show/Hide Channel Overview
+'Mixer', 'Show/Hide Equalizer Curve' | Show/Hide Equalizer Curve
+'Mixer', 'Show/Hide Latency' | Show/Hide Latency
+'Mixer', 'Show/Hide Meter Bridge' | Show/Hide Meter Bridge
+'Mixer', 'Show/Hide Notepad' | Show/Hide Notepad
+'Mixer', 'Show/Hide Pictures' | Show/Hide Pictures
+'Mixer', 'Unlink Channels' | Unlink Channels
+'Mixer', 'Views: Channel Strip' | Views: Channel Strip
+'Mixer', 'Views: Cue Sends' | Views: Cue Sends
+'Mixer', 'Views: Device Panels' | Views: Device Panels
+'Mixer', 'Views: Direct Routing' | Views: Direct Routing
+'Mixer', 'Views: EQs' | Views: EQs
+'Mixer', 'Views: Filters/Gain' | Views: Filters/Gain
+'Mixer', 'Views: Inserts' | Views: Inserts
+'Mixer', 'Views: Quick Controls' | Views: Quick Controls
+'Mixer', 'Views: Routing' | Views: Routing
+'Mixer', 'Views: Sends' | Views: Sends
+'Mixer', 'Views: VCA' | Views: VCA
+'Mixer', 'Windows: Close All Plug-Ins' | Windows: Close All Plug-Ins
+'Mixer', 'Zoom In Vertically' | Zoom In Vertically
+'Mixer', 'Zoom In' | Zoom In
+'Mixer', 'Zoom Out Vertically' | Zoom Out Vertically
+'Mixer', 'Zoom Out' | Zoom Out
+'Navigate', 'Add Down' | Add Down
+'Navigate', 'Add Left' | Add Left
+'Navigate', 'Add Right' | Add Right
+'Navigate', 'Add Up' | Add Up
+'Navigate', 'Back' | Back
+'Navigate', 'Bottom' | Bottom
+'Navigate', 'Down' | Down
+'Navigate', 'Focus Next Plug-in' | Set Remote-Control Focus on Previous Plug-in
+'Navigate', 'Focus Previous Plug-in' | Set Remote-Control Focus on Next Plug-in
+'Navigate', 'Fore' | Forward
+'Navigate', 'Left' | Left
+'Navigate', 'Less' | Less
+'Navigate', 'More' | More
+'Navigate', 'Right' | Right
+'Navigate', 'Toggle Selection' | Toggle Selection
+'Navigate', 'Top' | Top
+'Navigate', 'Up' | Up
+'Note Expression', 'Consolidate Note Expression Overlaps' | Consolidate Note Expression Overlaps
+'Note Expression', 'Convert to Note Expression' | Convert to Note Expression
+'Note Expression', 'Dissolve Note Expression' | Dissolve Note Expression
+'Note Expression', 'Double-Click opens Note Expression Editor On/Off' | Double-Click opens Note Expression Editor On/Off
+'Note Expression', 'Edit Next Parameter' | Edit Next Parameter
+'Note Expression', 'Edit Previous Parameter' | Edit Previous Parameter
+'Note Expression', 'Editor Size: Decrease' | Editor Size: Decrease
+'Note Expression', 'Editor Size: Increase' | Editor Size: Increase
+'Note Expression', 'Note Expression MIDI Setup' | Note Expression MIDI Setup...
+'Note Expression', 'Open/Close Editor' | Open Note Expression Editor
+'Note Expression', 'Paste Note Expression' | Paste Note Expression
+'Note Expression', 'Record MIDI as Note Expression' | Record MIDI as Note Expression
+'Note Expression', 'Remove Note Expression' | Remove Note Expression
+'Note Expression', 'Resolve Note Expression' | Distribute Notes to MIDI Channels
+'Note Expression', 'Show/Hide Note Expression Data' | Show/Hide Note Expression Data
+'Note Expression', 'Trim Note Expression to Note Length' | Trim Note Expression to Note Length
+'Nudge', 'Bottom Down' | Nudge Bottom Down
+'Nudge', 'Bottom Up' | Nudge Bottom Up
+'Nudge', 'Down More' | Down (Larger Step)
+'Nudge', 'Down' | Down
+'Nudge', 'End Left' | Nudge End Left
+'Nudge', 'End Right' | Nudge End Right
+'Nudge', 'Graphical Bottom' | Graphical Bottom
+'Nudge', 'Graphical Left' | Graphical Left
+'Nudge', 'Graphical Right' | Graphical Right
+'Nudge', 'Graphical Top' | Graphical Top
+'Nudge', 'Left' | Left
+'Nudge', 'Link to Grid On/Off' | Link to Grid On/Off
+'Nudge', 'Loop Range Left' | Loop Range Left
+'Nudge', 'Loop Range Right' | Loop Range Right
+'Nudge', 'Right' | Right
+'Nudge', 'Select Next Grid Type Value' | Select Next Grid Type Value
+'Nudge', 'Select Next Time Format' | Select Next Time Format
+'Nudge', 'Select Prev Grid Type Value' | Select Prev Grid Type Value
+'Nudge', 'Select Prev Time Format' | Select Prev Time Format
+'Nudge', 'Start Left' | Nudge Start Left
+'Nudge', 'Start Right' | Nudge Start Right
+'Nudge', 'Top Down' | Nudge Top Down
+'Nudge', 'Top Up' | Nudge Top Up
+'Nudge', 'Up More' | Up (Larger Step)
+'Nudge', 'Up' | Up
+'Preset', 'Next' | Next
+'Preset', 'Open Browser' | Open/Close Browser
+'Preset', 'Previous' | Previous
+'Preset', 'Track Preset: Next' | Track Preset: Next
+'Preset', 'Track Preset: Open Browser' | Track Preset: Open Browser
+'Preset', 'Track Preset: Previous' | Track Preset: Previous
+'Process', 'Envelope' | Envelope
+'Process', 'Fade In' | Fade In
+'Process', 'Fade Out' | Fade Out
+'Process', 'Gain' | Gain
+'Process', 'Invert Phase' | Invert Phase
+'Process', 'Normalize' | Normalize
+'Process', 'Pitch Shift' | Pitch Shift
+'Process', 'Remove DC Offset' | Remove DC Offset
+'Process', 'Resample' | Resample
+'Process', 'Reverse' | Reverse
+'Process', 'Silence' | Silence
+'Process', 'Stereo Flip' | Stereo Flip
+'Process', 'Time Stretch' | Time Stretch
+'Project', 'Auto Fades Settings' | Auto Fades Settings...
+'Project', 'Bring To Front' | Bring To Front
+'Project', 'Colors' | Project Colors Setup...
+'Project', 'Divide Track List' | Divide Track List
+'Project', 'Duplicate Tracks' | Duplicate Tracks
+'Project', 'Folding: Fold Tracks' | Fold Tracks
+'Project', 'Folding: Toggle Selected Track' | Toggle Selected Track
+'Project', 'Folding: Toggle Tracks' | Flip Fold States
+'Project', 'Folding: Tracks To Folder' | Move Selected Tracks to New Folder
+'Project', 'Folding: Unfold Tracks' | Unfold Tracks
+'Project', 'Notepad' | Notepad
+'Project', 'Open Markers' | Markers
+'Project', 'Open Pool' | Open Pool Window
+'Project', 'Open Score Layout' | Open Layout...
+'Project', 'Open Tempo Track' | Tempo Track
+'Project', 'Remove Empty Tracks' | Remove Empty Tracks
+'Project', 'Remove Selected Tracks' | Remove Selected Tracks
+'Project', 'Select Track: Add Next' | Select Track: Add Next
+'Project', 'Select Track: Add Prev' | Select Track: Add Prev
+'Project', 'Select Track: Next' | Select Track: Next
+'Project', 'Select Track: Prev' | Select Track: Prev
+'Project', 'Set Timecode' | Set Timecode at Cursor...
+'Project', 'Set Track/Event Color' | Colorize
+'Project', 'Setup' | Project Setup...
+'Project', 'Tap Tempo' | Tap Tempo
+'Project', 'Tempo Detection' | Tempo Detection...
+'Project', 'Track Controls Settings' | Track Controls Settings
+'Quantize Category', 'AudioWarp Quantize On/Off' | AudioWarp Quantize On/Off
+'Quantize Category', 'Auto Quantize On/Off' | Auto Quantize On/Off
+'Quantize Category', 'Create Groove Quantize Preset' | Create Groove Quantize Preset
+'Quantize Category', 'Freeze Quantize' | Freeze MIDI Quantize
+'Quantize Category', 'Iterative Quantize' | Soft Quantize On/Off
+'Quantize Category', 'Quantize Ends' | Quantize MIDI Event Ends
+'Quantize Category', 'Quantize Lengths' | Quantize MIDI Event Lengths
+'Quantize Category', 'Quantize Setup' | Quantize Panel
+'Quantize Category', 'Quantize' | Quantize
+'Quantize Category', 'Select Next Quantize' | Select Next Quantize Value
+'Quantize Category', 'Select Prev Quantize' | Select Previous Quantize Value
+'Quantize Category', 'Set Quantize to 128th' | Set Quantize to 1/128
+'Quantize Category', 'Set Quantize to 16th' | Set Quantize to 1/16
+'Quantize Category', 'Set Quantize to 1th' | Set Quantize to 1/1
+'Quantize Category', 'Set Quantize to 2th' | Set Quantize to 1/2
+'Quantize Category', 'Set Quantize to 32th' | Set Quantize to 1/32
+'Quantize Category', 'Set Quantize to 4th' | Set Quantize to 1/4
+'Quantize Category', 'Set Quantize to 64th' | Set Quantize to 1/64
+'Quantize Category', 'Set Quantize to 8th' | Set Quantize to 1/8
+'Quantize Category', 'Toggle Quantize Dotted' | Toggle Quantize Dotted
+'Quantize Category', 'Toggle Quantize Triplet' | Toggle Quantize Triplet
+'Quantize Category', 'Undo Quantize' | Reset Quantize
+'Render in Place', 'Render Setup...' | Render Settings...
+'Render in Place', 'Render' | Render (with Current Settings)
+'Sample Editor', 'Bypass Warping' | Bypass Warping
+'Sample Editor', 'VariAudio - Bypass Pitching' | VariAudio - Bypass VariAudio
+'Sample Editor', 'VariAudio - Extract MIDI (no Dialog)' | VariAudio - Extract MIDI (no Dialog)
+'Sample Editor', 'VariAudio - Extract MIDI...' | VariAudio - Extract MIDI...
+'Sample Editor', 'VariAudio - Quantize Pitch' | VariAudio - Correct Pitch
+'Sample Editor', 'VariAudio - Reanalyze' | Reanalyze Audio
+'Sample Editor', 'VariAudio - Reset Formant Shift Changes' | VariAudio - Reset Formant Shift Changes
+'Sample Editor', 'VariAudio - Reset Pitch + Warp Changes' | VariAudio - Reset All Changes
+'Sample Editor', 'VariAudio - Reset Pitch Changes' | VariAudio - Reset Pitch Changes
+'Sample Editor', 'VariAudio - Reset Pitch Curve Changes' | VariAudio - Reset Pitch Curve Changes
+'Sample Editor', 'VariAudio - Reset Volume Changes' | VariAudio - Reset Volume Changes
+'Sample Editor', 'VariAudio - Reset Warp Changes' | VariAudio - Reset Warp Changes
+'Sample Editor', 'VariAudio - Show MIDI Reference Track' | VariAudio - Show MIDI Reference Track
+'Sample Editor', 'VariAudio - Toggle Pitch Snap Mode' | VariAudio - Toggle Pitch Snap Mode
+'Sample Editor', 'VariAudio - Toggle Smart Control Mode' | VariAudio - Toggle Smart Control Mode
+'Sample Editor', 'Zoom Mode: Clip-Based' | Zoom Mode: Clip-Based
+'Sample Editor', 'Zoom Mode: Global' | Zoom Mode: Global
+'Score Align Elements', 'bottom' | Bottom
+'Score Align Elements', 'dynamics' | Dynamics
+'Score Align Elements', 'horizontal' | Center Horizontally
+'Score Align Elements', 'left' | Left
+'Score Align Elements', 'right' | Right
+'Score Align Elements', 'top' | Top
+'Score Align Elements', 'vertical' | Center Vertically
+'Score Functions', '+ move insert' | Insert Voice: Next
+'Score Functions', '+ move one' | One up
+'Score Functions', '- move insert' | Insert Voice: Previous
+'Score Functions', '- move one' | One down
+'Score Functions', '0 auto layout' | Auto Layout: Move Bars
+'Score Functions', '1 auto layout' | Auto Layout: Move All Bars
+'Score Functions', '1 pagemode zoom' | 50%
+'Score Functions', '1 set font set' | Attribute Set 1
+'Score Functions', '1 set insert' | Insert Voice: 1
+'Score Functions', '1 to string' | Move To String 1
+'Score Functions', '1 to verse' | Verse 1
+'Score Functions', '1 to voice' | Move To Voice 1
+'Score Functions', '10 set font set' | Attribute Set 10
+'Score Functions', '10 to string' | Move To String 10
+'Score Functions', '11 set font set' | Attribute Set 11
+'Score Functions', '11 to string' | Move To String 11
+'Score Functions', '12 set font set' | Attribute Set 12
+'Score Functions', '12 to string' | Move To String 12
+'Score Functions', '13 set font set' | Attribute Set 13
+'Score Functions', '14 set font set' | Attribute Set 14
+'Score Functions', '15 set font set' | Attribute Set 15
+'Score Functions', '16 set font set' | Attribute Set 16
+'Score Functions', '2 auto layout' | Auto Layout: Move Staves
+'Score Functions', '2 pagemode zoom' | 75%
+'Score Functions', '2 set font set' | Attribute Set 2
+'Score Functions', '2 set insert' | Insert Voice: 2
+'Score Functions', '2 to string' | Move To String 2
+'Score Functions', '2 to verse' | Verse 2
+'Score Functions', '2 to voice' | Move To Voice 2
+'Score Functions', '3 auto layout' | Auto Layout: Move All Staves
+'Score Functions', '3 pagemode zoom' | 100%
+'Score Functions', '3 set font set' | Attribute Set 3
+'Score Functions', '3 set insert' | Insert Voice: 3
+'Score Functions', '3 to string' | Move To String 3
+'Score Functions', '3 to verse' | Verse 3
+'Score Functions', '3 to voice' | Move To Voice 3
+'Score Functions', '4 auto layout' | Auto Layout: Spread Page
+'Score Functions', '4 pagemode zoom' | 120%
+'Score Functions', '4 set font set' | Attribute Set 4
+'Score Functions', '4 set insert' | Insert Voice: 4
+'Score Functions', '4 to string' | Move To String 4
+'Score Functions', '4 to verse' | Verse 4
+'Score Functions', '4 to voice' | Move To Voice 4
+'Score Functions', '5 auto layout' | Auto Layout: Spread All Pages
+'Score Functions', '5 pagemode zoom' | 200%
+'Score Functions', '5 set font set' | Attribute Set 5
+'Score Functions', '5 to string' | Move To String 5
+'Score Functions', '5 to verse' | Verse 5
+'Score Functions', '5 to voice' | Move To Voice 5
+'Score Functions', '6 auto layout' | Auto Layout: Hide Empty Staves
+'Score Functions', '6 pagemode zoom' | 300%
+'Score Functions', '6 set font set' | Attribute Set 6
+'Score Functions', '6 to string' | Move To String 6
+'Score Functions', '6 to verse' | Verse 6
+'Score Functions', '6 to voice' | Move To Voice 6
+'Score Functions', '7 auto layout' | Auto Layout: Hide All Empty Staves
+'Score Functions', '7 pagemode zoom' | 400%
+'Score Functions', '7 set font set' | Attribute Set 7
+'Score Functions', '7 to string' | Move To String 7
+'Score Functions', '7 to voice' | Move To Voice 7
+'Score Functions', '8 auto layout' | Auto Layout: Bars and Staves
+'Score Functions', '8 pagemode zoom' | 600%
+'Score Functions', '8 set font set' | Attribute Set 8
+'Score Functions', '8 to string' | Move To String 8
+'Score Functions', '8 to voice' | Move To Voice 8
+'Score Functions', '9 auto layout' | Auto Layout: Optimize All
+'Score Functions', '9 set font set' | Attribute Set 9
+'Score Functions', '9 to string' | Move To String 9
+'Score Functions', 'CB-EmptyBar' | Clear Bar
+'Score Functions', 'CB-RemoveRhythm' | Show Regular Notation
+'Score Functions', 'CB-ShowRepeat' | Show Bar Repeat Sign
+'Score Functions', 'CB-ShowRhythm' | Show Rhythmic Notation
+'Score Functions', 'Enharm Shift ##' | Enharmonic Shift: ##
+'Score Functions', 'Enharm Shift #' | Enharmonic Shift: #
+'Score Functions', 'Enharm Shift ()' | Enharmonic Shift: ()
+'Score Functions', 'Enharm Shift ?' | Enharmonic Shift: ?
+'Score Functions', 'Enharm Shift b' | Enharmonic Shift: b
+'Score Functions', 'Enharm Shift bb' | Enharmonic Shift: bb
+'Score Functions', 'Enharm Shift no' | Enharmonic Shift: no (hide)
+'Score Functions', 'Enharm Shift off' | Enharmonic Shift: off  (automatic)
+'Score Functions', 'auto dialog' | Auto Layout...
+'Score Functions', 'clean layout' | Reset Layout...
+'Score Functions', 'extract voices' | Extract Voices
+'Score Functions', 'flip' | Flip
+'Score Functions', 'force update' | Force Update
+'Score Functions', 'freeze scores' | Score Notes to MIDI
+'Score Functions', 'get info' | Get Info
+'Score Functions', 'grace note' | Convert to Grace Note
+'Score Functions', 'group' | Group/Ungroup Notes
+'Score Functions', 'hide' | Hide/Show
+'Score Functions', 'insert slur' | Insert Slur
+'Score Functions', 'make accel' | Build Accelerando...
+'Score Functions', 'make chords' | Make Chord Symbols
+'Score Functions', 'make repeat' | Build Repeat...
+'Score Functions', 'make trill' | Build Trill...
+'Score Functions', 'marker to form' | Marker Track to Form
+'Score Functions', 'merge staves' | Merge All Staves
+'Score Functions', 'open numbars' | Number of Bars
+'Score Functions', 'paste attr' | Paste Note Attributes
+'Score Functions', 'show chordtrack' | Show Chord Track
+'Score Functions', 'show marker' | Display Markers
+'Score Functions', 'show pos' | Position Panel
+'Score Functions', 'spacer to layout' | Spacer and Hidden to Layout
+'Score Functions', 'tuplet dialog' | Build N-Tuplet...
+'Score Functions', 'xplode' | Explode
+'Score Meter Scale', '1 pagemode zoom' | 50%
+'Score Meter Scale', '100 edmode zoom' | Edit Mode: 100 %
+'Score Meter Scale', '150 edmode zoom' | Edit Mode: 150 %
+'Score Meter Scale', '2 pagemode zoom' | 75%
+'Score Meter Scale', '200 edmode zoom' | Edit Mode: 200 %
+'Score Meter Scale', '3 pagemode zoom' | 100%
+'Score Meter Scale', '4 pagemode zoom' | 120%
+'Score Meter Scale', '5 pagemode zoom' | 200%
+'Score Meter Scale', '50 edmode zoom' | Edit Mode: 50 %
+'Score Meter Scale', '6 pagemode zoom' | 300%
+'Score Meter Scale', '7 pagemode zoom' | 400%
+'Score Meter Scale', '8 pagemode zoom' | 600%
+'Score Meter Scale', '80 edmode zoom' | Edit Mode: 80 %
+'Score Meter Scale', 'edmode hide' | Hide Unused
+'Score Meter Scale', 'fitPage' | Fit Page
+'Score Meter Scale', 'fitWidth' | Fit Width
+'Score Meter Scale', 'rulerCM' | CM
+'Score Meter Scale', 'rulerIN' | Inch
+'Score Meter Scale', 'rulerOFF' | Off
+'Score Meter Scale', 'rulerPT' | PT
+'Score Symbol Editor', '100%' | 100%
+'Score Symbol Editor', '200%' | 200%
+'Score Symbol Editor', '400%' | 400%
+'Score Symbol Editor', '600%' | 600%
+'Score Symbol Editor', '800%' | 800%
+'Score Symbol Editor', 'align bottom' | Align Bottom
+'Score Symbol Editor', 'align horizontal' | Align Center Horizontally
+'Score Symbol Editor', 'align left' | Align Left
+'Score Symbol Editor', 'align right' | Align Right
+'Score Symbol Editor', 'align top' | Align Top
+'Score Symbol Editor', 'align vertical' | Align Center Vertically
+'Score Symbol Editor', 'group' | Group
+'Score Symbol Editor', 'mirror 90 +' | Flip +90
+'Score Symbol Editor', 'mirror 90 -' | Flip -90
+'Score Symbol Editor', 'mirror horizontal' | Mirror horizontal
+'Score Symbol Editor', 'mirror vertical' | Mirror vertical
+'Score Symbol Editor', 'move behind' | Send To Back
+'Score Symbol Editor', 'move front' | Bring To Front
+'Score Symbol Editor', 'ungroup' | Ungroup
+'Score Symbol Palettes', 'dynamic mapping' | Dynamic Mapping
+'Score Symbol Palettes', 'form symbols' | Form Symbols
+'Score Symbol Palettes', 'palette chord' | Chord Symbols
+'Score Symbol Palettes', 'palette clef' | Clef etc.
+'Score Symbol Palettes', 'palette clefs' | Clef
+'Score Symbol Palettes', 'palette dyn' | Dynamics
+'Score Symbol Palettes', 'palette expressionmap' | Expression Map
+'Score Symbol Palettes', 'palette guitar' | Guitar Symbols
+'Score Symbol Palettes', 'palette keys' | Keys
+'Score Symbol Palettes', 'palette linetr' | Line/Trill
+'Score Symbol Palettes', 'palette notesyms' | Note Symbols
+'Score Symbol Palettes', 'palette other' | Other
+'Score Symbol Palettes', 'palette picts' | User Symbols
+'Score Symbol Palettes', 'palette sign' | Time Sign
+'Score Symbol Palettes', 'palette text' | Words
+'Score Symbol Palettes', 'palette user' | Favorites
+'Scores Statusbar', 'barhandles' | Toggle Filter: Bar Handles
+'Scores Statusbar', 'cut' | Toggle Filter: Cutflag
+'Scores Statusbar', 'group' | Toggle Filter: Grouping
+'Scores Statusbar', 'hidden notes' | Toggle Filter: Hidden Notes
+'Scores Statusbar', 'hide' | Toggle Filter: Hide
+'Scores Statusbar', 'layout' | Toggle Filter: Layout Tool
+'Scores Statusbar', 'quant' | Toggle Filter: Quantize
+'Scores Statusbar', 'splitrest' | Toggle Filter: Split Rests
+'Scores Statusbar', 'stems' | Toggle Filter: Stems/Beams
+'Scores', 'Show/Hide Computer Keyboard Input' | Computer Keyboard Input On/Off
+'Scores', 'Show/Hide Length' | Note Editing Overlay On/Off
+'Scores', 'Toggle Mode' | Page Mode
+'Scores', 'auto group' | Auto Group Notes
+'Scores', 'find replace' | Find and Replace...
+'Scores', 'global' | Settings...
+'Scores', 'lyrics from clip' | Lyrics from Clipboard
+'Scores', 'move next page' | Move to Next Page
+'Scores', 'move prev page' | Move to Previous Page
+'Scores', 'staff set' | Staff Setup
+'Scores', 'text from clip' | Text from Clipboard
+'Scores', 'toggle inpector' | Score Editor in Lower Zone: Toggle Inspector
+'Scores', 'user symbols' | User Symbols...
+'Set Insert Length', '.' | Toggle Dotted
+'Set Insert Length', '1' | 1/  1
+'Set Insert Length', '128' | 1/128
+'Set Insert Length', '16' | 1/ 16
+'Set Insert Length', '2' | 1/  2
+'Set Insert Length', '32' | 1/ 32
+'Set Insert Length', '4' | 1/  4
+'Set Insert Length', '64' | 1/ 64
+'Set Insert Length', '8' | 1/  8
+'Set Insert Length', 'T' | Toggle Triplet
+'Tool', 'Audio Tempo Definition Tool' | Audio Tempo Definition Tool
+'Tool', 'Color Tool' | Color Tool
+'Tool', 'Combine Selection Tools On/Off' | Combine Selection Tools On/Off
+'Tool', 'Comp Tool' | Comp Tool
+'Tool', 'Curve Tool' | Curve Tool
+'Tool', 'Cut Tool' | Cut Tool
+'Tool', 'Delete Tool' | Erase Tool
+'Tool', 'Display Quantize Tool' | Display Quantize Tool
+'Tool', 'Draw Tool' | Draw Tool
+'Tool', 'Drumstick Tool' | Drumstick Tool
+'Tool', 'Edit Pitch/Warp Tool' | VariAudio Tool
+'Tool', 'Export Range Tool' | Export Range Tool
+'Tool', 'Free Warp Tool' | Free Warp Tool
+'Tool', 'Glue Tool' | Glue Tool
+'Tool', 'Hitpoint Tool' | Hitpoint Tool
+'Tool', 'Insert Note Tool' | Insert Note Tool
+'Tool', 'Layout Tool' | Layout Tool
+'Tool', 'Mute Tool' | Mute Tool
+'Tool', 'Next Tool' | Next Tool
+'Tool', 'Object Selection Tool: Normal Sizing' | Object Selection Tool: Normal Sizing
+'Tool', 'Object Selection Tool: Sizing Applies Time Stretch' | Object Selection Tool: Sizing Applies Time Stretch
+'Tool', 'Object Selection Tool: Sizing Moves Content' | Object Selection Tool: Sizing Moves Content
+'Tool', 'Play Tool' | Play Tool
+'Tool', 'Popup Tools' | Pop-up Toolbox
+'Tool', 'Previous Tool' | Previous Tool
+'Tool', 'Range Tool' | Range Selection Tool
+'Tool', 'Score Zoom Tool' | Score Zoom Tool
+'Tool', 'Scrub Tool' | Scrub Tool
+'Tool', 'Select Tool' | Object Selection Tool
+'Tool', 'Split Tool' | Split Tool
+'Tool', 'TimeWarp Tool' | TimeWarp Tool
+'Tool', 'Tool 1' | Tool 1
+'Tool', 'Tool 10' | Tool 10
+'Tool', 'Tool 2' | Tool 2
+'Tool', 'Tool 3' | Tool 3
+'Tool', 'Tool 4' | Tool 4
+'Tool', 'Tool 5' | Tool 5
+'Tool', 'Tool 6' | Tool 6
+'Tool', 'Tool 7' | Tool 7
+'Tool', 'Tool 8' | Tool 8
+'Tool', 'Tool 9' | Tool 9
+'Tool', 'Trim Tool' | Trim Tool
+'Tool', 'Zoom Tool' | Zoom Tool
+'TrackVersions', 'Assign Common Version ID' | Assign Common Version ID
+'TrackVersions', 'Create Lanes from Versions' | Create Lanes from Versions
+'TrackVersions', 'Create Versions from Lanes' | Create Versions from Lanes
+'TrackVersions', 'Delete Inactive Versions of All Tracks' | Delete Inactive Versions of All Tracks
+'TrackVersions', 'Delete Inactive Versions of Selected Tracks' | Delete Inactive Versions of Selected Tracks
+'TrackVersions', 'Delete Version' | Delete Version
+'TrackVersions', 'Duplicate Version' | Duplicate Version
+'TrackVersions', 'New Version' | New Version
+'TrackVersions', 'Next Version' | Next Version
+'TrackVersions', 'Previous Version' | Previous Version
+'TrackVersions', 'Rename Version' | Rename Version
+'TrackVersions', 'Select Tracks with Same Version ID' | Select Tracks with Same Version ID
+'Transport', 'Activate Return to Start Position' | Return to Start Position on Stop
+'Transport', 'Audio Record Mode' | Audio Record Mode
+'Transport', 'Auto Punch In' | Activate Punch In
+'Transport', 'Auto Punch Out' | Activate Punch Out
+'Transport', 'Cycle' | Cycle
+'Transport', 'Edit Mode' | Use Video Follows Edit Mode
+'Transport', 'Exchange Locator Positions' | Exchange Left & Right Locator Positions
+'Transport', 'Exchange Time Formats' | Exchange Time Formats
+'Transport', 'Fast Forward' | Fast Forward
+'Transport', 'Fast Rewind' | Fast Rewind
+'Transport', 'Forward' | Forward
+'Transport', 'Global Retrospective Record' | Insert from All MIDI Inputs
+'Transport', 'Goto End' | Go to Project End
+'Transport', 'Input Left Locator' | Enter Left Locator Position
+'Transport', 'Input Locator Duration' | Enter Locator Range Duration
+'Transport', 'Input Position' | Enter Project Cursor Position
+'Transport', 'Input Punch In Position' | Enter Punch In Position
+'Transport', 'Input Punch Out Position' | Enter Punch Out Position
+'Transport', 'Input Right Locator' | Enter Right Locator Position
+'Transport', 'Input Tempo' | Enter Tempo
+'Transport', 'Input Time Signature' | Enter Time Signature
+'Transport', 'Jog Left' | Jog Left
+'Transport', 'Jog Right' | Jog Right
+'Transport', 'Locate Next Event' | Locate Next Event
+'Transport', 'Locate Next Hitpoint' | Locate Next Hitpoint
+'Transport', 'Locate Next Marker' | Locate Next Marker
+'Transport', 'Locate Previous Event' | Locate Previous Event
+'Transport', 'Locate Previous Hitpoint' | Locate Previous Hitpoint
+'Transport', 'Locate Previous Marker' | Locate Previous Marker
+'Transport', 'Locate Selection End' | Locate Selection End
+'Transport', 'Locate Selection' | Locate Selection Start
+'Transport', 'Locators to Selection' | Set Locators to Selection Range
+'Transport', 'Lock Record' | Lock Record
+'Transport', 'Loop Selection' | Loop Selection Range
+'Transport', 'MIDI Cycle Record Mode' | MIDI Cycle Record Mode
+'Transport', 'MIDI Record Auto Quantize' | Auto Quantize in Record
+'Transport', 'MIDI Record Mode' | MIDI Record Mode
+'Transport', 'MIDI Retrospective Record: Empty All Buffers' | Empty All Buffers
+'Transport', 'MIDI Retrospective Record: Insert from Track Input as Cycle Recording' | Insert from Track Input as Cycle Recording
+'Transport', 'MIDI Retrospective Record: Insert from Track Input as Linear Recording' | Insert from Track Input as Linear Recording
+'Transport', 'Metronome On' | Activate Metronome
+'Transport', 'Metronome Setup' | Metronome Setup...
+'Transport', 'Nudge +1 Frame' | Nudge +1 Frame
+'Transport', 'Nudge -1 Frame' | Nudge -1 Frame
+'Transport', 'Nudge Cursor +10 Seconds' | Nudge Cursor +10 Seconds
+'Transport', 'Nudge Cursor +20 Seconds' | Nudge Cursor +20 Seconds
+'Transport', 'Nudge Cursor +5 Seconds' | Nudge Cursor +5 Seconds
+'Transport', 'Nudge Cursor -10 Seconds' | Nudge Cursor -10 Seconds
+'Transport', 'Nudge Cursor -20 Seconds' | Nudge Cursor -20 Seconds
+'Transport', 'Nudge Cursor -5 Seconds' | Nudge Cursor -5 Seconds
+'Transport', 'Nudge Cursor Left' | Nudge Cursor Left
+'Transport', 'Nudge Cursor Right' | Nudge Cursor Right
+'Transport', 'Panel' | Transport Panel
+'Transport', 'Play Selection Range' | Play Selection Range
+'Transport', 'Play from Selection End' | Play from Selection End
+'Transport', 'Play from Selection Start' | Play from Selection Start
+'Transport', 'Play until Next Marker' | Play until Next Marker
+'Transport', 'Play until Selection End' | Play until Selection End
+'Transport', 'Play until Selection Start' | Play until Selection Start
+'Transport', 'Post-roll from Selection End' | Post-roll from Selection End
+'Transport', 'Post-roll from Selection Start' | Post-roll from Selection Start
+'Transport', 'Pre-roll to Selection End' | Pre-roll to Selection End
+'Transport', 'Pre-roll to Selection Start' | Pre-roll to Selection Start
+'Transport', 'Precount On' | Use Precount
+'Transport', 'Project Synchronization Setup' | Project Synchronization Setup...
+'Transport', 'Re-Record on/off' | Record: Punch In & Out/Re-Record
+'Transport', 'Recall Cycle Marker 1' | Recall Cycle Marker 1
+'Transport', 'Recall Cycle Marker 2' | Recall Cycle Marker 2
+'Transport', 'Recall Cycle Marker 3' | Recall Cycle Marker 3
+'Transport', 'Recall Cycle Marker 4' | Recall Cycle Marker 4
+'Transport', 'Recall Cycle Marker 5' | Recall Cycle Marker 5
+'Transport', 'Recall Cycle Marker 6' | Recall Cycle Marker 6
+'Transport', 'Recall Cycle Marker 7' | Recall Cycle Marker 7
+'Transport', 'Recall Cycle Marker 8' | Recall Cycle Marker 8
+'Transport', 'Recall Cycle Marker 9' | Recall Cycle Marker 9
+'Transport', 'Recall Cycle Marker X' | Recall Cycle Marker X
+'Transport', 'Record' | Record
+'Transport', 'Restart' | Restart from Last Stop Position
+'Transport', 'Return to Start Position' | Return to Start Position
+'Transport', 'Return to Zero' | Go to Project Start
+'Transport', 'Rewind' | Rewind
+'Transport', 'Set Left Locator' | Set Left Locator to Project Cursor Position
+'Transport', 'Set Marker 1' | Set Marker 1
+'Transport', 'Set Marker 2' | Set Marker 2
+'Transport', 'Set Marker 3' | Set Marker 3
+'Transport', 'Set Marker 4' | Set Marker 4
+'Transport', 'Set Marker 5' | Set Marker 5
+'Transport', 'Set Marker 6' | Set Marker 6
+'Transport', 'Set Marker 7' | Set Marker 7
+'Transport', 'Set Marker 8' | Set Marker 8
+'Transport', 'Set Marker 9' | Set Marker 9
+'Transport', 'Set Punch In Position' | Set Punch In to Project Cursor Position
+'Transport', 'Set Punch Out Position' | Set Punch Out to Project Cursor Position
+'Transport', 'Set Punch Points To Selection' | Set Punch Points to Selection Range
+'Transport', 'Set Right Locator' | Set Right Locator to Project Cursor Position
+'Transport', 'Shuttle Play 1/2x' | Shuttle Play 1/2x
+'Transport', 'Shuttle Play 1/4x' | Shuttle Play 1/4x
+'Transport', 'Shuttle Play 1/8x' | Shuttle Play 1/8x
+'Transport', 'Shuttle Play 1x' | Shuttle Play 1x
+'Transport', 'Shuttle Play 2x' | Shuttle Play 2x
+'Transport', 'Shuttle Play 4x' | Shuttle Play 4x
+'Transport', 'Shuttle Play 8x' | Shuttle Play 8x
+'Transport', 'Shuttle Play Reverse 1/2x' | Shuttle Play Reverse 1/2x
+'Transport', 'Shuttle Play Reverse 1/4x' | Shuttle Play Reverse 1/4x
+'Transport', 'Shuttle Play Reverse 1/8x' | Shuttle Play Reverse 1/8x
+'Transport', 'Shuttle Play Reverse 1x' | Shuttle Play Reverse 1x
+'Transport', 'Shuttle Play Reverse 2x' | Shuttle Play Reverse 2x
+'Transport', 'Shuttle Play Reverse 4x' | Shuttle Play Reverse 4x
+'Transport', 'Shuttle Play Reverse 8x' | Shuttle Play Reverse 8x
+'Transport', 'Start Mode' | Start Mode
+'Transport', 'Start Record at Left Locator' | Record: Start at Cursor/Left Locator
+'Transport', 'Start' | Start
+'Transport', 'StartStop Preview' | StartStop Preview
+'Transport', 'StartStop' | Start/Stop
+'Transport', 'Step Back Bar' | Nudge -1 Bar
+'Transport', 'Step Bar' | Nudge +1 Bar
+'Transport', 'Stop' | Stop
+'Transport', 'Sync Punch To Cycle' | Lock Punch Points to Locators
+'Transport', 'Tempo Track Rehearsal Mode On/Off' | Use Tempo Track
+'Transport', 'To Cycle Marker 1' | To Cycle Marker 1
+'Transport', 'To Cycle Marker 2' | To Cycle Marker 2
+'Transport', 'To Cycle Marker 3' | To Cycle Marker 3
+'Transport', 'To Cycle Marker 4' | To Cycle Marker 4
+'Transport', 'To Cycle Marker 5' | To Cycle Marker 5
+'Transport', 'To Cycle Marker 6' | To Cycle Marker 6
+'Transport', 'To Cycle Marker 7' | To Cycle Marker 7
+'Transport', 'To Cycle Marker 8' | To Cycle Marker 8
+'Transport', 'To Cycle Marker 9' | To Cycle Marker 9
+'Transport', 'To Cycle Marker X' | To Cycle Marker X
+'Transport', 'To Left Locator' | Go to Left Locator Position
+'Transport', 'To Marker 1' | To Marker 1
+'Transport', 'To Marker 2' | To Marker 2
+'Transport', 'To Marker 3' | To Marker 3
+'Transport', 'To Marker 4' | To Marker 4
+'Transport', 'To Marker 5' | To Marker 5
+'Transport', 'To Marker 6' | To Marker 6
+'Transport', 'To Marker 7' | To Marker 7
+'Transport', 'To Marker 8' | To Marker 8
+'Transport', 'To Marker 9' | To Marker 9
+'Transport', 'To Marker X' | To Marker X
+'Transport', 'To Punch In Position' | Go to Punch In Position
+'Transport', 'To Punch Out Position' | Go to Punch Out Position
+'Transport', 'To Right Locator' | Go to Right Locator Position
+'Transport', 'Toggle: Cycle follows when locating to Markers' | Toggle: Cycle follows when locating to Markers
+'Transport', 'Unlock Record' | Unlock Record
+'Transport', 'Use External Sync' | Activate External Sync
+'Transport', 'Use Post-roll' | Use Post-roll
+'Transport', 'Use Pre-/Post-Roll' | Use Pre-/Post-Roll
+'Transport', 'Use Pre-roll' | Use Pre-roll
+'VRPlayerRemote', 'Show Dialog' | GoPro VR Player Remote
+'Video', 'Mute all video tracks' | Mute all video tracks
+'WaveLab Exchange', 'Edit in WaveLab' | Edit in WaveLab
+'Window Zones', 'Show Next Page' | Show Next Page
+'Window Zones', 'Show Next Tab' | Show Next Tab
+'Window Zones', 'Show Previous Page' | Show Previous Page
+'Window Zones', 'Show Previous Tab' | Show Previous Tab
+'Window Zones', 'Show/Hide Channel Left Zone' | Show/Hide Channel
+'Window Zones', 'Show/Hide Editor Visibility' | Show/Hide Editor Visibility
+'Window Zones', 'Show/Hide Extended Left Zone' | Show/Hide Extended Left Zone
+'Window Zones', 'Show/Hide Infoview' | Show/Hide Info Line
+'Window Zones', 'Show/Hide Left Zone' | Show/Hide Left Zone
+'Window Zones', 'Show/Hide Lower Zone' | Show/Hide Lower Zone
+'Window Zones', 'Show/Hide Overview' | Show/Hide Overview
+'Window Zones', 'Show/Hide Regions' | Show/Hide Regions
+'Window Zones', 'Show/Hide Right Zone' | Show/Hide Right Zone
+'Window Zones', 'Show/Hide Status Line' | Show/Hide Status Line
+'Window Zones', 'Show/Hide Transport Zone' | Show/Hide Transport Zone
+'Windows', 'Close All Plug-in Windows' | Close All Plug-in Windows
+'Windows', 'Close All' | Close All
+'Windows', 'Maximize' | Zoom
+'Windows', 'Minimize All' | Minimize All
+'Windows', 'Minimize' | Minimize
+'Windows', 'Restore All' | Restore All
+'Windows', 'Select Next Plug-in Window' | Select Next Plug-in Window
+'Windows', 'Show/Hide Plug-ins' | Show Plug-in Windows
+'Workspaces', 'New' | New
+'Workspaces', 'No Workspace' | No Workspace
+'Workspaces', 'Organize' | Organize
+'Workspaces', 'Update Workspace' | Update Workspace
+'Workspaces', 'Workspace 1' | Workspace 1
+'Workspaces', 'Workspace 2' | Workspace 2
+'Workspaces', 'Workspace 3' | Workspace 3
+'Workspaces', 'Workspace 4' | Workspace 4
+'Workspaces', 'Workspace 5' | Workspace 5
+'Workspaces', 'Workspace 6' | Workspace 6
+'Workspaces', 'Workspace 7' | Workspace 7
+'Workspaces', 'Workspace 8' | Workspace 8
+'Workspaces', 'Workspace 9' | Workspace 9
+'Workspaces', 'Workspace X' | Workspace X
+'Zoom', 'Redo Zoom' | Redo Zoom
+'Zoom', 'Undo Zoom' | Undo Zoom
+'Zoom', 'Zoom 4 Tracks' | Zoom 4 Tracks
+'Zoom', 'Zoom 8 Tracks' | Zoom 8 Tracks
+'Zoom', 'Zoom Cycle Marker 1' | Zoom Cycle Marker 1
+'Zoom', 'Zoom Cycle Marker 2' | Zoom Cycle Marker 2
+'Zoom', 'Zoom Cycle Marker 3' | Zoom Cycle Marker 3
+'Zoom', 'Zoom Cycle Marker 4' | Zoom Cycle Marker 4
+'Zoom', 'Zoom Cycle Marker 5' | Zoom Cycle Marker 5
+'Zoom', 'Zoom Cycle Marker 6' | Zoom Cycle Marker 6
+'Zoom', 'Zoom Cycle Marker 7' | Zoom Cycle Marker 7
+'Zoom', 'Zoom Cycle Marker 8' | Zoom Cycle Marker 8
+'Zoom', 'Zoom Cycle Marker 9' | Zoom Cycle Marker 9
+'Zoom', 'Zoom Full' | Zoom Full
+'Zoom', 'Zoom In On Waveform Vertically' | Zoom In On Waveform Vertically
+'Zoom', 'Zoom In Tracks' | Zoom In Tracks
+'Zoom', 'Zoom In Vertically' | Zoom In Vertically
+'Zoom', 'Zoom In' | Zoom In
+'Zoom', 'Zoom MEM' | Zoom MEM
+'Zoom', 'Zoom N Tracks' | Zoom N Tracks
+'Zoom', 'Zoom Out Of Waveform Vertically' | Zoom Out Of Waveform Vertically
+'Zoom', 'Zoom Out Tracks' | Zoom Out Tracks
+'Zoom', 'Zoom Out Vertically' | Zoom Out Vertically
+'Zoom', 'Zoom Out' | Zoom Out
+'Zoom', 'Zoom Preset 1' | Zoom Preset 1
+'Zoom', 'Zoom Preset 2' | Zoom Preset 2
+'Zoom', 'Zoom Preset 3' | Zoom Preset 3
+'Zoom', 'Zoom Preset 4' | Zoom Preset 4
+'Zoom', 'Zoom Preset 5' | Zoom Preset 5
+'Zoom', 'Zoom Tracks 1 Row' | Zoom Tracks 1 Row
+'Zoom', 'Zoom Tracks 2 Rows' | Zoom Tracks 2 Rows
+'Zoom', 'Zoom Tracks 3 Rows' | Zoom Tracks 3 Rows
+'Zoom', 'Zoom Tracks 4 Rows' | Zoom Tracks 4 Rows
+'Zoom', 'Zoom Tracks Exclusive' | Zoom Selected Tracks
+'Zoom', 'Zoom Tracks Full' | Zoom Tracks Full
+'Zoom', 'Zoom Tracks Minimal' | Zoom Tracks Minimal
+'Zoom', 'Zoom Tracks N Rows' | Zoom Tracks N Rows
+'Zoom', 'Zoom ZAP' | Zoom ZAP
+'Zoom', 'Zoom to Event' | Zoom to Event
+'Zoom', 'Zoom to Locators' | Zoom to Locators
+'Zoom', 'Zoom to Selection Horizontally' | Zoom to Selection (Horiz.)
+'Zoom', 'Zoom to Selection' | Zoom to Selection

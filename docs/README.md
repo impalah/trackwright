@@ -1,24 +1,26 @@
-# Documentación de Trackwright
+# Trackwright documentation
 
-- **Manuales**
-  - [Instalación](manual/01-instalacion.md)
-  - [Operación y conexión con Claude Code o Claude Desktop](manual/02-operacion.md)
-  - [Configuración](manual/03-configuracion.md)
-  - [Referencia de herramientas](manual/04-herramientas.md)
-  - [Resolución de problemas](manual/05-problemas.md)
-- **Tutoriales**
-  1. [Primera conexión](tutoriales/01-primera-conexion.md)
-  2. [Inspeccionar una pista](tutoriales/02-inspeccionar-pista.md)
-  3. [Primer cambio seguro](tutoriales/03-primer-cambio-seguro.md)
-  4. [Insertar un EQ](tutoriales/04-insertar-eq.md)
-  5. [Marcadores y cursor](tutoriales/05-marcadores-cursor.md)
-  6. [Pista con diálogo](tutoriales/06-pista-con-dialogo.md)
-  7. [Grabar automatización](tutoriales/07-automatizacion.md)
-  8. [Editar un podcast por segundos](tutoriales/08-podcast.md)
-- **Proyecto**
-  - [Arquitectura](arquitectura.md)
-  - [Desarrollo](desarrollo.md)
-  - [Épicas e issues](issues/README.md)
-  - [Investigación de funcionalidades ampliadas](investigacion.md)
-  - [Registro de verificación](verificacion.md)
-  - [Cambios](../CHANGELOG.md)
+**English** · [Español](README.es.md)
+
+- **Manuals**
+  - [Installation](manual/01-installation.md)
+  - [Operation and connecting Claude Code or Claude Desktop](manual/02-operation.md)
+  - [Configuration](manual/03-configuration.md)
+  - [Tool reference](manual/04-tools.md)
+  - [Troubleshooting](manual/05-troubleshooting.md)
+- **Tutorials**
+  1. [First connection](tutorials/01-first-connection.md)
+  2. [Inspect a track](tutorials/02-inspect-track.md)
+  3. [First safe change](tutorials/03-first-safe-change.md)
+  4. [Insert an EQ](tutorials/04-insert-eq.md)
+  5. [Markers and cursor](tutorials/05-markers-cursor.md)
+  6. [Track with a dialog](tutorials/06-track-with-dialog.md)
+  7. [Record automation](tutorials/07-automation.md)
+  8. [Edit a podcast by seconds](tutorials/08-podcast.md)
+- **Project**
+  - [Architecture](architecture.md)
+  - [Development](development.md)
+  - [Epics and issues](issues/README.md)
+  - [Research on extended features](research.md)
+  - [Verification log](verification.md)
+  - [Changelog](../CHANGELOG.md)

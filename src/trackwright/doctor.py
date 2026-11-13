@@ -55,7 +55,7 @@ def run_doctor(settings: Settings) -> JsonObject:
                 False,
                 exc.to_dict(),
                 "open Cubase; in the MIDI Remote tab of the lower zone the 'Trackwright - Bridge' surface "
-                "must be active (see docs/manual/01-instalacion.md, step 6)",
+                "must be active (see docs/manual/01-installation.md, step 6)",
             )
     check(
         "writes",

@@ -1,37 +1,39 @@
-# Experimento TW-1206 — grabar automatización de volumen
+# Experiment TW-1206 — recording volume automation
 
-Issue: [TW-1206](../../docs/issues/E12-funcionalidades-ampliadas.md). Resultados: [docs/verificacion.md](../../docs/verificacion.md). Los datos de cada ejecución se guardan en `results.json`.
+**English** · [Español](README.es.md)
 
-| Variante | Mecanismo | Estado |
+Issue: [TW-1206](../../docs/issues/E12-extended-features.md). Results: [docs/verification.md](../../docs/verification.md). The data from each run is saved in `results.json`.
+
+| Variant | Mechanism | Status |
 |---|---|---|
-| A | Escribir el parámetro de volumen por DirectAccess con la escritura activada | **No graba** (2026-11-13) |
-| B1 | Cambiar el modo a Auto-Latch o Cross-Over por comando | **No disponible en Elements** (`canPerform=false`) |
-| B2 | Fader de la superficie enlazado al volumen de la pista seleccionada, con su estado de toque controlado por el script | **Graba y se reproduce** (2026-11-13) |
-| B3 (TW-1207) | Lo mismo, generalizado: 45 controles (volumen, panorama, envíos, EQ, pre-filtro, Quick Controls, parámetros de los slots de inserción 1 y 2). Reproducción con `Transport / Start` y `Stop` desde Trackwright | **7 de 8 graban** (el Quick Control sin asignar, no). Desde el script 1.4.0 los controles forman parte del script publicado |
+| A | Write the volume parameter through DirectAccess with write enabled | **Does not record** (2026-11-13) |
+| B1 | Change the mode to Auto-Latch or Cross-Over by command | **Not available in Elements** (`canPerform=false`) |
+| B2 | Surface fader bound to the volume of the selected track, with its touch state controlled by the script | **Records and plays back** (2026-11-13) |
+| B3 (TW-1207) | The same, generalized: 45 controls (volume, pan, sends, EQ, pre-filter, Quick Controls, parameters of insert slots 1 and 2). Playback with `Transport / Start` and `Stop` from Trackwright | **7 out of 8 record** (the unassigned Quick Control does not). Since script 1.4.0 the controls are part of the published script |
 
-## Variante B2
+## Variant B2
 
-> El generador `build.py` se retiró con el script 1.4.0, que trae los controles activos. Estos comandos quedan como registro.
+> The `build.py` generator was retired with script 1.4.0, which ships with the controls enabled. These commands remain as a record.
 
 ```sh
-uv run trackwright script install --apply                  # script 1.4.0 o posterior; reiniciar Cubase
-uv run python experiments/tw1206/automation.py prepare     # estado inicial, escritura activada, cursor en el compás 1
-uv run python experiments/tw1206/automation.py record-b2   # el usuario pulsa Play y, a los ~6 s, Stop
-uv run python experiments/tw1206/automation.py readback    # el usuario pulsa Play y Stop otra vez
+uv run trackwright script install --apply                  # script 1.4.0 or later; restart Cubase
+uv run python experiments/tw1206/automation.py prepare     # initial state, write enabled, cursor at bar 1
+uv run python experiments/tw1206/automation.py record-b2   # the user presses Play and, after ~6 s, Stop
+uv run python experiments/tw1206/automation.py readback    # the user presses Play and Stop again
 uv run python experiments/tw1206/automation.py cleanup
-uv run trackwright script install --apply                  # vuelta al script publicado, y reiniciar Cubase
+uv run trackwright script install --apply                  # back to the published script, and restart Cubase
 ```
 
-## Variante B3 (automática)
+## Variant B3 (automatic)
 
 ```sh
-uv run trackwright script install --apply    # script 1.4.0 o posterior (los controles ya vienen activos); reiniciar Cubase
-uv run python experiments/tw1206/controls.py list    # controles, valor actual y parámetro enlazado
-uv run python experiments/tw1206/controls.py run     # graba, comprueba y restaura cada control (sin pulsar nada)
+uv run trackwright script install --apply    # script 1.4.0 or later (the controls already come enabled); restart Cubase
+uv run python experiments/tw1206/controls.py list    # controls, current value and bound parameter
+uv run python experiments/tw1206/controls.py run     # records, checks and restores each control (without pressing anything)
 ```
 
-**Qué observar en la variante B2:**
-- en la superficie MIDI Remote aparece un fader a la derecha del panel;
-- durante la grabación, el fader y el volumen de la pista se mueven;
-- después, ¿aparece una curva en el carril de automatización?;
-- en la lectura, ¿el volumen repite la rampa sin que Trackwright lo toque?
+**What to observe in variant B2:**
+- on the MIDI Remote surface a fader appears to the right of the panel;
+- during recording, the fader and the track volume move;
+- afterwards, does a curve appear in the automation lane?;
+- during read, does the volume repeat the ramp without Trackwright touching it?

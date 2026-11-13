@@ -1,6 +1,6 @@
 """TW-1207: the automation controls of the released script (emulated surface).
 
-Recording automation through them was verified in Cubase (docs/verificacion.md, 2026-11-13); these
+Recording automation through them was verified in Cubase (docs/verification.md, 2026-11-13); these
 tests check every binding, the touch wiring and the auto.control / auto.list operations.
 """
 

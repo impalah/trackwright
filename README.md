@@ -1,130 +1,132 @@
 # Trackwright
 
-**Trackwright** es un servidor [MCP](https://modelcontextprotocol.io) que permite a Claude **inspeccionar y controlar Cubase**: pistas, mezcla, plugins y sus parámetros, transporte, marcadores, automatización y edición por rangos de tiempo, pensada para podcasts. Funciona con un script MIDI Remote que se ejecuta dentro de Cubase; no necesita controladores físicos ni puertos IAC.
+**English** · Español: `README.es.md` in the source repository
+
+**Trackwright** is an [MCP](https://modelcontextprotocol.io) server that lets Claude **inspect and control Cubase**: tracks, mixing, plugins and their parameters, transport, markers, automation and time-range editing designed for podcasts. It works through a MIDI Remote script that runs inside Cubase; it needs no hardware controllers or IAC ports.
 
 | | |
 |---|---|
-| Paquete | `trackwright` |
-| Ejecutable | `trackwright` |
-| Servidor MCP | `trackwright` (stdio) |
-| Plataforma | macOS. Verificado en macOS 27.2 (Apple Silicon) |
-| Cubase | 15.0.20 o posterior (API MIDI Remote 1.3). Verificado en Cubase Elements 15.0.30 |
-| Licencia | AGPL-3.0-or-later |
+| Package | `trackwright` |
+| Executable | `trackwright` |
+| MCP server | `trackwright` (stdio) |
+| Platform | macOS. Verified on macOS 27.2 (Apple Silicon) |
+| Cubase | 15.0.20 or later (MIDI Remote API 1.3). Verified on Cubase Elements 15.0.30 |
+| License | AGPL-3.0-or-later |
 
-> Trackwright es un proyecto independiente. No está afiliado a Steinberg ni respaldado por ella; Cubase es una marca de Steinberg Media Technologies GmbH.
+> Trackwright is an independent project. It is not affiliated with or endorsed by Steinberg; Cubase is a trademark of Steinberg Media Technologies GmbH.
 
-## Requisitos
+## Requirements
 
-- **[uv](https://docs.astral.sh/uv/)** 0.13 o posterior (`brew install uv`). No hace falta instalar Python: uv descarga el adecuado. No hay nada que compilar.
-- **Cubase** 15.0.20 o posterior.
-- Un cliente MCP: **Claude Code** o Claude Desktop.
+- **[uv](https://docs.astral.sh/uv/)** 0.13 or later (`brew install uv`). You don't need to install Python: uv downloads the right one. There is nothing to compile.
+- **Cubase** 15.0.20 or later.
+- An MCP client: **Claude Code** or Claude Desktop.
 
-## Instalación
+## Installation
 
 ```sh
 uv tool install trackwright
 trackwright setup
 ```
 
-Si el terminal no encuentra `trackwright`, ejecuta `uv tool update-shell` y abre otro terminal.
+If the terminal can't find `trackwright`, run `uv tool update-shell` and open a new terminal.
 
-`trackwright setup` es una instalación guiada. En cada paso **muestra lo que va a hacer y pregunta** antes de aplicarlo (la respuesta por defecto es «no»):
+`trackwright setup` is a guided installation. At each step it **shows what it is going to do and asks** before applying it (the default answer is "no"):
 
-1. copia el script `Trackwright_Bridge.js` en la carpeta MIDI Remote de Cubase (`~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/bridge/`);
-2. crea `~/.config/trackwright/config.toml` si no existe, preguntando si se permiten las escrituras y el guardado del proyecto (por defecto, no);
-3. registra el servidor en Claude Code (`claude mcp add --scope user trackwright …`) o, si no encuentra `claude`, te muestra el comando;
-4. comprueba todo con `trackwright doctor`.
+1. copies the `Trackwright_Bridge.js` script into the Cubase MIDI Remote folder (`~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/bridge/`);
+2. creates `~/.config/trackwright/config.toml` if it doesn't exist, asking whether writes and project saving are allowed (default: no);
+3. registers the server in Claude Code (`claude mcp add --scope user trackwright …`) or, if it can't find `claude`, shows you the command;
+4. checks everything with `trackwright doctor`.
 
-Nunca usa `sudo` ni cambia ajustes de Cubase o del sistema. Para no preguntar en un paso: `--yes script`, `--yes config` o `--yes claude`.
+It never uses `sudo` and never changes Cubase or system settings. To skip the question for a step: `--yes script`, `--yes config` or `--yes claude`.
 
-### Activar el script en Cubase
+### Activate the script in Cubase
 
-1. **Reinicia Cubase** (no recarga los scripts por sí mismo) y abre un proyecto. Para las primeras pruebas, mejor uno desechable.
-2. En la pestaña **MIDI Remote** de la zona inferior debe aparecer la superficie **Trackwright – Bridge**. Los puertos virtuales los crea Trackwright al arrancar, y el servidor MCP lo arranca Claude. Si no aparece, pulsa **+ Añadir superficie de controlador MIDI** y elige `Trackwright` / `Bridge`, con entrada `Trackwright To Cubase` y salida `Trackwright From Cubase`.
-3. **Recomendado:** en *Estudio > Configuración de estudio > Configuración de puertos MIDI*, desmarca **«En 'All MIDI Inputs'»** para `Trackwright To Cubase`.
+1. **Restart Cubase** (it doesn't reload scripts on its own) and open a project. For the first tests, a throwaway one is best.
+2. The **Trackwright – Bridge** surface should appear in the **MIDI Remote** tab of the lower zone. Trackwright creates the virtual ports when it starts, and Claude starts the MCP server. If the surface doesn't appear, click **+ Add MIDI Controller Surface** and choose `Trackwright` / `Bridge`, with input `Trackwright To Cubase` and output `Trackwright From Cubase`.
+3. **Recommended:** in *Studio > Studio Setup > MIDI Port Setup*, uncheck **"In 'All MIDI Inputs'"** for `Trackwright To Cubase`.
 
-### Comprobar
+### Check
 
 ```sh
-trackwright doctor   # revisa cada eslabón y dice qué hacer si algo falla
+trackwright doctor   # checks every link and tells you what to do if something fails
 ```
 
-Después, en Claude Code: «Comprueba el estado de Cubase con Trackwright».
+Then, in Claude Code: "Check the Cubase status with Trackwright".
 
-### Probar sin Cubase
+### Try it without Cubase
 
-Trackwright incluye un Cubase simulado. Para probarlo desde Claude Code sin instalar nada más:
+Trackwright includes a simulated Cubase. To try it from Claude Code without installing anything else:
 
 ```sh
 claude mcp add trackwright-sim -- uvx trackwright serve --simulate
 ```
 
-## Actualizar y desinstalar
+## Update and uninstall
 
-- **Actualizar:** `uv tool upgrade trackwright` y después `trackwright setup`, que actualiza el script si cambió. Reinicia Cubase.
-- **Desinstalar:**
+- **Update:** `uv tool upgrade trackwright` and then `trackwright setup`, which updates the script if it changed. Restart Cubase.
+- **Uninstall:**
   1. `claude mcp remove trackwright -s user`;
   2. `pkill -f "trackwright bridge"`;
   3. `uv tool uninstall trackwright`;
-  4. borra `~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/` y `~/.config/trackwright/`, y quita la superficie en la pestaña MIDI Remote de Cubase.
+  4. delete `~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/` and `~/.config/trackwright/`, and remove the surface in the Cubase MIDI Remote tab.
 
-## Qué puede hacer
+## What it can do
 
-32 herramientas, todas con salida estructurada:
+32 tools, all with structured output:
 
-- **Lectura:** estado, pistas del mezclador, canal seleccionado, inserts, catálogo de plugins, parámetros, transporte y cambios recientes.
-- **Escritura**, siempre con ensayo previo (`dry_run`) y verificación por relectura: parámetros (en valor normalizado o en unidades reales), inserción de plugins, volumen, mute, solo, armado, nombre de pista y tempo.
-- **Navegación:** seleccionar pistas y mover el cursor y los localizadores.
-- **Automatización:** graba curvas de volumen, panorama, envíos, EQ del canal, pre-filtro y parámetros de plugins, reproduciendo el proyecto, con valores en unidades reales (dB, Hz) que convierte Cubase. Verificado en Cubase Elements.
-- **Edición de podcasts:** borrar, cortar o insertar silencio en un rango en segundos, en todas las pistas o en una, con verificación del resultado.
-- **Ajustes del proyecto:** leer compás, ciclo, metrónomo, precuenta, punch…; cambiar ciclo, metrónomo, precuenta, punch, pre-roll y post-roll y nivel del clic.
-- **Presets de plugins:** siguiente o anterior, verificados por el cambio de parámetros. El nombre no está disponible en la API.
-- **Guardar el proyecto:** solo a petición, con permiso propio (`[writes] save`), ensayo y verificación por la fecha del archivo.
-- **Importar audio:** en la pista y la posición indicadas, con el selector de Cubase, y verificación por los bordes del evento nuevo.
-- **Exportar la mezcla:** de un rango o del proyecto completo, con el diálogo de Cubase, y confirmación del archivo creado.
-- **Comandos de Cubase:** marcadores, borrado de pistas, división en los localizadores, creación de pistas con ayuda del usuario y una lista de comandos permitidos. Cada comando indica cómo se comporta: si actúa directamente, si abre un diálogo o si pide confirmación.
+- **Reading:** status, mixer tracks, selected channel, inserts, plugin catalog, parameters, transport and recent changes.
+- **Writing**, always with a dry run (`dry_run`) and verification by reading back: parameters (as normalized values or in real units), plugin insertion, volume, mute, solo, record arm, track name and tempo.
+- **Navigation:** select tracks and move the cursor and the locators.
+- **Automation:** records volume, pan, send, channel EQ, pre-filter and plugin parameter curves by playing the project, with values in real units (dB, Hz) converted by Cubase. Verified on Cubase Elements.
+- **Podcast editing:** delete, cut or insert silence over a range in seconds, on all tracks or on one, with verification of the result.
+- **Project settings:** read time signature, cycle, metronome, count-in, punch…; change cycle, metronome, count-in, punch, pre-roll and post-roll, and click level.
+- **Plugin presets:** next or previous, verified by the change in parameters. The preset name is not available through the API.
+- **Save the project:** only on request, with its own permission (`[writes] save`), dry run and verification by the file's timestamp.
+- **Import audio:** on the given track and position, with the Cubase file picker, and verification by the edges of the new event.
+- **Export the mix:** of a range or of the whole project, with the Cubase dialog, and confirmation of the created file.
+- **Cubase commands:** markers, track deletion, splitting at the locators, track creation with the user's help, and a list of allowed commands. Each command states how it behaves: whether it acts directly, opens a dialog or asks for confirmation.
 
-Por defecto **solo lee**. Las escrituras se habilitan en la configuración y se pueden limitar a pistas concretas.
+By default it **only reads**. Writes are enabled in the configuration and can be limited to specific tracks.
 
-## Seguridad
+## Security
 
-- **Solo lectura por defecto.** Las escrituras se habilitan en `~/.config/trackwright/config.toml` (`[writes] enabled = true`) y se pueden limitar a pistas concretas (`allowed_tracks`). Guardar el proyecto tiene su propio permiso (`[writes] save`).
-- Cada escritura admite un **ensayo** (`dry_run`) y se **verifica releyendo** el estado. Una escritura cuyo resultado es incierto no se reintenta.
-- **No abre puertos de red:** el servidor habla con Claude por stdio y con el puente por un socket Unix privado.
-- No cierra Cubase, no graba audio y no guarda nada si no se le pide.
+- **Read-only by default.** Writes are enabled in `~/.config/trackwright/config.toml` (`[writes] enabled = true`) and can be limited to specific tracks (`allowed_tracks`). Saving the project has its own permission (`[writes] save`).
+- Every write supports a **dry run** (`dry_run`) and is **verified by reading back** the state. A write whose result is uncertain is not retried.
+- **It opens no network ports:** the server talks to Claude over stdio and to the bridge over a private Unix socket.
+- It doesn't close Cubase, doesn't record audio and doesn't save anything unless asked.
 
-## Configuración
+## Configuration
 
 ```toml
 # ~/.config/trackwright/config.toml
 [writes]
-enabled = true                   # permitir cambios en el proyecto abierto
-save = false                     # permitir guardar el proyecto a petición
-# allowed_tracks = ["Voz"]       # limitar las escrituras a estas pistas
+enabled = true                   # allow changes to the open project
+save = false                     # allow saving the project on request
+# allowed_tracks = ["Voice"]     # limit writes to these tracks
 
 [cubase]
-app = "Cubase 15"                # nombre de la aplicación para cubase_launch
+app = "Cubase 15"                # application name for cubase_launch
 ```
 
-`trackwright config` muestra la configuración efectiva.
+`trackwright config` shows the effective configuration.
 
-## Limitaciones conocidas
+## Known limitations
 
-- **No es posible por la API** cambiar el enrutado (entradas, salidas o envíos), leer el contenido de las pistas (eventos, audio o automatización) ni completar diálogos de Cubase.
-- **Solo se ven** las pistas que tienen canal de mezclador.
-- Importar audio, exportar la mezcla y cambiar de preset usan diálogos o ventanas de Cubase: Trackwright los abre y prepara, y tú completas el diálogo.
-- Por ahora, **solo macOS** y solo Cubase.
+- **Not possible through the API:** changing routing (inputs, outputs or sends), reading track contents (events, audio or automation) or completing Cubase dialogs.
+- **Only tracks with a mixer channel are visible.**
+- Importing audio, exporting the mix and changing presets use Cubase dialogs or windows: Trackwright opens and prepares them, and you complete the dialog.
+- For now, **macOS only** and Cubase only.
 
-## Estado
+## Status
 
-Versión alfa. Todas las herramientas se han ejecutado contra Cubase Elements 15.0.30 en macOS 27.2, con confirmación visual donde la API no puede observar el resultado. Además, tiene tests unitarios, de contrato MCP, del script con Node.js y de extremo a extremo, con una cobertura del 98 %.
+Alpha version. Every tool has been run against Cubase Elements 15.0.30 on macOS 27.2, with visual confirmation where the API cannot observe the result. It also has unit tests, MCP contract tests, script tests with Node.js and end-to-end tests, with 98 % coverage.
 
-## Documentación
+## Documentation
 
-Manuales y tutoriales, en español, en la carpeta `docs/` del código fuente (índice en `docs/README.md`).
+Manuals and tutorials, in English with Spanish translations in `*.es.md` files, are in the `docs/` folder of the source code (index in `docs/README.md`; Spanish in `docs/README.es.md`).
 
-## Licencia
+## License
 
 Copyright (C) 2026 impalah.
 
-Este programa es software libre: puedes redistribuirlo o modificarlo según los términos de la **GNU Affero General Public License** publicada por la Free Software Foundation, versión 3 o, a tu elección, cualquier versión posterior (`AGPL-3.0-or-later`). Se distribuye sin ninguna garantía. Consulta el archivo `LICENSE`.
+This program is free software: you can redistribute it and/or modify it under the terms of the **GNU Affero General Public License** as published by the Free Software Foundation, either version 3 or, at your option, any later version (`AGPL-3.0-or-later`). It is distributed without any warranty. See the `LICENSE` file.

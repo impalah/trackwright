@@ -1,70 +1,72 @@
-# Experimento TW-1209: propiedades del proyecto
+# Experiment TW-1209: project properties
 
-**Fecha:** 2026-11-13.
-**Entorno:** Cubase Elements 15.0.30, script 1.4.0 y proyecto de pruebas.
-**Alcance:** todo en solo lectura, salvo mover el cursor en el paso 2, que luego se restauró. No hizo falta instalar un script de experimento.
+**English** · [Español](README.es.md)
 
-## 1. Carpeta del proyecto con `lsof` (con permiso del usuario)
+**Date:** 2026-11-13.
+**Environment:** Cubase Elements 15.0.30, script 1.4.0 and test project.
+**Scope:** everything read-only, except moving the cursor in step 2, which was restored afterwards. There was no need to install an experiment script.
 
-- **Cubase no mantiene abierto el `.cpr`** (0 coincidencias): lo lee al abrir y lo cierra.
-- **Sí quedan abiertos los archivos de audio** del proyecto, en `<carpeta del proyecto>/Audio/`. De ahí sale la carpeta: `/Volumes/Data/Produccion/Cubase/X0001.test`.
-- **Límites:**
-  - no da el nombre exacto del `.cpr`;
-  - en un proyecto sin audio no se ve nada;
-  - con varios proyectos abiertos aparecerían varias carpetas.
-- No se listó el contenido de la carpeta.
+## 1. Project folder with `lsof` (with the user's permission)
 
-## 2. Compás deducido normalizando posiciones (cursor movido y restaurado)
+- **Cubase does not keep the `.cpr` open** (0 matches): it reads it on opening and closes it.
+- **The project's audio files do stay open**, in `<project folder>/Audio/`. The folder comes from there: `/Volumes/Data/Produccion/Cubase/X0001.test`.
+- **Limits:**
+  - it does not give the exact name of the `.cpr`;
+  - in a project without audio nothing is seen;
+  - with several projects open, several folders would appear.
+- The contents of the folder were not listed.
 
-| Posición pedida | Cubase la deja en | Conclusión |
+## 2. Time signature deduced by normalizing positions (cursor moved and restored)
+
+| Requested position | Cubase leaves it at | Conclusion |
 |---|---|---|
-| `1. 5. 1. 0` | `2. 1. 1. 0` | 4 tiempos por compás |
-| `1. 4. 1. 0` | `1. 4. 1. 0` | El tiempo 4 existe |
-| `1. 1. 5. 0` | `1. 2. 1. 0` | 4 semicorcheas por tiempo: el tiempo es una negra, denominador 4 |
-| `1. 7. 1. 0` | `2. 3. 1. 0` | Coherente con 4/4 |
-| `1. 1. 1. 300` | `1. 1. 3. 60` | 120 ticks por semicorchea |
-| `1. 1. 1. 500` | `1. 2. 1. 20` | Ídem |
+| `1. 5. 1. 0` | `2. 1. 1. 0` | 4 beats per bar |
+| `1. 4. 1. 0` | `1. 4. 1. 0` | Beat 4 exists |
+| `1. 1. 5. 0` | `1. 2. 1. 0` | 4 sixteenths per beat: the beat is a quarter note, denominator 4 |
+| `1. 7. 1. 0` | `2. 3. 1. 0` | Consistent with 4/4 |
+| `1. 1. 1. 300` | `1. 1. 3. 60` | 120 ticks per sixteenth |
+| `1. 1. 1. 500` | `1. 2. 1. 20` | Same |
 
-Funciona, pero lo hace innecesario el paso 3.
+It works, but step 3 makes it unnecessary.
 
-## 3. Objetos DirectAccess fuera del mezclador
+## 3. DirectAccess objects outside the mixer
 
-`da.object` acepta cualquier ID. Los hijos de «Device Root» (ID 1) incluyen objetos de estudio y de proyecto, **leídos sin escribir nada**.
+`da.object` accepts any ID. The children of «Device Root» (ID 1) include studio and project objects, **read without writing anything**.
 
-### «Transporte» (`type: Transport`, ID 18 en esta sesión; 101 parámetros)
+### «Transporte» (*Transport*) (`type: Transport`, ID 18 in this session; 101 parameters)
 
-| Tag | Título | Valor leído |
+| Tag | Title | Value read |
 |---|---|---|
 | 4027 | `signature` | **«4/4»** |
-| 4022 | `cycle` | Desact. |
-| 4099 | `metronomeOn` | Desact. |
-| 4100 | `precountOn` | Desact. |
-| 4020 / 4021 | `punchIn` / `punchOut` | Desact. |
+| 4022 | `cycle` | Desact. (*Off*) |
+| 4099 | `metronomeOn` | Desact. (*Off*) |
+| 4100 | `precountOn` | Desact. (*Off*) |
+| 4020 / 4021 | `punchIn` / `punchOut` | Desact. (*Off*) |
 | 4028 / 4029 | `punchInTime` / `punchOutTime` | 2. 1. 1. 0 / 4. 1. 1. 0 |
 | 4030 / 4031 / 4051 | `cycleLeftTime` / `cycleRightTime` / `cycleDuration` | 2. 1. 1. 0 / 4. 1. 1. 0 / 2. 0. 0. 0 |
-| 4032 / 4033, 4037 / 4038 | `preRoll` / `postRoll`, `usePreRoll` / `usePostRoll` | 0 / Desact. |
-| 4023 / 4101 | `time` / `time2` | 1. 1. 1. 0 / 0:00:00.000 (**la segunda pantalla sí da segundos aquí**) |
-| 4025 / 4102 | `timeFormat` / `timeFormat2` | Compases+Tiempos / Segundos |
-| 4129, 4121, 4106, 4107, 4108 | Modos de grabación | Punch in/out, Mantener historial, Nuevas partes, Mix, Iniciar en cursor |
-| 4145 / 4150 | `startPlayModes` / `returnOnStop` | Inicio desde posición / Desact. |
-| 4015 / 4016 / 4019 | `start` / `stop` / `record` | Estado del transporte (stop = Activ.) |
+| 4032 / 4033, 4037 / 4038 | `preRoll` / `postRoll`, `usePreRoll` / `usePostRoll` | 0 / Desact. (*Off*) |
+| 4023 / 4101 | `time` / `time2` | 1. 1. 1. 0 / 0:00:00.000 (**the second display does give seconds here**) |
+| 4025 / 4102 | `timeFormat` / `timeFormat2` | Compases+Tiempos / Segundos (*Bars+Beats* / *Seconds*) |
+| 4129, 4121, 4106, 4107, 4108 | Recording modes | Punch in/out, Mantener historial, Nuevas partes, Mix, Iniciar en cursor (*Punch in/out, Keep History, New Parts, Mix, Start at Cursor*) |
+| 4145 / 4150 | `startPlayModes` / `returnOnStop` | Inicio desde posición / Desact. (*Start from position* / *Off*) |
+| 4015 / 4016 / 4019 | `start` / `stop` / `record` | Transport state (stop = Activ. (*On*)) |
 | 4098 | `message` | OFFLINE |
 
-### Otros objetos
+### Other objects
 
-- **«Metronome»** (`type: Metronome`): `clickLevel` 127, `tickInRecord` Desact. y `tickInPlayback` Desact. Este último es el «clic durante la reproducción».
-- **«Sistema de audio»:** su único hijo es la interfaz de audio, sin parámetros. **No se toca** (regla de no controlar interfaces de audio).
-- **Sin rastro en ningún objeto** (IDs 0–699) de la frecuencia de muestreo, la resolución, el frame rate, la longitud del proyecto o su nombre.
+- **«Metronome»** (`type: Metronome`): `clickLevel` 127, `tickInRecord` Desact. (*Off*) and `tickInPlayback` Desact. (*Off*). The latter is the “click during playback”.
+- **«Sistema de audio»** (*Audio System*): its only child is the audio interface, with no parameters. **It is not touched** (rule of not controlling audio interfaces).
+- **No trace in any object** (IDs 0–699) of the sample rate, the resolution, the frame rate, the project length or its name.
 
-## 4. Verificación con 3/4 (cambiado por el usuario en la barra de transporte)
+## 4. Verification with 3/4 (changed by the user in the transport bar)
 
-- **`signature`** (tag 4027) = **«3/4»**. El valor de proceso es 1966,12 (con 4/4 era 2621,48): una codificación interna, así que se usa el texto mostrado.
-- **Normalización del cursor:** `1. 4. 1. 0` → `2. 1. 1. 0` (3 tiempos), `1. 3. 1. 0` se mantiene y `1. 1. 5. 0` → `1. 2. 1. 0` (denominador 4). **Coincide.**
-- **Sin verificar:** el comportamiento con cambios de compás a mitad del proyecto, porque no hay pista de compás.
+- **`signature`** (tag 4027) = **«3/4»**. The process value is 1966.12 (with 4/4 it was 2621.48): an internal encoding, so the displayed text is used.
+- **Cursor normalization:** `1. 4. 1. 0` → `2. 1. 1. 0` (3 beats), `1. 3. 1. 0` stays and `1. 1. 5. 0` → `1. 2. 1. 0` (denominator 4). **It matches.**
+- **Unverified:** the behavior with time signature changes in the middle of the project, because there is no signature track.
 
-## Conclusiones
+## Conclusions
 
-1. **TW-1209 se puede implementar sin script nuevo,** con `da.params` sobre los objetos Transport y Metronome. Se localizan **por tipo** entre los hijos de Device Root, porque los IDs cambian entre sesiones.
-2. **Compás:** el parámetro `signature` lo da directamente, verificado con 4/4 y 3/4. Queda por ver si sigue al cursor cuando hay cambios de compás.
-3. **TW-1210:** los parámetros del Transport (`cycle`, `metronomeOn`, `precountOn`, `punchIn`…) son candidatos a escribirse con `da.param.set` y releerse. **Sin probar:** escribir es parte de TW-1210.
-4. **Frecuencia de muestreo, longitud y nombre:** no accesibles por la API. Para la carpeta, `lsof`, con sus límites.
+1. **TW-1209 can be implemented without a new script,** with `da.params` on the Transport and Metronome objects. They are located **by type** among the children of Device Root, because the IDs change between sessions.
+2. **Time signature:** the `signature` parameter gives it directly, verified with 4/4 and 3/4. It remains to be seen whether it follows the cursor when there are time signature changes.
+3. **TW-1210:** the Transport parameters (`cycle`, `metronomeOn`, `precountOn`, `punchIn`…) are candidates to be written with `da.param.set` and read back. **Untested:** writing is part of TW-1210.
+4. **Sample rate, length and name:** not accessible through the API. For the folder, `lsof`, with its limits.

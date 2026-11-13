@@ -1,12 +1,14 @@
-# Experimento TW-1210: modificar propiedades del proyecto
+# Experiment TW-1210: modifying project properties
 
-**Fecha:** 2026-11-13.
-**Entorno:** Cubase Elements 15.0.30 y script 1.5.4.
-**Método:** `da.param.set` sobre los objetos «Transporte» y «Metronome» (TW-1209). Cada valor se leyó, se escribió el contrario, se releyó y se restauró.
+**English** · [Español](README.es.md)
 
-## Interruptores (todos ✅: escritura, relectura y restauración)
+**Date:** 2026-11-13.
+**Environment:** Cubase Elements 15.0.30 and script 1.5.4.
+**Method:** `da.param.set` on the «Transporte» (*Transport*) and «Metronome» objects (TW-1209). Each value was read, the opposite was written, read back and restored.
 
-| Objeto | Parámetro (tag) | Desact. → Activ. → Desact. |
+## Switches (all ✅: write, readback and restore)
+
+| Object | Parameter (tag) | Desact. → Activ. → Desact. (*Off → On → Off*) |
 |---|---|---|
 | Transport | `cycle` (4022) | ✅ |
 | Transport | `metronomeOn` (4099) | ✅ |
@@ -15,19 +17,19 @@
 | Transport | `usePreRoll` (4037) / `usePostRoll` (4038) | ✅ / ✅ |
 | Metronome | `tickInPlayback` / `tickInRecord` | ✅ / ✅ |
 
-## Valores continuos
+## Continuous values
 
-| Parámetro | Escrito | Mostrado | Conclusión |
+| Parameter | Written | Displayed | Conclusion |
 |---|---|---|---|
-| `clickLevel` (Metronome) | 0,5 / 0 | «64» / «0» | Escala 0–127 = valor × 127 ✅ (restaurado a 127) |
-| `preRoll` (Transport) | 0,1 / 0,5 | «1. 2. 0. 0» / «7. 2. 0. 0» | 6 y 30 tiempos: ¿tiempos = valor × 60? **Hay pocos puntos medidos: queda fuera** |
-| `postRoll` (Transport) | 0,1 | «1. 2. 0. 0» | Igual que el pre-roll |
+| `clickLevel` (Metronome) | 0.5 / 0 | «64» / «0» | Scale 0–127 = value × 127 ✅ (restored to 127) |
+| `preRoll` (Transport) | 0.1 / 0.5 | «1. 2. 0. 0» / «7. 2. 0. 0» | 6 and 30 beats: beats = value × 60? **Few points measured: left out** |
+| `postRoll` (Transport) | 0.1 | «1. 2. 0. 0» | Same as the pre-roll |
 
-- **Compás** (`signature`): su valor interno no está en [0, 1] (2621,48 con 4/4) y el script rechaza escrituras fuera de ese rango. **No se escribe.** Se cambia en «Configuración del proyecto» o en la barra de transporte, como hizo el usuario.
+- **Time signature** (`signature`): its internal value is not in [0, 1] (2621.48 with 4/4) and the script rejects writes outside that range. **It is not written.** It is changed in «Configuración del proyecto» (*Project Setup*) or in the transport bar, as the user did.
 
-## Conclusión
+## Conclusion
 
-`cubase_set_project` puede cambiar, con ensayo y relectura:
-- ciclo, metrónomo, precuenta, punch in/out y uso de pre-roll y post-roll;
-- clic al reproducir y al grabar;
-- nivel del clic.
+`cubase_set_project` can change, with dry run and readback:
+- cycle, metronome, precount, punch in/out and use of pre-roll and post-roll;
+- click during playback and during recording;
+- click level.

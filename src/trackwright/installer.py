@@ -41,7 +41,7 @@ StepStatus = Literal["done", "skipped", "declined", "manual", "failed"]
 Runner = Callable[[Sequence[str]], subprocess.CompletedProcess[str]]
 
 CONFIG_TEMPLATE = """\
-# Trackwright configuration, created by 'trackwright setup' (see docs/manual/03-configuracion.md)
+# Trackwright configuration, created by 'trackwright setup' (see docs/manual/03-configuration.md)
 
 [writes]
 # Allow tools to modify the open Cubase project. Dry runs and navigation work regardless.

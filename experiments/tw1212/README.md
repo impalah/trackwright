@@ -1,42 +1,44 @@
-# Experimento TW-1212: borrar un rango en una sola pista
+# Experiment TW-1212: deleting a range on a single track
 
-**Fecha:** 2026-11-13.
-**Entorno:** Cubase Elements 15.0.30, script 1.5.1, proyecto de pruebas guardado y herramienta de objetos.
-**Medios:** sondeo de bordes de eventos (TW-1211) y «Locate Selection / Selection End» para medir la selección. Se usaron `experiments/tw1211/probe.py` y scripts sueltos.
+**English** · [Español](README.es.md)
 
-## Alcance de las selecciones
+**Date:** 2026-11-13.
+**Environment:** Cubase Elements 15.0.30, script 1.5.1, saved test project and Object tool.
+**Means:** event edge probing (TW-1211) and «Locate Selection / Selection End» to measure the selection. `experiments/tw1211/probe.py` and ad hoc scripts were used.
 
-| Comando | Prueba | Resultado |
+## Scope of the selections
+
+| Command | Test | Result |
 |---|---|---|
-| `Select Events under Cursor` | POC-INSTR seleccionada, cursor a 5 s. POC-INSTR tiene una parte de 4 a 6 s; POC-TEST, un evento de 2 a 6,8 s | Selección **4–6 s**: **solo la pista seleccionada** ✅ |
-| `Select All on Tracks` | POC-INSTR seleccionada | Selección medida 0–2 s; con POC-TEST había dado 0–2:19,976. Ambiguo, no se usa |
-| `Select Events under Cursor` sin evento bajo el cursor | — | `canPerform = false` |
+| `Select Events under Cursor` | POC-INSTR selected, cursor at 5 s. POC-INSTR has a part from 4 to 6 s; POC-TEST, an event from 2 to 6.8 s | Selection **4–6 s**: **only the selected track** ✅ |
+| `Select All on Tracks` | POC-INSTR selected | Selection measured 0–2 s; with POC-TEST it had given 0–2:19.976. Ambiguous, not used |
+| `Select Events under Cursor` with no event under the cursor | — | `canPerform = false` |
 
-## Flujo completo: borrar 2–30 s solo en POC-TEST
+## Complete flow: delete 2–30 s only on POC-TEST
 
-1. **Cortes:** en 2 s y en 30 s: `Select None`, cursor, `Select Events under Cursor` y `Split at Cursor`. Los bordes de POC-TEST pasan a `2.0, 6.0, 6.8, 18.0, 22.0, 30.0, 2:19.976`. POC-INSTR no cambia.
-2. **Borrados:** en el punto medio de cada tramo entre bordes dentro del rango: `Select None`, cursor, `Select Events under Cursor` (si se puede) y `Delete`.
-3. **Un trozo oculto:** al quitar el evento de encima reapareció un borde en 2,4 s. Era el final del primer evento, oculto bajo el segundo: el sondeo no ve los bordes de los trozos tapados del todo. Hizo falta **otra ronda**.
-4. **Resultado:**
-   - POC-TEST: bordes `2.0, 30.0, 2:19.976`, el hueco exacto ✅;
-   - POC-INSTR: `2, 4, 6, 8`, sin cambios ✅.
-5. **Deshacer:** **7 pasos** (2 cortes y 5 borrados) devolvieron POC-TEST exactamente a su estado inicial ✅.
+1. **Splits:** at 2 s and at 30 s: `Select None`, cursor, `Select Events under Cursor` and `Split at Cursor`. POC-TEST's edges become `2.0, 6.0, 6.8, 18.0, 22.0, 30.0, 2:19.976`. POC-INSTR does not change.
+2. **Deletions:** at the midpoint of each segment between edges within the range: `Select None`, cursor, `Select Events under Cursor` (if possible) and `Delete`.
+3. **A hidden piece:** when the event on top was removed, an edge reappeared at 2.4 s. It was the end of the first event, hidden under the second: the probe does not see the edges of pieces that are completely covered. **Another round** was needed.
+4. **Result:**
+   - POC-TEST: edges `2.0, 30.0, 2:19.976`, the exact gap ✅;
+   - POC-INSTR: `2, 4, 6, 8`, unchanged ✅.
+5. **Undo:** **7 steps** (2 splits and 5 deletions) returned POC-TEST exactly to its initial state ✅.
 
-## Conclusiones
+## Conclusions
 
-- **Borrar dejando hueco** (`delete`) en una pista se puede hacer con la herramienta de objetos:
-  1. cortar en los extremos solo esa pista;
-  2. borrar por rondas, sondeando hasta que no quede nada dentro;
-  3. verificar con el sondeo.
-- **Seguridad:** antes de cada borrado se mide la selección con «Locate Selection / Selection End». Si sale del rango, porque el corte falló, no se borra.
-- **Deshacer** necesita varios pasos. La herramienta debe informar de cuántos.
-- **Cerrar el hueco** (`delete_time`) o **insertar silencio** en una sola pista desincronizaría esa pista del resto. No se ofrece.
+- **Deleting while leaving a gap** (`delete`) on one track can be done with the Object tool:
+  1. split at the ends on that track only;
+  2. delete in rounds, probing until nothing is left inside;
+  3. verify with the probe.
+- **Safety:** before each deletion the selection is measured with «Locate Selection / Selection End». If it goes outside the range, because the split failed, nothing is deleted.
+- **Undo** needs several steps. The tool must report how many.
+- **Closing the gap** (`delete_time`) or **inserting silence** on a single track would desynchronize that track from the rest. Not offered.
 
-## Implementación y fallo encontrado (2026-11-13)
+## Implementation and bug found (2026-11-13)
 
-- **Primera versión de la herramienta:** antes de cada borrado medía la selección con «Locate Selection End», que **mueve el cursor**. Con la preferencia de Cubase «seleccionar automáticamente eventos bajo el cursor», activa en el sistema del usuario, la selección cambiaba al evento que empieza donde acaba el medido, y `Delete` lo borraba: **se perdió el evento de 30 a 139,976 s**.
-  - Además, la herramienta informó de 8 pasos de deshacer y hicieron falta 15.
-  - El proyecto se restauró deshaciendo paso a paso hasta recuperar los bordes originales.
-- **Diagnóstico:** se repitió paso a paso, mirando los bordes tras cada acción. Se midió la selección 18–22 y desapareció el evento de 22 a 139,976.
-- **Corrección:** tras medir, se vuelve al centro del trozo y se repite la selección antes de borrar. El simulador reproduce la preferencia (`auto_select_under_cursor`) y un test cubre los dos casos.
-- **Verificación tras la corrección:** `verified: true`. POC-TEST queda con bordes `2.0, 30.0, 2:19.976` y POC-INSTR sin cambios. Se informaron **7 pasos** de deshacer y hicieron falta **7**. Tarda 26 s.
+- **First version of the tool:** before each deletion it measured the selection with «Locate Selection End», which **moves the cursor**. With the Cubase preference «seleccionar automáticamente eventos bajo el cursor» (*Auto Select Events under Cursor*), enabled on the user's system, the selection changed to the event starting where the measured one ends, and `Delete` deleted it: **the event from 30 to 139.976 s was lost**.
+  - In addition, the tool reported 8 undo steps and 15 were needed.
+  - The project was restored by undoing step by step until the original edges were recovered.
+- **Diagnosis:** it was repeated step by step, looking at the edges after each action. The 18–22 selection was measured and the event from 22 to 139.976 disappeared.
+- **Fix:** after measuring, the tool goes back to the center of the piece and repeats the selection before deleting. The simulator reproduces the preference (`auto_select_under_cursor`) and a test covers both cases.
+- **Verification after the fix:** `verified: true`. POC-TEST is left with edges `2.0, 30.0, 2:19.976` and POC-INSTR unchanged. **7** undo steps were reported and **7** were needed. It takes 26 s.
