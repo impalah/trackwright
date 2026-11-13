@@ -50,6 +50,7 @@ La evidencia está en `cubase-mcp-poc/docs/findings.md` y `progress.md`.
 | Supresión de duplicados en curso, en el script | Un duplicado en ráfaga se ejecutaba dos veces; corregido y verificado. |
 | Rechazo de escrituras fuera de [0, 1] | Cubase las limita a ese rango; el enrutado (22) no se puede volver a escribir (verificado, con un incidente). |
 | Automatización con controles de superficie «tocados» | Escribir el parámetro por DirectAccess mueve el valor pero no graba. Un fader de la superficie enlazado al parámetro, con su estado de toque controlado por el script, sí graba en modo Touch, como un controlador físico (TW-1206 y TW-1207, verificado en Elements). |
+| Transporte CoreMIDI con `ctypes` | `python-rtmidi` solo se distribuye como código fuente para macOS y exige compilarlo (Xcode). Con `ctypes` sobre CoreMIDI, el paquete es Python puro. El transporte mido + rtmidi se conserva como alternativa (`[bridge] backend`). Verificado con Cubase (TW-1302). |
 | Clases de comando | Los comandos no devuelven resultado; unos abren diálogos y otros actúan sobre la selección de la interfaz (verificado). |
 | Política de escritura con solo lectura por defecto | El modelo puede cometer errores: el usuario decide qué se puede tocar. |
 | Simulador `FakeCubase` | Tests rápidos y reproducibles; un modo `--simulate` para aprender sin riesgo. Nunca cuenta como evidencia sobre Cubase. |

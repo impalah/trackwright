@@ -2,7 +2,9 @@
 
 ## Sin publicar
 
-(nada todavía)
+- **Transporte MIDI con CoreMIDI vía `ctypes`** (TW-1302), por defecto en macOS:
+  - el paquete es Python puro y no necesita compilar nada (ni Xcode);
+  - `mido` y `python-rtmidi` quedan comentados en `pyproject.toml`; el transporte basado en ellos se conserva y se elige con `[bridge] backend = "rtmidi"`.
 
 ## 0.2.0 — 2026-11-13
 

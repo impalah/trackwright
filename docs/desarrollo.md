@@ -35,7 +35,8 @@ src/trackwright/
   logs.py           # loguru, stderr, intercepción de logging
   errors.py         # jerarquía de errores con código estable
   protocol.py       # tramas SysEx "TW" y reensamblado
-  transport.py      # puertos virtuales CoreMIDI (mido + rtmidi)
+  coremidi.py       # puertos virtuales CoreMIDI con ctypes (por defecto en macOS; sin compilar)
+  transport.py      # interfaz Transport y transporte alternativo mido + python-rtmidi
   host.py           # cliente del script: correlación, sesiones, timeouts
   ops.py            # operaciones del script (lecturas, escrituras)
   bridge.py         # daemon con socket Unix y su cliente

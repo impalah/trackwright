@@ -45,6 +45,9 @@ class BridgeConfig(_Section):
     """Default timeout in seconds for one request to Cubase."""
     write_timeout: float = Field(default=5.0, ge=0.05, le=30.0)
     """Timeout for write operations (they run in an idle tick and read back)."""
+    backend: Literal["auto", "coremidi", "rtmidi"] = "auto"
+    """MIDI transport: ``coremidi`` (ctypes, nothing to compile; macOS), ``rtmidi`` (mido + python-rtmidi,
+    which must be installed: see pyproject.toml) or ``auto`` (coremidi on macOS, rtmidi elsewhere)."""
     autostart: bool = True
     """``trackwright serve`` starts the bridge when it is not running (TW-1201)."""
     autostart_timeout: float = Field(default=10.0, ge=0.5, le=60.0)

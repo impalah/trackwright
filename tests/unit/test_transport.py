@@ -88,7 +88,7 @@ def test_close_is_best_effort(log_records: list[str]) -> None:
 
 
 def test_real_mido_backend_is_loaded_lazily(monkeypatch: pytest.MonkeyPatch) -> None:
-    import mido
+    mido = pytest.importorskip("mido", reason="mido + python-rtmidi are optional since TW-1302 (see pyproject.toml)")
 
     calls: list[str] = []
     monkeypatch.setattr(mido, "set_backend", calls.append)

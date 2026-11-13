@@ -23,7 +23,7 @@ Origen: pregunta del usuario del 2026-11-13. Hoy Trackwright se usa desde el có
 
 ## TW-1302 Transporte MIDI con CoreMIDI vía `ctypes` (sin compilación)
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-13). Verificada con Cubase; detalle en [verificacion.md](../verificacion.md)
 - **Objetivo:** que en macOS no haga falta compilar nada: el paquete pasa a ser Python puro.
 - **Alcance:**
   1. un transporte nuevo, `CoreMidiTransport`, con `ctypes` sobre `CoreMIDI.framework` y `CoreFoundation.framework`:

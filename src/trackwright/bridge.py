@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import os
+import platform
 import socket
 import socketserver
 import stat
@@ -281,6 +282,20 @@ class BridgeClient:
 
 
 # ---------------------------------------------------------------------------- entry point
+def make_transport(settings: BridgeConfig, *, system: str | None = None) -> Transport:
+    """The configured MIDI transport (TW-1302): CoreMIDI through ctypes on macOS by default."""
+    backend = settings.backend
+    if backend == "auto":
+        backend = "coremidi" if (system or platform.system()) == "Darwin" else "rtmidi"
+    if backend == "coremidi":
+        from trackwright.coremidi import CoreMidiTransport  # noqa: PLC0415
+
+        return CoreMidiTransport(settings.to_cubase_port, settings.from_cubase_port)
+    from trackwright.transport import MidiTransport  # noqa: PLC0415 - needs mido + python-rtmidi installed
+
+    return MidiTransport(settings.to_cubase_port, settings.from_cubase_port)
+
+
 def run_bridge(
     settings: BridgeConfig, *, transport: Transport | None = None, stop: threading.Event | None = None
 ) -> None:
@@ -288,11 +303,10 @@ def run_bridge(
     import signal  # noqa: PLC0415 - only needed by the daemon
 
     from trackwright.host import HostClient  # noqa: PLC0415
-    from trackwright.transport import MidiTransport  # noqa: PLC0415
 
     stop_event = stop or threading.Event()
     host = HostClient(
-        transport or MidiTransport(settings.to_cubase_port, settings.from_cubase_port),
+        transport or make_transport(settings),
         default_timeout=settings.request_timeout,
     )
     host.open()

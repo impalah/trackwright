@@ -337,3 +337,18 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
 - **El nombre del preset** no es accesible.
 - Detalle en [experiments/tw1205](../experiments/tw1205/README.md).
 - **Prueba del usuario desde Claude Code:** funciona.
+
+## 2026-11-13 — TW-1302: transporte CoreMIDI con `ctypes`
+
+- **Sin Cubase,** con una prueba en bucle con puertos de prueba propios (ahora también test automático en macOS):
+  - 13 tramas de un mensaje de 3 KB en cada sentido, idénticas;
+  - los puertos desaparecen al cerrar.
+- **CoreMIDI entrega dos veces los SysEx universales** (`F0 7E …`, Identity Request) en dos callbacks distintos; las tramas de Trackwright (`7D`) llegan una sola vez. Probablemente es la capa MIDI-CI de macOS. Sin efecto: se cuentan como ajenas y se descartan.
+- **Con Cubase:**
+  - se paró el puente anterior (rtmidi) y `serve` arrancó uno nuevo con CoreMIDI;
+  - **Cubase se reconectó en 4,2 s** (script 1.5.5);
+  - `ping` correcto y `doctor` con 5/5;
+  - lecturas: pistas, 46 parámetros del Compressor (9 KB, mensajes fragmentados) y 45 controles de automatización;
+  - escritura: mute de POC-TEST escrito y restaurado, ambos verificados;
+  - 260 tramas recibidas, sin errores de transporte.
+- **Entorno sin `mido` ni `python-rtmidi`** (`uv sync` los quitó): todo lo anterior funciona sin ellos.
