@@ -271,3 +271,12 @@ Detalle en [experiments/tw1209/README.md](../experiments/tw1209/README.md).
   - modos de grabación;
   - carpeta del proyecto: `/Volumes/Data/Produccion/Cubase/X0001.test`.
 - **Consecuencia:** con 3/4, la automatización que suponía 4/4 habría calculado mal las posiciones. Ahora usa el compás leído; probado en el simulador con 3/4 y 6/8.
+
+## 2026-11-13 — TW-1211: experimento de edición por rangos
+
+Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
+
+- **Funcionan y se verifican:** `Delete`, `Delete Time`, `Cut Time`, `Insert Silence` y `Crop Range` sobre un rango 2–30 s, medidos con el sondeo de eventos (`Locate Next Event`) y deshechos con `Undo`.
+- **Con diálogo:** `Process / Silence`.
+- **Localizadores en segundos:** fallan directamente; funcionan poniendo el cursor en segundos y usando `Set Left/Right Locator`.
+- **Alcance:** `Select in Loop` solo crea un rango con la herramienta de rango, y lo hace en todas las pistas.

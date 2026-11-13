@@ -87,7 +87,7 @@ def main(argv: list[str]) -> Any:
         return service.select_track(argv[1]).model_dump()
     if step == "run":
         key, apply = argv[1], "--apply" in argv
-        plan = service.run_command(key, dry_run=True)
+        plan = service.run_command(key, dry_run=True, force=True)
         if not apply:
             return {"plan": plan.model_dump()}
         before = state()
