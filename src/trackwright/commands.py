@@ -204,6 +204,15 @@ _SPECS = [
         "Open the Export Audio Mixdown dialog",
         "not observed (TW-1204)",
     ),
+    CommandSpec("file.save", "File", "Save", "unknown", "Save the project", "not observed (TW-1202)"),
+    CommandSpec(
+        "file.save_new_version",
+        "File",
+        "Save New Version",
+        "unknown",
+        "Save the project as a new numbered version",
+        "not observed (TW-1202)",
+    ),
     CommandSpec(
         "edit.delete_time",
         "Edit",

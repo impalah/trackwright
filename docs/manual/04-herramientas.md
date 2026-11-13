@@ -225,6 +225,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `transport.set_left_locator`, `transport.set_right_locator`, `transport.locate_next_event`, `transport.locate_selection`, `transport.locate_selection_end` | direct (verificado, TW-1211) |
 | `process.silence` | dialog (verificado, TW-1211: pregunta si el archivo de audio está compartido) |
 | `edit.select_events_under_cursor`, `transport.locate_prev_event`, `transport.to_left_locator`, `tool.range`, `tool.select` | unknown |
+| `file.save`, `file.save_new_version` | unknown (experimento TW-1202) |
 
 ## Edición por rangos en segundos
 
