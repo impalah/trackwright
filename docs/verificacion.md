@@ -252,3 +252,12 @@ Medido sobre POC-TEST con el código de TW-1208, a través del puente. Solo lect
   - el puente de prueba se paró al terminar.
 - **`cubase_launch`** en ensayo, con Cubase abierto → `already_running`, script 1.4.0. No abre nada.
 - **Prueba completa del usuario,** desde Claude Code, con Cubase y el puente cerrados: `serve` arrancó el puente y `cubase_launch` abrió Cubase. Devolvió **`awaiting_user`** hasta que el usuario abrió el proyecto en Steinberg Hub; después el script respondió. El script empieza a responder solo cuando hay un proyecto abierto.
+
+## 2026-11-13 — TW-1209: experimento de propiedades del proyecto
+
+Detalle en [experiments/tw1209/README.md](../experiments/tw1209/README.md).
+
+- **DirectAccess:** el objeto «Transporte» (`type: Transport`) da `signature` = «4/4», `cycle`, `metronomeOn`, `precountOn`, punch, pre-roll y post-roll, y los modos de grabación. «Metronome» da `clickLevel`.
+- **Compás deducido por normalización del cursor:** 4/4, coherente con lo anterior.
+- **`lsof`:** el `.cpr` no queda abierto; la carpeta del proyecto se deduce de los archivos de audio abiertos.
+- **No accesibles:** frecuencia de muestreo, longitud y nombre del proyecto.

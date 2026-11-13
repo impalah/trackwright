@@ -139,7 +139,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1209 Leer las propiedades del proyecto abierto
 
-- **Estado:** pendiente; requiere un experimento previo
+- **Estado:** experimento hecho ([experiments/tw1209](../../experiments/tw1209/README.md)): los objetos DirectAccess «Transporte» y «Metronome» dan compás, ciclo, metrónomo, precuenta, punch, pre-roll y post-roll, y modos de grabación. Falta verificar el compás con uno distinto de 4/4
 - **Objetivo:** que el modelo conozca el contexto del proyecto antes de actuar: nombre, tempo, compás, frecuencia de muestreo, longitud, ciclo y metrónomo. Hoy supone 4/4 y no conoce el nombre ni la frecuencia.
 - **Qué hay hoy:** `cubase_get_transport` ya lee el cursor, los localizadores del ciclo y el tempo.
 - **Qué ofrece la API de MIDI Remote** (según `midiremote_api_v1.d.ts` de Cubase 15; **sin verificar**):
