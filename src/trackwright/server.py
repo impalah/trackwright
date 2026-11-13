@@ -25,6 +25,7 @@ from trackwright.core.models import (
     AutomationTargetsOut,
     ChangesOut,
     CommandOut,
+    ConvertOut,
     InsertPluginOut,
     InsertsOut,
     ParameterOut,
@@ -57,6 +58,9 @@ Rules for using these tools:
 - Routing (inputs, outputs, send destinations) cannot be changed through this API.
 - Automation: list the parameters with cubase_list_automation_targets, then record a curve with
   cubase_record_automation. Recording plays the project (audible) and writes the track's automation.
+  Give points in real units ("plain": -20 for -20 dB, 1000 for 1 kHz, pan -100 left..0..+100 right):
+  Cubase converts them exactly. Never guess
+  normalized values; use cubase_convert_value when you need one.
 - If a tool fails with WRITES_DISABLED, writes are disabled in the user's Trackwright configuration.
 """
 
@@ -266,10 +270,24 @@ def build_server(service: CubaseService) -> MCPServer:
         return await run(lambda: service.list_automation_targets(track))
 
     @server.tool(
+        annotations=NAVIGATE,
+        description="Exact conversion done by Cubase between a parameter's real units (dB, Hz...) and its "
+        "normalized 0..1 value, in either direction. Give plain or value. Changes nothing (selects the track).",
+    )
+    async def cubase_convert_value(
+        track: TrackArg,
+        parameter: Annotated[str, Field(description="key from cubase_list_automation_targets, e.g. 'volume'")],
+        plain: Annotated[float | None, Field(description="value in real units, e.g. -20 (dB)")] = None,
+        value: Annotated[float | None, Field(description="normalized value 0..1")] = None,
+    ) -> ConvertOut:
+        return await run(lambda: service.convert_value(track, parameter, plain=plain, value=value))
+
+    @server.tool(
         annotations=WRITE,
         description="Record an automation curve on a track parameter: plays the project from just before the "
         "first point and moves the parameter through the points (linear in between). Audible. Optionally "
-        "verifies with a read-back pass. Positions assume 4/4.",
+        "verifies with a read-back pass. Positions assume 4/4. Give each point as plain (real units, preferred) "
+        "or value.",
     )
     async def cubase_record_automation(
         track: TrackArg,

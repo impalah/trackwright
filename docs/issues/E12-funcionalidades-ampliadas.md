@@ -113,3 +113,26 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
   5. para la reproducción y desactiva W;
   6. verifica con una reproducción en lectura (opcional).
   - Exigirá escrituras habilitadas y confirmación, porque reproduce audio y modifica el proyecto.
+
+## TW-1208 Unidades reales en la automatización (conversión exacta de Cubase)
+
+- **Estado:** implementada (servicio, herramienta `cubase_convert_value`, tests de servicio y de contrato). Falta verificarla en Cubase con la herramienta definitiva
+- **Origen:** en el uso real (2026-11-13), el modelo no conocía la correspondencia entre el valor normalizado y los dB. Estimó −20 dB ≈ 0,36 (es 0,2551) y propuso calibrar moviendo el fader.
+- **Evidencia:** `da.convert` (`convertParameterPlainToProcessValue`) convierte con exactitud y en los dos sentidos el volumen, los envíos, el EQ (ganancia y frecuencia), el pre-filtro y los parámetros de plugin ([verificacion.md](../verificacion.md)).
+- **Alcance:**
+  1. **Correspondencia** entre cada control de automatización y su parámetro DirectAccess:
+
+     | Control | Objeto | Parámetro |
+     |---|---|---|
+     | `volume` | canal | tag 1025 |
+     | `pan` | Panner | tag 4201 |
+     | `sendN.level` | slot de envío N | tag 4097 |
+     | `eqB.gain/freq/q` | EQ del strip | título «EQ B Gain/Freq/Q» |
+     | `prefilter.gain/lowcut/highcut` | InputFilter | `PreGain`, `LC-Freq` y `HC-Freq` |
+     | `insertS.pN` | plugin del slot S | por título, tomado del título del control, por ejemplo «Compressor / Threshold» → «Threshold» |
+
+     Los `qcN` no tienen correspondencia conocida: solo admiten valores normalizados.
+  2. **`cubase_record_automation`:** cada punto acepta `value` (normalizado) **o** `plain` (unidades reales: dB, Hz…). Los `plain` se convierten con Cubase antes de grabar, y el ensayo muestra la conversión.
+  3. **Herramienta `cubase_convert_value(track, parameter, plain | value)`:** solo lectura, convierte en los dos sentidos. Sustituye a la calibración: es exacta y no mueve nada.
+  4. **`cubase_list_automation_targets`:** el campo `display` ya está en unidades reales. Se documenta así en lugar de convertir los 45 parámetros, que costaría varios segundos.
+- **Pruebas:** simulador con los objetos Panner, slots de envío, InputFilter, EQ con 12 parámetros y plugins con parámetros nombrados; tests de correspondencia, conversión, errores (`NO_UNIT_CONVERSION` en los Quick Controls, `OUT_OF_RANGE`) y contrato MCP.

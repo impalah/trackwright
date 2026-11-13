@@ -2,6 +2,10 @@
 
 ## Sin publicar
 
+- **Unidades reales en la automatización** (TW-1208):
+  - los puntos de `cubase_record_automation` aceptan `plain` (dB, Hz…), que Cubase convierte con exactitud;
+  - herramienta nueva `cubase_convert_value`, de solo lectura;
+  - `cubase_list_automation_targets` indica si cada parámetro admite unidades reales (`converts_units`).
 - **Automatización** (TW-1207):
   - herramientas `cubase_list_automation_targets` y `cubase_record_automation`: graban curvas de volumen, panorama, envíos, EQ del canal, pre-filtro y parámetros de plugins de inserción, reproduciendo el proyecto, con verificación opcional;
   - **script 1.4.0**, con 45 controles de automatización activos en la superficie y las operaciones `auto.control` y `auto.list`;

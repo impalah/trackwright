@@ -12,16 +12,19 @@ beat; the cursor position reported by Cubase during playback drives the timing.
 from __future__ import annotations
 
 import itertools
+import re
 import time
 from collections.abc import Iterator
 from typing import Any
 
-from trackwright.core.base import TAG_SELECTED, ServiceBase, operation
+from trackwright.core.base import MIXER, TAG_SELECTED, TAG_VOLUME, ServiceBase, operation
 from trackwright.core.models import (
     AutomationPoint,
     AutomationRecordOut,
     AutomationTarget,
     AutomationTargetsOut,
+    ConvertOut,
+    ResolvedPoint,
     WrittenPoint,
 )
 from trackwright.core.refs import TrackSelector
@@ -32,6 +35,13 @@ TAG_WRITE, TAG_READ = 4013, 4014
 MAX_POINTS = 64
 VERIFY_TOLERANCE = 0.05
 TICKS_PER_BEAT = 480
+TAG_PAN, TAG_SEND_LEVEL = 4201, 4097
+PREFILTER_TITLES = {"gain": "PreGain", "lowcut": "LC-Freq", "highcut": "HC-Freq"}
+EQ_TITLES = {"gain": "Gain", "freq": "Freq", "q": "Q"}
+SEND_KEY = re.compile(r"^send([1-8])\.level$")
+EQ_KEY = re.compile(r"^eq([1-4])\.(gain|freq|q)$")
+PREFILTER_KEY = re.compile(r"^prefilter\.(gain|lowcut|highcut)$")
+INSERT_KEY = re.compile(r"^insert([1-8])\.p[1-8]$")
 STALL_SECONDS = 2.0
 JsonObject = dict[str, Any]
 
@@ -98,6 +108,7 @@ class AutomationMixin(ServiceBase):
             value=value if isinstance(value, int | float) else None,
             display=control.get("display") or None,
             available=bound,
+            converts_units=bound and not key.startswith("qc"),
         )
 
     def _flag(self, item: JsonObject, tag: int, on: bool) -> None:
@@ -105,6 +116,78 @@ class AutomationMixin(ServiceBase):
 
     def _flag_state(self, item: JsonObject, tag: int) -> bool:
         return float(self.read_parameter(int(item["id"]), tag).get("process") or 0) >= 0.5
+
+    # ------------------------------------------------------------------ unit conversion (TW-1208)
+    def _child_of_type(self, item: JsonObject, kind: str) -> JsonObject:
+        for child in self.children(int(item["id"])):
+            if child.get("type") == kind:
+                return child
+        raise NotFoundError(f"the track has no {kind}", code="NO_UNIT_CONVERSION")
+
+    def _tag_by_title(self, obj: JsonObject, title: str) -> int:
+        offset = 0
+        while True:
+            page = self.call("da.params", {"id": obj["id"], "offset": offset, "limit": 25, **MIXER})
+            for param in page.get("items", []):
+                if param.get("title") == title:
+                    return int(param["tag"])
+            offset += len(page.get("items", []))
+            if not page.get("items") or offset >= int(page.get("total", 0)):
+                raise NotFoundError(f"parameter {title!r} not found on {obj.get('title')}", code="NO_UNIT_CONVERSION")
+
+    def _da_parameter(self, item: JsonObject, key: str, control: JsonObject) -> tuple[JsonObject, int]:
+        """The DirectAccess object and tag behind an automation control (for exact unit conversion)."""
+        if key == "volume":
+            return item, TAG_VOLUME
+        if key == "pan":
+            return self._child_of_type(item, "Panner"), TAG_PAN
+        if match := SEND_KEY.match(key):
+            return self.children(int(self.section(item, "Sends")["id"]))[int(match.group(1)) - 1], TAG_SEND_LEVEL
+        if match := EQ_KEY.match(key):
+            eq = self.resolve_target(item, "strip:eq")
+            return eq, self._tag_by_title(eq, f"EQ {match.group(1)} {EQ_TITLES[match.group(2)]}")
+        if match := PREFILTER_KEY.match(key):
+            input_filter = self._child_of_type(item, "InputFilter")
+            return input_filter, self._tag_by_title(input_filter, PREFILTER_TITLES[match.group(1)])
+        if match := INSERT_KEY.match(key):
+            plugin = self.resolve_target(item, f"insert:{match.group(1)}")
+            title = str(control.get("title") or "").split(" / ", 1)[-1]
+            return plugin, self._tag_by_title(plugin, title)
+        raise PreconditionFailedError(
+            f"{key} has no known Cubase parameter for unit conversion: use normalized values",
+            code="NO_UNIT_CONVERSION",
+        )
+
+    def _to_value(self, target: tuple[JsonObject, int], plain: float) -> float:
+        obj, tag = target
+        value = float(
+            self.call("da.convert", {"id": obj["id"], "tag": tag, "plain": plain, **MIXER})["processFromPlain"]
+        )
+        if not 0.0 <= value <= 1.0:
+            raise PreconditionFailedError(
+                f"{plain} is outside the parameter's range", code="OUT_OF_RANGE", details={"normalized": value}
+            )
+        return value
+
+    def _to_plain(self, target: tuple[JsonObject, int], value: float) -> float:
+        obj, tag = target
+        return float(
+            self.call("da.convert", {"id": obj["id"], "tag": tag, "process": value, **MIXER})["plainFromProcess"]
+        )
+
+    def _bound_control(self, item: JsonObject, parameter: str) -> tuple[JsonObject, AutomationTarget]:
+        self._select(item)
+        controls = self._auto_controls()
+        if parameter not in controls:
+            raise NotFoundError(f"unknown automation parameter {parameter!r}", code="PARAM_NOT_FOUND",
+                                details={"known": sorted(controls)})  # fmt: skip
+        target = self._target(parameter, controls[parameter])
+        if not target.available:
+            raise PreconditionFailedError(
+                f"{parameter} is not bound to any parameter on this track (empty slot or unassigned control)",
+                code="NOT_AUTOMATABLE",
+            )
+        return controls[parameter], target
 
     # ------------------------------------------------------------------ tools
     @operation
@@ -117,6 +200,26 @@ class AutomationMixin(ServiceBase):
         return AutomationTargetsOut(track=self.track_info(item).name, targets=targets)
 
     @operation
+    def convert_value(
+        self, track: str, parameter: str, *, plain: float | None = None, value: float | None = None
+    ) -> ConvertOut:
+        """Exact conversion between real units and normalized values, done by Cubase. Selects the track."""
+        if (plain is None) == (value is None):
+            raise PreconditionFailedError("give exactly one of plain or value", code="BAD_REQUEST")
+        item = self.resolve_track(TrackSelector.parse(track))
+        control, target = self._bound_control(item, parameter)
+        da = self._da_parameter(item, parameter, control)
+        if plain is not None:
+            normalized = self._to_value(da, plain)
+            return ConvertOut(track=self.track_info(item).name, parameter=parameter, title=target.title,
+                              plain=plain, value=normalized)  # fmt: skip
+        assert value is not None
+        if not 0.0 <= value <= 1.0:
+            raise PreconditionFailedError("value must be within [0, 1]", code="OUT_OF_RANGE")
+        return ConvertOut(track=self.track_info(item).name, parameter=parameter, title=target.title,
+                          plain=self._to_plain(da, value), value=value)  # fmt: skip
+
+    @operation
     def record_automation(
         self,
         track: str,
@@ -127,20 +230,13 @@ class AutomationMixin(ServiceBase):
         verify: bool = True,
         pre_roll_bars: int = 1,
     ) -> AutomationRecordOut:
-        curve = self._validate_points(points)
+        if not 1 <= len(points) <= MAX_POINTS:
+            raise PreconditionFailedError(f"give 1 to {MAX_POINTS} points", code="BAD_REQUEST")
         item = self.resolve_track(TrackSelector.parse(track))
         name = self.track_info(item).name
-        self._select(item)
-        controls = self._auto_controls()
-        if parameter not in controls:
-            raise NotFoundError(f"unknown automation parameter {parameter!r}", code="PARAM_NOT_FOUND",
-                                details={"known": sorted(controls)})  # fmt: skip
-        target = self._target(parameter, controls[parameter])
-        if not target.available:
-            raise PreconditionFailedError(
-                f"{parameter} is not bound to any parameter on this track (empty slot or unassigned control)",
-                code="NOT_AUTOMATABLE",
-            )
+        control, target = self._bound_control(item, parameter)
+        resolved = self._resolve_points(item, parameter, control, points)
+        curve = self._validate_points(resolved)
         start_beats = max(curve[0][0] - 4 * pre_roll_bars, 0.0)
         out = AutomationRecordOut(
             dry_run=dry_run,
@@ -150,7 +246,7 @@ class AutomationMixin(ServiceBase):
             value_before=target.value,
             display_before=target.display,
             start=format_bars(from_beats(start_beats)),
-            points=points,
+            points=resolved,
             written=[],
             verified=None,
             notes=["positions assume 4/4", "playback is audible: lower the monitor level"],
@@ -169,10 +265,24 @@ class AutomationMixin(ServiceBase):
         return out
 
     # ------------------------------------------------------------------ internals
+    def _resolve_points(
+        self, item: JsonObject, parameter: str, control: JsonObject, points: list[AutomationPoint]
+    ) -> list[ResolvedPoint]:
+        """Convert ``plain`` points with Cubase; keep normalized ones as given."""
+        da: tuple[JsonObject, int] | None = None
+        resolved = []
+        for point in points:
+            if point.plain is None:
+                assert point.value is not None
+                resolved.append(ResolvedPoint(position=point.position, value=point.value, plain=None))
+                continue
+            da = da or self._da_parameter(item, parameter, control)
+            resolved.append(ResolvedPoint(position=point.position, value=self._to_value(da, point.plain),
+                                          plain=point.plain))  # fmt: skip
+        return resolved
+
     @staticmethod
-    def _validate_points(points: list[AutomationPoint]) -> list[tuple[float, float]]:
-        if not 1 <= len(points) <= MAX_POINTS:
-            raise PreconditionFailedError(f"give 1 to {MAX_POINTS} points", code="BAD_REQUEST")
+    def _validate_points(points: list[ResolvedPoint]) -> list[tuple[float, float]]:
         curve: list[tuple[float, float]] = []
         for point in points:
             position = bars_tuple(point.position)

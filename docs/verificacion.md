@@ -221,3 +221,24 @@ El proyecto no se ha guardado.
 
 - **Panner:** «Izquierda-derecha» es el tag 4201, con plain 0 en el centro; escala sin medir. InputFilter: `PreGain` 4201, `LC-Freq` 4204, `HC-Freq` 4206.
 - **Conclusión:** la estimación de 0,36 para −20 dB era errónea (es 0,2551; la escala no es lineal). **No hace falta calibrar moviendo el fader:** Cubase convierte con exactitud y sin modificar nada. Propuesta: aceptar unidades reales en las herramientas (TW-1208).
+
+## 2026-11-13 — TW-1208: correspondencia entre controles y parámetros de Cubase (`cubase_convert_value`)
+
+Medido sobre POC-TEST con el código de TW-1208, a través del puente. Solo lectura, salvo la selección de la pista. Las 12 conversiones son exactas en ida y vuelta:
+
+| Clave | Parámetro de Cubase | Conversión |
+|---|---|---|
+| `volume` | POC-TEST / Volumen | −20 dB → 0,2551 · 0 dB → 0,7891 |
+| `pan` | Panner / Izquierda-derecha | **escala −100 (izquierda) … 0 (centro) … +100 (derecha)**: 0 → 0,5 · −50 → 0,25 |
+| `send1.level` | 1 / Nivel | −20 dB → 0,2551 |
+| `eq1.gain` | EQ / EQ 1 Gain | +6 dB → 0,625 |
+| `eq2.freq` | EQ / EQ 2 Freq | 1000 Hz → 0,5 |
+| `eq1.q` | EQ / EQ 1 Q | 1 → 0,0833 |
+| `prefilter.gain` | Input Filter / PreGain | −12 dB → 0,375 |
+| `prefilter.lowcut` | Input Filter / LC-Freq | 100 Hz → 0,2811 |
+| `prefilter.highcut` | Input Filter / HC-Freq | 10 kHz → 0,8535 |
+| `insert1.p1` | Compressor / Threshold | −35 dB → 0,4167 |
+| `insert1.p2` | Compressor / Ratio | 4:1 → 0,4286 |
+
+- `qc1` e `insert2.p1` aparecen como no disponibles: no hay nada asignado ni plugin en el slot 2.
+- **Queda pendiente** la grabación con `plain` desde la otra sesión de Claude Code.

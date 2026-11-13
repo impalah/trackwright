@@ -17,7 +17,7 @@ Claude usa `cubase_list_automation_targets`. Verás claves como `volume`, `pan` 
 
 > Haz un fundido de salida en POC-TEST: volumen de 0 dB en el compás 5 a silencio casi total en el compás 9.
 
-1. Claude prepara la curva y te enseña el plan (`dry_run`): parámetro, valor actual, puntos y compás de inicio de la reproducción, que es uno antes del primer punto.
+1. Claude prepara la curva **en dB**: los puntos llevan `plain: 0` y `plain: -60`, y Cubase los convierte con exactitud a valores normalizados (0 dB es 0,7891; la escala no es lineal). Te enseña el plan (`dry_run`): parámetro, valor actual, puntos y compás de inicio de la reproducción, que es uno antes del primer punto.
 2. Tras tu confirmación, la aplica. Verás moverse un fader de la superficie y el de la pista.
 3. Con la verificación activada (por defecto), Trackwright vuelve a reproducir con la lectura de automatización y comprueba que el volumen sigue la curva: `verified: true`.
 
@@ -27,7 +27,7 @@ En Cubase aparecerá la curva en el carril de automatización de volumen.
 
 > Sube el Threshold del compresor de POC-TEST de −20 a −35 dB entre los compases 2 y 4.
 
-Claude buscará la clave (`insert1.p1`) y el valor normalizado que corresponde, y grabará la curva igual que antes.
+Claude buscará la clave (`insert1.p1`) y pasará los puntos como `plain: -20` y `plain: -35`, que Cubase convierte. Si quieres comprobar una conversión sin grabar nada, pregunta por ejemplo «¿qué valor normalizado son −20 dB de volumen?»: Claude usará `cubase_convert_value`.
 
 ## Paso 4. Dejarlo como estaba
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from trackwright.commands import CommandClass
 
@@ -230,27 +230,50 @@ class CommandOut(_Out):
 
 # ---------------------------------------------------------------------------- automation (TW-1207)
 class AutomationPoint(BaseModel):
-    """One point of an automation curve (input)."""
+    """One point of an automation curve (input): give ``plain`` (real units) or ``value`` (normalized)."""
 
     model_config = ConfigDict(extra="forbid")
     position: str = Field(description="bar position, e.g. '9. 1. 1. 0' (bar. beat. 16th. tick); 4/4 assumed")
-    value: float = Field(
-        ge=0, le=1, description="normalized value 0..1 (read current values with list_automation_targets)"
+    plain: float | None = Field(
+        default=None, description="value in real units (dB, Hz...), converted exactly by Cubase. Preferred."
     )
+    value: float | None = Field(default=None, ge=0, le=1, description="normalized value 0..1 (use plain instead)")
+
+    @model_validator(mode="after")
+    def _one_value(self) -> AutomationPoint:
+        if (self.plain is None) == (self.value is None):
+            raise ValueError("give exactly one of plain or value")
+        return self
 
 
 class AutomationTarget(_Out):
     parameter: str = Field(description="key to pass to cubase_record_automation, e.g. 'volume' or 'insert1.p1'")
     title: str | None = Field(description="the Cubase parameter bound to it, e.g. 'Compressor / Threshold'")
     value: float | None
-    display: str | None
+    display: str | None = Field(description="current value as Cubase shows it, in real units (dB, Hz, L/R...)")
     available: bool = Field(description="false when nothing is bound (empty insert slot, unassigned quick control)")
+    converts_units: bool = Field(description="plain values (real units) are accepted for this parameter")
 
 
 class AutomationTargetsOut(_Out):
     track: str
     targets: list[AutomationTarget]
     note: str = "the track was selected: automation controls follow the selected track"
+
+
+class ResolvedPoint(_Out):
+    position: str
+    value: float = Field(description="normalized value written")
+    plain: float | None = Field(description="the value in real units, when given or converted")
+
+
+class ConvertOut(_Out):
+    track: str
+    parameter: str
+    title: str | None
+    plain: float
+    value: float = Field(description="normalized value 0..1")
+    note: str = "exact conversion by Cubase (convertParameterPlainToProcessValue / ProcessValueToPlain)"
 
 
 class WrittenPoint(_Out):
@@ -267,7 +290,7 @@ class AutomationRecordOut(_Out):
     value_before: float | None
     display_before: str | None
     start: str = Field(description="where playback starts (pre-roll before the first point)")
-    points: list[AutomationPoint]
+    points: list[ResolvedPoint] = Field(description="the curve, with the normalized value used for each point")
     written: list[WrittenPoint]
     verified: bool | None = Field(description="a read-back pass followed the curve (null when not verified)")
     mismatches: list[str] = Field(default_factory=list)

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import pytest
+from pydantic import ValidationError
 
 from trackwright.core import automation
 from trackwright.core.automation import from_beats, interpolate, to_beats
@@ -196,3 +197,100 @@ def test_no_selected_channel_in_fake(fake: FakeCubase) -> None:
         fake.call("auto.control", {"key": "nope"})
     with pytest.raises(Exception, match=r"\[0,1\]"):
         fake.call("auto.control", {"key": "pan", "value": 3})
+
+
+# ---------------------------------------------------------------- real units (TW-1208)
+# The fake converts plain p to (p + 24) / 48 for every parameter.
+def test_plain_points_are_converted_by_cubase(service: CubaseService, fake: FakeCubase) -> None:
+    points = [AutomationPoint(position="2.1.1.0", plain=0), AutomationPoint(position="3.1.1.0", plain=-12)]
+    plan = service.record_automation("POC-TEST", "volume", points)
+    assert [(p.value, p.plain) for p in plan.points] == [(0.5, 0), (0.25, -12)]
+    done = service.record_automation("POC-TEST", "volume", points, dry_run=False)
+    assert done.verified is True
+    assert done.written[-1].value == pytest.approx(0.25)
+
+
+def test_mixed_points(service: CubaseService) -> None:
+    points = [AutomationPoint(position="2.1.1.0", value=0.9), AutomationPoint(position="3.1.1.0", plain=0)]
+    assert [p.plain for p in service.record_automation("POC-TEST", "pan", points).points] == [None, 0]
+
+
+def test_point_needs_exactly_one_value() -> None:
+    with pytest.raises(ValidationError):
+        AutomationPoint(position="2.1.1.0")
+    with pytest.raises(ValidationError):
+        AutomationPoint(position="2.1.1.0", value=0.5, plain=-3)
+
+
+@pytest.mark.parametrize(
+    ("parameter", "kind", "title"),
+    [
+        ("volume", "Channel", None),
+        ("pan", "Panner", "Izquierda-derecha"),
+        ("send2.level", "Slot", "Nivel"),
+        ("eq3.freq", "EQ", "EQ 3 Freq"),
+        ("prefilter.lowcut", "InputFilter", "LC-Freq"),
+        ("insert1.p3", "Plugin", "Param 3"),
+    ],
+)
+def test_conversion_mapping(service: CubaseService, fake: FakeCubase, parameter: str, kind: str,
+                            title: str | None) -> None:  # fmt: skip
+    service.insert_plugin("POC-TEST", 1, STUDIO_EQ, dry_run=False)
+    seen: list[dict[str, object]] = []
+    original = fake._op_da_convert
+
+    def spy(p: dict[str, object]) -> dict[str, object]:
+        seen.append(p)
+        return original(p)
+
+    fake._op_da_convert = spy  # type: ignore[method-assign]
+    out = service.convert_value("POC-TEST", parameter, plain=-12)
+    assert out.value == pytest.approx(0.25)
+    obj = fake.objects[int(seen[0]["id"])]  # type: ignore[call-overload]
+    tag = int(seen[0]["tag"])  # type: ignore[call-overload]
+    if title is None:
+        assert (obj.id, tag) == (fake.channel_by_title("POC-TEST").id, 1025)
+    else:
+        assert obj.params[tag].title == title
+    assert kind in (obj.type, "Channel")
+
+
+def test_convert_value_back_and_errors(service: CubaseService) -> None:
+    assert service.convert_value("POC-TEST", "volume", value=0.75).plain == pytest.approx(12)
+    with pytest.raises(PreconditionFailedError) as both:
+        service.convert_value("POC-TEST", "volume", plain=0, value=0.5)
+    assert both.value.code == "BAD_REQUEST"
+    with pytest.raises(PreconditionFailedError) as out_of_range:
+        service.convert_value("POC-TEST", "volume", plain=30)
+    assert out_of_range.value.code == "OUT_OF_RANGE"
+    with pytest.raises(PreconditionFailedError) as bad_value:
+        service.convert_value("POC-TEST", "volume", value=2)
+    assert bad_value.value.code == "OUT_OF_RANGE"
+    with pytest.raises(PreconditionFailedError) as unbound:
+        service.convert_value("POC-TEST", "qc1", plain=0)
+    assert unbound.value.code == "NOT_AUTOMATABLE"
+
+
+def test_quick_controls_have_no_unit_conversion(service: CubaseService, fake: FakeCubase,
+                                                monkeypatch: pytest.MonkeyPatch) -> None:  # fmt: skip
+    original = fake._auto_title
+    monkeypatch.setattr(fake, "_auto_title", lambda key: "Synth / Cutoff" if key == "qc1" else original(key))
+    target = {t.parameter: t for t in service.list_automation_targets("POC-TEST").targets}["qc1"]
+    assert (target.available, target.converts_units) == (True, False)
+    with pytest.raises(PreconditionFailedError) as exc:
+        service.convert_value("POC-TEST", "qc1", plain=0)
+    assert exc.value.code == "NO_UNIT_CONVERSION"
+
+
+def test_missing_objects_for_conversion(service: CubaseService, fake: FakeCubase) -> None:
+    channel = fake.channel_by_title("POC-TEST")
+    channel.children = [c for c in channel.children if fake.objects[c].type != "Panner"]
+    with pytest.raises(NotFoundError) as no_panner:
+        service.convert_value("POC-TEST", "pan", plain=0)
+    assert no_panner.value.code == "NO_UNIT_CONVERSION"
+    service.insert_plugin("POC-TEST", 1, STUDIO_EQ, dry_run=False)
+    original = fake._auto_title
+    fake._auto_title = lambda key: "StudioEQ / Missing" if key == "insert1.p1" else original(key)  # type: ignore[method-assign]
+    with pytest.raises(NotFoundError) as no_param:
+        service.convert_value("POC-TEST", "insert1.p1", plain=0)
+    assert no_param.value.code == "NO_UNIT_CONVERSION"

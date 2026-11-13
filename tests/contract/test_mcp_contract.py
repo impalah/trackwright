@@ -37,7 +37,12 @@ WRITE_TOOLS = {
     "cubase_add_track_interactive",
     "cubase_record_automation",
 }
-NAVIGATION_TOOLS = {"cubase_select_track", "cubase_set_position", "cubase_list_automation_targets"}
+NAVIGATION_TOOLS = {
+    "cubase_select_track",
+    "cubase_set_position",
+    "cubase_list_automation_targets",
+    "cubase_convert_value",
+}
 DESTRUCTIVE_TOOLS = {"cubase_remove_selected_tracks", "cubase_split_at_locators", "cubase_run_command"}
 ALL_TOOLS = READ_TOOLS | WRITE_TOOLS | NAVIGATION_TOOLS | DESTRUCTIVE_TOOLS
 STUDIO_EQ = "946051208E29496E804F64A825C8A047"
@@ -188,3 +193,13 @@ async def test_automation_tools(client: Client, fake: FakeCubase) -> None:
         "cubase_record_automation",
         {"track": "POC-TEST", "parameter": "qc1", "points": [{"position": "2.1.1.0", "value": 0.5}], "dry_run": False},
     )
+
+
+async def test_unit_conversion_tools(client: Client) -> None:
+    out = await call(client, "cubase_convert_value", {"track": "POC-TEST", "parameter": "volume", "plain": -12})
+    assert out["value"] == 0.25
+    plan = await call(client, "cubase_record_automation", {"track": "POC-TEST", "parameter": "volume",
+                      "points": [{"position": "2.1.1.0", "plain": 0}]})  # fmt: skip
+    assert plan["points"][0] == {"position": "2.1.1.0", "value": 0.5, "plain": 0}
+    assert "exactly one" in await call_error(client, "cubase_record_automation", {"track": "POC-TEST",
+                                             "parameter": "volume", "points": [{"position": "2.1.1.0"}]})  # fmt: skip

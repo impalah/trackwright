@@ -167,10 +167,27 @@ class FakeCubase:
             if i == 3:
                 eq = self._obj("EQ", "EQ")
                 eq.params[4232] = Param("EQ 1 Gain", "continuous", 0.5, automatable=True)
+                for band in range(1, 5):  # remaining EQ parameters, titled as in Cubase 15
+                    for offset, name in enumerate(("Gain", "Freq", "Q")):
+                        tag = 4300 + band * 10 + offset
+                        if not (band == 1 and name == "Gain"):
+                            eq.params[tag] = Param(f"EQ {band} {name}", "continuous", 0.5, automatable=True)
                 slot.children.append(eq.id)
             strips.children.append(slot.id)
         sends = self._obj("Sends", "Envíos")
-        ch.children = [self._obj("Panner", "Panner").id, inserts.id, strips.id, sends.id]
+        for i in range(1, 9):
+            send = self._obj("Slot", str(i), unique_name="Slot")
+            send.params[4097] = Param("Nivel", "continuous", 0.7890865802764893, automatable=True)
+            sends.children.append(send.id)
+        panner = self._obj("Panner", "Panner")
+        panner.params[4201] = Param("Izquierda-derecha", "continuous", 0.5, automatable=True)
+        input_filter = self._obj("InputFilter", "Input Filter")
+        input_filter.params = {
+            4201: Param("PreGain", "continuous", 0.5, automatable=True),
+            4204: Param("LC-Freq", "continuous", 0.0, automatable=True),
+            4206: Param("HC-Freq", "continuous", 1.0, automatable=True),
+        }
+        ch.children = [input_filter.id, panner.id, inserts.id, strips.id, sends.id]
         return ch
 
     # ------------------------------------------------------------------ scenario helpers
@@ -571,6 +588,8 @@ class FakeCubase:
         if entry is not None:
             plugin = self._obj("Plugin", entry["name"], unique_name=f"{uid}-0")
             plugin.params[4207] = Param("GainP1L", "continuous", 0.5, automatable=True)
+            for n in range(1, 9):  # bank parameters, titled like the automation controls report them
+                plugin.params[4300 + n] = Param(f"Param {n}", "continuous", 0.5, automatable=True)
             slot.children.append(plugin.id)
             slot.params[4125] = Param("Tipo de efecto", "discrete", 1, entry["name"])
         return {"guard": guard, "result": entry is not None, "before": before, "after": self._describe(slot)}
@@ -594,7 +613,9 @@ class FakeCubase:
             return " / "
         if key.startswith("insert"):
             slot_index, param_index = int(key[6]) - 1, int(key.split(".p")[1])
-            inserts = self.objects[self.objects[self.selected].children[1]]
+            inserts = next(
+                self.objects[c] for c in self.objects[self.selected].children if self.objects[c].type == "Inserts"
+            )
             slot = self.objects[inserts.children[slot_index]]
             if not slot.children:
                 return " / "

@@ -1,6 +1,6 @@
 # Referencia de herramientas MCP
 
-El servidor `trackwright` publica 23 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 24 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 ## Conceptos comunes
 
@@ -221,12 +221,29 @@ Mecanismo verificado en Cubase Elements 15.0.30: el script tiene en la superfici
   - `qc1` a `qc8` (Quick Controls);
   - `insert1.p1` a `insert2.p8`: los parámetros del plugin de los slots 1 y 2, en el orden de banco que decide Cubase.
 - **Selecciona la pista,** porque los controles siguen la selección.
+- **`display`** es el valor actual tal como lo muestra Cubase, en unidades reales («-18.2», «-20.0 dB», «100.0Hz»).
+- **`converts_units`** indica si el parámetro admite valores en unidades reales. Todos lo admiten salvo los Quick Controls.
+
+### `cubase_convert_value` (navegación, no cambia nada)
+
+- **Entrada:** `track`, `parameter` y **uno** de estos dos: `plain` (unidades reales: −20 para −20 dB, 1000 para 1 kHz) o `value` (0..1).
+- **Salida:** los dos valores. La conversión la hace Cubase (`convertParameterPlainToProcessValue`) y es exacta.
+- **Para qué sirve:** sustituye a cualquier calibración. Verificado en Cubase Elements: el volumen va de 0 dB → 0,7891 a −20 dB → 0,2551, una escala **no lineal**, así que no hay que estimar valores.
+- **Unidades verificadas:**
+  - volumen, envíos y ganancias en dB;
+  - frecuencias en Hz;
+  - Q sin unidad;
+  - Ratio del compresor como número (4 = 4:1);
+  - **panorama de −100 (izquierda) a +100 (derecha)**, con 0 en el centro.
+- **Errores:** `OUT_OF_RANGE` (fuera del rango del parámetro), `NO_UNIT_CONVERSION` (Quick Controls) y `NOT_AUTOMATABLE`.
 
 ### `cubase_record_automation` (escritura, reproduce audio)
 
 - **Entrada:**
   - `track` y `parameter`;
-  - `points`: de 1 a 64 puntos `{position: "9. 1. 1. 0", value: 0..1}`, en orden creciente;
+  - `points`: de 1 a 64 puntos en orden creciente. Cada punto lleva `position` («9. 1. 1. 0») y **uno** de estos dos valores:
+    - `plain`: en unidades reales, convertido por Cubase. **Es lo recomendado;**
+    - `value`: normalizado, de 0 a 1;
   - `verify` (por defecto `true`) y `dry_run`.
 - **Qué hace:**
   1. selecciona la pista;
@@ -235,8 +252,8 @@ Mecanismo verificado en Cubase Elements 15.0.30: el script tiene en la superfici
   4. «toca» el control, recorre la curva (lineal entre puntos) siguiendo la posición del cursor y lo «suelta»;
   5. para la reproducción y deja W y R como estaban.
   - Con `verify`, vuelve a reproducir con R activado y compara el valor leído con la curva (tolerancia 0,05).
-- **Salida:** los valores escritos (`written`), `verified`, las discrepancias (`mismatches`) y notas.
-- **Errores:** `PARAM_NOT_FOUND`, `NOT_AUTOMATABLE` (no hay nada enlazado: slot vacío o Quick Control sin asignar), `TRANSPORT_RUNNING`, `NOT_RECORDED`, `BAD_TIME` y `WRITES_DISABLED`.
+- **Salida:** la curva con el valor normalizado de cada punto (`points`), los valores escritos (`written`), `verified`, las discrepancias (`mismatches`) y notas.
+- **Errores:** `PARAM_NOT_FOUND`, `OUT_OF_RANGE`, `NO_UNIT_CONVERSION`, `NOT_AUTOMATABLE` (no hay nada enlazado: slot vacío o Quick Control sin asignar), `TRANSPORT_RUNNING`, `NOT_RECORDED`, `BAD_TIME` y `WRITES_DISABLED`.
 - **Limitaciones:**
   - las posiciones suponen compás de 4/4;
   - hay un punto escrito cada ~0,1–0,3 s;

@@ -82,7 +82,7 @@ def test_get_selected_channel_sections(service: CubaseService) -> None:
     out = service.get_selected_channel()
     assert out.track is not None
     assert out.track.name == "POC-TEST"
-    assert [s.kind for s in out.sections] == ["Panner", "Inserts", "Strips", "Sends"]
+    assert [s.kind for s in out.sections] == ["InputFilter", "Panner", "Inserts", "Strips", "Sends"]
     assert all(s.ref.startswith("tw1.") for s in out.sections)
 
 
@@ -129,7 +129,9 @@ def test_list_parameters_channel_and_filter(service: CubaseService) -> None:
 def test_list_parameters_targets(service: CubaseService) -> None:
     eq = service.list_parameters("selected", "strip:eq")
     assert eq.target_name == "EQ"
-    assert [p.tag for p in eq.items] == [4232]
+    assert eq.items[0].tag == 4232
+    assert [p.title for p in eq.items[:4]] == ["EQ 1 Gain", "EQ 1 Freq", "EQ 1 Q", "EQ 2 Gain"]
+    assert eq.total == 12
     with pytest.raises(PreconditionFailedError) as empty:
         service.list_parameters("selected", "insert:1")
     assert empty.value.code == "EMPTY_SLOT"
