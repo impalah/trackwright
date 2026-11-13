@@ -47,7 +47,7 @@ uv crea `.venv/` dentro del proyecto con todas las dependencias. Compruébalo:
 uv run trackwright version
 ```
 
-Debe responder algo como `{"trackwright": "0.1.0"}`.
+Debe responder algo como `{"trackwright": "0.2.0"}`.
 
 ## 4. Instalar el script en Cubase
 

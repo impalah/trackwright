@@ -2,6 +2,12 @@
 
 ## Sin publicar
 
+(nada todavía)
+
+## 0.2.0 — 2026-11-13
+
+Épica E12 cerrada (TW-1201 a TW-1212): 32 herramientas, script Cubase 1.5.5.
+
 - **Presets de plugins** (TW-1205):
   - herramienta `cubase_plugin_preset` (siguiente o anterior), verificada por el cambio de parámetros; pide un clic en la ventana del plugin la primera vez;
   - **script 1.5.5**, con `Preset / Next` y `Previous`.
