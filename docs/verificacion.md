@@ -329,3 +329,4 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
 
 - **Experimento** ([experiments/tw1210](../experiments/tw1210/README.md)): los 9 interruptores del Transporte y el Metronome y el nivel del clic se escriben, se releen y se restauran.
 - **`cubase_set_project`** contra Cubase: metrónomo, nivel 100 y ciclo, con `verified: true`; restaurados con `verified: true`.
+- **Prueba del usuario desde Claude Code** (metrónomo y precuenta): funciona.

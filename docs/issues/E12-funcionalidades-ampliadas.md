@@ -162,7 +162,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1210 Modificar las propiedades del proyecto
 
-- **Estado:** implementada (`cubase_set_project`). Experimento en [experiments/tw1210](../../experiments/tw1210/README.md): 9 interruptores y el nivel del clic. Fuera de alcance: compás, duración del pre-roll y post-roll, y pista de tempo. Falta que el usuario la pruebe
+- **Estado:** cerrada. `cubase_set_project` probada por el usuario desde Claude Code el 2026-11-13. Experimento en [experiments/tw1210](../../experiments/tw1210/README.md): 9 interruptores y el nivel del clic. Fuera de alcance: compás, duración del pre-roll y post-roll, y pista de tempo
 - **Objetivo:** cambiar desde el MCP las propiedades del proyecto que la API permita, con ensayo, confirmación y relectura, como el resto de escrituras.
 - **Qué hay hoy:** `cubase_set_tempo` (verificado) y `cubase_set_position` (cursor y localizadores del ciclo, verificado).
 - **Candidatas:**
