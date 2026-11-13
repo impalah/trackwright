@@ -185,3 +185,24 @@ def test_add_track_interactive_folder_and_errors(
     fake.can_perform_false.add("addtrack.audio")
     with pytest.raises(PreconditionFailedError):
         service.add_track_interactive("start", "audio", "x")
+
+
+def test_locate_next_without_next_marker_goes_to_end_of_last_event(service: CubaseService, fake: FakeCubase) -> None:
+    """Verified on Cubase 15: no next marker -> end of the last event (the audio of POC-TEST ended at bar 70)."""
+    fake.last_event_end = "70. 4. 4. 97"
+    service.set_position("cursor", "2.1.1.0")
+    out = service.markers("locate_next", dry_run=False)
+    assert out.details["cursor_after"] == "70. 4. 4. 97"
+
+
+def test_locate_next_without_events_stays_put(service: CubaseService, fake: FakeCubase) -> None:
+    fake.last_event_end = None
+    service.set_position("cursor", "2.1.1.0")
+    assert service.markers("locate_next", dry_run=False).details["cursor_after"] == "2. 1. 1.  0"
+
+
+def test_locate_next_prefers_a_marker_before_the_end(service: CubaseService, fake: FakeCubase) -> None:
+    fake.markers = ["5. 1. 1.  0"]
+    fake.last_event_end = "70. 4. 4. 97"
+    service.set_position("cursor", "2.1.1.0")
+    assert service.markers("locate_next", dry_run=False).details["cursor_after"] == "5. 1. 1.  0"

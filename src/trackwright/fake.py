@@ -8,7 +8,8 @@ reproduces the behaviours verified against Cubase Elements 15.0.30 in the POC:
 - process writes outside [0, 1] are refused; routing values (e.g. 22) cannot be written back;
 - selection is single; ``da.base`` follows it and is ``-1`` on tracks without a mixer channel;
 - after a script reload the session changes and old ids point at *different* objects;
-- commands: ``dialog`` ones leave a pending dialog, ``confirm`` ones may wait for confirmation.
+- commands: ``dialog`` ones leave a pending dialog, ``confirm`` ones may wait for confirmation;
+- "Locate Next Marker" without a next marker moves to the end of the last event (``last_event_end``).
 
 It is used by the unit and contract tests and by ``trackwright serve --simulate``. Everything it
 reports is flagged ``simulated``: it is never evidence about real Cubase behaviour.
@@ -99,6 +100,8 @@ class FakeCubase:
         }
         self.tempo = 120.0
         self.markers: list[str] = []
+        self.last_event_end: str | None = "9. 1. 1.  0"
+        """End of the last event in the project (``None`` = no events). Used by "Locate Next Marker"."""
         self.fired: list[str] = []
         self.pending_dialog: str | None = None
         self.pending_removal: int | None = None
@@ -635,6 +638,10 @@ class FakeCubase:
             later = [m for m in self.markers if _bars(m) > _bars(self.transport["locator"])]
             if later:
                 self.transport["locator"] = min(later, key=_bars)
+            elif self.last_event_end is not None and _bars(self.last_event_end) > _bars(self.transport["locator"]):
+                # Verified on Cubase 15 (2026-11-12): without a next marker the cursor goes to the end of the
+                # last event of the project (the POC had seen it stay put).
+                self.transport["locator"] = self.last_event_end
 
 
 def _bars(time: str) -> tuple[int, ...]:
