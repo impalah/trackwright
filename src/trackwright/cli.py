@@ -91,10 +91,10 @@ def make_service(settings: Settings, *, simulate: bool) -> Any:
 
     policy = WritePolicy.from_config(settings.writes)
     if simulate:
-        from trackwright.fake import FakeCubase, FakeLauncher  # noqa: PLC0415
+        from trackwright.fake import FakeCubase, FakeExports, FakeLauncher  # noqa: PLC0415
 
         cubase = FakeCubase()
-        return CubaseService(cubase, policy, launcher=FakeLauncher(cubase))
+        return CubaseService(cubase, policy, launcher=FakeLauncher(cubase), exports=FakeExports())  # type: ignore[arg-type]
     from trackwright.bridge import BridgeClient  # noqa: PLC0415
     from trackwright.hostport import BridgeHost  # noqa: PLC0415
     from trackwright.launcher import BridgeLauncher, CubaseLauncher  # noqa: PLC0415

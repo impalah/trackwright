@@ -2,6 +2,9 @@
 
 ## Sin publicar
 
+- **Exportar la mezcla** (TW-1204):
+  - herramienta `cubase_export_mix` en dos fases: el rango (o todo el audio) y el diálogo de Cubase; después, la confirmación del archivo y de su duración;
+  - **script 1.5.2**, con `File / Export Audio Mixdown`.
 - **Borrado en una sola pista** (TW-1212): `cubase_edit_range` con `track` y `action: "delete"`. Corta, borra los trozos uno a uno, verifica e informa de los pasos de deshacer.
 - **Edición por rangos en segundos** (TW-1211):
   - herramienta `cubase_edit_range` (`delete`, `delete_time`, `cut_time`, `insert_silence`, `crop`), con verificación por sondeo de los bordes de los eventos;

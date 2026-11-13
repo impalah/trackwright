@@ -24,13 +24,14 @@ claude mcp add trackwright -- uv --directory "$PWD" run trackwright serve
 
 ## Qué puede hacer
 
-27 herramientas, todas con salida estructurada:
+28 herramientas, todas con salida estructurada:
 
 - **Lectura:** estado, pistas del mezclador, canal seleccionado, inserts, catálogo de plugins, parámetros, transporte y cambios recientes.
 - **Escritura**, siempre con ensayo previo (`dry_run`) y verificación por relectura: parámetros (en valor normalizado o en unidades reales), inserción de plugins, volumen, mute, solo, armado, nombre de pista y tempo.
 - **Navegación:** seleccionar pistas y mover el cursor y los localizadores.
 - **Automatización:** graba curvas de volumen, panorama, envíos, EQ del canal, pre-filtro y parámetros de plugins, reproduciendo el proyecto, con valores en unidades reales (dB, Hz) que convierte Cubase. Verificado en Cubase Elements.
-- **Edición de podcasts:** borrar, cortar o insertar silencio en un rango en segundos, con verificación del resultado.
+- **Edición de podcasts:** borrar, cortar o insertar silencio en un rango en segundos, en todas las pistas o en una, con verificación del resultado.
+- **Exportar la mezcla:** de un rango o del proyecto completo, con el diálogo de Cubase, y confirmación del archivo creado.
 - **Comandos de Cubase:** marcadores, borrado de pistas, división en los localizadores, creación de pistas con ayuda del usuario y una lista de comandos permitidos. Cada comando indica cómo se comporta: si actúa directamente, si abre un diálogo o si pide confirmación.
 
 Por defecto **solo lee**. Las escrituras se habilitan en la configuración y se pueden limitar a pistas concretas.

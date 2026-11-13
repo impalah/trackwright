@@ -38,6 +38,7 @@ WRITE_TOOLS = {
     "cubase_add_track_interactive",
     "cubase_record_automation",
     "cubase_launch",
+    "cubase_export_mix",
 }
 NAVIGATION_TOOLS = {
     "cubase_select_track",
@@ -238,3 +239,12 @@ async def test_edit_range_single_track(client: Client) -> None:
     )
     assert (done["verified"], done["track"]) == (True, "POC-TEST")
     assert done["undo_steps"] > 1
+
+
+async def test_export_mix(client: Client) -> None:
+    plan = await call(client, "cubase_export_mix", {"phase": "start", "start": "2", "end": "30"})
+    assert (plan["status"], plan["expected_seconds"]) == ("planned", 28.0)
+    started = await call(client, "cubase_export_mix", {"phase": "start", "dry_run": False})
+    assert started["status"] == "awaiting_user"
+    confirm = await call(client, "cubase_export_mix", {"phase": "confirm", "since": started["since"]})
+    assert confirm["status"] == "not_found"

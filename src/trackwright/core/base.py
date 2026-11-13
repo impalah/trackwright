@@ -21,11 +21,16 @@ from trackwright.errors import (
     StaleSessionError,
     TrackwrightError,
 )
+from trackwright.exports import ExportedFile, ExportInspector
 from trackwright.hostport import HostPort
 from trackwright.ops import WRITE_OPS
 
 JsonObject = dict[str, Any]
 T = TypeVar("T")
+
+
+class ExportFinder(Protocol):
+    def find(self, folder: Path, since: float) -> list[ExportedFile]: ...
 
 
 class AppLauncher(Protocol):
@@ -90,9 +95,11 @@ class ServiceBase:
         sleep: Callable[[float], None] = time.sleep,
         settle_timeout: float = 1.0,
         launcher: AppLauncher | None = None,
+        exports: ExportFinder | None = None,
     ) -> None:
         self.host = host
         self.launcher = launcher
+        self.exports: ExportFinder = exports if exports is not None else ExportInspector()
         self.policy = policy
         self._sleep = sleep
         self._settle_timeout = settle_timeout

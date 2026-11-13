@@ -34,6 +34,16 @@ Con `verify_track`, compara los bordes del audio de esa pista antes y después: 
 | Quedarte solo con un fragmento | «Deja solo del 10 al 70» → `crop` |
 | Quitar una tos en un solo micro | «Borra del 1:12.4 al 1:13.1 solo en la pista Invitado» → `delete` con `track: "Invitado"` |
 
+## Exportar el episodio
+
+> Exporta el episodio completo.
+
+1. Claude usa `cubase_export_mix` con `phase: "start"`: pone los localizadores alrededor de todo el audio y abre «Exportar mezcla de audio».
+2. Tú eliges el formato (por ejemplo, MP3 a 128 kB/s para publicar) y pulsas **Exportar audio**.
+3. Dile a Claude «ya está». Con `phase: "confirm"` encontrará el archivo en la carpeta *Mixdown* del proyecto y comprobará que dura lo que el episodio.
+
+Para un fragmento, por ejemplo un avance: «exporta del 5:00 al 5:45».
+
 ## Si algo no sale como esperabas
 
 - **Edición > Deshacer** en Cubase lo revierte.

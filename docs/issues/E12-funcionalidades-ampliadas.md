@@ -47,7 +47,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1204 Flujo guiado de exportación de audio
 
-- **Estado:** pendiente
+- **Estado:** implementada (`cubase_export_mix`, script 1.5.2). Experimento en [experiments/tw1204](../../experiments/tw1204/README.md); falta que el usuario la pruebe de principio a fin
 - **Objetivo:** exportar la mezcla de un rango.
 - **Flujo:**
   1. colocar los localizadores [VER];

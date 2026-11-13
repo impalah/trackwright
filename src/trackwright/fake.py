@@ -842,8 +842,7 @@ class FakeCubase:
     def _bars_at(self, seconds: float) -> str:
         return _beats_to_bars(seconds * self.tempo / 60, self.meter)
 
-    def _apply_edit(self, key: str) -> bool:
-        """Tool and range commands; ``False`` lets other edit commands fall through."""
+    def _apply_selection(self, key: str) -> bool:
         if key in ("tool.range", "tool.select"):
             self.tool = key.split(".")[1]
             self.range = None
@@ -853,9 +852,19 @@ class FakeCubase:
         elif key == "edit.select_none":
             self.range = None
             self.selected_events = []
+        elif key == "edit.select_all":
+            self.selected_events = [(tid, e) for tid, events in self.track_events.items() for e in events]
         elif key == "edit.select_events_under_cursor":  # verified: only the selected tracks
             self.selected_events = self._under_cursor()
-        elif key == "edit.split_at_cursor" and self.selected_events:
+        else:
+            return False
+        return True
+
+    def _apply_edit(self, key: str) -> bool:
+        """Tool, selection and range commands; ``False`` lets other edit commands fall through."""
+        if self._apply_selection(key):
+            return True
+        if key == "edit.split_at_cursor" and self.selected_events:
             self._split_selected(self._seconds(self.transport["locator"]))
         elif key == "edit.delete" and self.tool == "select" and self.selected_events:
             self._snapshot()
@@ -927,11 +936,21 @@ class FakeCubase:
         if self.auto_select_under_cursor and self.tool == "select" and self.track_events:
             self.selected_events = self._under_cursor()
 
+    def _apply_locators(self, key: str) -> bool:
+        bounds = self.selection_bounds()
+        if key == "transport.locators_to_selection" and bounds:
+            self.transport["cycleLeft"], self.transport["cycleRight"] = (self._bars_at(b) for b in bounds)
+        elif key in ("transport.set_left_locator", "transport.set_right_locator"):
+            self.transport["cycleLeft" if "left" in key else "cycleRight"] = self.transport["locator"]
+        else:
+            return False
+        return True
+
     def _apply_transport_move(self, key: str) -> None:
         cursor = self.transport["locator"]
-        if key in ("transport.set_left_locator", "transport.set_right_locator"):
-            self.transport["cycleLeft" if "left" in key else "cycleRight"] = cursor
-        elif key == "transport.locate_next_event":
+        if self._apply_locators(key):
+            return
+        if key == "transport.locate_next_event":
             here = self._seconds(cursor)
             following = [edge for edge in self.edges(self.selected) if edge > here + 1e-6]
             if following:
@@ -1035,3 +1054,21 @@ class FakeLauncher:
         self.running = True
         if self.answers_after >= 0:
             self.cubase.online = True
+
+
+class FakeExports:
+    """Export folder for the simulator: ``files`` are returned by ``find`` (no disk access)."""
+
+    def __init__(self) -> None:
+        from trackwright.exports import ExportedFile  # noqa: PLC0415
+
+        self.files: list[ExportedFile] = []
+        self._file = ExportedFile
+        self.searched: list[tuple[object, float]] = []
+
+    def add(self, path: str, duration: float | None, *, modified: float = 2e9, size: int = 1000) -> None:
+        self.files.append(self._file(path, size, modified, duration))
+
+    def find(self, folder: object, since: float) -> list[object]:
+        self.searched.append((folder, since))
+        return [f for f in self.files if f.modified >= since - 1.0]

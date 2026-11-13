@@ -1,6 +1,6 @@
 # Referencia de herramientas MCP
 
-El servidor `trackwright` publica 27 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 28 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 ## Conceptos comunes
 
@@ -215,7 +215,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `zoom.in`, `zoom.out` | unknown |
 | `edit.undo`, `edit.redo`, `edit.cut`, `edit.copy`, `edit.paste`, `edit.delete`, `edit.split_at_cursor`, `edit.split_range`, `edit.select_all`, `edit.select_none`, `edit.select_in_loop` | ui_selection |
 | `edit.split_loop` | direct |
-| `addtrack.audio`, `addtrack.group`, `addtrack.folder`, `audio.detect_silence`, `file.export_audio_mixdown` | dialog |
+| `addtrack.audio`, `addtrack.group`, `addtrack.folder`, `audio.detect_silence`, `file.export_audio_mixdown` | dialog (exportar: verificado, TW-1204) |
 | `addtrack.marker`, `marker.insert`, `project.select_track_next`, `project.select_track_prev`, `transport.locate_next_marker`, `transport.locate_prev_marker` | direct |
 | `project.remove_selected_tracks` | confirm |
 | `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.locators_to_selection` | unknown |
@@ -263,6 +263,24 @@ Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
 - **Errores:** `BAD_TIME`, `TRANSPORT_RUNNING`, `NO_RANGE_SELECTION` (Cubase no creó la selección, por ejemplo porque la ventana de proyecto no está delante), `SPLIT_FAILED` y `WRITES_DISABLED`.
 - **Deshacer:** **Edición > Deshacer** en Cubase lo revierte, como se verificó con cada acción. No se guarda el proyecto.
 - **No incluida:** «Process > Silence» abre un diálogo si el archivo de audio lo comparten varios eventos.
+
+## Exportar la mezcla
+
+### `cubase_export_mix` (con el usuario, dos fases)
+
+Trackwright **nunca exporta por sí mismo**: coloca el rango y abre el diálogo de Cubase; el formato y el botón son del usuario.
+
+- **Fase `start`** (`dry_run` por defecto):
+  - **Entrada:** `start` y `end` en segundos (o compases con `unit: "bars"`). Sin ellos, exporta **todo el audio**: «Select All» y «Locators to Selection» ponen los localizadores del primer al último evento.
+  - **Qué hace:** pone los localizadores en el rango y abre «Exportar mezcla de audio». En Elements el diálogo no tiene campo de rango: exporta entre los localizadores (verificado).
+  - **Salida:** `awaiting_user`, la carpeta que propondrá Cubase (`<carpeta del proyecto>/Mixdown`, deducida de los archivos abiertos), la duración esperada y `since` (marca de tiempo).
+- **El usuario,** en el diálogo, revisa el canal (Stereo Out), el nombre, la ruta y el formato (WAV para archivar, MP3 para publicar) y pulsa **Exportar audio**.
+- **Fase `confirm`:**
+  - **Entrada:** `since` y `expected_seconds` de la fase anterior; `folder` si se eligió otra carpeta.
+  - **Qué hace:** busca en la carpeta los archivos de audio creados después de `since` y lee **solo** su nombre, tamaño, fecha y duración (con `afinfo` de macOS).
+  - **Salida:** `done` y `verified`, si la duración coincide con el rango (±0,15 s), o `not_found`.
+- Los localizadores **se quedan** en el rango exportado.
+- **Errores:** `TRANSPORT_RUNNING`, `CANNOT_PERFORM` (hay otro diálogo abierto), `BAD_TIME` y `WRITES_DISABLED`.
 
 ## Abrir Cubase
 

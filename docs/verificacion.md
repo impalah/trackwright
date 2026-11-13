@@ -298,3 +298,12 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
 - **Tras la corrección:** `verified: true`; POC-INSTR intacta; 7 pasos de deshacer, informados y reales.
 - Detalle en [experiments/tw1212](../experiments/tw1212/README.md).
 - **El usuario lo verificó desde otra sesión de Claude Code:** funciona.
+
+## 2026-11-13 — TW-1204: exportar la mezcla
+
+- **Experimento** ([experiments/tw1204](../experiments/tw1204/README.md)):
+  - el diálogo se abre y exporta entre los localizadores: `X0001.mp3` dura 27,99 s para un rango de 2–30 s;
+  - Select All + Locators to Selection dejan los localizadores en 0 → 2:19,976 s.
+- **`cubase_export_mix`, contra Cubase:**
+  - el ensayo de `start` propone la carpeta `…/X0001.test/Mixdown`, deducida con `lsof`;
+  - `confirm` encontró `X0001.mp3` (27,99 s), con `verified: true`.

@@ -373,3 +373,26 @@ class RangeEditOut(_Out):
     verified: bool | None = None
     mismatches: list[str] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------- export (TW-1204)
+class ExportedFileOut(_Out):
+    path: str
+    size_bytes: int
+    duration_seconds: float | None
+    duration_matches: bool | None = Field(description="the duration equals the exported range (±0.15 s)")
+
+
+class ExportOut(_Out):
+    phase: Literal["start", "confirm"]
+    status: Literal["planned", "awaiting_user", "done", "not_found"]
+    dry_run: bool
+    start: str | None = Field(description="range start (h:mm:ss.mmm)")
+    end: str | None
+    expected_seconds: float | None
+    folder: str | None = Field(description="where Cubase proposes to export (<project folder>/Mixdown)")
+    since: float | None = Field(description="pass it back to the confirm phase")
+    files: list[ExportedFileOut] = Field(default_factory=list)
+    verified: bool | None = None
+    instructions: str | None = None
+    notes: list[str] = Field(default_factory=list)
