@@ -2,6 +2,11 @@
 .venv/
 __pycache__/
 *.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Tools: tests, coverage, linters, type checker
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
@@ -9,15 +14,34 @@ __pycache__/
 .coverage.*
 htmlcov/
 coverage.xml
-dist/
-build/
-*.egg-info/
 
-# Local runtime output
-.trackwright/
+# Secrets and local settings (PyPI tokens, environment overrides)
+.env
+.env.*
+.pypirc
+
+# Claude Code: personal settings and notes (CLAUDE.md is shared)
+.claude/settings.local.json
+CLAUDE.local.md
+
+# Logs ([logging] file may point here)
 *.log
 
-# OS / editors
+# Audio and Cubase files produced while testing (experiment evidence lives in experiments/*/results*.json)
+*.wav
+*.aif
+*.aiff
+*.mp3
+*.cpr
+*.bak
+
+# OS
 .DS_Store
+._*
+Thumbs.db
+
+# Editors
 .idea/
 .vscode/
+*.swp
+*~
