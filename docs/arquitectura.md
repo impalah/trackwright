@@ -73,4 +73,41 @@ Agrupar operaciones dentro del script es la principal vía de mejora.
 - No se abre ningún puerto de red. El socket está en un directorio privado (0700) bajo `$TMPDIR`, con permisos 0600.
 - El puente solo acepta las operaciones de una lista blanca, líneas de 64 KiB como máximo y timeouts acotados.
 - Por defecto el servidor es de solo lectura. Las escrituras requieren configuración explícita y siempre se pueden ensayar antes.
-- El script no guarda proyectos ni controla la reproducción.
+- El script solo guarda el proyecto a petición explícita y con su propio permiso (`[writes] save`). Solo inicia la reproducción para grabar automatización, y nunca graba audio.
+
+## Extensión a otros DAW (posible, no implementada)
+
+**Decisión (2026-11-13):** por ahora Trackwright solo controla Cubase y **no se introduce una abstracción de DAW** (YAGNI). Una interfaz deducida de un solo DAW saldría con la forma de ese DAW. Se diseñará cuando haya un segundo DAW concreto, con un prototipo contra su API real, como se hizo con Cubase en la prueba de concepto. Llegado ese momento se acepta romper interfaces internas.
+
+### Qué se puede reutilizar hoy
+
+| Capa | Módulos | Reutilizable |
+|---|---|---|
+| Transporte MIDI y tramas SysEx | `coremidi.py`, `transport.py`, `protocol.py` | Sí, para cualquier DAW programable por MIDI |
+| Puente y canal local | `bridge.py`, arranque automático, sesiones | Casi entero; la lista blanca (`ops.py`) es de Cubase |
+| Puerto hacia el DAW | `HostPort.call(op, params)` | La forma sí; el vocabulario (`da.*`, `pm.*`, `cmd.run`) es la API MIDI Remote de Cubase |
+| Dominio | `core/` (`CubaseService` y sus mixins) | No: *tags* de DirectAccess, secciones `Inserts` y `Strips`, comandos de Cubase y rodeos a su comportamiento (rangos con la herramienta de rango, sondeo de bordes…) |
+| Herramientas MCP | `server.py` | No: recibe un `CubaseService` y las herramientas se llaman `cubase_*` |
+| Transversal | `policy.py`, `errors.py`, `core/models.py` | Bastante: política de escrituras, errores con código, modelos de pista y parámetro |
+| Instalación | `launcher.py`, `installer.py`, `doctor.py`, secciones `[cubase]` y `[script]` | La estructura; el contenido es de Cubase |
+
+Lo más transferible son los **principios**: ensayo antes de escribir (`dry_run`), verificación por relectura, no reintentar escrituras de resultado incierto, sesión fijada durante cada operación y clasificación de cada comando por su comportamiento observado.
+
+### Ruta prevista
+
+1. Mover lo específico de Cubase a `trackwright/daws/cubase/`: servicio, operaciones, script, lanzador, simulador y comprobaciones de `doctor`.
+2. Dejar en el núcleo el transporte, el puente, la política, los errores y los modelos comunes.
+3. Un `HostPort` por DAW, con el transporte que su API permita.
+4. `server.py` registra las herramientas del DAW configurado (por ejemplo, `[daw] kind = "cubase"`).
+5. **Nombres de herramienta con prefijo por DAW** (`cubase_*`, `ableton_*`, `protools_*`), que reflejan lo que cada uno hace de verdad. Un conjunto común pequeño (pistas, transporte, marcadores, mezcla básica) puede añadirse después, con marcas de capacidad.
+
+### Candidatos (sin verificar en este proyecto)
+
+- **Ableton Live:** *Remote Scripts* en Python dentro de Live, sobre su modelo de objetos (pistas, dispositivos, parámetros, clips).
+  - Podría reutilizar el transporte SysEx. Las alternativas habituales por OSC/UDP abren un puerto de red, lo que choca con la regla de seguridad.
+  - Es fuerte en mezcla y dispositivos y más limitado en la edición de la línea de tiempo (*Arrangement*).
+- **Pro Tools:** no tiene scripts MIDI; ofrece **PTSL** (Pro Tools Scripting Library), una API gRPC local.
+  - Necesitaría otro `HostPort` y no usaría el puente MIDI.
+  - Es fuerte en sesión, pistas, clips, edición, importación y exportación, y más limitado en el control de parámetros de plugins.
+
+Antes de diseñar nada, cada candidato necesita su propia prueba de concepto que mida qué expone de verdad, como `cubase-mcp-poc` hizo con Cubase.
