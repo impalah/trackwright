@@ -73,3 +73,13 @@ El estado final de POC-TEST (volumen, mute, solo, nombre), el tempo y el cursor 
 - POC-TEST seleccionada.
 
 El proyecto no se ha guardado.
+
+## 2026-11-13 — uso real desde Claude Code
+
+- **Registro:** `claude mcp add --scope user trackwright -- uv --directory /Volumes/Data/projects/sound/trackwright run trackwright serve`. `claude mcp list` → `✔ Connected`.
+- **Configuración:** `~/.config/trackwright/config.toml` con `[writes] enabled = true`, sin limitar pistas.
+- **Sesión nueva de Claude Code,** sin el contexto del desarrollo. Según el usuario funcionaron:
+  - `cubase_status`;
+  - el listado de pistas;
+  - silenciar y volver a activar una pista.
+- **Conclusión:** la cadena completa cliente MCP → `trackwright serve` → puente → Cubase funciona en uso real, y un modelo sin conocimiento previo del proyecto usa las herramientas a partir de sus descripciones.
