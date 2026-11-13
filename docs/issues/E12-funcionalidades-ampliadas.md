@@ -85,4 +85,8 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
   | A6 | Limpieza: el usuario borra la automatización, o Deshacer; 4014 = 0; volumen original | estado final igual que A0 |
 
 - **Precaución:** se reproduce audio. Baja el monitor o silencia la salida; el silencio de la salida no afecta a la automatización de la pista.
-- **Si funciona:** diseñar `cubase_record_automation(track, parameter, points)`. Requeriría iniciar el transporte desde Trackwright, con `Transport / Start` o `mTransport.mValue.mStart`, que habría que verificar.
+- **Resultado de la variante A (2026-11-13): no graba.** Detalle en [verificacion.md](../verificacion.md). El fader se mueve durante la reproducción, pero no queda automatización; con la lectura activada, el volumen no varía.
+- **Variantes pendientes:**
+  - **B1, sin cambiar el script:** el usuario pone a mano el modo de automatización **Auto-Latch** (o Cross-Over), en el que la escritura arranca con cualquier cambio del parámetro, y se repiten A1–A4.
+  - **B2, con cambios en el script:** un fader de la superficie enlazado (`makeValueBinding`) al volumen de la pista seleccionada (`mTrackSelection.mMixerChannel.mValue.mVolume`). El script movería el fader con su estado de toque (`mTouchState`), como un controlador físico, que es como los controladores graban automatización.
+- **Si alguna variante funciona:** diseñar `cubase_record_automation(track, parameter, points)`. Requeriría iniciar el transporte desde Trackwright, con `Transport / Start` o `mTransport.mValue.mStart`, que habría que verificar.

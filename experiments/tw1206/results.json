@@ -1,0 +1,290 @@
+{
+  "A0_A1": {
+    "at": "2026-11-13 10:09:44",
+    "initial": {
+      "volume": {
+        "tag": 1025,
+        "title": "Volumen",
+        "process": 0.7890865802764893,
+        "display": "0.00"
+      },
+      "write": {
+        "tag": 4013,
+        "title": "Escribir automatización",
+        "process": 0.0,
+        "display": "Desact."
+      },
+      "read": {
+        "tag": 4014,
+        "title": "Leer automatización",
+        "process": 0.0,
+        "display": "Desact."
+      },
+      "cursor": "1. 1. 1.  0"
+    },
+    "write_enabled": true,
+    "write_after": {
+      "tag": 4013,
+      "title": "Escribir automatización",
+      "process": 1.0,
+      "display": "Activ."
+    },
+    "cursor_set": true
+  },
+  "A2_record": {
+    "at": "2026-11-13 10:42:56",
+    "playback_detected_at_cursor": "1. 1. 1. 61",
+    "steps": [
+      {
+        "t": 0.31,
+        "requested": 0.79,
+        "after": 0.7900000214576721,
+        "display": "0.04",
+        "cursor": "1. 1. 4.  9"
+      },
+      {
+        "t": 0.64,
+        "requested": 0.7705,
+        "after": 0.7705000042915344,
+        "display": "-0.38",
+        "cursor": "1. 2. 2. 91"
+      },
+      {
+        "t": 0.98,
+        "requested": 0.751,
+        "after": 0.7509999871253967,
+        "display": "-0.79",
+        "cursor": "1. 3. 1. 54"
+      },
+      {
+        "t": 1.31,
+        "requested": 0.7315,
+        "after": 0.7315000295639038,
+        "display": "-1.23",
+        "cursor": "1. 3. 4. 18"
+      },
+      {
+        "t": 1.65,
+        "requested": 0.712,
+        "after": 0.7120000123977661,
+        "display": "-1.68",
+        "cursor": "1. 4. 2. 99"
+      },
+      {
+        "t": 1.99,
+        "requested": 0.6925,
+        "after": 0.6924999952316284,
+        "display": "-2.17",
+        "cursor": "2. 1. 1. 61"
+      },
+      {
+        "t": 2.32,
+        "requested": 0.673,
+        "after": 0.6729999780654907,
+        "display": "-2.68",
+        "cursor": "2. 1. 4. 24"
+      },
+      {
+        "t": 2.66,
+        "requested": 0.6535,
+        "after": 0.6535000205039978,
+        "display": "-3.22",
+        "cursor": "2. 2. 2.107"
+      },
+      {
+        "t": 2.99,
+        "requested": 0.634,
+        "after": 0.6340000033378601,
+        "display": "-3.80",
+        "cursor": "2. 3. 1. 69"
+      },
+      {
+        "t": 3.33,
+        "requested": 0.6145,
+        "after": 0.6144999861717224,
+        "display": "-4.42",
+        "cursor": "2. 3. 4. 32"
+      },
+      {
+        "t": 3.67,
+        "requested": 0.595,
+        "after": 0.5950000286102295,
+        "display": "-5.09",
+        "cursor": "2. 4. 2.114"
+      },
+      {
+        "t": 4.0,
+        "requested": 0.5755,
+        "after": 0.5755000114440918,
+        "display": "-5.82",
+        "cursor": "3. 1. 1. 77"
+      },
+      {
+        "t": 4.34,
+        "requested": 0.556,
+        "after": 0.5559999942779541,
+        "display": "-6.46",
+        "cursor": "3. 1. 4. 39"
+      },
+      {
+        "t": 4.67,
+        "requested": 0.5365,
+        "after": 0.5364999771118164,
+        "display": "-7.08",
+        "cursor": "3. 2. 3.  2"
+      },
+      {
+        "t": 5.01,
+        "requested": 0.517,
+        "after": 0.5170000195503235,
+        "display": "-7.73",
+        "cursor": "3. 3. 1. 85"
+      },
+      {
+        "t": 5.35,
+        "requested": 0.4975,
+        "after": 0.4975000023841858,
+        "display": "-8.39",
+        "cursor": "3. 3. 4. 49"
+      },
+      {
+        "t": 5.68,
+        "requested": 0.478,
+        "after": 0.4779999852180481,
+        "display": "-9.09",
+        "cursor": "3. 4. 3. 10"
+      },
+      {
+        "t": 6.02,
+        "requested": 0.4585,
+        "after": 0.4584999978542328,
+        "display": "-9.81",
+        "cursor": "4. 1. 1. 92"
+      },
+      {
+        "t": 6.35,
+        "requested": 0.439,
+        "after": 0.4390000104904175,
+        "display": "-10.6",
+        "cursor": "4. 1. 4. 55"
+      },
+      {
+        "t": 6.69,
+        "requested": 0.4195,
+        "after": 0.4194999933242798,
+        "display": "-11.4",
+        "cursor": "4. 2. 3. 17"
+      },
+      {
+        "t": 7.02,
+        "requested": 0.4,
+        "after": 0.4000000059604645,
+        "display": "-12.2",
+        "cursor": "4. 3. 1.100"
+      }
+    ]
+  },
+  "A3_A4_readback": {
+    "at": "2026-11-13 10:46:07",
+    "write_off": true,
+    "read_on": true,
+    "volume_reset": true,
+    "playback_detected_at_cursor": "1. 1. 1. 11",
+    "samples": [
+      {
+        "t": 0.21,
+        "process": 0.7900000214576721,
+        "display": "0.04",
+        "cursor": "1. 1. 2.106"
+      },
+      {
+        "t": 0.66,
+        "process": 0.7900000214576721,
+        "display": "0.04",
+        "cursor": "1. 2. 2. 56"
+      },
+      {
+        "t": 1.1,
+        "process": 0.7900000214576721,
+        "display": "0.04",
+        "cursor": "1. 3. 2.  6"
+      },
+      {
+        "t": 1.55,
+        "process": 0.7900000214576721,
+        "display": "0.04",
+        "cursor": "1. 4. 1. 76"
+      },
+      {
+        "t": 2.0,
+        "process": 0.7900000214576721,
+        "display": "0.04",
+        "cursor": "2. 1. 1. 26"
+      },
+      {
+        "t": 2.45,
+        "process": 0.7900000214576721,
+        "display": "0.04",
+        "cursor": "2. 1. 4. 96"
+      },
+      {
+        "t": 2.9,
+        "process": 0.7900000214576721,
+        "display": "0.04",
+        "cursor": "2. 2. 4. 46"
+      },
+      {
+        "t": 3.34,
+        "process": 0.7900000214576721,
+        "display": "0.04",
+        "cursor": "2. 3. 3.116"
+      },
+      {
+        "t": 3.79,
+        "process": 0.7900000214576721,
+        "display": "0.04",
+        "cursor": "2. 4. 3. 66"
+      },
+      {
+        "t": 4.24,
+        "process": 0.7900000214576721,
+        "display": "0.04",
+        "cursor": "3. 1. 3. 16"
+      },
+      {
+        "t": 4.69,
+        "process": 0.7900000214576721,
+        "display": "0.04",
+        "cursor": "3. 2. 2. 86"
+      },
+      {
+        "t": 5.14,
+        "process": 0.7900000214576721,
+        "display": "0.04",
+        "cursor": "3. 3. 2. 37"
+      }
+    ]
+  },
+  "A6_cleanup": {
+    "at": "2026-11-13 10:46:27",
+    "volume": {
+      "tag": 1025,
+      "title": "Volumen",
+      "process": 0.7890865802764893,
+      "display": "0.00"
+    },
+    "write": {
+      "tag": 4013,
+      "title": "Escribir automatización",
+      "process": 0.0,
+      "display": "Desact."
+    },
+    "read": {
+      "tag": 4014,
+      "title": "Leer automatización",
+      "process": 0.0,
+      "display": "Desact."
+    },
+    "cursor": "1. 1. 1.  0"
+  }
+}

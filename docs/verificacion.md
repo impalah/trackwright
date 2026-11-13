@@ -115,3 +115,21 @@ El proyecto no se ha guardado.
     - tres `ping` separados por 2 s (09:47:39–09:47:45) → **tres destellos cortos**;
     - diez `da.channels` seguidos durante 1,0 s (09:47:45–09:47:46) → **encendida todo ese segundo** y apagada al terminar.
 - **Conclusión:** TW-1101 verificado en Cubase Elements 15.0.30.
+
+## 2026-11-13 — experimento TW-1206 (grabar automatización de volumen), variante A
+
+- **Script:** `experiments/tw1206/automation.py`. Datos completos en `experiments/tw1206/results.json`.
+- **Pista:** POC-TEST, con audio. Modo de automatización: el que tenía el proyecto, presumiblemente **Touch** (el habitual; no se comprobó).
+
+| Paso | Resultado |
+|---|---|
+| A0–A1 | Estado inicial: volumen 0,79 (0 dB), W y R desactivados. Escritura (4013) → «Activ.» |
+| A2 (10:42:56) | Reproducción detectada por los avisos de transporte. Rampa de 21 escrituras de 0,79 a 0,40 (−12,2 dB), todas releídas exactas. **El fader se movió** (observado por el usuario). Cada paso tardó unos 0,33 s, porque cada escritura vuelve a resolver la pista |
+| Observación | **No apareció ninguna curva** en el carril de automatización de volumen |
+| A3–A4 (10:46:07) | Escritura desactivada y lectura (4014) activada; volumen puesto a 0,79. Durante 5 s de reproducción el volumen **se quedó en 0,79** todo el tiempo (12 lecturas) |
+| A6 | Restaurado: 0 dB, W y R desactivados, cursor en el compás 1 |
+
+**Hallazgos:**
+1. **No se graba automatización** al escribir el parámetro de volumen por DirectAccess (`setParameterProcessValue`) con la escritura activada y en reproducción. Hipótesis: Cubase no considera esos cambios un control «tocado», que es lo que necesita para grabar en Touch.
+2. **El script recibe la posición del cursor durante la reproducción** (`mTransportLocator.mOnChange`): avanzó del compás 1 al 4 a lo largo de la rampa. Así se puede detectar la reproducción y seguir la posición.
+3. **Latencia:** una escritura completa con resolución de la pista cuesta unos 0,33 s. Para escrituras rápidas en serie habría que escribir sobre el objeto ya resuelto.
