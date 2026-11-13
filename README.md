@@ -9,7 +9,7 @@
 | Servidor MCP | `trackwright` (stdio) |
 | Plataforma | macOS. Verificado en macOS 27.2 (Apple Silicon) |
 | Cubase | 15.0.20 o posterior (API MIDI Remote 1.3). Verificado en Cubase Elements 15.0.30 |
-| Licencia | AGPL-3.0-only |
+| Licencia | AGPL-3.0-or-later |
 
 > Trackwright es un proyecto independiente. No está afiliado a Steinberg ni respaldado por ella; Cubase es una marca de Steinberg Media Technologies GmbH.
 
@@ -127,4 +127,4 @@ Manuales y tutoriales, en español, en la carpeta `docs/` del código fuente (í
 
 Copyright (C) 2026 impalah.
 
-Este programa es software libre: puedes redistribuirlo o modificarlo según los términos de la **GNU Affero General Public License, versión 3** (`AGPL-3.0-only`), publicada por la Free Software Foundation. Se distribuye sin ninguna garantía. Consulta el archivo `LICENSE`.
+Este programa es software libre: puedes redistribuirlo o modificarlo según los términos de la **GNU Affero General Public License** publicada por la Free Software Foundation, versión 3 o, a tu elección, cualquier versión posterior (`AGPL-3.0-or-later`). Se distribuye sin ninguna garantía. Consulta el archivo `LICENSE`.
