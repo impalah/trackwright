@@ -297,3 +297,4 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
 - **Primer intento:** borró de más, por la preferencia de selección automática bajo el cursor; restaurado con Deshacer.
 - **Tras la corrección:** `verified: true`; POC-INSTR intacta; 7 pasos de deshacer, informados y reales.
 - Detalle en [experiments/tw1212](../experiments/tw1212/README.md).
+- **El usuario lo verificó desde otra sesión de Claude Code:** funciona.

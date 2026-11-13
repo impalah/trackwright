@@ -206,7 +206,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1212 Edición por rangos en una sola pista
 
-- **Estado:** implementada: `cubase_edit_range` con `track` (solo `delete`). Verificada en Cubase el 2026-11-13: `verified: true` y 7 pasos de deshacer, informados y reales. Detalle en [experiments/tw1212](../../experiments/tw1212/README.md)
+- **Estado:** cerrada. `cubase_edit_range` con `track` (solo `delete`). Verificada en Cubase el 2026-11-13, primero por Claude (`verified: true`, 7 pasos de deshacer, informados y reales) y después por el usuario desde Claude Code. Detalle en [experiments/tw1212](../../experiments/tw1212/README.md)
 - **Origen:** `cubase_edit_range` actúa sobre todas las pistas, porque `Select in Loop` con la herramienta de rango selecciona todas (TW-1211). Para un podcast hace falta también quitar, por ejemplo, una tos del micro de un invitado sin tocar los demás.
 - **Vías a investigar:**
   1. **Objeto en vez de rango:** `Split Loop` corta en los localizadores (en todas las pistas, sin cambiar el sonido); después, seleccionar solo los eventos de la pista dentro del rango (con `Select All on Tracks`, `Select Events under Cursor` o `Select from Cursor to End` con la pista seleccionada) y aplicar `Delete`. Hay que verificar qué alcance tiene cada selección.
