@@ -174,3 +174,32 @@ El proyecto no se ha guardado.
 - **`cubase_run_command("transport.start")`:** el cursor avanzó de `1. 1. 1. 0` a `1. 4. 3. 94` en 2,1 s, según los avisos de transporte durante la reproducción. El usuario confirma que reprodujo.
 - **`cubase_run_command("transport.stop")`:** el cursor se detuvo en `2. 1. 4. 17` y no cambió en los 0,8 s siguientes. El usuario confirma que paró.
 - **Conclusión:** Trackwright puede iniciar y detener la reproducción (clase `direct`).
+
+## 2026-11-13 — TW-1207, experimento B3: automatización de más parámetros (script 1.3.0+tw1206)
+
+- **Controles:** 45, enlazados a la pista seleccionada (POC-TEST), sin errores. `auto.list` informa del parámetro enlazado a cada uno:
+  - volumen y panorama;
+  - envíos 1 a 4 («Nivel»);
+  - EQ del canal («EQ n Gain/Freq/Q»);
+  - pre-filtro («PreGain», «LC-Freq», «HC-Freq»);
+  - **slot 1 (Compressor), en este orden del banco:** Threshold, Ratio, Attack, Release, AutoRelease, Hold, MakeUp y AutoMakeUp;
+  - vacíos: los Quick Controls (sin asignar en una pista de audio) y el slot 2 (vacío).
+- **Prueba automática** (`experiments/tw1206/controls.py run`, datos en `results-b3.json`). Reproducción iniciada y detenida por Trackwright (`transport.start` y `transport.stop`). Para cada parámetro: grabación de una rampa con toque, comprobación en lectura y restauración.
+
+| Parámetro | Rampa | ¿Se reproduce en lectura? |
+|---|---|---|
+| volume | 0,00 → −8,69 dB | ✅ |
+| pan | C → L60 | ✅ |
+| send1.level | 0,00 → −8,69 dB | ✅ |
+| eq1.gain | 0,0 → −14,4 dB | ✅ |
+| prefilter.gain | 0,0 → −28,8 dB | ✅ |
+| insert1.p1 (Compressor Threshold) | −20 → −38 dB | ✅ |
+| insert1.p2 (Compressor Ratio) | 2:1 → 4,10:1 | ✅ |
+| qc1 | sin parámetro asignado | ❌ (esperado) |
+
+- **Incidencia de método:** la restauración de cada parámetro la deshacía la lectura del siguiente, porque **R (leer automatización) afecta a todos los parámetros de la pista** y reproduce las curvas ya grabadas. Restaurado al final, con R desactivado, y verificado por DirectAccess: volumen 0,00, EQ 0,0 dB, Threshold −20 dB, Ratio 2:1, panorama C, envío 0,00 y pre-filtro 0,0 dB.
+- **Conclusiones:**
+  - Trackwright puede grabar automatización de **volumen, panorama, envíos, EQ del canal, pre-filtro y parámetros de plugins de inserción** (por banco), además de reproducir y parar solo.
+  - Los Quick Controls dependen de que la pista los tenga asignados.
+  - **Para la herramienta:** con R activado, la automatización manda sobre el valor. Hay que informar de ello y no «restaurar» valores bajo lectura.
+- **Quedan en el proyecto** las curvas grabadas, sin efecto mientras R esté desactivado.
