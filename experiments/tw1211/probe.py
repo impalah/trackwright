@@ -8,6 +8,8 @@ Steps (all print JSON; destructive ones only act with --apply):
   events [max]                walk Locate Next Event from the project start; list cursor stops (seconds)
   select <track>              select a track
   run <command-key> [--apply] run one Trackwright command key (canPerform shown first)
+  bounds                      selection start/end in seconds (Locate Selection / Selection End); cursor restored
+  edges <track>               select the track and list its event edges (seconds) with the service probe
 """
 
 from __future__ import annotations
@@ -83,6 +85,23 @@ def main(argv: list[str]) -> Any:
                 break
             stops.append(value)
         return {"stops_seconds": stops, "bars_now": tparam(4023)}
+    if step == "bounds":
+        cursor = tparam(4101)
+        out = {}
+        for key in ("transport.locate_selection", "transport.locate_selection_end"):
+            if not service.run_command(key, dry_run=True, force=True).can_perform:
+                out[key] = "canPerform=false (nothing selected?)"
+                continue
+            previous = tparam(4101)
+            service.run_command(key, dry_run=False, force=True)
+            out[key] = settle(previous, 1.0)
+        service.set_position("cursor", cursor, unit="seconds")
+        return out
+    if step == "edges":
+        service.select_track(argv[1])
+        transport = TRANSPORT
+        edges, complete = service.probe_edges(transport, 0.0)
+        return {"track": argv[1], "edges": [f"{e:.3f}" for e in edges], "complete": complete}
     if step == "select":
         return service.select_track(argv[1]).model_dump()
     if step == "run":
