@@ -2,6 +2,7 @@
 
 ## Sin publicar
 
+- **Script 1.2.0:** comandos de automatización (modos Touch, Auto-Latch y Cross-Over, siguiente modo y escritura en las pistas seleccionadas) para el experimento TW-1206. Clase `unknown` hasta observarlos.
 - **Script 1.1.0:** panel de estado en la superficie MIDI Remote (TW-1101): título con la versión, pista seleccionada y lámpara de actividad. Solo usa mecanismos verificados en Cubase 15. Las operaciones no cambian.
 - **Experimento TW-1101** (`experiments/tw1101/README.md`): protocolo y resultados, en `docs/verificacion.md`.
 - **`trackwright script install --file <script>`:** instala otro script, como el del experimento.

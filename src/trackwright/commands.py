@@ -201,6 +201,46 @@ _SPECS = [
         "Open Detect Silence for the selected audio event",
         "verified: opens its dialog; needs a selected audio event",
     ),
+    CommandSpec(
+        "automation.mode_touch",
+        "Automation",
+        "Automation Mode - Touch",
+        "unknown",
+        "Automation mode Touch: writes only while a control is touched",
+        "not observed (TW-1206)",
+    ),
+    CommandSpec(
+        "automation.mode_auto_latch",
+        "Automation",
+        "Automation Mode - Auto-Latch",
+        "unknown",
+        "Automation mode Auto-Latch: writing starts on any change and lasts until stop",
+        "not observed (TW-1206)",
+    ),
+    CommandSpec(
+        "automation.mode_cross_over",
+        "Automation",
+        "Automation Mode - Cross-Over",
+        "unknown",
+        "Automation mode Cross-Over: like Auto-Latch, stops when crossing existing automation",
+        "not observed (TW-1206)",
+    ),
+    CommandSpec(
+        "automation.next_mode",
+        "Automation",
+        "Next Automation Mode",
+        "unknown",
+        "Switch to the next automation mode",
+        "not observed (TW-1206)",
+    ),
+    CommandSpec(
+        "automation.toggle_write_selected",
+        "Automation",
+        "Toggle Write Enable Selected Tracks",
+        "unknown",
+        "Toggle automation write on the selected tracks",
+        "used by factory scripts; not observed",
+    ),
 ]
 
 COMMANDS: dict[str, CommandSpec] = {spec.key: spec for spec in _SPECS}

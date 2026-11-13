@@ -16,7 +16,7 @@
 
 var midiremote_api = require('midiremote_api_v1')
 
-var SCRIPT_VERSION = '1.1.0'
+var SCRIPT_VERSION = '1.2.0'
 var PROTOCOL_VERSION = 1
 var MANUFACTURER = 0x7D
 var MAGIC_A = 0x54
@@ -235,7 +235,14 @@ var COMMANDS = [
 	['edit.select_all', 'Edit', 'Select All'],
 	['edit.select_none', 'Edit', 'Select None'],
 	['edit.select_in_loop', 'Edit', 'Select in Loop'],
-	['audio.detect_silence', 'Audio', 'Detect Silence']
+	['audio.detect_silence', 'Audio', 'Detect Silence'],
+	// TW-1206: automation modes (Touch only writes while a control is touched; Auto-Latch and
+	// Cross-Over start writing on any change). Behaviour in Cubase not observed yet.
+	['automation.mode_touch', 'Automation', 'Automation Mode - Touch'],
+	['automation.mode_auto_latch', 'Automation', 'Automation Mode - Auto-Latch'],
+	['automation.mode_cross_over', 'Automation', 'Automation Mode - Cross-Over'],
+	['automation.next_mode', 'Automation', 'Next Automation Mode'],
+	['automation.toggle_write_selected', 'Automation', 'Toggle Write Enable Selected Tracks']
 ]
 var commands = {}
 var commandErrors = []

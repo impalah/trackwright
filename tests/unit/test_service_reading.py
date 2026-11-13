@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import pytest
 
+from trackwright.commands import COMMANDS
 from trackwright.core.policy import WritePolicy
 from trackwright.core.refs import ObjectRef
 from trackwright.core.service import CubaseService
@@ -20,7 +21,7 @@ def test_status(service: CubaseService) -> None:
     assert status.simulated is True
     assert status.script_version == SCRIPT_VERSION
     assert status.mixer_access is True
-    assert status.commands_bound == 30
+    assert status.commands_bound == len(COMMANDS)
     assert status.writes_enabled is True
 
 

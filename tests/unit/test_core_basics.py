@@ -8,6 +8,7 @@ from typing import Any
 import pytest
 
 from trackwright.bridge import BridgeClient
+from trackwright.commands import COMMANDS
 from trackwright.config import WritesConfig
 from trackwright.core.policy import WritePolicy
 from trackwright.core.refs import ObjectRef, TrackSelector
@@ -172,7 +173,7 @@ def test_fake_misc_reads() -> None:
     assert fake.call("status")["simulated"] is True
     assert fake.call("hello")["sessionId"] == fake.session_id
     assert fake.call("da.base", {"scope": "mixer"})["object"]["type"] == "VST Mixer"
-    assert len(fake.call("cmd.list")["commands"]) == 30
+    assert len(fake.call("cmd.list")["commands"]) == len(COMMANDS)
     fake.selected = -1
     assert fake.call("da.base") == {"base": -1}
     assert fake.call("da.channels") == {"base": -1, "total": 0, "items": [], "duplicates": []}

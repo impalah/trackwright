@@ -202,6 +202,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `addtrack.marker`, `marker.insert`, `project.select_track_next`, `project.select_track_prev`, `transport.locate_next_marker`, `transport.locate_prev_marker` | direct |
 | `project.remove_selected_tracks` | confirm |
 | `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.set_left_locator`, `transport.set_right_locator`, `transport.locators_to_selection` | unknown |
+| `automation.mode_touch`, `automation.mode_auto_latch`, `automation.mode_cross_over`, `automation.next_mode`, `automation.toggle_write_selected` | unknown (experimento TW-1206) |
 
 ## Lo que no se puede hacer
 
