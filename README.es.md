@@ -2,6 +2,14 @@
 
 [English](README.md) · **Español**
 
+[![PyPI version](https://badge.fury.io/py/trackwright.svg)](https://pypi.org/project/trackwright/)
+[![Python 3.14+](https://img.shields.io/badge/python-3.14+-blue.svg)](https://www.python.org/downloads/)
+[![License: AGPL v3+](https://img.shields.io/badge/License-AGPL%20v3%2B-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+![Coverage 98%](https://img.shields.io/badge/coverage-98%25-brightgreen.svg)
+![Platform: macOS](https://img.shields.io/badge/platform-macOS-lightgrey.svg)
+![Cubase 15.0.20+](https://img.shields.io/badge/Cubase-15.0.20+-red.svg)
+[![MCP](https://img.shields.io/badge/MCP-server-8A2BE2.svg)](https://modelcontextprotocol.io)
+
 **Trackwright** es un servidor [MCP](https://modelcontextprotocol.io) que permite a Claude **inspeccionar y controlar Cubase**: pistas, mezcla, plugins y sus parámetros, transporte, marcadores, automatización y edición por rangos de tiempo, pensada para podcasts. Funciona con un script MIDI Remote que se ejecuta dentro de Cubase; no necesita controladores físicos ni puertos IAC.
 
 | | |
