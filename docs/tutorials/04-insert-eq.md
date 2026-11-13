@@ -2,6 +2,8 @@
 
 **English** · [Español](04-insert-eq.es.md)
 
+> **Tested setup.** These tutorials use **Claude Code** and **Cubase**: the tool behavior they describe was verified with Claude Code and Cubase Elements 15.0.30 (see the [verification log](../verification.md)). Any other MCP client calls the same tools; where the text says "the assistant", read your client's AI assistant. For now, Cubase is the only DAW Trackwright supports.
+
 **Goal:** load StudioEQ in an empty slot, raise a band's gain by 3 dB in real units and restore it.
 **You need:** [tutorial 3](03-first-safe-change.md), with writes enabled for POC-TEST.
 
@@ -15,7 +17,7 @@ Let's assume slot 2 is empty. Trackwright **never replaces a loaded plugin**: on
 
 > Insert StudioEQ in slot 2 of POC-TEST. Show me the plan first.
 
-1. Claude looks up StudioEQ's `uid` with `cubase_list_available_plugins`: it is `946051208E29496E804F64A825C8A047`.
+1. The assistant looks up StudioEQ's `uid` with `cubase_list_available_plugins`: it is `946051208E29496E804F64A825C8A047`.
 2. It calls `cubase_insert_plugin` with `dry_run: true` and shows you the track, the slot and the plugin.
 3. After your confirmation, it applies it.
 
@@ -25,13 +27,13 @@ The response includes `inserted: true` and `verified: true`: the slot contains a
 
 > In the EQ in slot 2, which parameter controls band 1's gain?
 
-With `cubase_list_parameters`, `target: "insert:2"` and a filter, Claude finds the parameter `GainP1L` (tag 4207). Its value is `0.0 dB`.
+With `cubase_list_parameters`, `target: "insert:2"` and a filter, the assistant finds the parameter `GainP1L` (tag 4207). Its value is `0.0 dB`.
 
 ## Step 4. Write in real units
 
 > Raise that gain to +3 dB.
 
-Claude uses `cubase_set_parameter` with `unit: "plain"` and `value: 3`. Cubase converts the 3 dB to its normalized value (0.5625), and Trackwright verifies with a tolerance of 1e-3. In the dry run you will see the normalized value that will be written.
+The assistant uses `cubase_set_parameter` with `unit: "plain"` and `value: 3`. Cubase converts the 3 dB to its normalized value (0.5625), and Trackwright verifies with a tolerance of 1e-3. In the dry run you will see the normalized value that will be written.
 
 ## Step 5. Restore
 

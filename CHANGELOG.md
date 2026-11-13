@@ -8,7 +8,7 @@
   - **AGPL-3.0-or-later** license (`LICENSE` file, metadata per PEP 639).
   - README rewritten for end users; the documentation index moves to `docs/README.md`.
   - `setup` registers in Claude Code the absolute path of `trackwright` (installed with `uv tool`), or `uvx --from trackwright==<version> trackwright serve` when run with `uvx`, pinned to the version of the script it installs.
-- **Positioning:** Trackwright is presented as an independent MCP server for DAWs whose first implementation is Cubase. The docs speak of MCP clients in general (tested with Claude Code) and explain how to connect GitHub Copilot in VS Code (not tested yet).
+- **Positioning:** Trackwright is presented as an independent MCP server for DAWs whose first implementation is Cubase. The docs speak of MCP clients in general (tested with Claude Code) and explain how to connect GitHub Copilot in VS Code (not tested yet). The tutorials and the tool reference speak of "the assistant" and state that they were tested with Claude Code and Cubase.
 - **Documentation in English** with a Spanish translation of every document in a sibling `*.es.md` file. English file and folder names (`docs/tutorials`, `docs/reference`, `docs/manual/01-installation.md`…). `tests/unit/test_docs.py` checks that every document has its translation and that links and anchors stay in their language.
 - **Guided installation** (TW-1301): `trackwright setup` installs the Cubase script, creates the configuration if it doesn't exist (writes and saving disabled by default) and registers the server in Claude Code. Each step is shown and confirmed; `--yes STEP` skips the question. It ends with `doctor`.
 - `doctor` also shows `[writes] save` and, with `autostart`, explains that the bridge starts with the MCP server.

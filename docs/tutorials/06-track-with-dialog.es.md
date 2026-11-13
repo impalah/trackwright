@@ -2,7 +2,9 @@
 
 [English](06-track-with-dialog.md) · **Español**
 
-**Objetivo:** crear un canal de grupo con nombre propio colaborando con Claude, y después borrarlo de forma segura.
+> **Configuración probada.** Estos tutoriales usan **Claude Code** y **Cubase**: el comportamiento de las herramientas que describen se verificó con Claude Code y Cubase Elements 15.0.30 (ver el [registro de verificación](../verification.es.md)). Cualquier otro cliente MCP llama a las mismas herramientas; donde dice «el asistente», entiende el asistente de IA de tu cliente. Por ahora, Cubase es el único DAW que admite Trackwright.
+
+**Objetivo:** crear un canal de grupo con nombre propio colaborando con el asistente, y después borrarlo de forma segura.
 **Necesitas:** las escrituras habilitadas, y estar delante de la pantalla de Cubase.
 
 ## Por qué hace falta tu ayuda
@@ -13,7 +15,7 @@ Al añadir pistas de audio, de grupo o carpetas, Cubase abre el diálogo «Añad
 
 > Crea un canal de grupo llamado POC-GROUP.
 
-Claude llama a `cubase_add_track_interactive` con `phase: "start"`, `kind: "group"` y `suggested_name: "POC-GROUP"`. La respuesta trae `status: "awaiting_user"` y unas instrucciones.
+El asistente llama a `cubase_add_track_interactive` con `phase: "start"`, `kind: "group"` y `suggested_name: "POC-GROUP"`. La respuesta trae `status: "awaiting_user"` y unas instrucciones.
 
 En Cubase se abre el diálogo «Añadir pista». **Escribe el nombre `POC-GROUP`** y acepta.
 
@@ -23,7 +25,7 @@ Si aceptas sin escribir nombre, Cubase lo llama «Group 01» y la fase de confir
 
 > Ya lo he creado.
 
-Claude llama de nuevo con `phase: "confirm"`. Trackwright busca la pista en el mezclador y devuelve:
+El asistente llama de nuevo con `phase: "confirm"`. Trackwright busca la pista en el mezclador y devuelve:
 - `status: "done"` y `verified: true`, con el selector `uid:` del grupo nuevo;
 - o `not_found`, si cancelaste el diálogo o usaste otro nombre.
 
@@ -31,7 +33,7 @@ Claude llama de nuevo con `phase: "confirm"`. Trackwright busca la pista en el m
 
 > Borra POC-GROUP.
 
-Claude debería:
+El asistente debería:
 1. seleccionarlo con `cubase_select_track`;
 2. ensayar `cubase_remove_selected_tracks` con `expect_selected: "POC-GROUP"`, que solo actúa si la selección coincide **exactamente** (si no, `SELECTION_MISMATCH`);
 3. con tu confirmación, aplicarlo.

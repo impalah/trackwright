@@ -2,6 +2,8 @@
 
 **English** · [Español](02-inspect-track.es.md)
 
+> **Tested setup.** These tutorials use **Claude Code** and **Cubase**: the tool behavior they describe was verified with Claude Code and Cubase Elements 15.0.30 (see the [verification log](../verification.md)). Any other MCP client calls the same tools; where the text says "the assistant", read your client's AI assistant. For now, Cubase is the only DAW Trackwright supports.
+
 **Goal:** read a track's inserts, the plugin catalog and a plugin's parameters, without modifying anything.
 **You need:** [tutorial 1](01-first-connection.md). So that there is something to read, manually insert a plugin (for example, StudioEQ) in slot 1 of a track.
 
@@ -11,7 +13,7 @@ Ask:
 
 > List the tracks and give me the selector for the "POC-TEST" track.
 
-Claude uses `cubase_list_tracks` and gives you something like `uid:79CDBA14…`. **That selector does not change even if you restart Cubase**, so it is the safest way to refer to the track.
+The assistant uses `cubase_list_tracks` and gives you something like `uid:79CDBA14…`. **That selector does not change even if you restart Cubase**, so it is the safest way to refer to the track.
 
 ## Step 2. View the inserts
 
@@ -29,7 +31,7 @@ Claude uses `cubase_list_tracks` and gives you something like `uid:79CDBA14…`.
 
 > Show me the gain parameters of the plugin in slot 1.
 
-Claude uses `cubase_list_parameters` with `target: "insert:1"` and a filter. Each parameter has:
+The assistant uses `cubase_list_parameters` with `target: "insert:1"` and a filter. Each parameter has:
 - `tag`: its stable identifier;
 - `title`: in Cubase's language;
 - `display`: the value as Cubase shows it, for example `0.0 dB`;

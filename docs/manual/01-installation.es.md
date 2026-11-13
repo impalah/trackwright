@@ -114,7 +114,7 @@ Cubase **no recarga** los scripts cambiados por sí mismo. Si estaba abierto, re
 
 ## 5. Arrancar el puente
 
-**Normalmente no hace falta:** el servidor MCP arranca el puente cuando lo necesita (`[bridge] autostart`). Arrancarlo a mano sirve para hacer las comprobaciones del paso 7 antes de conectar Claude, o para ver su log en directo. En una terminal que dejarás abierta:
+**Normalmente no hace falta:** el servidor MCP arranca el puente cuando lo necesita (`[bridge] autostart`). Arrancarlo a mano sirve para hacer las comprobaciones del paso 7 antes de conectar tu cliente MCP, o para ver su log en directo. En una terminal que dejarás abierta:
 
 ```sh
 cd /Volumes/Data/projects/sound/trackwright

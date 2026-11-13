@@ -2,7 +2,9 @@
 
 **English** · [Español](06-track-with-dialog.es.md)
 
-**Goal:** create a group channel with a custom name in collaboration with Claude, and then delete it safely.
+> **Tested setup.** These tutorials use **Claude Code** and **Cubase**: the tool behavior they describe was verified with Claude Code and Cubase Elements 15.0.30 (see the [verification log](../verification.md)). Any other MCP client calls the same tools; where the text says "the assistant", read your client's AI assistant. For now, Cubase is the only DAW Trackwright supports.
+
+**Goal:** create a group channel with a custom name in collaboration with the assistant, and then delete it safely.
 **You need:** writes enabled, and to be in front of the Cubase screen.
 
 ## Why your help is needed
@@ -13,7 +15,7 @@ When adding audio tracks, group tracks or folders, Cubase opens the "Add Track" 
 
 > Create a group channel called POC-GROUP.
 
-Claude calls `cubase_add_track_interactive` with `phase: "start"`, `kind: "group"` and `suggested_name: "POC-GROUP"`. The response includes `status: "awaiting_user"` and some instructions.
+The assistant calls `cubase_add_track_interactive` with `phase: "start"`, `kind: "group"` and `suggested_name: "POC-GROUP"`. The response includes `status: "awaiting_user"` and some instructions.
 
 The "Add Track" dialog opens in Cubase. **Type the name `POC-GROUP`** and accept.
 
@@ -23,7 +25,7 @@ If you accept without typing a name, Cubase calls it "Group 01" and the confirma
 
 > I've created it.
 
-Claude calls again with `phase: "confirm"`. Trackwright looks for the track in the mixer and returns:
+The assistant calls again with `phase: "confirm"`. Trackwright looks for the track in the mixer and returns:
 - `status: "done"` and `verified: true`, with the `uid:` selector of the new group;
 - or `not_found`, if you canceled the dialog or used a different name.
 
@@ -31,7 +33,7 @@ Claude calls again with `phase: "confirm"`. Trackwright looks for the track in t
 
 > Delete POC-GROUP.
 
-Claude should:
+The assistant should:
 1. select it with `cubase_select_track`;
 2. dry-run `cubase_remove_selected_tracks` with `expect_selected: "POC-GROUP"`, which only acts if the selection matches **exactly** (otherwise, `SELECTION_MISMATCH`);
 3. with your confirmation, apply it.

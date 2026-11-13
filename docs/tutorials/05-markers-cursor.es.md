@@ -2,6 +2,8 @@
 
 [English](05-markers-cursor.md) · **Español**
 
+> **Configuración probada.** Estos tutoriales usan **Claude Code** y **Cubase**: el comportamiento de las herramientas que describen se verificó con Claude Code y Cubase Elements 15.0.30 (ver el [registro de verificación](../verification.es.md)). Cualquier otro cliente MCP llama a las mismas herramientas; donde dice «el asistente», entiende el asistente de IA de tu cliente. Por ahora, Cubase es el único DAW que admite Trackwright.
+
 **Objetivo:** mover el cursor y los localizadores, crear una pista de marcadores, insertar un marcador y navegar entre marcadores.
 **Necesitas:** las escrituras habilitadas. Basta con `enabled = true`: los marcadores no pertenecen a ninguna pista concreta. Ten el transporte parado.
 

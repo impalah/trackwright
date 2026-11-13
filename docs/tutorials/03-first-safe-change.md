@@ -2,6 +2,8 @@
 
 **English** · [Español](03-first-safe-change.es.md)
 
+> **Tested setup.** These tutorials use **Claude Code** and **Cubase**: the tool behavior they describe was verified with Claude Code and Cubase Elements 15.0.30 (see the [verification log](../verification.md)). Any other MCP client calls the same tools; where the text says "the assistant", read your client's AI assistant. For now, Cubase is the only DAW Trackwright supports.
+
 **Goal:** change the volume and mute of a track **that is not selected**, check the change and put it back the way it was.
 **You need:** [tutorial 2](02-inspect-track.md), a **saved** throwaway project and the transport stopped.
 
@@ -25,7 +27,7 @@ In Cubase, click a track that is **not** POC-TEST. This way you will confirm tha
 
 > Mute the POC-TEST track, but first show me what you are going to change.
 
-Claude calls `cubase_set_track_mix` with `mute: true` and `dry_run: true`, the default. You get the plan:
+The assistant calls `cubase_set_track_mix` with `mute: true` and `dry_run: true`, the default. You get the plan:
 - `before`: the current value, `Desact.`;
 - `requested`: the requested value, `1`;
 - `verified: null`, because nothing has been applied.
@@ -36,13 +38,13 @@ Claude calls `cubase_set_track_mix` with `mute: true` and `dry_run: true`, the d
 
 > Go ahead, apply it.
 
-Claude repeats the call with `dry_run: false`. Trackwright writes the value, reads it back and returns `after: Activ.` and `verified: true`. POC-TEST's mute button lights up in Cubase.
+The assistant repeats the call with `dry_run: false`. Trackwright writes the value, reads it back and returns `after: Activ.` and `verified: true`. POC-TEST's mute button lights up in Cubase.
 
 ## Step 5. Volume and restore
 
 > Lower POC-TEST's volume to 0.7 and then put it back the way it was.
 
-Claude notes the original value returned by the dry run, applies 0.7, verifies and restores it. Volume is expressed normalized, between 0 and 1: volume in dB is not available yet.
+The assistant notes the original value returned by the dry run, applies 0.7, verifies and restores it. Volume is expressed normalized, between 0 and 1: volume in dB is not available yet.
 
 Unmute it the same way.
 

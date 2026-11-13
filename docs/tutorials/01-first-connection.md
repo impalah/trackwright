@@ -2,7 +2,9 @@
 
 **English** · [Español](01-first-connection.es.md)
 
-**Goal:** go from zero to Claude telling you what is in your Cubase project.
+> **Tested setup.** These tutorials use **Claude Code** and **Cubase**: the tool behavior they describe was verified with Claude Code and Cubase Elements 15.0.30 (see the [verification log](../verification.md)). Any other MCP client calls the same tools; where the text says "the assistant", read your client's AI assistant. For now, Cubase is the only DAW Trackwright supports.
+
+**Goal:** go from zero to the assistant telling you what is in your Cubase project.
 **Time:** 15 minutes.
 **You need:** uv and Cubase 15.0.20 or later (see the [installation manual](../manual/01-installation.md#1-requirements)).
 
@@ -10,7 +12,7 @@ The commands are those of an installation from PyPI. From source, prefix them wi
 
 ## Step 1. Dry run with the simulator
 
-Before touching Cubase, check that Claude can talk to Trackwright using the simulator, which needs nothing installed:
+Before touching Cubase, check that your MCP client can talk to Trackwright using the simulator, which needs nothing installed:
 
 1. Register the simulated server in Claude Code:
    ```sh
@@ -18,10 +20,12 @@ Before touching Cubase, check that Claude can talk to Trackwright using the simu
    ```
 2. Open Claude Code and ask:
    > What tracks are in my Cubase project?
-3. Claude will call `cubase_list_tracks` and tell you there are `Stereo Out`, `POC-INSTR` and `POC-TEST`. These are the simulator's tracks.
+3. The assistant will call `cubase_list_tracks` and tell you there are `Stereo Out`, `POC-INSTR` and `POC-TEST`. These are the simulator's tracks.
 4. Ask for `cubase_status`. It should show `simulated: true`.
 
 If this works, the MCP side is fine. Remove the simulated server with `claude mcp remove trackwright-sim`.
+
+**With another MCP client** (for example, GitHub Copilot in VS Code, not tested yet): register the command `uvx trackwright serve --simulate` as a stdio server, as described in the [operation manual](../manual/02-operation.md#connect-an-mcp-client).
 
 ## Step 2. Install
 
@@ -37,12 +41,14 @@ trackwright setup
 - **create the configuration:** yes;
 - **register in Claude Code:** yes.
 
+`setup` only registers the server in Claude Code; for another client, register `trackwright serve` by hand (see the [operation manual](../manual/02-operation.md#connect-an-mcp-client)).
+
 At the end, `doctor` will show "bridge running" in red: this is expected, because the bridge starts with the MCP server.
 
 ## Step 3. Connect to Cubase
 
 1. **Restart Cubase** and open a throwaway project that has at least one audio track.
-2. Restart Claude Code (or open `/mcp`) so that the `trackwright` server starts. The server starts the bridge, and the **Trackwright – Bridge** surface appears in Cubase's **MIDI Remote** tab. If it does not appear, follow step 6 of the [installation manual](../manual/01-installation.md#6-activate-the-script-in-cubase).
+2. Restart Claude Code (or open `/mcp`), or your MCP client, so that the `trackwright` server starts. The server starts the bridge, and the **Trackwright – Bridge** surface appears in Cubase's **MIDI Remote** tab. If it does not appear, follow step 6 of the [installation manual](../manual/01-installation.md#6-activate-the-script-in-cubase).
 3. In a terminal:
    ```sh
    trackwright doctor
@@ -51,7 +57,7 @@ At the end, `doctor` will show "bridge running" in red: this is expected, becaus
 4. In Claude Code:
    > Check Cubase's status with Trackwright.
 
-   Claude should answer with `simulated: false`, the Cubase version and `writes_enabled: false`: you are in read-only mode.
+   The assistant should answer with `simulated: false`, the Cubase version and `writes_enabled: false`: you are in read-only mode.
 
 ## Step 4. Explore
 

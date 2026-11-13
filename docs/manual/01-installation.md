@@ -114,7 +114,7 @@ Cubase **does not reload** changed scripts on its own. If it was open, restart i
 
 ## 5. Start the bridge
 
-**Normally you don't need to:** the MCP server starts the bridge when it needs it (`[bridge] autostart`). Starting it by hand is useful for running the checks in step 7 before connecting Claude, or for watching its log live. In a terminal that you will leave open:
+**Normally you don't need to:** the MCP server starts the bridge when it needs it (`[bridge] autostart`). Starting it by hand is useful for running the checks in step 7 before connecting your MCP client, or for watching its log live. In a terminal that you will leave open:
 
 ```sh
 cd /Volumes/Data/projects/sound/trackwright

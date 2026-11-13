@@ -2,6 +2,8 @@
 
 **English** · [Español](05-markers-cursor.es.md)
 
+> **Tested setup.** These tutorials use **Claude Code** and **Cubase**: the tool behavior they describe was verified with Claude Code and Cubase Elements 15.0.30 (see the [verification log](../verification.md)). Any other MCP client calls the same tools; where the text says "the assistant", read your client's AI assistant. For now, Cubase is the only DAW Trackwright supports.
+
 **Goal:** move the cursor and the locators, create a marker track, insert a marker and navigate between markers.
 **You need:** writes enabled. `enabled = true` is enough: markers do not belong to any particular track. Keep the transport stopped.
 

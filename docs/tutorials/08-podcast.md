@@ -2,6 +2,8 @@
 
 **English** · [Español](08-podcast.es.md)
 
+> **Tested setup.** These tutorials use **Claude Code** and **Cubase**: the tool behavior they describe was verified with Claude Code and Cubase Elements 15.0.30 (see the [verification log](../verification.md)). Any other MCP client calls the same tools; where the text says "the assistant", read your client's AI assistant. For now, Cubase is the only DAW Trackwright supports.
+
 **Goal:** remove a section of a podcast by specifying it in seconds and check that it was done correctly.
 **You need:**
 - writes enabled;
@@ -13,7 +15,7 @@
 
 > Remove the section between second 2 and second 30 from the podcast, closing the gap. Check it with the Voice track.
 
-Claude uses `cubase_edit_range` with `action: "delete_time"`, `start: "2"`, `end: "30"` and `verify_track: "Voice"`, first as a dry run. It shows you:
+The assistant uses `cubase_edit_range` with `action: "delete_time"`, `start: "2"`, `end: "30"` and `verify_track: "Voice"`, first as a dry run. It shows you:
 - the range (`0:00:02.000`–`0:00:30.000`, 28 s);
 - the effect: the section is removed and everything after it moves earlier;
 - the scope: **every track** with audio in that section.
@@ -40,17 +42,17 @@ With `verify_track`, it compares the audio edges of that track before and after:
 
 > Import the theme music /Users/me/Music/theme.wav on the Music track, at second 0.
 
-1. Claude uses `cubase_import_audio` with `phase: "start"`: it selects the track, puts the cursor at 0 and opens "Import Audio File".
+1. The assistant uses `cubase_import_audio` with `phase: "start"`: it selects the track, puts the cursor at 0 and opens "Import Audio File".
 2. In the file picker, press **Cmd+Shift+G**, paste the path and open the file. Accept the options (Cubase copies it into the project).
-3. Tell Claude "done". With `phase: "confirm"` it will check that the track has audio from 0 to the length of the theme music.
+3. Tell the assistant "done". With `phase: "confirm"` it will check that the track has audio from 0 to the length of the theme music.
 
 ## Exporting the episode
 
 > Export the full episode.
 
-1. Claude uses `cubase_export_mix` with `phase: "start"`: it sets the locators around all the audio and opens "Export Audio Mixdown".
+1. The assistant uses `cubase_export_mix` with `phase: "start"`: it sets the locators around all the audio and opens "Export Audio Mixdown".
 2. You choose the format (for example, MP3 at 128 kB/s for publishing) and click **Export Audio**.
-3. Tell Claude "done". With `phase: "confirm"` it will find the file in the project's *Mixdown* folder and check that it is as long as the episode.
+3. Tell the assistant "done". With `phase: "confirm"` it will find the file in the project's *Mixdown* folder and check that it is as long as the episode.
 
 For a fragment, for example a teaser: "export from 5:00 to 5:45".
 
