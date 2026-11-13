@@ -52,6 +52,7 @@ Por defecto **solo lee**. Las escrituras se habilitan en la configuración y se 
   - [Arquitectura](docs/arquitectura.md)
   - [Desarrollo](docs/desarrollo.md)
   - [Épicas e issues](docs/issues/README.md)
+  - [Investigación de funcionalidades ampliadas](docs/investigacion.md)
 
 ## Estado
 
