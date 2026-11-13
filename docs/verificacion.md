@@ -251,4 +251,4 @@ Medido sobre POC-TEST con el código de TW-1208, a través del puente. Solo lect
   - el log del puente quedó en `bridge.log` del directorio del socket;
   - el puente de prueba se paró al terminar.
 - **`cubase_launch`** en ensayo, con Cubase abierto → `already_running`, script 1.4.0. No abre nada.
-- **Pendiente,** porque necesita al usuario: Cubase cerrado → `cubase_launch` → Cubase abierto y el script respondiendo, o `awaiting_user` si Cubase muestra un diálogo.
+- **Prueba completa del usuario,** desde Claude Code, con Cubase y el puente cerrados: `serve` arrancó el puente y `cubase_launch` abrió Cubase. Devolvió **`awaiting_user`** hasta que el usuario abrió el proyecto en Steinberg Hub; después el script respondió. El script empieza a responder solo cuando hay un proyecto abierto.

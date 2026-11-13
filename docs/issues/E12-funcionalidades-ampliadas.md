@@ -6,7 +6,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1201 Arranque automático de Cubase y del puente
 
-- **Estado:** implementada; falta la verificación manual con Cubase cerrado
+- **Estado:** cerrada. Verificada en Cubase el 2026-11-13: puente arrancado por `serve`, Cubase abierto por `cubase_launch` y `awaiting_user` hasta abrir el proyecto
 - **Objetivo:** que el usuario no tenga que abrir Cubase ni el puente a mano.
 - **Alcance:**
   - **`cubase_launch`** (escritura del sistema, con confirmación):
