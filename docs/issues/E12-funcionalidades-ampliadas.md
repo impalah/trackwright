@@ -174,3 +174,32 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
   | Precuenta, uso de la pista de tempo | Comandos que alternan, sin lectura: solo serían seguros si se pudiera leer el estado | Sin relectura: **no se implementan** salvo que TW-1209 encuentre cómo leerlos |
   | Compás, frecuencia de muestreo, longitud | Solo en el diálogo «Configuración del proyecto» (comando `Project / Setup`, clase `dialog`) | Herramienta interactiva como `cubase_add_track_interactive`: Trackwright abre el diálogo, el usuario lo cambia y Trackwright relee lo que pueda |
 - **Reglas:** toda escritura comprueba la política (`check_project_write`), ensaya por defecto y relee. Nada sin relectura se presenta como verificado.
+
+## TW-1211 Edición por rangos en segundos (podcast)
+
+- **Estado:** en curso (experimento)
+- **Origen:** el usuario edita podcasts, donde el compás no importa. Quiere dar órdenes como «borra el audio de la pista X entre el segundo 2 y el 30».
+- **Qué hay:**
+  - `cubase_set_position` con `unit: "seconds"` para el cursor y los localizadores. Su verificación supone 4/4 y tempo constante: hay que pasar a releer `time2` del objeto Transport (TW-1209);
+  - comandos verificados: `Split Loop` corta todas las pistas con eventos en el rango, y `Select in Loop` crea una selección de rango.
+- **Limitación de la API:** no se pueden leer ni modificar eventos. Toda edición pasa por comandos que actúan entre los localizadores o sobre la selección.
+- **Experimento** ([experiments/tw1211](../../experiments/tw1211/README.md)):
+  1. posicionar en segundos y releer con `time2`;
+  2. ver si `Locate Next/Previous Event` permite leer los bordes de los eventos (sondeo de eventos, para verificar);
+  3. ver el alcance de `Select in Loop`: ¿pistas seleccionadas o todas?;
+  4. ver el efecto de cada acción sobre el rango 2–30 s de una pista:
+
+     | Acción | Comando |
+     |---|---|
+     | Borrar dejando hueco | `Delete` sobre la selección de rango |
+     | Borrar cerrando el hueco | `Delete Time` |
+     | Cortar el tiempo | `Cut Time` |
+     | Silenciar | `Process / Silence` |
+     | Insertar silencio | `Insert Silence` |
+     | Recortar | `Crop Range` |
+  5. clase de cada comando (directo, diálogo, selección) y si `Undo` lo deshace.
+- **Entregable:** herramienta `cubase_edit_range(tracks, start, end, unit, action)`, con ensayo, confirmación y, si el sondeo de eventos funciona, verificación.
+- **Riesgos:**
+  - `Delete Time` y `Split Loop` afectan a todas las pistas;
+  - sin sondeo de eventos no hay relectura;
+  - por eso el experimento se hace con el proyecto guardado y con el usuario mirando.

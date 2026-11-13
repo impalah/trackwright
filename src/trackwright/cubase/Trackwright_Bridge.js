@@ -16,7 +16,7 @@
 
 var midiremote_api = require('midiremote_api_v1')
 
-var SCRIPT_VERSION = '1.4.0'
+var SCRIPT_VERSION = '1.5.0'
 var PROTOCOL_VERSION = 1
 var MANUFACTURER = 0x7D
 var MAGIC_A = 0x54
@@ -309,6 +309,19 @@ var COMMANDS = [
 	['edit.select_all', 'Edit', 'Select All'],
 	['edit.select_none', 'Edit', 'Select None'],
 	['edit.select_in_loop', 'Edit', 'Select in Loop'],
+	// TW-1211: range editing and event probing (classes not verified yet)
+	['edit.delete_time', 'Edit', 'Delete Time'],
+	['edit.cut_time', 'Edit', 'Cut Time'],
+	['edit.insert_silence', 'Edit', 'Insert Silence'],
+	['edit.crop_range', 'Edit', 'Crop Range'],
+	['process.silence', 'Process', 'Silence'],
+	['edit.select_all_on_tracks', 'Edit', 'Select All on Tracks'],
+	['edit.select_events_under_cursor', 'Edit', 'Select Events under Cursor'],
+	['transport.locate_next_event', 'Transport', 'Locate Next Event'],
+	['transport.locate_prev_event', 'Transport', 'Locate Previous Event'],
+	['transport.locate_selection', 'Transport', 'Locate Selection'],
+	['transport.locate_selection_end', 'Transport', 'Locate Selection End'],
+	['transport.to_left_locator', 'Transport', 'To Left Locator'],
 	['audio.detect_silence', 'Audio', 'Detect Silence'],
 	// TW-1206: automation modes (Touch only writes while a control is touched; Auto-Latch and
 	// Cross-Over start writing on any change). Behaviour in Cubase not observed yet.

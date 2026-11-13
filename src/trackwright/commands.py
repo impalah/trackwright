@@ -193,6 +193,72 @@ _SPECS = [
         "Select the range between the locators",
         "verified: range selection",
     ),
+    # TW-1211: range editing and event probing; behaviour not observed yet (experiments/tw1211)
+    CommandSpec(
+        "edit.delete_time", "Edit", "Delete Time", "unknown", "Delete the range and close the gap", "not observed"
+    ),
+    CommandSpec("edit.cut_time", "Edit", "Cut Time", "unknown", "Cut the range and close the gap", "not observed"),
+    CommandSpec(
+        "edit.insert_silence", "Edit", "Insert Silence", "unknown", "Insert silence over the range", "not observed"
+    ),
+    CommandSpec("edit.crop_range", "Edit", "Crop Range", "unknown", "Keep only the range", "not observed"),
+    CommandSpec("process.silence", "Process", "Silence", "unknown", "Silence the selected audio", "not observed"),
+    CommandSpec(
+        "edit.select_all_on_tracks",
+        "Edit",
+        "Select All on Tracks",
+        "unknown",
+        "Select all events of the selected tracks",
+        "not observed",
+    ),
+    CommandSpec(
+        "edit.select_events_under_cursor",
+        "Edit",
+        "Select Events under Cursor",
+        "unknown",
+        "Select the events under the cursor",
+        "not observed",
+    ),
+    CommandSpec(
+        "transport.locate_next_event",
+        "Transport",
+        "Locate Next Event",
+        "unknown",
+        "Move the cursor to the next event edge",
+        "not observed",
+    ),
+    CommandSpec(
+        "transport.locate_prev_event",
+        "Transport",
+        "Locate Previous Event",
+        "unknown",
+        "Move the cursor to the previous event edge",
+        "not observed",
+    ),
+    CommandSpec(
+        "transport.locate_selection",
+        "Transport",
+        "Locate Selection",
+        "unknown",
+        "Move the cursor to the selection start",
+        "not observed",
+    ),
+    CommandSpec(
+        "transport.locate_selection_end",
+        "Transport",
+        "Locate Selection End",
+        "unknown",
+        "Move the cursor to the selection end",
+        "not observed",
+    ),
+    CommandSpec(
+        "transport.to_left_locator",
+        "Transport",
+        "To Left Locator",
+        "unknown",
+        "Move the cursor to the left locator",
+        "not observed",
+    ),
     CommandSpec(
         "audio.detect_silence",
         "Audio",

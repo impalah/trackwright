@@ -221,6 +221,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.set_left_locator`, `transport.set_right_locator`, `transport.locators_to_selection` | unknown |
 | `automation.mode_touch`, `automation.mode_auto_latch`, `automation.mode_cross_over`, `automation.next_mode`, `automation.toggle_write_selected` | unknown (experimento TW-1206) |
 | `transport.start`, `transport.stop` | direct (verificado: reproduce y para; nunca graba) |
+| `edit.delete_time`, `edit.cut_time`, `edit.insert_silence`, `edit.crop_range`, `process.silence`, `edit.select_all_on_tracks`, `edit.select_events_under_cursor`, `transport.locate_next_event`, `transport.locate_prev_event`, `transport.locate_selection`, `transport.locate_selection_end`, `transport.to_left_locator` | unknown (experimento TW-1211) |
 
 ## Abrir Cubase
 
