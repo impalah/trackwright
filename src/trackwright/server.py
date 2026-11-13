@@ -27,6 +27,7 @@ from trackwright.core.models import (
     CommandOut,
     ConvertOut,
     ExportOut,
+    ImportOut,
     InsertPluginOut,
     InsertsOut,
     LaunchOut,
@@ -324,6 +325,29 @@ def build_server(service: CubaseService) -> MCPServer:
         dry_run: DryRunArg = True,
     ) -> SaveOut:
         return await run(lambda: service.save_project(mode, dry_run=dry_run))
+
+    # ------------------------------------------------------------------ import (TW-1203)
+    @server.tool(
+        annotations=WRITE,
+        description="Import an audio file with the user, in two phases. 'start' selects the track, puts the "
+        "cursor at the position (seconds or bars) and opens Cubase's file selector: the user picks the file "
+        "(Cubase does not answer until the selector is closed). 'confirm' (same track, position and file, plus "
+        "since) probes the track for the new event edges and lists the copy in the project's Audio folder.",
+    )
+    async def cubase_import_audio(
+        phase: Literal["start", "confirm"],
+        track: TrackArg,
+        position: Annotated[str, Field(description="where the audio starts: seconds ('0', '1:30') or bars")],
+        unit: Annotated[Literal["seconds", "bars"], Field(description="unit of position")] = "seconds",
+        file: Annotated[
+            str | None, Field(description="path of the file the user will pick (to tell them and check duration)")
+        ] = None,
+        since: Annotated[float | None, Field(description="confirm: the 'since' returned by start")] = None,
+        dry_run: DryRunArg = True,
+    ) -> ImportOut:
+        return await run(
+            lambda: service.import_audio(phase, track, position, unit=unit, file=file, since=since, dry_run=dry_run)
+        )
 
     # ------------------------------------------------------------------ export (TW-1204)
     @server.tool(

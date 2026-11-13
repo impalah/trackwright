@@ -418,3 +418,20 @@ class SaveOut(_Out):
     verified: bool | None = None
     instructions: str | None = None
     notes: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------- import (TW-1203)
+class ImportOut(_Out):
+    phase: Literal["start", "confirm"]
+    status: Literal["planned", "awaiting_user", "done", "not_found"]
+    dry_run: bool
+    track: str
+    position: str = Field(description="where the audio goes (h:mm:ss.mmm)")
+    file: str | None = Field(description="the file to pick in the dialog, when given")
+    expected_seconds: float | None = Field(description="duration of that file (afinfo)")
+    since: float | None = Field(description="pass it back to the confirm phase")
+    edges_found: list[str] = Field(default_factory=list, description="event edges at the start and end")
+    copied_to_project: list[str] = Field(default_factory=list, description="new files in <project>/Audio")
+    verified: bool | None = None
+    instructions: str | None = None
+    notes: list[str] = Field(default_factory=list)

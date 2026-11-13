@@ -314,3 +314,12 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
 - **Experimento,** con autorización del usuario: `File / Save` reescribió `X0001.cpr` y `Save New Version` creó `X0001-01.cpr`, ambos sin diálogo. Detalle en [experiments/tw1202](../experiments/tw1202/README.md).
 - **`cubase_save_project`:** en ensayo, contra Cubase, listó los dos `.cpr`; sin `[writes] save`, el guardado real da `SAVE_DISABLED`.
 - **Prueba del usuario desde Claude Code,** con `[writes] save = true`: funciona.
+
+## 2026-11-13 — TW-1203: importar audio
+
+- **Experimento** ([experiments/tw1203](../experiments/tw1203/README.md)):
+  - el tono de 3 s entra en la pista seleccionada y en el cursor: bordes en 150 y 153 s de POC-TEST;
+  - Cubase copia el archivo a `Audio/`;
+  - con el selector abierto, Cubase no responde al script;
+  - Deshacer quita el evento, no la copia.
+- **`cubase_import_audio`** contra Cubase: el ensayo planifica 0:02:30.000 y 3,0 s; `confirm` da `not_found`, lo correcto porque estaba deshecho, y lista las copias.

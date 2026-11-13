@@ -1,6 +1,6 @@
 # Referencia de herramientas MCP
 
-El servidor `trackwright` publica 29 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 30 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 ## Conceptos comunes
 
@@ -215,7 +215,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `zoom.in`, `zoom.out` | unknown |
 | `edit.undo`, `edit.redo`, `edit.cut`, `edit.copy`, `edit.paste`, `edit.delete`, `edit.split_at_cursor`, `edit.split_range`, `edit.select_all`, `edit.select_none`, `edit.select_in_loop` | ui_selection |
 | `edit.split_loop` | direct |
-| `addtrack.audio`, `addtrack.group`, `addtrack.folder`, `audio.detect_silence`, `file.export_audio_mixdown`, `file.import_audio` | dialog (exportar: verificado, TW-1204) |
+| `addtrack.audio`, `addtrack.group`, `addtrack.folder`, `audio.detect_silence`, `file.export_audio_mixdown`, `file.import_audio` | dialog (exportar e importar: verificados, TW-1204 y TW-1203; el selector de importación bloquea Cubase mientras está abierto) |
 | `addtrack.marker`, `marker.insert`, `project.select_track_next`, `project.select_track_prev`, `transport.locate_next_marker`, `transport.locate_prev_marker` | direct |
 | `project.remove_selected_tracks` | confirm |
 | `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.locators_to_selection` | unknown |
@@ -282,6 +282,27 @@ Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
 - **Estados:** `saved` o `awaiting_user`. El segundo, si en 10 s no se escribió nada: probablemente hay un diálogo, como «Guardar como» en un proyecto que nunca se guardó.
 - **Verificado en Cubase Elements:** `Save` reescribió `X0001.cpr` en 1 s, y `Save New Version` creó `X0001-01.cpr`. Ninguno abrió diálogo.
 - **No se ofrecen** cerrar, revertir ni salir.
+
+## Importar audio
+
+### `cubase_import_audio` (con el usuario, dos fases)
+
+- **Fase `start`** (`dry_run` por defecto):
+  - **Entrada:**
+    - `track` y `position` (segundos o compases);
+    - `file`, opcional: la ruta del archivo que el usuario elegirá. Sirve para indicársela y para conocer su duración con `afinfo`.
+  - **Qué hace:**
+    1. selecciona la pista;
+    2. pone el cursor en la posición;
+    3. abre «Importar archivo de audio».
+  - **Con el selector abierto, Cubase no responde al script** (verificado). Por eso la fase no hace nada más y devuelve `awaiting_user`, con instrucciones: Cmd+Shift+G y la ruta.
+- **El usuario** elige el archivo y acepta las opciones. Cubase lo copia a la carpeta *Audio* del proyecto.
+- **Fase `confirm`** (misma pista, posición y archivo, más `since`):
+  - si Cubase aún no responde: `awaiting_user`, porque el selector sigue abierto;
+  - si no, sondea la pista y busca bordes en la posición y en la posición más la duración. Devuelve `done` y `verified`, o `not_found` si se canceló o fue a otra parte;
+  - `copied_to_project` lista las copias nuevas en `<proyecto>/Audio`, solo con el nombre.
+- **Verificado en Cubase Elements:** un tono de 3 s quedó en POC-TEST de 150 a 153 s.
+- **Deshacer** quita el evento, **no** la copia en disco.
 
 ## Exportar la mezcla
 

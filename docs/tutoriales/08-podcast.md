@@ -34,6 +34,14 @@ Con `verify_track`, compara los bordes del audio de esa pista antes y después: 
 | Quedarte solo con un fragmento | «Deja solo del 10 al 70» → `crop` |
 | Quitar una tos en un solo micro | «Borra del 1:12.4 al 1:13.1 solo en la pista Invitado» → `delete` con `track: "Invitado"` |
 
+## Importar la sintonía
+
+> Importa la sintonía /Users/yo/Música/sintonia.wav en la pista Música, en el segundo 0.
+
+1. Claude usa `cubase_import_audio` con `phase: "start"`: selecciona la pista, pone el cursor en 0 y abre «Importar archivo de audio».
+2. En el selector, pulsa **Cmd+Shift+G**, pega la ruta y abre el archivo. Acepta las opciones (Cubase lo copia al proyecto).
+3. Dile «ya está». Con `phase: "confirm"` comprobará que la pista tiene audio de 0 a la duración de la sintonía.
+
 ## Exportar el episodio
 
 > Exporta el episodio completo.

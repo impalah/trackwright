@@ -34,7 +34,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1203 Flujo guiado de importación de audio
 
-- **Estado:** pendiente
+- **Estado:** implementada (`cubase_import_audio`, script 1.5.4). Experimento en [experiments/tw1203](../../experiments/tw1203/README.md). La verificación ya no es visual: usa el sondeo de eventos. Falta que el usuario la pruebe
 - **Objetivo:** «Importa este audio en la pista X en el compás N» con el mínimo esfuerzo del usuario.
 - **Flujo:**
   1. seleccionar la pista [VER];
@@ -43,7 +43,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
   4. el usuario elige el archivo, y Trackwright le indica cuál, si se le ha dado una ruta;
   5. confirmación, en dos fases, como `cubase_add_track_interactive`.
 - **Experimento previo:** clase del comando, y si la importación va a la pista seleccionada y a la posición del cursor (o pide opciones de copia y conversión).
-- **Verificación:** visual. La API no ve los eventos.
+- **Verificación:** ~~visual~~ por sondeo de bordes de eventos (TW-1211).
 
 ## TW-1204 Flujo guiado de exportación de audio
 

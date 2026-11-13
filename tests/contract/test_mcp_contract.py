@@ -39,6 +39,7 @@ WRITE_TOOLS = {
     "cubase_record_automation",
     "cubase_launch",
     "cubase_export_mix",
+    "cubase_import_audio",
 }
 NAVIGATION_TOOLS = {
     "cubase_select_track",
@@ -255,3 +256,8 @@ async def test_save_project_needs_its_own_switch(client: Client) -> None:
     plan = await call(client, "cubase_save_project", {})
     assert plan["status"] == "planned"
     assert "SAVE_DISABLED" in await call_error(client, "cubase_save_project", {"dry_run": False})
+
+
+async def test_import_audio(client: Client) -> None:
+    plan = await call(client, "cubase_import_audio", {"phase": "start", "track": "POC-TEST", "position": "150"})
+    assert (plan["status"], plan["position"]) == ("planned", "0:02:30.000")

@@ -32,6 +32,8 @@ T = TypeVar("T")
 class ExportFinder(Protocol):
     def find(self, folder: Path, since: float, suffixes: frozenset[str] = ...) -> list[ExportedFile]: ...
 
+    def duration(self, path: Path) -> float | None: ...
+
 
 class AppLauncher(Protocol):
     """Opens Cubase (:class:`trackwright.launcher.CubaseLauncher`, or a fake in tests)."""

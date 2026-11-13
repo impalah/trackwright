@@ -287,6 +287,15 @@ class FakeCubase:
         self.channels = [remapped[c] for c in self.channels]
         self.selected = remapped.get(self.selected, -1)
 
+    def finish_import(self, duration: float | None) -> None:
+        """The user picks a file in the import selector (``None`` = cancels): it lands on the selected track
+        at the cursor, as verified in Cubase."""
+        self.pending_dialog = None
+        if duration is not None:
+            self._snapshot()
+            start = self._seconds(self.transport["locator"])
+            self.track_events.setdefault(self.selected, []).append((start, start + duration))
+
     def complete_dialog(self, name: str) -> None:
         """The user fills in and accepts the pending Add Track dialog."""
         kind = {"addtrack.audio": "AudioChannel", "addtrack.group": "GroupChannel"}.get(self.pending_dialog or "")
@@ -316,7 +325,8 @@ class FakeCubase:
     def call(self, op: str, params: JsonObject | None = None) -> JsonObject:
         p = dict(params or {})
         self.calls.append((op, p))
-        if not self.online:  # Cubase closed: the bridge times out waiting for the script
+        if not self.online or self.pending_dialog == "file.import_audio":
+            # Cubase closed, or blocked by the macOS file selector (verified, TW-1203): the bridge times out.
             raise RequestTimeoutError(f"no answer from Cubase for {op}", outcome_unknown=op not in SESSIONLESS_OPS)
         if op in self.fail_next:
             raise self.fail_next.pop(op)
@@ -1065,9 +1075,13 @@ class FakeExports:
         self.files: list[ExportedFile] = []
         self._file = ExportedFile
         self.searched: list[tuple[object, float]] = []
+        self.durations: dict[str, float] = {}
 
     def add(self, path: str, duration: float | None, *, modified: float = 2e9, size: int = 1000) -> None:
         self.files.append(self._file(path, size, modified, duration))
+
+    def duration(self, path: object) -> float | None:
+        return self.durations.get(str(path))
 
     def find(self, folder: object, since: float, suffixes: frozenset[str] | None = None) -> list[object]:
         self.searched.append((folder, since))

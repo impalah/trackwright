@@ -2,6 +2,9 @@
 
 ## Sin publicar
 
+- **Importar audio** (TW-1203):
+  - herramienta `cubase_import_audio` en dos fases: pista, posición y selector de Cubase; después, la confirmación por sondeo de bordes y la copia en el proyecto;
+  - **script 1.5.4**, con `File / Import Audio File`.
 - **Guardar el proyecto** (TW-1202):
   - herramienta `cubase_save_project` (`save` o `new_version`), con permiso propio `[writes] save`, desactivado por defecto, y verificación por la fecha de los `.cpr`;
   - **script 1.5.3**, con `File / Save` y `Save New Version`.
