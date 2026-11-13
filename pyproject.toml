@@ -34,6 +34,8 @@ dependencies = [
 ]
 
 [project.urls]
+Repository = "https://github.com/impalah/trackwright"
+Issues = "https://github.com/impalah/trackwright/issues"
 Author = "https://pressanykey.tech"
 
 [project.scripts]
