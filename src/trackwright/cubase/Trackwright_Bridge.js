@@ -16,7 +16,7 @@
 
 var midiremote_api = require('midiremote_api_v1')
 
-var SCRIPT_VERSION = '1.0.1'
+var SCRIPT_VERSION = '1.1.0'
 var PROTOCOL_VERSION = 1
 var MANUFACTURER = 0x7D
 var MAGIC_A = 0x54
@@ -44,11 +44,12 @@ deviceDriver.makeDetectionUnit().detectPortPair(midiInput, midiOutput)
 	.expectInputNameEquals('Trackwright To Cubase')
 	.expectOutputNameEquals('Trackwright From Cubase')
 
-// Status panel on the MIDI Remote surface (TW-1101). Off in released builds; the experiment build
-// (experiments/tw1101) switches it on to find out what Cubase can display.
-var PANEL_ENABLED = false
+// Status panel on the MIDI Remote surface (TW-1101). Only mechanisms verified in Cubase 15 are used:
+// fixed label text, a label bound to the selected track and a lamp driven by the script. Dynamic text
+// through relateTo + setDisplayValue did NOT display (experiment of 2026-11-13) and is not used.
+var PANEL_ENABLED = true
 
-// A minimal surface element: some hosts require at least one element to show a surface.
+// Without the panel a single element is still needed for Cubase to show the surface.
 if (!PANEL_ENABLED) deviceDriver.mSurface.makeLabelField(0, 0, 4, 1)
 
 var page = deviceDriver.mMapping.makePage('Bridge')
@@ -95,48 +96,44 @@ function makeSessionId() {
 state.sessionId = makeSessionId()
 state.loadedAt = (new Date()).getTime()
 
-// ---------------------------------------------------------------- status panel (TW-1101, experimental)
-// Every call is guarded: a surface problem must never stop the script from loading or answering.
-// Layout (grid units): row 0 static title, row 1 selected track (host object), row 2 dynamic status
-// related to a lamp whose display value the script sets; the lamp blinks as a heartbeat.
+// ---------------------------------------------------------------- status panel (TW-1101)
+// Layout (grid units): row 0 = "Trackwright <version>" + activity lamp, row 1 = selected track name.
+// The lamp lights when a request arrives and goes off once the queue is empty, after at least
+// PANEL_LAMP_MIN_TICKS idle ticks so that it is visible. Every call is guarded: a surface problem must
+// never stop the script from loading or answering.
 var panel = null
-var PANEL_HEARTBEAT_TICKS = 9 // ~1 s at the measured ~8.9 idle ticks per second
+var PANEL_LAMP_MIN_TICKS = 3 // ~0.3 s at the measured ~8.9 idle ticks per second
 function buildPanel() {
 	if (!PANEL_ENABLED) return
 	try {
 		var surface = deviceDriver.mSurface
-		panel = { lampOn: false, errors: [] }
+		panel = { lampOn: false, lampOffAt: 0, errors: [] }
 		panel.title = surface.makeLabelField(0, 0, 8, 1)
-		panel.track = surface.makeLabelField(0, 1, 8, 1)
-		panel.lamp = surface.makeLamp(8, 2, 1, 1)
-		panel.status = surface.makeLabelField(0, 2, 8, 1)
+		panel.lamp = surface.makeLamp(8, 0, 1, 1)
+		panel.track = surface.makeLabelField(0, 1, 9, 1)
 	} catch (e) {
 		state.lastError = 'panel build: ' + String(e)
 		panel = null
 		return
 	}
 	try { panel.lamp.setShapeCircle() } catch (e1) { panel.errors.push('lamp shape: ' + String(e1)) }
-	try { panel.status.relateTo(panel.lamp) } catch (e2) { panel.errors.push('relateTo: ' + String(e2)) }
-	try { page.setLabelFieldText(panel.title, 'Trackwright ' + SCRIPT_VERSION) } catch (e3) { panel.errors.push('title: ' + String(e3)) }
+	try { page.setLabelFieldText(panel.title, 'Trackwright ' + SCRIPT_VERSION) } catch (e2) { panel.errors.push('title: ' + String(e2)) }
 	try {
 		page.setLabelFieldHostObject(panel.track, page.mHostAccess.mTrackSelection.mMixerChannel)
-	} catch (e4) { panel.errors.push('track: ' + String(e4)) }
+	} catch (e3) { panel.errors.push('track: ' + String(e3)) }
 }
-function panelText(activeDevice, text) {
+function panelLamp(activeDevice, on) {
+	if (!panel || panel.lampOn === on) return
+	panel.lampOn = on
+	try { panel.lamp.mSurfaceValue.setProcessValue(activeDevice, on ? 1 : 0) } catch (e) { panel.errors.push('lamp: ' + String(e)) }
+}
+function panelActivity(activeDevice) {
 	if (!panel) return
-	try { panel.lamp.mSurfaceValue.setDisplayValue(activeDevice, text) } catch (e) { panel.errors.push('text: ' + String(e)) }
+	panel.lampOffAt = state.idleTicks + PANEL_LAMP_MIN_TICKS
+	panelLamp(activeDevice, true)
 }
-function panelNote(activeDevice, req) {
-	if (!panel) return
-	var time = new Date()
-	var hhmmss = ('0' + time.getHours()).slice(-2) + ':' + ('0' + time.getMinutes()).slice(-2) + ':' + ('0' + time.getSeconds()).slice(-2)
-	var detail = req.op === 'ping' && req.p && typeof req.p.echo === 'string' ? ' ' + req.p.echo : ''
-	panelText(activeDevice, hhmmss + ' ' + req.op + detail)
-}
-function panelHeartbeat(activeDevice) {
-	if (!panel || state.idleTicks % PANEL_HEARTBEAT_TICKS !== 0) return
-	panel.lampOn = !panel.lampOn
-	try { panel.lamp.mSurfaceValue.setProcessValue(activeDevice, panel.lampOn ? 1 : 0) } catch (e) { panel.errors.push('lamp: ' + String(e)) }
+function panelIdle(activeDevice) {
+	if (panel && panel.lampOn && state.queue.length === 0 && state.idleTicks >= panel.lampOffAt) panelLamp(activeDevice, false)
 }
 buildPanel()
 
@@ -411,7 +408,7 @@ function handleText(activeDevice, text) {
 		reply(activeDevice, req, false, null, 'PROTOCOL_MISMATCH', 'script speaks v' + PROTOCOL_VERSION)
 		return
 	}
-	panelNote(activeDevice, req)
+	panelActivity(activeDevice)
 	var dupKey = String(req.sid || '') + '/' + req.rid
 	if (state.dupMap.hasOwnProperty(dupKey)) {
 		var cached = state.dupMap[dupKey]
@@ -910,7 +907,6 @@ midiInput.mOnSysex = function (activeDevice, message) {
 deviceDriver.mOnActivate = function (activeDevice) {
 	state.deviceActive = true
 	console.log('Trackwright bridge ' + SCRIPT_VERSION + ' activated, session ' + state.sessionId + ', json=' + hasJSON)
-	panelText(activeDevice, 'activo')
 }
 
 deviceDriver.mOnDeactivate = function (activeDevice) {
@@ -958,7 +954,7 @@ page.mOnDeactivate = function (activeDevice, activeMapping) {
 page.mOnIdle = function (activeDevice, activeMapping) {
 	state.idleTicks++
 	expireAssemblies()
-	panelHeartbeat(activeDevice)
+	panelIdle(activeDevice)
 	if (pendingReleases.length > 0) {
 		var keep = []
 		for (var r = 0; r < pendingReleases.length; r++) {

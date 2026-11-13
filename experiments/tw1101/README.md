@@ -1,5 +1,7 @@
 # Experimento TW-1101 — panel de estado en la superficie MIDI Remote
 
+> **Concluido el 2026-11-13.** Resultados en [`docs/verificacion.md`](../../docs/verificacion.md). Desde el script 1.1.0, el panel forma parte del script publicado con lo que funcionó: título, pista seleccionada y lámpara de actividad. El generador `build.py` se retiró. Este documento queda como registro del protocolo.
+
 Objetivo: averiguar qué puede mostrar Cubase en la superficie «Trackwright – Bridge». El experimento usa una versión de prueba del script con el panel activado (`PANEL_ENABLED = true`, versión `1.0.1+tw1101`). **Las operaciones no cambian:** todas las herramientas siguen funcionando igual.
 
 ## Qué incluye la versión de prueba

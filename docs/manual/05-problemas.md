@@ -29,6 +29,12 @@ Cada comprobación que falla incluye un `fix` con la solución.
   2. En la pestaña **MIDI Remote** de Cubase debe aparecer **Trackwright – Bridge**. Si no, añádela a mano (paso 6 del [manual de instalación](01-instalacion.md#6-activar-el-script-en-cubase)).
   3. Comprueba que la superficie usa la entrada `Trackwright To Cubase` y la salida `Trackwright From Cubase`.
 
+## El panel de la superficie muestra «-» o solo la lámpara
+
+- **Solo la lámpara, sin textos:** la página «Bridge» no está activa, normalmente porque el puente está parado. Arráncalo.
+- **«-» en la fila de la pista:** no hay ninguna pista con canal de mezclador seleccionada.
+- **Otra versión en el título:** Cubase tiene cargado otro script. Ejecuta `uv run trackwright script install --apply` y reinicia Cubase.
+
 ## El script no se actualiza
 
 - **Causa:** Cubase no recarga los scripts modificados por sí mismo.

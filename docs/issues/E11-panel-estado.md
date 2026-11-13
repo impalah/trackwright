@@ -15,7 +15,7 @@ En la pestaña MIDI Remote, Cubase muestra:
 
 ## TW-1101 Panel de estado en la superficie
 
-- **Estado:** pendiente
+- **Estado:** hecha (script 1.1.0)
 - **Prioridad:** baja (mejora de experiencia de uso)
 
 ### Qué dice la API (typings locales v1)
@@ -61,6 +61,15 @@ Detalle en [`docs/verificacion.md`](../verificacion.md#2026-11-13--experimento-t
 | Texto dinámico (`relateTo` + `setDisplayValue`) | ❌ siempre «-» |
 
 La **pregunta abierta** queda resuelta: el dibujo inicial era el campo de texto de 4×1 vacío.
+
+### Decisión e implementación (script 1.1.0)
+
+Se adopta lo verificado (opción elegida por el usuario):
+- **Fila 0:** «Trackwright <versión>» (`setLabelFieldText`) y, a la derecha, una **lámpara de actividad**. Se enciende al llegar una petición y se apaga cuando la cola queda vacía, tras un mínimo de 3 ciclos de idle (unos 0,3 s), para que se vea.
+- **Fila 1:** la pista seleccionada (`setLabelFieldHostObject`).
+- **Descartados:** la fila de estado (`relateTo` + `setDisplayValue`, que no se muestra) y el parpadeo continuo.
+
+Tests en `tests/script/test_panel.py`: disposición, uso exclusivo de mecanismos verificados, encendido y apagado de la lámpara, una sola conmutación con varias peticiones en cola y operaciones sin bloqueo. El generador del experimento se retiró, y su protocolo queda en `experiments/tw1101/README.md`.
 
 ### Riesgos
 

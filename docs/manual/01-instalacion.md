@@ -85,7 +85,12 @@ Verás `virtual MIDI ports open` y `bridge listening on …/bridge.sock`. Mientr
    - Modelo: `Bridge`;
    - Entrada MIDI: `Trackwright To Cubase`;
    - Salida MIDI: `Trackwright From Cubase`.
-4. **Recomendado:** en *Estudio > Configuración de estudio > Configuración de puertos MIDI* (*Studio > Studio Setup > MIDI Port Setup*), desmarca la columna **«En 'All MIDI Inputs'»** de `Trackwright To Cubase`. Así los mensajes de control no llegan nunca a una pista.
+4. **Qué verás en la superficie** cuando el puente esté en marcha:
+   - **Fila 1:** «Trackwright» con la versión del script cargado, y una **lámpara** a la derecha. La lámpara se enciende un instante cada vez que Trackwright envía una petición a Cubase.
+   - **Fila 2:** el nombre de la pista seleccionada. Muestra «-» si la seleccionada no tiene canal de mezclador (marcadores, carpetas) o si no hay ninguna seleccionada.
+
+   Con el puente parado, solo se ve la lámpara: los textos aparecen cuando la página «Bridge» se activa.
+5. **Recomendado:** en *Estudio > Configuración de estudio > Configuración de puertos MIDI* (*Studio > Studio Setup > MIDI Port Setup*), desmarca la columna **«En 'All MIDI Inputs'»** de `Trackwright To Cubase`. Así los mensajes de control no llegan nunca a una pista.
 
 Los nombres exactos de los menús en español pueden variar ligeramente según la versión.
 
