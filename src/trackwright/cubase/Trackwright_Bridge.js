@@ -16,7 +16,7 @@
 
 var midiremote_api = require('midiremote_api_v1')
 
-var SCRIPT_VERSION = '1.5.3'
+var SCRIPT_VERSION = '1.5.4'
 var PROTOCOL_VERSION = 1
 var MANUFACTURER = 0x7D
 var MAGIC_A = 0x54
@@ -317,6 +317,8 @@ var COMMANDS = [
 	// TW-1202: saving (Close, Revert and Quit are deliberately not offered)
 	['file.save', 'File', 'Save'],
 	['file.save_new_version', 'File', 'Save New Version'],
+	// TW-1203: import (opens Cubase's file dialog; the user picks the file)
+	['file.import_audio', 'File', 'Import Audio File'],
 	['edit.delete_time', 'Edit', 'Delete Time'],
 	['edit.cut_time', 'Edit', 'Cut Time'],
 	['edit.insert_silence', 'Edit', 'Insert Silence'],

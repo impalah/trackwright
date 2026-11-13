@@ -214,6 +214,14 @@ _SPECS = [
         "not observed (TW-1202)",
     ),
     CommandSpec(
+        "file.import_audio",
+        "File",
+        "Import Audio File",
+        "dialog",
+        "Open the Import Audio File dialog",
+        "not observed (TW-1203)",
+    ),
+    CommandSpec(
         "edit.delete_time",
         "Edit",
         "Delete Time",
