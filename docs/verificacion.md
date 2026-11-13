@@ -203,3 +203,21 @@ El proyecto no se ha guardado.
   - Los Quick Controls dependen de que la pista los tenga asignados.
   - **Para la herramienta:** con R activado, la automatización manda sobre el valor. Hay que informar de ello y no «restaurar» valores bajo lectura.
 - **Quedan en el proyecto** las curvas grabadas, sin efecto mientras R esté desactivado.
+
+## 2026-11-13 — uso real de `cubase_record_automation` y conversión de unidades
+
+- **Desde Claude Code** (sesión independiente), con el script 1.4.0: fundido de volumen en POC-TEST grabado; **la curva aparece en el carril**, según el usuario.
+- **Problema detectado en esa sesión:** el modelo no conocía la correspondencia entre el valor normalizado y los dB. Estimó −20 dB ≈ 0,36 y propuso calibrar moviendo el fader.
+- **Conversión de Cubase** (`da.convert`, `convertParameterPlainToProcessValue`), solo lectura, ida y vuelta exacta:
+
+| Parámetro (objeto, tag) | Conversiones |
+|---|---|
+| Volumen (canal, 1025) | 0 dB → 0,7891 · −6 → 0,5708 · **−20 → 0,2551** · −60 → 0,0255 · +6 → 0,9990 |
+| Nivel del envío 1 (slot de envío, 4097) | 0 dB → 0,7891 · −20 → 0,2551 |
+| EQ 1 Gain (EQ del strip, 4232) | 0 dB → 0,5 · −6 → 0,375 · +6 → 0,625 |
+| EQ 1 Freq (EQ del strip) | 100 Hz → 0,2811 · 1000 Hz → 0,5 |
+| PreGain (InputFilter, 4201) | 0 dB → 0,5 · −12 → 0,375 |
+| Threshold (Compressor) | −20 dB → 0,6667 · −35 → 0,4167 |
+
+- **Panner:** «Izquierda-derecha» es el tag 4201, con plain 0 en el centro; escala sin medir. InputFilter: `PreGain` 4201, `LC-Freq` 4204, `HC-Freq` 4206.
+- **Conclusión:** la estimación de 0,36 para −20 dB era errónea (es 0,2551; la escala no es lineal). **No hace falta calibrar moviendo el fader:** Cubase convierte con exactitud y sin modificar nada. Propuesta: aceptar unidades reales en las herramientas (TW-1208).
