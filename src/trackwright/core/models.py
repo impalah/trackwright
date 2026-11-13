@@ -435,3 +435,19 @@ class ImportOut(_Out):
     verified: bool | None = None
     instructions: str | None = None
     notes: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------- project settings (TW-1210)
+class SettingChange(_Out):
+    setting: str
+    before: bool | int | None
+    requested: bool | int
+    after: bool | int | None
+    verified: bool | None
+
+
+class ProjectSettingsOut(_Out):
+    dry_run: bool
+    changes: list[SettingChange]
+    verified: bool | None
+    notes: list[str] = Field(default_factory=list)

@@ -68,6 +68,12 @@ def parse_signature(text: str | None) -> Signature | None:
     return Signature(text=text, numerator=int(match.group(1)), denominator=int(match.group(2)))
 
 
+def click_level(metronome: dict[str, JsonObject]) -> str | None:
+    """The click level 0-127 (verified: value x 127, TW-1210)."""
+    param = metronome.get("clickLevel")
+    return None if param is None else str(round(float(param.get("process") or 0) * 127))
+
+
 class ProjectMixin(ServiceBase):
     def _device_root(self) -> int:
         for oid in (1, *range(DEVICE_ROOT_SCAN)):  # id 1 in Cubase 15; scan in case that changes
@@ -202,7 +208,7 @@ class ProjectMixin(ServiceBase):
             post_roll=Roll(active=flag(transport, "usePostRoll"), length=text(transport, "postRoll")),
             metronome=Metronome(
                 active=flag(transport, "metronomeOn"),
-                click_level=text(metronome, "clickLevel"),
+                click_level=click_level(metronome),
                 in_record=flag(metronome, "tickInRecord"),
                 in_playback=flag(metronome, "tickInPlayback"),
             ),

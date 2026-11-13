@@ -36,6 +36,7 @@ from trackwright.core.models import (
     PluginCatalogOut,
     PositionOut,
     ProjectOut,
+    ProjectSettingsOut,
     RangeEditOut,
     SaveOut,
     SelectedChannelOut,
@@ -312,6 +313,33 @@ def build_server(service: CubaseService) -> MCPServer:
                 start, end, action, unit=unit, verify_track=verify_track, track=track, dry_run=dry_run
             )
         )
+
+    # ------------------------------------------------------------------ project settings (TW-1210)
+    @server.tool(
+        annotations=WRITE,
+        description="Change project/transport settings: cycle, metronome, precount, punch in/out, use of pre/post-"
+        "roll, click in playback/record (true/false) and click level (0-127). Each one is read back. Dry run by "
+        "default. Time signature, tempo track and project setup are not settable here (use cubase_set_tempo).",
+    )
+    async def cubase_set_project(
+        cycle: bool | None = None,
+        metronome: bool | None = None,
+        precount: bool | None = None,
+        punch_in: bool | None = None,
+        punch_out: bool | None = None,
+        pre_roll: bool | None = None,
+        post_roll: bool | None = None,
+        click_in_playback: bool | None = None,
+        click_in_record: bool | None = None,
+        click_level: Annotated[int | None, Field(ge=0, le=127)] = None,
+        dry_run: DryRunArg = True,
+    ) -> ProjectSettingsOut:
+        given = {k: v for k, v in {
+            "cycle": cycle, "metronome": metronome, "precount": precount, "punch_in": punch_in,
+            "punch_out": punch_out, "pre_roll": pre_roll, "post_roll": post_roll,
+            "click_in_playback": click_in_playback, "click_in_record": click_in_record, "click_level": click_level,
+        }.items() if v is not None}  # fmt: skip
+        return await run(lambda: service.set_project(given, dry_run=dry_run))
 
     # ------------------------------------------------------------------ save (TW-1202)
     @server.tool(

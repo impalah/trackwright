@@ -8,10 +8,18 @@ from trackwright.core.importing import ImportMixin
 from trackwright.core.lifecycle import LifecycleMixin
 from trackwright.core.reading import ReadingMixin
 from trackwright.core.saving import SavingMixin
+from trackwright.core.settings import SettingsMixin
 from trackwright.core.writing import WritingMixin
 
 
 class CubaseService(
-    SavingMixin, ImportMixin, LifecycleMixin, AutomationMixin, CommandingMixin, WritingMixin, ReadingMixin
+    SettingsMixin,
+    SavingMixin,
+    ImportMixin,
+    LifecycleMixin,
+    AutomationMixin,
+    CommandingMixin,
+    WritingMixin,
+    ReadingMixin,
 ):
     """Every tool: read, write, commands, automation, launch, project, ranges, export, import and save (E05-E12)."""

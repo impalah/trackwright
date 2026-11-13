@@ -184,7 +184,7 @@ class FakeCubase:
         for i, (title, value) in enumerate(texts.items()):
             transport.params[4027 if title == "signature" else 4200 + i] = Param(title, "text", 0, value)
         metronome = self._obj("Metronome", "Metronome")
-        metronome.params = {1: Param("clickLevel", "text", 1, "127"), 2: Param("tickInRecord", "discrete", 0),
+        metronome.params = {1: Param("clickLevel", "continuous", 1.0), 2: Param("tickInRecord", "discrete", 0),
                             3: Param("tickInPlayback", "discrete", 0)}  # fmt: skip
         root.children = [self._obj("MIDI System", "CoreMIDI").id, transport.id, metronome.id]
         self.studio = {"root": root, "transport": transport, "metronome": metronome}

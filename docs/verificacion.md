@@ -324,3 +324,8 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
   - Deshacer quita el evento, no la copia.
 - **`cubase_import_audio`** contra Cubase: el ensayo planifica 0:02:30.000 y 3,0 s; `confirm` da `not_found`, lo correcto porque estaba deshecho, y lista las copias.
 - **Prueba del usuario desde Claude Code** (importación del tono en POC-TEST): funciona.
+
+## 2026-11-13 — TW-1210: ajustes del proyecto
+
+- **Experimento** ([experiments/tw1210](../experiments/tw1210/README.md)): los 9 interruptores del Transporte y el Metronome y el nivel del clic se escriben, se releen y se restauran.
+- **`cubase_set_project`** contra Cubase: metrónomo, nivel 100 y ciclo, con `verified: true`; restaurados con `verified: true`.

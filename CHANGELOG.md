@@ -2,6 +2,9 @@
 
 ## Sin publicar
 
+- **Ajustes del proyecto** (TW-1210):
+  - herramienta `cubase_set_project`: ciclo, metrónomo, precuenta, punch, uso del pre-roll y post-roll, clic al reproducir y al grabar, y nivel del clic, con relectura;
+  - `cubase_get_project` da el nivel del clic como 0–127.
 - **Importar audio** (TW-1203):
   - herramienta `cubase_import_audio` en dos fases: pista, posición y selector de Cubase; después, la confirmación por sondeo de bordes y la copia en el proyecto;
   - **script 1.5.4**, con `File / Import Audio File`.

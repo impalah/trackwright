@@ -1,6 +1,6 @@
 # Referencia de herramientas MCP
 
-El servidor `trackwright` publica 30 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 31 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 ## Conceptos comunes
 
@@ -131,6 +131,19 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 - **`unavailable`:** lo que la API de Cubase no expone (frecuencia de muestreo, resolución, longitud y nombre del proyecto) y el motivo.
 - **Cómo funciona:** lee los objetos internos «Transporte» y «Metronome» de Cubase, que se localizan por tipo. Verificado con 4/4 y 3/4.
 - **Coste:** alrededor de 1 s.
+
+### `cubase_set_project` (escritura, con ensayo)
+
+- **Entrada:** cualquiera de estos ajustes, más `dry_run`:
+  - interruptores (`true`/`false`): `cycle`, `metronome`, `precount`, `punch_in`, `punch_out`, `pre_roll` y `post_roll` (usar el pre-roll y el post-roll), `click_in_playback` y `click_in_record`;
+  - `click_level`, de 0 a 127.
+- **Qué hace:** escribe cada ajuste en el objeto «Transporte» o «Metronome» de Cubase y lo relee. La salida da el valor antes, el pedido, el leído y `verified` de cada uno.
+- **Verificado en Cubase Elements:** los 9 interruptores y el nivel del clic (experimento TW-1210).
+- **No disponible:**
+  - **compás:** Cubase no acepta escribirlo por esta vía; se cambia en la barra de transporte o en «Configuración del proyecto»;
+  - **duración** del pre-roll y el post-roll: su escala no está verificada;
+  - **pista de tempo.**
+  - El tempo se cambia con `cubase_set_tempo`.
 
 ## Herramientas de escritura y navegación
 

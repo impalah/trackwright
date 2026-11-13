@@ -40,6 +40,7 @@ WRITE_TOOLS = {
     "cubase_launch",
     "cubase_export_mix",
     "cubase_import_audio",
+    "cubase_set_project",
 }
 NAVIGATION_TOOLS = {
     "cubase_select_track",
@@ -261,3 +262,9 @@ async def test_save_project_needs_its_own_switch(client: Client) -> None:
 async def test_import_audio(client: Client) -> None:
     plan = await call(client, "cubase_import_audio", {"phase": "start", "track": "POC-TEST", "position": "150"})
     assert (plan["status"], plan["position"]) == ("planned", "0:02:30.000")
+
+
+async def test_set_project(client: Client) -> None:
+    done = await call(client, "cubase_set_project", {"metronome": True, "click_level": 90, "dry_run": False})
+    assert done["verified"] is True
+    assert (await call(client, "cubase_get_project", {}))["metronome"]["active"] is True
