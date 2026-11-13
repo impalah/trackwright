@@ -2,13 +2,16 @@
 
 ## Rutina diaria
 
-1. **Arranca el puente** en una terminal y déjala abierta:
+1. **Usa tu cliente MCP.**
+   - Lanza `trackwright serve`, que **arranca el puente** si no está en marcha (`[bridge] autostart`).
+   - Si Cubase está cerrado, pide a Claude que lo abra («abre Cubase», o con un proyecto `.cpr`). Usa `cubase_launch`.
+2. **Si Cubase muestra un diálogo** al arrancar (Steinberg Hub, elección de proyecto, dispositivo de audio), respóndelo tú y abre un proyecto. El script empieza a responder cuando hay un proyecto abierto.
+3. **Al terminar,** cierra Cubase tú; Trackwright nunca lo cierra. El puente arrancado automáticamente sigue en segundo plano. Para pararlo:
    ```sh
-   cd /Volumes/Data/projects/sound/trackwright && uv run trackwright bridge
+   pkill -f "trackwright bridge"
    ```
-2. **Abre Cubase.** El orden no importa: si el puente arranca después, Cubase vuelve a conectar solo cuando aparecen los puertos.
-3. **Usa tu cliente MCP.** Lanza `trackwright serve` cuando lo necesita.
-4. **Al terminar,** pulsa **Ctrl+C** en la terminal del puente.
+
+También puedes arrancar el puente a mano en una terminal, como antes (`uv run trackwright bridge`), y pararlo con **Ctrl+C**. Si ya está en marcha, `serve` lo usa y no arranca otro.
 
 ## Estado del puente
 
@@ -89,6 +92,7 @@ Cómo trabaja el modelo con las escrituras:
 | Situación | Efecto | Qué hacer |
 |---|---|---|
 | Reinicias el puente | Cubase vuelve a conectar solo. Las `ref` siguen siendo válidas. | Nada. |
+| El puente se cae | La siguiente herramienta lo vuelve a arrancar (si `autostart`). Una escritura que no llegó a enviarse se envía tras el arranque; una que se envió nunca se reintenta. | Nada. Si no arranca, mira `bridge.log` en el directorio del socket. |
 | Reinicias Cubase o recargas el script | Nueva sesión: las `ref` anteriores dan `STALE_REF`. | Volver a listar. Los selectores `uid:` siguen valiendo. |
 | Actualizas Trackwright | Puede traer un script nuevo. | `uv run trackwright script install --apply` y reiniciar Cubase. |
 | Una escritura vence por tiempo | Resultado desconocido; no se reintenta. | Revisar el `read_back` del error. |

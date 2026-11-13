@@ -36,6 +36,7 @@ WRITE_TOOLS = {
     "cubase_markers",
     "cubase_add_track_interactive",
     "cubase_record_automation",
+    "cubase_launch",
 }
 NAVIGATION_TOOLS = {
     "cubase_select_track",

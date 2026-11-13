@@ -91,18 +91,22 @@ def make_service(settings: Settings, *, simulate: bool) -> Any:
 
     policy = WritePolicy.from_config(settings.writes)
     if simulate:
-        from trackwright.fake import FakeCubase  # noqa: PLC0415
+        from trackwright.fake import FakeCubase, FakeLauncher  # noqa: PLC0415
 
-        return CubaseService(FakeCubase(), policy)
+        cubase = FakeCubase()
+        return CubaseService(cubase, policy, launcher=FakeLauncher(cubase))
     from trackwright.bridge import BridgeClient  # noqa: PLC0415
     from trackwright.hostport import BridgeHost  # noqa: PLC0415
+    from trackwright.launcher import BridgeLauncher, CubaseLauncher  # noqa: PLC0415
 
+    bridge_launcher = BridgeLauncher(settings.bridge, config_path=settings.source)
     host = BridgeHost(
         BridgeClient(settings.bridge.socket_path),
         read_timeout=settings.bridge.request_timeout,
         write_timeout=settings.bridge.write_timeout,
+        ensure_bridge=bridge_launcher.ensure if settings.bridge.autostart else None,
     )
-    return CubaseService(host, policy)
+    return CubaseService(host, policy, launcher=CubaseLauncher(settings.cubase))
 
 
 def cmd_serve(args: argparse.Namespace, settings: Settings) -> int:

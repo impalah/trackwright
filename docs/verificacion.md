@@ -242,3 +242,13 @@ Medido sobre POC-TEST con el código de TW-1208, a través del puente. Solo lect
 
 - `qc1` e `insert2.p1` aparecen como no disponibles: no hay nada asignado ni plugin en el slot 2.
 - **Grabación con `plain` desde la otra sesión de Claude Code:** según el usuario, funcionó correctamente.
+
+## 2026-11-13 — TW-1201: arranque automático del puente y `cubase_launch`
+
+- **Arranque automático,** con una configuración de prueba (puertos «TW1201 Test To/From» y socket `/tmp/tw1201-test`, para no interferir con el puente real ni con Cubase):
+  - `status` sin puente → `serve` lo arrancó como proceso independiente en **0,2 s**; luego `TIMEOUT`, lo esperado porque Cubase no usa esos puertos;
+  - una segunda sesión **reutilizó** el puente: seguía habiendo uno;
+  - el log del puente quedó en `bridge.log` del directorio del socket;
+  - el puente de prueba se paró al terminar.
+- **`cubase_launch`** en ensayo, con Cubase abierto → `already_running`, script 1.4.0. No abre nada.
+- **Pendiente,** porque necesita al usuario: Cubase cerrado → `cubase_launch` → Cubase abierto y el script respondiendo, o `awaiting_user` si Cubase muestra un diálogo.

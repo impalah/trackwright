@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from trackwright.core.automation import AutomationMixin
 from trackwright.core.commanding import CommandingMixin
+from trackwright.core.lifecycle import LifecycleMixin
 from trackwright.core.reading import ReadingMixin
 from trackwright.core.writing import WritingMixin
 
 
-class CubaseService(AutomationMixin, CommandingMixin, WritingMixin, ReadingMixin):
-    """Read tools (E05), write and navigation tools (E06), command tools (E07) and automation (TW-1207)."""
+class CubaseService(LifecycleMixin, AutomationMixin, CommandingMixin, WritingMixin, ReadingMixin):
+    """Read (E05), write and navigation (E06), commands (E07), automation (TW-1207) and launch (TW-1201)."""

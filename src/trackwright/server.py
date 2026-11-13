@@ -28,6 +28,7 @@ from trackwright.core.models import (
     ConvertOut,
     InsertPluginOut,
     InsertsOut,
+    LaunchOut,
     ParameterOut,
     ParametersOut,
     PluginCatalogOut,
@@ -259,6 +260,19 @@ def build_server(service: CubaseService) -> MCPServer:
         force: Annotated[bool, Field(description="fire even if Cubase says it cannot be performed")] = False,
     ) -> CommandOut:
         return await run(lambda: service.run_command(key, dry_run=dry_run, force=force))
+
+    # ------------------------------------------------------------------ lifecycle (TW-1201)
+    @server.tool(
+        annotations=WRITE,
+        description="Open Cubase (optionally with a .cpr project) when it is closed, and wait until the "
+        "Trackwright script answers. Never opens a second instance and never closes Cubase. Returns "
+        "awaiting_user when Cubase shows a dialog (Steinberg Hub, project choice) that the user must answer.",
+    )
+    async def cubase_launch(
+        project: Annotated[str | None, Field(description="path of a .cpr project to open (optional)")] = None,
+        dry_run: DryRunArg = True,
+    ) -> LaunchOut:
+        return await run(lambda: service.launch_cubase(project, dry_run=dry_run))
 
     # ------------------------------------------------------------------ automation tools (TW-1207)
     @server.tool(

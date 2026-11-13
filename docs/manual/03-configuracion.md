@@ -27,6 +27,12 @@ from_cubase_port = "Trackwright From Cubase"
 # socket_dir = "/private/tmp/mi-directorio"   # por defecto: $TMPDIR/trackwright-<uid>
 request_timeout = 3.0
 write_timeout = 5.0
+autostart = true            # serve arranca el puente si no está en marcha
+autostart_timeout = 10.0
+
+[cubase]
+app = "Cubase 15"
+launch_timeout = 120.0
 
 [writes]
 enabled = true
@@ -51,8 +57,17 @@ Las claves desconocidas se rechazan con `CONFIG_ERROR`, para que una errata no p
 | `socket_dir` | `$TMPDIR/trackwright-<uid>` | Directorio privado (permisos 0700) del socket local `bridge.sock`. No uses un volumen montado con `noowners`. |
 | `request_timeout` | `3.0` | Segundos de espera de una lectura (entre 0,05 y 30). |
 | `write_timeout` | `5.0` | Segundos de espera de una escritura (entre 0,05 y 30). Tras un timeout, el resultado es desconocido: Trackwright no reintenta. |
+| `autostart` | `true` | Si `trackwright serve` no encuentra el puente, lo arranca como proceso independiente. No lo duplica si ya existe, y su log va a `bridge.log` dentro de `socket_dir`. |
+| `autostart_timeout` | `10.0` | Segundos de espera a que el puente arrancado acepte conexiones (entre 0,5 y 60). |
 
 Si cambias los nombres de los puertos, el script de Cubase no los encontrará, porque también los lleva escritos. Déjalos como están salvo que sepas lo que haces.
+
+## `[cubase]`
+
+| Clave | Por defecto | Descripción |
+|---|---|---|
+| `app` | `"Cubase 15"` | Nombre de la aplicación para `open -a` y del proceso para `pgrep -x`. Cámbialo si usas otra versión, por ejemplo `"Cubase 14"`. |
+| `launch_timeout` | `120.0` | Segundos que `cubase_launch` espera a que el script responda tras abrir Cubase (entre 5 y 600). |
 
 ## `[writes]`
 

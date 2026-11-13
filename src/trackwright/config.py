@@ -45,6 +45,10 @@ class BridgeConfig(_Section):
     """Default timeout in seconds for one request to Cubase."""
     write_timeout: float = Field(default=5.0, ge=0.05, le=30.0)
     """Timeout for write operations (they run in an idle tick and read back)."""
+    autostart: bool = True
+    """``trackwright serve`` starts the bridge when it is not running (TW-1201)."""
+    autostart_timeout: float = Field(default=10.0, ge=0.5, le=60.0)
+    """Seconds to wait for an auto-started bridge to accept connections."""
 
     @field_validator("socket_dir", mode="after")
     @classmethod
@@ -90,11 +94,19 @@ class ScriptConfig(_Section):
         return value.expanduser()
 
 
+class CubaseConfig(_Section):
+    app: str = Field(default="Cubase 15", min_length=1)
+    """Application name for ``open -a`` and process name for ``pgrep -x``."""
+    launch_timeout: float = Field(default=120.0, ge=5.0, le=600.0)
+    """Seconds cubase_launch waits for the script to answer after opening Cubase."""
+
+
 class Settings(_Section):
     bridge: BridgeConfig = Field(default_factory=BridgeConfig)
     writes: WritesConfig = Field(default_factory=WritesConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     script: ScriptConfig = Field(default_factory=ScriptConfig)
+    cubase: CubaseConfig = Field(default_factory=CubaseConfig)
     source: Path | None = None
     """File the settings were loaded from (``None`` = built-in defaults)."""
 

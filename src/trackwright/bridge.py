@@ -149,6 +149,8 @@ class _Handler(socketserver.StreamRequestHandler):
 
     def handle(self) -> None:
         line = self.rfile.readline(MAX_LINE + 1)
+        if not line:
+            return  # a liveness probe: connected and closed without a request
         if len(line) > MAX_LINE:
             response: JsonObject = {"ok": False, "error": ProtocolError("IPC line too long").to_dict()}
         else:
@@ -247,10 +249,13 @@ class BridgeClient:
                     buffer += chunk
         except FileNotFoundError as exc:
             raise BridgeUnavailableError(
-                f"bridge socket not found at {self.socket_path}: start it with 'trackwright bridge'"
+                f"bridge socket not found at {self.socket_path}: start it with 'trackwright bridge'",
+                details={"sent": False},
             ) from exc
         except ConnectionRefusedError as exc:
-            raise BridgeUnavailableError(f"bridge is not accepting connections at {self.socket_path}") from exc
+            raise BridgeUnavailableError(
+                f"bridge is not accepting connections at {self.socket_path}", details={"sent": False}
+            ) from exc
         except TimeoutError as exc:
             raise RequestTimeoutError(
                 f"no answer from the bridge for {op}", outcome_unknown=True, details={"op": op}

@@ -1,6 +1,6 @@
 # Referencia de herramientas MCP
 
-El servidor `trackwright` publica 24 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 25 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 ## Conceptos comunes
 
@@ -204,6 +204,27 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.set_left_locator`, `transport.set_right_locator`, `transport.locators_to_selection` | unknown |
 | `automation.mode_touch`, `automation.mode_auto_latch`, `automation.mode_cross_over`, `automation.next_mode`, `automation.toggle_write_selected` | unknown (experimento TW-1206) |
 | `transport.start`, `transport.stop` | direct (verificado: reproduce y para; nunca graba) |
+
+## Abrir Cubase
+
+### `cubase_launch` (escritura, con ensayo)
+
+- **Entrada:** `project` (ruta de un `.cpr`, opcional) y `dry_run`.
+- **Qué hace:**
+  - comprueba si el script responde y si el proceso de Cubase existe (`pgrep -x`);
+  - si Cubase está cerrado, lo abre con `open -a "Cubase 15"` (y el proyecto, si lo hay);
+  - espera hasta `[cubase] launch_timeout` a que el script responda.
+- **Estados:**
+
+  | Estado | Significado |
+  |---|---|
+  | `planned` | Ensayo: Cubase está cerrado y se abriría. |
+  | `already_running` | El script ya responde. No hace nada. |
+  | `running_without_script` | Cubase está abierto pero el script no responde (sin proyecto, con un diálogo o sin el script instalado). **No abre una segunda instancia.** |
+  | `ready` | Cubase abierto y el script respondiendo. |
+  | `awaiting_user` | Cubase arranca, pero el script no ha respondido a tiempo: probablemente hay un diálogo esperando al usuario. |
+- **Nunca** cierra Cubase, fuerza su salida ni guarda proyectos.
+- Requiere las escrituras habilitadas.
 
 ## Herramientas de automatización
 

@@ -8,7 +8,8 @@ import threading
 import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
-from typing import Any, Concatenate
+from pathlib import Path
+from typing import Any, Concatenate, Protocol
 
 from trackwright.core.models import ParameterInfo, TrackInfo, Value
 from trackwright.core.policy import WritePolicy
@@ -24,6 +25,22 @@ from trackwright.hostport import HostPort
 from trackwright.ops import WRITE_OPS
 
 JsonObject = dict[str, Any]
+
+
+class AppLauncher(Protocol):
+    """Opens Cubase (:class:`trackwright.launcher.CubaseLauncher`, or a fake in tests)."""
+
+    @property
+    def app(self) -> str: ...
+
+    @property
+    def launch_timeout(self) -> float: ...
+
+    def is_running(self) -> bool: ...
+
+    def launch(self, project: Path | None = None) -> None: ...
+
+
 MIXER: JsonObject = {"scope": "mixer"}
 CHANNEL_TAGS = (1024, 4000, 1025, 1027, 1028, 4101, 4102)
 TAG_NAME, TAG_SELECTED, TAG_VOLUME, TAG_MUTE, TAG_SOLO, TAG_RECORD, TAG_INPUT, TAG_OUTPUT = (
@@ -69,8 +86,10 @@ class ServiceBase:
         *,
         sleep: Callable[[float], None] = time.sleep,
         settle_timeout: float = 1.0,
+        launcher: AppLauncher | None = None,
     ) -> None:
         self.host = host
+        self.launcher = launcher
         self.policy = policy
         self._sleep = sleep
         self._settle_timeout = settle_timeout

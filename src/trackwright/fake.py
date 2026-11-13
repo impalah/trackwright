@@ -24,7 +24,7 @@ from typing import Any
 
 from trackwright.commands import COMMANDS
 from trackwright.cubase import SCRIPT_VERSION
-from trackwright.errors import HostError, StaleSessionError, TrackwrightError
+from trackwright.errors import HostError, RequestTimeoutError, StaleSessionError, TrackwrightError
 from trackwright.ops import SESSIONLESS_OPS
 
 JsonObject = dict[str, Any]
@@ -99,6 +99,7 @@ class FakeCubase:
             "cycleRight": "1. 1. 1.  0",
         }
         self.tempo = 120.0
+        self.online = True  # False simulates Cubase closed or still starting (TW-1201)
         # Automation simulation (TW-1207): playback advances the cursor on every transport.get.
         self.automation_controls = True
         self.playing = False
@@ -251,6 +252,8 @@ class FakeCubase:
     def call(self, op: str, params: JsonObject | None = None) -> JsonObject:
         p = dict(params or {})
         self.calls.append((op, p))
+        if not self.online:  # Cubase closed: the bridge times out waiting for the script
+            raise RequestTimeoutError(f"no answer from Cubase for {op}", outcome_unknown=op not in SESSIONLESS_OPS)
         if op in self.fail_next:
             raise self.fail_next.pop(op)
         handler = getattr(self, "_op_" + op.replace(".", "_"), None)
@@ -795,3 +798,25 @@ def _seconds_to_bars(time: str, tempo: float) -> str:
     total = int(hours) * 3600 + int(minutes) * 60 + float(seconds)
     beats = total * tempo / 60
     return f"{int(beats // 4) + 1}. {int(beats % 4) + 1}. 1.  0"
+
+
+class FakeLauncher:
+    """Opens the simulated Cubase: ``launch`` brings the script online after ``answers_after`` polls."""
+
+    app = "Cubase 15 (simulated)"
+    launch_timeout = 5.0
+
+    def __init__(self, cubase: FakeCubase, *, running: bool = True, answers_after: int = 1) -> None:
+        self.cubase = cubase
+        self.running = running
+        self.answers_after = answers_after
+        self.launched: list[object] = []
+
+    def is_running(self) -> bool:
+        return self.running
+
+    def launch(self, project: object = None) -> None:
+        self.launched.append(project)
+        self.running = True
+        if self.answers_after >= 0:
+            self.cubase.online = True

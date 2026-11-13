@@ -2,6 +2,10 @@
 
 ## Sin publicar
 
+- **Arranque automático** (TW-1201):
+  - `trackwright serve` arranca el puente si no está en marcha (`[bridge] autostart`, activado por defecto), sin duplicarlo;
+  - herramienta `cubase_launch`, que abre Cubase (opcionalmente con un proyecto) y espera al script;
+  - sección de configuración `[cubase]`.
 - **Unidades reales en la automatización** (TW-1208):
   - los puntos de `cubase_record_automation` aceptan `plain` (dB, Hz…), que Cubase convierte con exactitud;
   - herramienta nueva `cubase_convert_value`, de solo lectura;

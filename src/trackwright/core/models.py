@@ -295,3 +295,14 @@ class AutomationRecordOut(_Out):
     verified: bool | None = Field(description="a read-back pass followed the curve (null when not verified)")
     mismatches: list[str] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)
+
+
+# ---------------------------------------------------------------------------- lifecycle (TW-1201)
+class LaunchOut(_Out):
+    status: Literal["planned", "already_running", "running_without_script", "ready", "awaiting_user"]
+    app: str
+    dry_run: bool
+    process_running: bool
+    script_version: str | None
+    project: str | None
+    instructions: str | None = None
