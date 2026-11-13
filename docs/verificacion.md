@@ -104,3 +104,14 @@ El proyecto no se ha guardado.
 - **El dibujo antiguo** (un recuadro con una barra blanca y líneas a los lados) era el campo de texto `makeLabelField(0, 0, 4, 1)` **vacío**: Cubase dibuja así los campos sin texto («-»). Queda resuelta la pregunta abierta de TW-1101.
 - **Funcionan:** el texto fijo, el nombre de la pista seleccionada y una lámpara controlada por el script.
 - **No funciona:** mostrar texto variable mediante un campo asociado a un elemento (`relateTo` + `setDisplayValue`). Por lo que se ve en la barra superior («Último control tocado: Ningún mapeado»), un campo asociado parece mostrar el mapeo del elemento, no su valor. Es una hipótesis sin verificar.
+
+## 2026-11-13 — panel de estado en el script 1.1.0
+
+- **Instalación:** `script install --apply` (1.1.0) y reinicio de Cubase. `capabilities.panel = {enabled: true, errors: []}`.
+- **Observado por el usuario:**
+  - **Fila 1:** «Trackwright 1.1.0».
+  - **Fila 2:** el nombre de la pista seleccionada.
+  - **Lámpara de actividad:**
+    - tres `ping` separados por 2 s (09:47:39–09:47:45) → **tres destellos cortos**;
+    - diez `da.channels` seguidos durante 1,0 s (09:47:45–09:47:46) → **encendida todo ese segundo** y apagada al terminar.
+- **Conclusión:** TW-1101 verificado en Cubase Elements 15.0.30.
