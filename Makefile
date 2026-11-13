@@ -3,8 +3,8 @@
 
 .DEFAULT_GOAL := help
 .PHONY: help sync lint format format-check typecheck test test-cov test-node test-integration \
-        test-integration-write check build dist-check publish-test publish clean version doctor ping \
-        bridge bridge-status serve-sim script-status script-install script-install-apply setup
+	test-integration-write check build dist-check publish-test publish clean version doctor ping \
+	bridge bridge-status serve-sim script-status script-install script-install-apply setup
 
 UV ?= uv
 TEST_TRACK ?= POC-TEST
