@@ -34,7 +34,7 @@ Regla común: un comando sin probar **no** se expone como herramienta hasta veri
 
 ## TW-1203 Flujo guiado de importación de audio
 
-- **Estado:** implementada (`cubase_import_audio`, script 1.5.4). Experimento en [experiments/tw1203](../../experiments/tw1203/README.md). La verificación ya no es visual: usa el sondeo de eventos. Falta que el usuario la pruebe
+- **Estado:** cerrada. `cubase_import_audio` probada por el usuario desde Claude Code el 2026-11-13. Experimento en [experiments/tw1203](../../experiments/tw1203/README.md)
 - **Objetivo:** «Importa este audio en la pista X en el compás N» con el mínimo esfuerzo del usuario.
 - **Flujo:**
   1. seleccionar la pista [VER];

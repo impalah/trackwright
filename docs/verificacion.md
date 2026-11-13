@@ -323,3 +323,4 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.md).
   - con el selector abierto, Cubase no responde al script;
   - Deshacer quita el evento, no la copia.
 - **`cubase_import_audio`** contra Cubase: el ensayo planifica 0:02:30.000 y 3,0 s; `confirm` da `not_found`, lo correcto porque estaba deshecho, y lista las copias.
+- **Prueba del usuario desde Claude Code** (importación del tono en POC-TEST): funciona.
