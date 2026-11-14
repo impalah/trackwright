@@ -16,7 +16,7 @@
 
 var midiremote_api = require('midiremote_api_v1')
 
-var SCRIPT_VERSION = '1.6.0'
+var SCRIPT_VERSION = '1.6.1'
 var MAX_CHANNEL_TAGS = 16 // da.channels: tags per channel in one idle tick (1.6.0, S-03)
 var PROTOCOL_VERSION = 1
 var MANUFACTURER = 0x7D
@@ -102,11 +102,16 @@ state.sessionId = makeSessionId()
 state.loadedAt = (new Date()).getTime()
 
 // ---------------------------------------------------------------- status panel (TW-1101)
-// Layout (grid units): row 0 = "Trackwright <version>" + activity lamp, row 1 = selected track name.
+// Layout (grid units): row 0 = "Trackwright <version>" + activity lamp, row 1 = selected track name,
+// rows 3-5 = what the automation faders on the right are (1.6.1; fixed text, like the title).
 // The lamp lights when a request arrives and goes off once the queue is empty, after at least
 // PANEL_LAMP_MIN_TICKS idle ticks so that it is visible. Every call is guarded: a surface problem must
 // never stop the script from loading or answering.
 var panel = null
+// The faders on the right are the automation controls of cubase_record_automation (TW-1206/1207): Cubase
+// records automation only from a touched surface control, and surface controls can only be created when
+// the script loads, so all of them are always there. Moving one by hand changes the selected track.
+var PANEL_HELP = ['Faders on the right:', 'automation (Trackwright)', 'do not move or map them']
 var PANEL_LAMP_MIN_TICKS = 3 // ~0.3 s at the measured ~8.9 idle ticks per second
 function buildPanel() {
 	if (!PANEL_ENABLED) return
@@ -116,6 +121,8 @@ function buildPanel() {
 		panel.title = surface.makeLabelField(0, 0, 8, 1)
 		panel.lamp = surface.makeLamp(8, 0, 1, 1)
 		panel.track = surface.makeLabelField(0, 1, 9, 1)
+		panel.help = []
+		for (var hl = 0; hl < PANEL_HELP.length; hl++) panel.help.push(surface.makeLabelField(0, 3 + hl, 9, 1))
 	} catch (e) {
 		state.lastError = 'panel build: ' + String(e)
 		panel = null
@@ -123,6 +130,9 @@ function buildPanel() {
 	}
 	try { panel.lamp.setShapeCircle() } catch (e1) { panel.errors.push('lamp shape: ' + String(e1)) }
 	try { page.setLabelFieldText(panel.title, 'Trackwright ' + SCRIPT_VERSION) } catch (e2) { panel.errors.push('title: ' + String(e2)) }
+	for (var ht = 0; ht < panel.help.length; ht++) {
+		try { page.setLabelFieldText(panel.help[ht], PANEL_HELP[ht]) } catch (e4) { panel.errors.push('help: ' + String(e4)) }
+	}
 	try {
 		page.setLabelFieldHostObject(panel.track, page.mHostAccess.mTrackSelection.mMixerChannel)
 	} catch (e3) { panel.errors.push('track: ' + String(e3)) }

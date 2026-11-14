@@ -37,6 +37,10 @@ Every failing check includes a `fix` with the solution.
 - **"-" in the track row:** no track with a mixer channel is selected.
 - **A different version in the title:** Cubase has another script loaded. Run `uv run trackwright script install --apply` and restart Cubase.
 
+## Why are there so many faders on the surface?
+
+They are the 45 automation controls of `cubase_record_automation`, bound to the selected track. Cubase only records automation from a touched surface control, and a script can only create its controls when it loads, so they are always there. Don't move them: moving one changes the selected track. Details in the [installation manual](01-installation.md#6-activate-the-script-in-cubase).
+
 ## The script doesn't update
 
 - **Cause:** Cubase doesn't reload modified scripts on its own.

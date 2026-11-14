@@ -137,7 +137,21 @@ Verás `virtual MIDI ports open` y `bridge listening on …/bridge.sock`. Mientr
    - **Fila 1:** «Trackwright» con la versión del script cargado, y una **lámpara** a la derecha. La lámpara se enciende un instante cada vez que Trackwright envía una petición a Cubase.
    - **Fila 2:** el nombre de la pista seleccionada. Muestra «-» si la seleccionada no tiene canal de mezclador (marcadores, carpetas) o si no hay ninguna seleccionada.
 
-   - **A la derecha:** decenas de faders. Son los controles de automatización (volumen, panorama, envíos, EQ, pre-filtro, Quick Controls y parámetros de plugins de la pista seleccionada) que usa `cubase_record_automation`. No los asignes a otras funciones en el asistente de asignación.
+   - **Filas 4 a 6:** un recordatorio de qué son los faders de la derecha.
+   - **A la derecha: 45 faders.** Son los controles de automatización de la **pista seleccionada** que usa `cubase_record_automation`:
+
+     | Faders | Parámetro |
+     |---|---|
+     | 2 | volumen y panorama |
+     | 4 | nivel de los envíos 1 a 4 |
+     | 12 | EQ del canal: ganancia, frecuencia y Q de las bandas 1 a 4 |
+     | 3 | pre-filtro: ganancia, corte de graves y corte de agudos |
+     | 8 | Quick Controls 1 a 8 |
+     | 16 | parámetros 1 a 8 de los plugins de los slots de inserción 1 y 2 |
+
+     **Por qué hay tantos y están siempre:** Cubase solo graba automatización cuando el valor llega de un **control de la superficie que está «tocado»** (comprobado en el experimento TW-1206; escribir el parámetro directamente no graba nada). Y la API de MIDI Remote solo deja crear los controles de la superficie al cargar el script, no mientras funciona. Así que cada parámetro que se puede grabar necesita su fader desde el principio, aunque ahora no lo use ningún comando.
+
+     **No los muevas ni los asignes** a otras funciones en el asistente de asignación: cada uno está vinculado a un parámetro de la pista seleccionada, así que moverlo a mano cambia el volumen, la EQ, el plugin… de esa pista.
 
    Con el puente parado, solo se ve la lámpara: los textos aparecen cuando la página «Bridge» se activa.
 5. **Recomendado:** en *Estudio > Configuración de estudio > Configuración de puertos MIDI* (*Studio > Studio Setup > MIDI Port Setup*), desmarca la columna **«En 'All MIDI Inputs'»** de `Trackwright To Cubase`. Así los mensajes de control no llegan nunca a una pista.

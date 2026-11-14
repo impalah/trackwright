@@ -4,15 +4,15 @@
 
 ## 0.4.0 — 2026-11-14
 
-Phases 1 and 2 of the quality remediation (epic E14): safety and truthful results, bridge and Cubase script robustness. Requires the **Cubase script 1.6.0**.
+Phases 1 and 2 of the quality remediation (epic E14): safety and truthful results, bridge and Cubase script robustness. Requires the **Cubase script 1.6.1**.
 
 **Upgrading from 0.3.0:**
 
 1. `uv tool upgrade trackwright`
 2. `trackwright bridge-stop`: the bridge started by 0.3.0 ignores the session that writes now carry. The MCP server starts a new one when it needs it.
-3. `trackwright setup`: it installs the script 1.6.0 (it shows what it replaces and asks), then **restart Cubase**.
+3. `trackwright setup`: it installs the script 1.6.1 (it shows what it replaces and asks), then **restart Cubase**.
 4. Restart your MCP client (in Claude Code, `/mcp`), so it loads the new tools. If you registered the server with `uvx --from trackwright==0.3.0`, that registration keeps running 0.3.0: `setup` now warns about it; replace it with `claude mcp remove trackwright -s user` and `trackwright setup`.
-5. `trackwright doctor`: "script loaded in Cubase" must show 1.6.0.
+5. `trackwright doctor`: "script loaded in Cubase" must show 1.6.1.
 
 - **Breaking:** `track` is required in `cubase_set_parameter` and `cubase_insert_plugin`; their outputs include `track_uid` to reuse when applying a dry run.
 - **Write policy** (TW-1401): `cubase_run_command` refuses save and track removal (use the dedicated tools) and is refused, like range edits and splits on every track, while `[writes] allowed_tracks` is set; single-track range edits honour `allowed_tracks`; `cubase_set_parameter` refuses the channel's routing, name and selection; moving the cycle locators needs writes enabled.
@@ -23,6 +23,7 @@ Phases 1 and 2 of the quality remediation (epic E14): safety and truthful result
 - **`trackwright bridge-stop`** (and `make bridge-stop`): stops the running bridge through the pid it reports. The documented `pkill -f "trackwright bridge"` did not match an autostarted bridge, which runs as `python -m trackwright --config … bridge`.
 - **Running script version** (TW-1407): `doctor` checks that Cubase runs the packaged script (after an upgrade without restarting Cubase it fails with the fix), and `cubase_status` reports `script_outdated`.
 - **Cubase script 1.6.0** (TW-1406): parameter writes no longer walk the mixer tree; each DirectAccess scope checks its own activation; `da.channels` accepts at most 16 tags; requests still queued when the page deactivates are answered with `NOT_ACTIVE`; `page.mOnIdle` never throws into Cubase; inherited names (`toString`) are not operations or commands; incomplete requests expire after ~6 s instead of ~225 s; `RESPONSE_TOO_LARGE` keeps `op` and `via`. Install it with `trackwright setup` and restart Cubase.
+- **Surface panel** (script 1.6.1): three fixed lines say what the 45 faders are (the automation controls of `cubase_record_automation`) and not to move or map them; the installation manual explains why they are always there.
 - **Code quality review** (`docs/quality-review.md`) and its remediation plan, epic E14: policy holes, session pinning in the bridge, truthful results, robustness, simulator/script conformance, mutation testing and CI.
 - **Project links:** `Repository` and `Issues` (GitHub) in the package metadata; the README links the Spanish version, the documentation and the license on GitHub, which also work on PyPI.
 - **Docs:** the source installation clones the GitHub repository; local paths replaced with generic ones.

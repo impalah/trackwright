@@ -37,6 +37,10 @@ Cada comprobación que falla incluye un `fix` con la solución.
 - **«-» en la fila de la pista:** no hay ninguna pista con canal de mezclador seleccionada.
 - **Otra versión en el título:** Cubase tiene cargado otro script. Ejecuta `uv run trackwright script install --apply` y reinicia Cubase.
 
+## ¿Por qué hay tantos faders en la superficie?
+
+Son los 45 controles de automatización de `cubase_record_automation`, vinculados a la pista seleccionada. Cubase solo graba automatización desde un control de la superficie que está tocado, y un script solo puede crear sus controles al cargarse, así que están siempre. No los muevas: mover uno cambia la pista seleccionada. Más detalle en el [manual de instalación](01-installation.es.md#6-activar-el-script-en-cubase).
+
 ## El script no se actualiza
 
 - **Causa:** Cubase no recarga los scripts modificados por sí mismo.

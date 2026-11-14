@@ -36,8 +36,16 @@ def test_layout_uses_only_verified_mechanisms(h: Harness) -> None:
         ("label", 0, 0, 8),
         ("lamp", 8, 0, 1),
         ("label", 0, 1, 9),
+        ("label", 0, 3, 9),
+        ("label", 0, 4, 9),
+        ("label", 0, 5, 9),
     ]
-    title, lamp, track = surface
+    title, lamp, track, *help_rows = surface
+    assert [e["text"] for e in help_rows] == [
+        "Faders on the right:",
+        "automation (Trackwright)",
+        "do not move or map them",
+    ]
     assert title["text"] == f"Trackwright {SCRIPT_VERSION}"
     assert track["hostObject"] == "selected"
     assert lamp["shape"] == "circle"

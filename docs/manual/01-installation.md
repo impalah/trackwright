@@ -137,7 +137,21 @@ You will see `virtual MIDI ports open` and `bridge listening on …/bridge.sock`
    - **Row 1:** "Trackwright" with the version of the loaded script, and a **lamp** on the right. The lamp lights up briefly every time Trackwright sends a request to Cubase.
    - **Row 2:** the name of the selected track. It shows "-" if the selected track has no mixer channel (markers, folders) or if no track is selected.
 
-   - **On the right:** dozens of faders. These are the automation controls (volume, pan, sends, EQ, pre-filter, Quick Controls and plugin parameters of the selected track) used by `cubase_record_automation`. Don't assign them to other functions in the mapping assistant.
+   - **Rows 4 to 6:** a reminder of what the faders on the right are.
+   - **On the right: 45 faders.** They are the automation controls of the **selected track** that `cubase_record_automation` uses:
+
+     | Faders | Parameter |
+     |---|---|
+     | 2 | volume and pan |
+     | 4 | level of sends 1 to 4 |
+     | 12 | channel EQ: gain, frequency and Q of bands 1 to 4 |
+     | 3 | pre-filter: gain, low cut and high cut |
+     | 8 | Quick Controls 1 to 8 |
+     | 16 | parameters 1 to 8 of the plugins in insert slots 1 and 2 |
+
+     **Why there are so many and they are always there:** Cubase only records automation when the value comes from a **surface control that is "touched"** (verified in experiment TW-1206; writing the parameter directly does not record anything). And the MIDI Remote API only lets a script create its surface controls when it loads, not while it runs. So every parameter that can be recorded needs its fader from the start, even if no command uses it now.
+
+     **Do not move them or assign them** to other functions in the mapping assistant: each one is bound to a parameter of the selected track, so moving it by hand changes that track's volume, EQ, plugin…
 
    With the bridge stopped, only the lamp is visible: the texts appear when the "Bridge" page becomes active.
 5. **Recommended:** in *Studio > Studio Setup > MIDI Port Setup*, uncheck the **"In 'All MIDI Inputs'"** column for `Trackwright To Cubase`. This way control messages never reach a track.
