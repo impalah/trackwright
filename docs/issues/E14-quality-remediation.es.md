@@ -2,7 +2,7 @@
 
 [English](E14-quality-remediation.md) · **Español**
 
-**Estado de la épica: en curso.** Las fases 1 y 2 (TW-1401 a TW-1407) están hechas y verificadas en Cubase, y se publicaron en la versión 0.4.0 (2026-11-14, etiqueta `v0.4.0`). Faltan las fases 3 y 4. Origen: la revisión de calidad del código del 2026-11-14, con cada hallazgo, su evidencia y su ubicación en [`docs/quality-review.es.md`](../quality-review.es.md). Los IDs de hallazgo (C-xx, I-xx, S-xx, F-xx, T-xx, R-xx) remiten a ese documento.
+**Estado de la épica: en curso.** Las fases 1 y 2 (TW-1401 a TW-1407) están hechas y verificadas en Cubase, y se publicaron en la versión 0.4.0 (2026-11-14, etiqueta `v0.4.0`). La fase 3 (TW-1408 a TW-1411) está hecha; falta la fase 4. Origen: la revisión de calidad del código del 2026-11-14, con cada hallazgo, su evidencia y su ubicación en [`docs/quality-review.es.md`](../quality-review.es.md). Los IDs de hallazgo (C-xx, I-xx, S-xx, F-xx, T-xx, R-xx) remiten a ese documento.
 
 **Orden:** cuatro fases, por riesgo. La fase 1 corrige las formas en que una escritura puede saltarse la configuración del usuario o una herramienta puede informar de algo que no ocurrió; debería publicarse antes que las funciones nuevas. Las fases 1 y 2 juntas forman la versión **0.4.0**: algunos cambios alteran los esquemas de las herramientas (C-04) y Trackwright sigue en alfa.
 
@@ -110,7 +110,7 @@
 
 ### TW-1411 Más tests de integración en vivo
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-14): 14 herramientas más con tests en directo (20 de 32), todos pasan contra Cubase; las otras 12 abren diálogos, reproducen audio o borran cosas y siguen siendo manuales (listadas en verification.es.md). La primera ejecución dejó renombrada la pista de pruebas (la política bloqueó la restauración); corregido en el test y restaurado en el momento
 - **Alcance:** tests en vivo opcionales, reversibles y limitados a la pista de pruebas, para las herramientas de lectura que no tienen ninguno (`get_selected_channel`, `list_available_plugins`, `list_parameters`, `get_parameter`, `get_project`, `poll_changes`, `list_automation_targets`, `convert_value`) y, tras `TRACKWRIGHT_ALLOW_WRITES`, para las escrituras reversibles (`set_parameter`, `rename_track`, `select_track`, `set_tempo`, `set_project`, `markers`). Las herramientas con diálogos o audio siguen siendo manuales y se enumeran como tales.
 
 ## Fase 4 — Mantenibilidad y API

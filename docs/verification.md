@@ -444,3 +444,12 @@ mutmut 3.8.1 through `uv run --with`, 4 workers, ~2 minutes for 899 mutants.
 - **With `host` and `hostport`:** the most serious survivor was `BridgeHost` retrying when the send outcome is uncertain (`sent is False` instead of `is not False`), the case the never-retry rule forbids; its tests live in `test_launcher.py`, which mutmut cannot run. Also: writes losing their session, the caller's deadline not reaching every internal step, history bounds and error texts. Tests in `tests/unit/test_mutation_host.py` (28).
 - **Remaining survivors, all reviewed:** message texts and log arguments; changes equivalent in Python (`"ascii"`/`"ASCII"`, `allow_nan=None`, `code=None` where the default code is the same, initial values with no effect, a branch that cannot be reached after the lock wait); and `ObjectRef.decode`/`check_*`, which no tool calls (C-25, TW-1412).
 - **Score without `core/refs`:** 637 of 730 mutants killed, 87.3 % (goal: 85 %). No survivor that changes behavior is left in `protocol`, `policy`, `hostport` or `host`.
+
+## 2026-11-14 — TW-1411: more live integration tests
+
+Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC-TEST`.
+
+- **New read tests** (10 pass): selected channel, plugin catalog, channel parameters and one parameter, project properties, changes, automation targets and the exact conversion of 0 dB (0.7891), marker navigation with the cursor put back.
+- **New reversible write tests** (7 pass with the earlier ones): volume through `set_parameter`, rename, selection, tempo and metronome, each restored in `finally`.
+- **Incident in the first run:** the rename test renamed POC-TEST to "TW-RENAME-TEST" and then could not rename it back: its policy allowed only `POC-TEST`, and the track was no longer called that. The name was restored by hand at once (verified), and the test now allows both names. After the corrected run every track has its name, volume 0.00 dB, no mute, tempo 120 and the metronome off, as before.
+- **Live coverage:** 20 of the 32 tools have a repeatable live test (6 before). Still manual, because they open dialogs, play audio or remove things: `insert_plugin`, `remove_selected_tracks`, `split_at_locators`, `add_track_interactive`, `run_command`, `edit_range`, `plugin_preset`, `save_project`, `import_audio`, `export_mix`, `launch` and `record_automation`; their checks are in this log.

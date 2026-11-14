@@ -2,7 +2,7 @@
 
 **English** · [Español](E14-quality-remediation.es.md)
 
-**Epic status: in progress.** Phases 1 and 2 (TW-1401 to TW-1407) are done and verified in Cubase, and were published in version 0.4.0 (2026-11-14, tag `v0.4.0`). Phases 3 and 4 are pending. Origin: the code-quality review of 2026-11-14, with every finding, its evidence and its location in [`docs/quality-review.md`](../quality-review.md). Finding IDs (C-xx, I-xx, S-xx, F-xx, T-xx, R-xx) refer to that document.
+**Epic status: in progress.** Phases 1 and 2 (TW-1401 to TW-1407) are done and verified in Cubase, and were published in version 0.4.0 (2026-11-14, tag `v0.4.0`). Phase 3 (TW-1408 to TW-1411) is done; phase 4 is pending. Origin: the code-quality review of 2026-11-14, with every finding, its evidence and its location in [`docs/quality-review.md`](../quality-review.md). Finding IDs (C-xx, I-xx, S-xx, F-xx, T-xx, R-xx) refer to that document.
 
 **Order:** four phases, by risk. Phase 1 fixes ways in which a write can bypass the user's configuration or a tool can report something that did not happen; it should be released before new features. Phases 1 and 2 together make version **0.4.0**: some changes alter tool schemas (C-04) and Trackwright is still alpha.
 
@@ -110,7 +110,7 @@
 
 ### TW-1411 More live integration tests
 
-- **Status:** pending
+- **Status:** done (2026-11-14): 14 more tools with live tests (20 of 32), all passing against Cubase; the other 12 open dialogs, play audio or remove things and stay manual (listed in verification.md). The first run left the test track renamed (the policy blocked the restore); fixed in the test and restored at once
 - **Scope:** opt-in live tests, reversible and limited to the test track, for the read tools that have none (`get_selected_channel`, `list_available_plugins`, `list_parameters`, `get_parameter`, `get_project`, `poll_changes`, `list_automation_targets`, `convert_value`) and, behind `TRACKWRIGHT_ALLOW_WRITES`, for the reversible writes (`set_parameter`, `rename_track`, `select_track`, `set_tempo`, `set_project`, `markers`). Tools with dialogs or audio stay manual and are listed as such.
 
 ## Phase 4 — Maintainability and API
