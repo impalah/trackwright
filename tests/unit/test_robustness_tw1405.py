@@ -172,6 +172,7 @@ def test_script_install_is_atomic_and_refuses_symlinked_folders(tmp_path: Path) 
     status, written = install_script(folder, apply=True)
     assert written and status.state == "up_to_date"
     assert sorted(p.name for p in folder.iterdir()) == [SCRIPT_NAME]  # no temporary file left behind
+    assert (folder / SCRIPT_NAME).stat().st_mode & 0o777 == 0o644
     linked = tmp_path / "linked"
     linked.symlink_to(tmp_path / "real", target_is_directory=True)
     (tmp_path / "real").mkdir()

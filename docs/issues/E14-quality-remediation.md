@@ -76,7 +76,7 @@
 
 ### TW-1406 Cubase script robustness (script 1.6.0)
 
-- **Status:** pending
+- **Status:** done in code (2026-11-14): script 1.6.0, node tests in `tests/script/test_script_node.py`; installed in the user's Cubase (with permission) and waiting for a Cubase restart to be verified. Decision: no routing guard inside the script — the slot parameter 4101 ("Edición") is legitimately written by `cubase_plugin_preset`, so the script cannot refuse a tag number without knowing the object type; the Python guard (TW-1401) covers every MCP path and the bridge only accepts Trackwright's own requests. Baseline before installing: `da.param.set` median 112 ms (script 1.5.5, n=20)
 - **Findings:** S-01, S-02, S-03, S-05, S-06, S-07, S-08, S-09, F-03.
 - **Scope:** drop the guard walk and `expectChannelTitle`; active flag per scope; cap on `da.channels` tags; reply `NOT_ACTIVE` to queued requests on deactivation; `try/catch` in `mOnIdle`; `hasOwnProperty` lookups; assembly expiry ~50 ticks; one error-envelope helper.
 - **Verification in Cubase:** install with permission, restart Cubase, `doctor`, the live integration tests and a write latency comparison before/after S-01.

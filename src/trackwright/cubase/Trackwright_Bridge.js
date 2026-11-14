@@ -16,7 +16,8 @@
 
 var midiremote_api = require('midiremote_api_v1')
 
-var SCRIPT_VERSION = '1.5.5'
+var SCRIPT_VERSION = '1.6.0'
+var MAX_CHANNEL_TAGS = 16 // da.channels: tags per channel in one idle tick (1.6.0, S-03)
 var PROTOCOL_VERSION = 1
 var MANUFACTURER = 0x7D
 var MAGIC_A = 0x54
@@ -28,11 +29,9 @@ var MAX_PENDING_ASSEMBLIES = 8
 var MAX_QUEUE = 32
 var MAX_OPS_PER_IDLE = 4
 var DUP_CACHE_SIZE = 64
-var ASSEMBLY_MAX_IDLE_TICKS = 2000
+var ASSEMBLY_MAX_IDLE_TICKS = 50 // ~6 s at ~9 idle ticks/s, close to the 5 s of the Python side (1.6.0, S-08)
 // Write policy lives in the Python server (configurable allow-list, dry runs). The script only checks
-// object validity and optional caller preconditions (expectChannelTitle, expectTitle).
-var GUARD_MAX_NODES = 3000
-var GUARD_MAX_DEPTH = 8
+// object validity and optional caller preconditions (expectTitle).
 var MAX_EVENTS = 500
 
 var deviceDriver = midiremote_api.makeDeviceDriver('Trackwright', 'Bridge', 'Trackwright')
@@ -372,7 +371,7 @@ function sendPayload(activeDevice, obj) {
 	if (count < 1) count = 1
 	if (count > MAX_FRAGMENTS) {
 		text = asciiEscape(JSON.stringify({
-			v: PROTOCOL_VERSION, sid: state.sessionId, rid: obj.rid || '', ok: false,
+			v: PROTOCOL_VERSION, sid: state.sessionId, rid: obj.rid || '', op: obj.op, via: obj.via, ok: false,
 			err: { code: 'RESPONSE_TOO_LARGE', msg: 'response exceeds ' + MAX_FRAGMENTS + ' fragments; use paging' }
 		}))
 		count = Math.ceil(text.length / MAX_FRAGMENT_PAYLOAD)
@@ -537,7 +536,7 @@ function handleText(activeDevice, text) {
 		reply(activeDevice, req, false, null, 'STALE_SESSION', 'expected session ' + state.sessionId)
 		return
 	}
-	if (DIRECT_OPS[req.op]) {
+	if (DIRECT_OPS.hasOwnProperty(req.op)) {
 		try {
 			reply(activeDevice, req, true, runDirect(req), null, null, { via: 'sysex' })
 		} catch (e) {
@@ -545,7 +544,7 @@ function handleText(activeDevice, text) {
 		}
 		return
 	}
-	if (!IDLE_OPS[req.op]) {
+	if (!IDLE_OPS.hasOwnProperty(req.op)) {
 		reply(activeDevice, req, false, null, 'UNKNOWN_OP', req.op)
 		return
 	}
@@ -706,33 +705,12 @@ function assertValid(am, id) {
 	return n
 }
 
-// Write context (0.2.0): no title restriction any more. Records the base object and, when the caller
-// sends expectChannelTitle, checks it (a precondition chosen by the caller, not a global restriction).
-// The subtree path is reported when the target is under the base; a target elsewhere is allowed.
-function guardTarget(am, targetId, p) {
+// Write context: the base object of the DirectAccess instance used (1.6.0, S-01). The subtree walk of
+// earlier versions (up to 3000 nodes per write, only to report a path nobody read) and the
+// expectChannelTitle precondition (never sent by Trackwright) were removed.
+function guardTarget(am) {
 	var base = da.getBaseObjectID(am)
-	var title = base >= 0 ? da.getObjectTitle(am, base) : null
-	if (p && typeof p.expectChannelTitle === 'string' && title !== p.expectChannelTitle) {
-		throw { code: 'PRECONDITION_FAILED', msg: 'base channel title is "' + title + '", expected "' + p.expectChannelTitle + '"' }
-	}
-	if (base < 0) return { base: base, baseTitle: null, path: null, policy: 'open' }
-	if (targetId === base) return { base: base, baseTitle: title, path: [base], policy: 'open' }
-	var stack = [{ id: base, depth: 0, path: [base] }]
-	var visited = 0
-	while (stack.length > 0) {
-		var cur = stack.pop()
-		visited++
-		if (visited > GUARD_MAX_NODES) break
-		if (cur.depth >= GUARD_MAX_DEPTH) continue
-		var n = da.getNumberOfChildObjects(am, cur.id)
-		for (var i = 0; i < n; i++) {
-			var c = da.getChildObjectID(am, cur.id, i)
-			var path = cur.path.concat([c])
-			if (c === targetId) return { base: base, baseTitle: title, path: path, policy: 'open' }
-			stack.push({ id: c, depth: cur.depth + 1, path: path })
-		}
-	}
-	return { base: base, baseTitle: title, path: null, policy: 'open', outsideBase: true }
+	return { base: base, baseTitle: base >= 0 ? da.getObjectTitle(am, base) : null }
 }
 
 var NO_DA_OPS = { 'auto.control': true, 'sel.step': true, 'transport.setTime': true, 'transport.setTempo': true, 'cmd.canPerform': true, 'cmd.run': true }
@@ -796,7 +774,7 @@ var IDLE_OPS = {
 		var tag = num(p, 'tag')
 		var value = num(p, 'value')
 		assertValid(am, id)
-		var guard = guardTarget(am, id, p)
+		var guard = guardTarget(am)
 		var before = describeParam(am, id, tag)
 		// Verified (POC): the host clamps process writes to [0,1]. Discrete values read outside that
 		// range (routing: 'Stereo Out' = 22) cannot be written back, so they are refused here.
@@ -814,7 +792,7 @@ var IDLE_OPS = {
 		var tag = num(p, 'tag')
 		if (typeof p.value !== 'string') throw { code: 'BAD_REQUEST', msg: 'value must be a string' }
 		assertValid(am, id)
-		var guard = guardTarget(am, id, p)
+		var guard = guardTarget(am)
 		var before = describeParam(am, id, tag)
 		if (typeof p.expectTitle === 'string' && before.title !== p.expectTitle) {
 			throw { code: 'PRECONDITION_FAILED', msg: 'parameter title is "' + before.title + '", expected "' + p.expectTitle + '"' }
@@ -831,6 +809,7 @@ var IDLE_OPS = {
 		if (base < 0) return { base: base, total: 0, items: [] }
 		var offset = Math.max(0, Math.floor(num(p, 'offset', 0)))
 		var limit = clampLimit(num(p, 'limit', 16), 32)
+		if (p.tags && p.tags.length > MAX_CHANNEL_TAGS) throw { code: 'BAD_REQUEST', msg: 'at most ' + MAX_CHANNEL_TAGS + ' tags' }
 		var tags = (p.tags && p.tags.length) ? p.tags : [1024, 4000, 1025, 1027, 1028, 4101, 4102]
 		var total = assertValid(am, base)
 		var items = []
@@ -868,7 +847,7 @@ var IDLE_OPS = {
 	// TW-1206/1207: touch / move / release one automation control (bound to a parameter of the selected track).
 	'auto.control': function (am, p, activeDevice) {
 		if (!autoControls) throw { code: 'UNSUPPORTED', msg: 'automation controls are not enabled in this script build' }
-		var c = autoControls.byKey[p.key]
+		var c = autoControls.byKey.hasOwnProperty(p.key) ? autoControls.byKey[p.key] : undefined
 		if (!c) throw { code: 'NOT_FOUND', msg: 'unknown automation control ' + p.key }
 		var touchedBefore = c.touched
 		if (p.touch === true && !c.touched) {
@@ -919,7 +898,7 @@ var IDLE_OPS = {
 		return { canPerform: out }
 	},
 	'cmd.run': function (am, p, activeDevice) {
-		var c = commands[p.key]
+		var c = commands.hasOwnProperty(p.key) ? commands[p.key] : undefined
 		if (!c) throw { code: 'NOT_FOUND', msg: 'unknown command key ' + p.key }
 		var can = null
 		try { can = c.binding.canPerform(am) } catch (e) { can = 'error: ' + String(e) }
@@ -981,7 +960,7 @@ var IDLE_OPS = {
 		var pm = da.mPluginManager
 		if (!pm) throw { code: 'UNSUPPORTED', msg: 'mPluginManager not available' }
 		assertValid(am, slot)
-		var guard = guardTarget(am, slot, p)
+		var guard = guardTarget(am)
 		var before = describeObject(am, slot)
 		// Verified on Cubase Elements 15.0.30: an empty insert slot has children=0 and 8 slot-level
 		// parameters (on, edit, bypass, effect type...). A loaded plugin appears as a child object.
@@ -1019,8 +998,8 @@ function runQueued(activeDevice, activeMapping) {
 			reply(activeDevice, req, false, null, 'UNSUPPORTED', 'DirectAccess (' + scope + ') unavailable: ' + (scope === 'mixer' ? daMixError : daError), extra)
 			continue
 		}
-		if (!state.daActive) {
-			reply(activeDevice, req, false, null, 'NOT_ACTIVE', 'DirectAccess not activated', extra)
+		if (!(scope === 'mixer' ? state.daMixActive : state.daActive)) {
+			reply(activeDevice, req, false, null, 'NOT_ACTIVE', 'DirectAccess (' + scope + ') not activated', extra)
 			continue
 		}
 		try {
@@ -1087,24 +1066,38 @@ page.mOnDeactivate = function (activeDevice, activeMapping) {
 	}
 	state.daActive = false
 	state.daMixActive = false
+	// 1.6.0 (S-05): answer what was queued instead of dropping it, so callers do not wait for a timeout
+	// and do not take a write that never ran for one with an unknown outcome.
+	var dropped = state.queue
 	state.queue = []
 	state.inflight = {}
+	for (var q = 0; q < dropped.length; q++) {
+		try {
+			reply(activeDevice, dropped[q].req, false, null, 'NOT_ACTIVE', 'the MIDI Remote page was deactivated before this request ran', { via: 'idle' })
+		} catch (e3) {
+			state.lastError = 'deactivate reply: ' + String(e3)
+		}
+	}
 }
 
 page.mOnIdle = function (activeDevice, activeMapping) {
-	state.idleTicks++
-	expireAssemblies()
-	panelIdle(activeDevice)
-	if (pendingReleases.length > 0) {
-		var keep = []
-		for (var r = 0; r < pendingReleases.length; r++) {
-			if (state.idleTicks >= pendingReleases[r].atTick) {
-				try { pendingReleases[r].variable.setProcessValue(activeDevice, 0) } catch (e) { state.lastError = 'release: ' + String(e) }
-			} else keep.push(pendingReleases[r])
+	try {
+		state.idleTicks++
+		expireAssemblies()
+		panelIdle(activeDevice)
+		if (pendingReleases.length > 0) {
+			var keep = []
+			for (var r = 0; r < pendingReleases.length; r++) {
+				if (state.idleTicks >= pendingReleases[r].atTick) {
+					try { pendingReleases[r].variable.setProcessValue(activeDevice, 0) } catch (e) { state.lastError = 'release: ' + String(e) }
+				} else keep.push(pendingReleases[r])
+			}
+			pendingReleases = keep
 		}
-		pendingReleases = keep
+		if (state.queue.length > 0) runQueued(activeDevice, activeMapping)
+	} catch (eIdle) {
+		state.lastError = 'mOnIdle: ' + String(eIdle) // 1.6.0 (S-06): never throw into Cubase
 	}
-	if (state.queue.length > 0) runQueued(activeDevice, activeMapping)
 }
 
 if (daMix) {

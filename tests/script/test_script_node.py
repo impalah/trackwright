@@ -235,6 +235,32 @@ def test_plugin_insert_flow(h: Harness) -> None:
     assert again["err"]["code"] == "SLOT_NOT_EMPTY"
 
 
-def test_precondition_expect_channel_title(h: Harness) -> None:
+def test_write_guard_reports_only_the_base(h: Harness) -> None:
+    """1.6.0 (S-01): no subtree walk; expectChannelTitle is gone (Trackwright never sent it)."""
     resp = h.call("da.param.set", {"id": ids(h)["instr"], "tag": 1027, "value": 1, "expectChannelTitle": "Other"})
-    assert resp["err"]["code"] == "PRECONDITION_FAILED"
+    assert resp["ok"] is True
+    assert set(resp["r"]["guard"]) == {"base", "baseTitle"}
+
+
+def test_inherited_names_are_not_operations_or_commands(h: Harness) -> None:
+    """1.6.0 (S-07): plain-object lookups no longer accept 'toString' or 'constructor'."""
+    assert h.call("toString")["err"]["code"] == "UNKNOWN_OP"
+    resp = h.call("cmd.run", {"key": "constructor"})
+    assert resp["ok"] is False
+    assert resp["err"]["code"] != "SCRIPT_ERROR"
+
+
+def test_channel_listing_caps_the_tags(h: Harness) -> None:
+    """1.6.0 (S-03)."""
+    resp = h.call("da.channels", {"tags": list(range(1000, 1017)), "scope": "mixer"})
+    assert resp["err"]["code"] == "BAD_REQUEST"
+    assert h.call("da.channels", {"tags": list(range(1000, 1016)), "scope": "mixer"})["ok"] is True
+
+
+def test_deactivation_answers_queued_requests(h: Harness) -> None:
+    """1.6.0 (S-05): queued requests get NOT_ACTIVE instead of waiting for the caller's timeout."""
+    h.call("hello")
+    sent = h.step(frames=h.frames_for("da.base", {"scope": "mixer"}))["sent"]
+    assert h.decode(sent) == []  # queued for the idle tick
+    replies = h.decode(h.step(deactivate=True)["sent"])
+    assert [(r["op"], r["err"]["code"]) for r in replies] == [("da.base", "NOT_ACTIVE")]

@@ -9,6 +9,7 @@
 //   "frames": [[...sysex data...], ...]   deliver frames to the script's MIDI input
 //   "idle": n                             run n page idle ticks
 //   "remove": objectId                    remove an object (as if deleted in Cubase)
+//   "deactivate": true                    deactivate the MIDI Remote page
 //   "state": true                         include harness state (fired commands, selection, ids)
 // Reply: {"sent": [frames sent by the script during the step], "logs": [...], "state"?: {...}}
 'use strict'
@@ -306,6 +307,7 @@ rl.on('line', function (line) {
 	sent = []
 	if (step.frames) step.frames.forEach(function (f) { midiInput.mOnSysex(device, [0xF0].concat(f, [0xF7])) })
 	if (step.idle) for (var i = 0; i < step.idle; i++) { page.mOnIdle(device, mapping); if (driver.mOnIdle) driver.mOnIdle(device) }
+	if (step.deactivate) page.mOnDeactivate(device, mapping)
 	if (step.remove) {
 		objects[step.remove].removed = true
 		listeners.da.forEach(function (d) { if (d.mOnObjectWillBeRemoved) d.mOnObjectWillBeRemoved(device, mapping, step.remove) })

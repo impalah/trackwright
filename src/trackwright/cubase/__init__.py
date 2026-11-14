@@ -82,6 +82,7 @@ def install_script(install_dir: Path, *, apply: bool, source: Path = SCRIPT_PATH
     # and a symlink created in between is replaced, not followed.
     with tempfile.NamedTemporaryFile(dir=install_dir, prefix=".tw-", suffix=".js", delete=False) as tmp:
         tmp.write(source.read_bytes())
+    Path(tmp.name).chmod(0o644)  # a temporary file is 0600; a script is readable like any document
     Path(tmp.name).replace(status.destination)
     logger.info("installed {} {} at {}", SCRIPT_NAME, _version_of(source), status.destination)
     return script_status(install_dir, source), True

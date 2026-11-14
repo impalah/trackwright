@@ -425,13 +425,11 @@ class FakeCubase:
             "plain": plain,
         }
 
-    def _guard(self, p: JsonObject) -> JsonObject:
-        base = self.objects.get(self.selected)
-        title = base.title if base else None
-        expected = p.get("expectChannelTitle")
-        if isinstance(expected, str) and title != expected:
-            raise HostError(f'base channel title is "{title}", expected "{expected}"', code="PRECONDITION_FAILED")
-        return {"base": self.selected, "baseTitle": title, "policy": "open"}
+    def _guard(self, _p: JsonObject) -> JsonObject:
+        """Like the script since 1.6.0: only the base object, no subtree path or caller precondition."""
+        base = self.selected
+        channel = self.objects.get(base) if base >= 0 else None
+        return {"base": base, "baseTitle": channel.title if channel else None}
 
     def _select(self, oid: int) -> None:
         for cid in self.channels:

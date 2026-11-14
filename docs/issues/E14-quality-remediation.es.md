@@ -76,7 +76,7 @@
 
 ### TW-1406 Robustez del script de Cubase (script 1.6.0)
 
-- **Estado:** pendiente
+- **Estado:** hecha en el código (2026-11-14): script 1.6.0, tests con Node en `tests/script/test_script_node.py`; instalado en el Cubase del usuario (con permiso) y a la espera de reiniciar Cubase para verificarlo. Decisión: sin protección del enrutado dentro del script: el parámetro 4101 del slot («Edición») lo escribe legítimamente `cubase_plugin_preset`, así que el script no puede rechazar un número de tag sin conocer el tipo de objeto; la protección de Python (TW-1401) cubre todos los caminos MCP y el puente solo acepta peticiones del propio Trackwright. Referencia antes de instalar: mediana de `da.param.set` de 112 ms (script 1.5.5, n=20)
 - **Hallazgos:** S-01, S-02, S-03, S-05, S-06, S-07, S-08, S-09, F-03.
 - **Alcance:** eliminar el recorrido de la guarda y `expectChannelTitle`; indicador de activo por ámbito; límite de tags en `da.channels`; responder `NOT_ACTIVE` a las peticiones en cola al desactivarse; `try/catch` en `mOnIdle`; búsquedas con `hasOwnProperty`; caducidad de los ensamblados en ~50 ticks; una sola función auxiliar para el sobre de error.
 - **Verificación en Cubase:** instalar con permiso, reiniciar Cubase, `doctor`, los tests de integración en vivo y una comparación de la latencia de escritura antes y después de S-01.
