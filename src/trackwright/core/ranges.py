@@ -147,7 +147,10 @@ class RangeMixin(ProjectMixin):
         )
         if dry_run:
             return out
-        self.policy.check_project_write()
+        if target is not None:
+            self.policy.check_track(self.track_info(target).name)
+        else:
+            self.policy.check_all_tracks("an edit on every track")
         if self._transport_flag(transport, TAG_START) or self._transport_flag(transport, TAG_RECORD):
             raise PreconditionFailedError("stop the transport before editing", code="TRANSPORT_RUNNING")
         if target is not None:
@@ -269,6 +272,8 @@ class RangeMixin(ProjectMixin):
             left = self._set_locator_seconds(transport, "left", start)
             right = self._set_locator_seconds(transport, "right", end)
             out.locators = [left, right]
+            # A leftover object selection must not be what the edit acts on (TW-1401).
+            self._clear_selection()
             self._range_cmd("tool.range")
             self._range_cmd("edit.select_in_loop")
             key = ACTION_KEYS[out.action]

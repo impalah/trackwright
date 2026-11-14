@@ -25,6 +25,12 @@ MARKER_ACTIONS = {
     "locate_prev": "transport.locate_prev_marker",
     "locate_next": "transport.locate_next_marker",
 }
+# Commands with a dedicated tool that guards them (TW-1401): cubase_run_command refuses them.
+DEDICATED_TOOLS = {
+    "file.save": "cubase_save_project",
+    "file.save_new_version": "cubase_save_project",
+    "project.remove_selected_tracks": "cubase_remove_selected_tracks",
+}
 NAVIGATION_COMMANDS = frozenset(
     {
         "transport.locate_prev_marker",
@@ -91,6 +97,12 @@ class CommandingMixin(ServiceBase):
     @operation
     def run_command(self, key: str, *, dry_run: bool = True, force: bool = False) -> CommandOut:
         spec = self._spec(key)
+        if key in DEDICATED_TOOLS:
+            raise PreconditionFailedError(
+                f"use {DEDICATED_TOOLS[key]} for '{spec.name}': it checks the configuration and verifies the result",
+                code="USE_DEDICATED_TOOL",
+                details={"tool": DEDICATED_TOOLS[key]},
+            )
         can = self._can_perform(key)
         if can is False and not force:
             raise PreconditionFailedError(
@@ -99,7 +111,8 @@ class CommandingMixin(ServiceBase):
         if dry_run:
             return self._out(spec, dry_run=True, can=can, status="planned", verified=None)
         if key not in NAVIGATION_COMMANDS:
-            self.policy.check_project_write()
+            # Commands act on the Cubase window selection, which may include any track.
+            self.policy.check_all_tracks(f"'{spec.name}'")
         self._fire(spec, force=force)
         status, instructions = self._status_for(spec)
         return self._out(
@@ -164,6 +177,10 @@ class CommandingMixin(ServiceBase):
             )
         name = self.track_info(expected).name
         can = self._can_perform(spec.key)
+        if can is False:
+            raise PreconditionFailedError(
+                f"Cubase reports that '{spec.name}' cannot be performed now", code="CANNOT_PERFORM"
+            )
         if dry_run:
             return self._out(spec, dry_run=True, can=can, status="planned", verified=None, details={"track": name})
         self.policy.check_track(name)
@@ -206,7 +223,7 @@ class CommandingMixin(ServiceBase):
             return self._out(
                 spec, dry_run=True, can=self._can_perform(spec.key), status="planned", verified=None, details=details
             )
-        self.policy.check_project_write()
+        self.policy.check_all_tracks("Split Loop")
         for which, text in (("cycleLeft", format_bars(left_pos)), ("cycleRight", format_bars(right_pos))):
             self.call("transport.setTime", {"which": which, "display": "primary", "time": text})
         locators = self.wait_until(

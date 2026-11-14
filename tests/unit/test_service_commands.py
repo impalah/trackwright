@@ -41,8 +41,6 @@ def test_run_command_classes(service: CubaseService, fake: FakeCubase) -> None:
     selection = service.run_command("edit.copy", dry_run=False)
     assert selection.command_class == "ui_selection"
     assert "selection" in (selection.instructions or "")
-    confirm = service.run_command("project.remove_selected_tracks", dry_run=False)
-    assert confirm.command_class == "confirm"
     direct = service.run_command("zoom.in", dry_run=False)
     assert (direct.status, direct.verified, direct.instructions) == ("fired", "not_observable", None)
 

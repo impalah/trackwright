@@ -16,8 +16,10 @@ import re
 
 from trackwright.core.base import (
     MIXER,
+    TAG_INPUT,
     TAG_MUTE,
     TAG_NAME,
+    TAG_OUTPUT,
     TAG_RECORD,
     TAG_SELECTED,
     TAG_SOLO,
@@ -55,6 +57,17 @@ def format_bars(position: tuple[int, int, int, int]) -> str:
     """Cubase's own rendering, e.g. ``"3. 1. 1.  0"`` (ticks right-aligned on three characters)."""
     bar, beat, sixteenth, ticks = position
     return f"{bar}. {beat}. {sixteenth}.{ticks:>3}"
+
+
+# Channel parameters that set_parameter refuses (TW-1401): writing the routing disconnects the track
+# ("Sin bus" in the simulator's record of the POC); name and selection have their own verified tools.
+PROTECTED_CHANNEL_TAGS = {
+    TAG_INPUT: "input routing",
+    TAG_OUTPUT: "output routing",
+    TAG_NAME: "track name",
+    TAG_SELECTED: "selection",
+}
+PROTECTED_TAG_TOOLS = {TAG_NAME: "cubase_rename_track", TAG_SELECTED: "cubase_select_track"}
 
 
 class WritingMixin(ProjectMixin):
@@ -101,6 +114,14 @@ class WritingMixin(ProjectMixin):
     ) -> WriteOut:
         item = self.resolve_track(TrackSelector.parse(track))
         obj = self.resolve_target(item, target)
+        if obj is item and tag in PROTECTED_CHANNEL_TAGS:
+            raise PreconditionFailedError(
+                f"channel parameter {tag} ({PROTECTED_CHANNEL_TAGS[tag]}) cannot be written with this tool",
+                code="READ_ONLY_PARAM",
+                details={
+                    "use": "cubase_rename_track / cubase_select_track" if tag in (TAG_NAME, TAG_SELECTED) else None
+                },
+            )
         before = self.read_parameter(int(obj["id"]), tag)
         if before.get("editLock"):
             raise PreconditionFailedError("the parameter is edit-locked in Cubase", code="PARAM_LOCKED")
@@ -332,6 +353,9 @@ class WritingMixin(ProjectMixin):
         before = TimePosition(time=before_raw["time"], format=before_raw.get("format")) if before_raw else None
         if dry_run:
             return PositionOut(dry_run=True, which=which, requested=text, before=before, after=None, verified=None)
+        if which != "cursor":
+            # The cycle locators are saved with the project (TW-1401); moving the cursor is navigation.
+            self.policy.check_project_write()
         if seconds is not None:
             return self._set_position_seconds(which, field, text, seconds, before)
         self.call("transport.setTime", {"which": field, "display": "primary", "time": text})

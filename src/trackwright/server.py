@@ -64,6 +64,8 @@ Rules for using these tools:
   never claim it is done. "ui_selection" commands act on the Cubase window selection, which these tools
   cannot see: ask the user to check the result.
 - Routing (inputs, outputs, send destinations) cannot be changed through this API.
+- With [writes] allowed_tracks set, only those tracks can be changed: tools that can affect every track
+  (range edits on all tracks, split at locators, cubase_run_command) fail with NOT_ALLOWED.
 - Podcast-style editing: cubase_edit_range works in seconds and acts on every track in the range.
 - Never save on your own initiative: cubase_save_project only when the user asks to save, after a dry run.
 - Automation: list the parameters with cubase_list_automation_targets, then record a curve with
@@ -174,7 +176,11 @@ def build_server(service: CubaseService) -> MCPServer:
         return await run(service.poll_changes)
 
     # ------------------------------------------------------------------ write and navigation tools (E06)
-    @server.tool(annotations=WRITE, description="Set a parameter (process 0..1 or plain units) and verify it.")
+    @server.tool(
+        annotations=WRITE,
+        description="Set a parameter (process 0..1 or plain units) and verify it. On the channel, routing "
+        "(input/output), name and selection are refused: READ_ONLY_PARAM.",
+    )
     async def cubase_set_parameter(
         target: TargetArg,
         tag: int,
@@ -227,7 +233,11 @@ def build_server(service: CubaseService) -> MCPServer:
     ) -> SelectOut:
         return await run(lambda: service.select_track(track, step))
 
-    @server.tool(annotations=NAVIGATE, description="Move the cursor or a cycle locator (transport stopped).")
+    @server.tool(
+        annotations=NAVIGATE,
+        description="Move the cursor or a cycle locator (transport stopped). The locators are saved with "
+        "the project, so moving them needs writes enabled; the cursor does not.",
+    )
     async def cubase_set_position(
         which: Literal["cursor", "cycle_left", "cycle_right"],
         time: TimeArg,
@@ -274,7 +284,9 @@ def build_server(service: CubaseService) -> MCPServer:
     @server.tool(
         annotations=DESTRUCTIVE,
         description="Run a Cubase command from the allow-list (see the tools reference). Advanced: prefer the "
-        "dedicated tools. Reports the observed command class.",
+        "dedicated tools; save and track removal are refused here (USE_DEDICATED_TOOL). Commands act on the "
+        "Cubase window selection, so they are refused while [writes] allowed_tracks is set. "
+        "Reports the observed command class.",
     )
     async def cubase_run_command(
         key: Annotated[str, Field(description="command key, e.g. 'edit.undo' or 'zoom.in'")],

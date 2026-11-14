@@ -15,7 +15,13 @@
 
 ### TW-1401 Close the write-policy holes
 
-- **Status:** pending
+- **Status:** done in code (2026-11-14), tests in `tests/unit/test_write_policy_tw1401.py`; verification in Cubase pending (Cubase was closed).
+- **Decisions:**
+  - `cubase_run_command` refuses `file.save`, `file.save_new_version` and `project.remove_selected_tracks` with `USE_DEDICATED_TOOL`, even with permission: the dedicated tools check and verify more.
+  - New `WritePolicy.check_all_tracks()`: anything that can change any track (Cubase commands acting on the window selection, range edits and splits on every track) is refused with `NOT_ALLOWED` while `allowed_tracks` is set.
+  - Cycle locators need writes enabled; `cubase_set_position` keeps `dry_run=false` by default, like the other navigation tools (documented exception).
+  - The routing guard inside the Cubase script moves to TW-1406 (script 1.6.0), to batch the script changes; the Python guard already covers every MCP path.
+  - `edit.select_none` before *Select in Loop* is tested against the simulator only; it must be checked in Cubase with a range edit on the test project.
 - **Findings:** C-01, C-02, C-03, C-08, C-10, C-09.
 - **Scope:**
   1. `run_command`: per-key policy. `file.save` and `file.save_new_version` → `check_save()`. Keys that have a dedicated guarded tool (track removal, range edits) are refused, or allowed only when `allowed_tracks` is empty; document which.

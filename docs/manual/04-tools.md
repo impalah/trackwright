@@ -155,7 +155,8 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 
 - **Input:** `target`, `tag`, `value`, `track`, `unit` (`process` from 0 to 1, or `plain` in real units via Cubase), `expect_title`, `dry_run`.
 - **Verification:** read-back, with a tolerance of 1e-3.
-- **Errors:** `OUT_OF_RANGE`, `PARAM_LOCKED` and `PARAM_NOT_FOUND`.
+- **Protected channel parameters:** on target `channel`, the input and output routing (tags 4101 and 4102), the name (1024) and the selection (4000) are refused with `READ_ONLY_PARAM`, also in a dry run. Writing the routing disconnects the track; name and selection have their own verified tools (`cubase_rename_track`, `cubase_select_track`).
+- **Errors:** `OUT_OF_RANGE`, `PARAM_LOCKED`, `PARAM_NOT_FOUND` and `READ_ONLY_PARAM`.
 
 ### `cubase_insert_plugin` (write)
 
@@ -186,6 +187,7 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 - **Input:** `which` (`cursor`, `cycle_left` or `cycle_right`), `time`, `unit` (`bars` or `seconds`) and `dry_run`.
 - **Bars format:** `"3. 1. 1. 0"` (bar, beat, sixteenth, tick).
 - **Seconds format:** `"2.5"`, `"1:30"` or `"0:00:02.000"`.
+- **Permission:** moving the cursor is navigation and works with writes disabled. The cycle locators are saved with the project, so moving them requires `[writes] enabled = true` (`WRITES_DISABLED`). The tool keeps `dry_run` false by default, like the other navigation tools.
 - **In seconds,** the position is read back using Cubase's seconds display, without assuming time signature or tempo. The locators cannot be moved using the seconds display (verified), so they are placed by moving the cursor there and using "Set Left/Right Locator"; the cursor then returns to where it was.
 
 ### `cubase_set_tempo` (write)
@@ -229,7 +231,7 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 
 - **Input:** `left`, `right` and `dry_run`.
 - Sets the locators, reads them back and runs "Split Loop".
-- **Splits every track** that has events in that range.
+- **Splits every track** that has events in that range, so it is refused with `NOT_ALLOWED` while `[writes] allowed_tracks` is set.
 - The locators **stay** at the split points; restoring them immediately could get ahead of the command. The output includes `previous_left` and `previous_right`, so you can restore them later with `cubase_set_position`.
 
 ### `cubase_add_track_interactive` (write, with the user)
@@ -242,6 +244,8 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 
 - **Input:** `key`, `dry_run` and `force`.
 - Runs a command from the allowlist. The specific tools are preferable.
+- **Refused here** (`USE_DEDICATED_TOOL`, also in a dry run): `file.save` and `file.save_new_version` (use `cubase_save_project`, which checks `[writes] save` and verifies the file) and `project.remove_selected_tracks` (use `cubase_remove_selected_tracks`, which checks the selection).
+- **Permission:** commands act on the selection in the Cubase window, which may include any track, so every command except navigation needs writes enabled and is refused with `NOT_ALLOWED` while `[writes] allowed_tracks` is set.
 
 | `key` | Class |
 |---|---|
@@ -250,7 +254,7 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 | `edit.split_loop` | direct |
 | `addtrack.audio`, `addtrack.group`, `addtrack.folder`, `audio.detect_silence`, `file.export_audio_mixdown`, `file.import_audio` | dialog (export and import: verified, TW-1204 and TW-1203; the import file picker blocks Cubase while it is open) |
 | `addtrack.marker`, `marker.insert`, `project.select_track_next`, `project.select_track_prev`, `transport.locate_next_marker`, `transport.locate_prev_marker` | direct |
-| `project.remove_selected_tracks` | confirm |
+| `project.remove_selected_tracks` | confirm (refused here: use `cubase_remove_selected_tracks`) |
 | `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.locators_to_selection` | unknown |
 | `automation.mode_touch`, `automation.mode_auto_latch`, `automation.mode_cross_over`, `automation.next_mode`, `automation.toggle_write_selected` | unknown (experiment TW-1206) |
 | `transport.start`, `transport.stop` | direct (verified: plays and stops; never records) |
@@ -258,7 +262,7 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 | `transport.set_left_locator`, `transport.set_right_locator`, `transport.locate_next_event`, `transport.locate_selection`, `transport.locate_selection_end` | direct (verified, TW-1211) |
 | `process.silence` | dialog (verified, TW-1211: asks whether the audio file is shared) |
 | `edit.select_events_under_cursor`, `transport.locate_prev_event`, `transport.to_left_locator`, `tool.range`, `tool.select` | unknown |
-| `file.save`, `file.save_new_version` | direct (verified, TW-1202, on a project that was already saved) |
+| `file.save`, `file.save_new_version` | direct (verified, TW-1202, on a project that was already saved; refused here: use `cubase_save_project`) |
 | `preset.next`, `preset.previous` | ui_selection (verified, TW-1205: they act on the plugin editor that has focus) |
 
 ## Range editing in seconds
@@ -295,7 +299,7 @@ Designed for podcast editing: it works in **seconds** and the time signature doe
   3. switches back to the **Object Selection** tool (it cannot know which one you had before);
   4. restores the locators, the cursor and the selected track.
 - **Verification:** with `verify_track`, it walks the event edges of that track with "Locate Next Event" (starts and ends, without distinguishing them) and checks that they match what is expected. It checks up to 48 edges starting 1 s before the range.
-- **Errors:** `BAD_TIME`, `TRANSPORT_RUNNING`, `NO_RANGE_SELECTION` (Cubase did not create the selection, for example because the Project window is not in front), `SPLIT_FAILED` and `WRITES_DISABLED`.
+- **Errors:** `BAD_TIME`, `TRANSPORT_RUNNING`, `NO_RANGE_SELECTION` (Cubase did not create the selection, for example because the Project window is not in front), `SPLIT_FAILED`, `WRITES_DISABLED` and `NOT_ALLOWED` (with `track`, a track outside `[writes] allowed_tracks`; without `track`, any edit while `allowed_tracks` is set, because it acts on every track).
 - **Undo:** **Edit > Undo** in Cubase reverts it, as verified with each action. The project is not saved.
 - **Not included:** "Process > Silence" opens a dialog if the audio file is shared by several events.
 

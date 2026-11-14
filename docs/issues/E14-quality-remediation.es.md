@@ -15,7 +15,13 @@
 
 ### TW-1401 Cerrar los agujeros de la política de escritura
 
-- **Estado:** pendiente
+- **Estado:** hecha en el código (2026-11-14), con tests en `tests/unit/test_write_policy_tw1401.py`; falta la verificación en Cubase (Cubase estaba cerrado).
+- **Decisiones:**
+  - `cubase_run_command` rechaza `file.save`, `file.save_new_version` y `project.remove_selected_tracks` con `USE_DEDICATED_TOOL`, incluso con permiso: las herramientas específicas comprueban y verifican más.
+  - Nuevo `WritePolicy.check_all_tracks()`: todo lo que puede cambiar cualquier pista (los comandos de Cubase, que actúan sobre la selección de la ventana, y las ediciones de rango y cortes en todas las pistas) se rechaza con `NOT_ALLOWED` mientras `allowed_tracks` tenga pistas.
+  - Los localizadores del ciclo necesitan las escrituras activadas; `cubase_set_position` mantiene `dry_run=false` por defecto, como las demás herramientas de navegación (excepción documentada).
+  - La protección del enrutado dentro del script de Cubase pasa a TW-1406 (script 1.6.0), para agrupar los cambios del script; la de Python ya cubre todos los caminos MCP.
+  - `edit.select_none` antes de *Select in Loop* solo está probado con el simulador; hay que comprobarlo en Cubase con una edición de rango en el proyecto de pruebas.
 - **Hallazgos:** C-01, C-02, C-03, C-08, C-10, C-09.
 - **Alcance:**
   1. `run_command`: política por clave. `file.save` y `file.save_new_version` → `check_save()`. Las claves que tienen una herramienta propia con guarda (eliminación de pistas, ediciones de rango) se rechazan, o solo se permiten cuando `allowed_tracks` está vacío; documentar cuál de las dos.

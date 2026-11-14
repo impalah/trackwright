@@ -79,7 +79,7 @@ If you change the port names, the Cubase script won't find them, because it has 
 | Key | Default | Description |
 |---|---|---|
 | `enabled` | `false` | Master switch. With `false`, writes fail with `WRITES_DISABLED`; dry runs (`dry_run`) and navigation keep working. |
-| `allowed_tracks` | `[]` | Names of the tracks that can be modified. Empty means all. Outside the list: `NOT_ALLOWED`. |
+| `allowed_tracks` | `[]` | Names of the tracks that can be modified. Empty means all. Outside the list: `NOT_ALLOWED`. While it is set, operations that can change any track are refused too: range edits and splits on every track, and `cubase_run_command`. |
 | `save` | `false` | Allows `cubase_save_project` to **save the project file to disk**. It is independent of `enabled`, and both are required. Without it: `SAVE_DISABLED`. Dry runs always work. |
 
 What counts as a write:

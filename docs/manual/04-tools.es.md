@@ -155,7 +155,8 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 
 - **Entrada:** `target`, `tag`, `value`, `track`, `unit` (`process` de 0 a 1, o `plain` en unidades reales vía Cubase), `expect_title`, `dry_run`.
 - **Verificación:** relectura, con una tolerancia de 1e-3.
-- **Errores:** `OUT_OF_RANGE`, `PARAM_LOCKED` y `PARAM_NOT_FOUND`.
+- **Parámetros protegidos del canal:** con el objetivo `channel`, el enrutado de entrada y de salida (tags 4101 y 4102), el nombre (1024) y la selección (4000) se rechazan con `READ_ONLY_PARAM`, también en el ensayo. Escribir el enrutado desconecta la pista; el nombre y la selección tienen sus propias herramientas verificadas (`cubase_rename_track`, `cubase_select_track`).
+- **Errores:** `OUT_OF_RANGE`, `PARAM_LOCKED`, `PARAM_NOT_FOUND` y `READ_ONLY_PARAM`.
 
 ### `cubase_insert_plugin` (escritura)
 
@@ -186,6 +187,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 - **Entrada:** `which` (`cursor`, `cycle_left` o `cycle_right`), `time`, `unit` (`bars` o `seconds`) y `dry_run`.
 - **Formato de compases:** `"3. 1. 1. 0"` (compás, tiempo, semicorchea, tick).
 - **Formato de segundos:** `"2.5"`, `"1:30"` o `"0:00:02.000"`.
+- **Permiso:** mover el cursor es navegación y funciona con las escrituras desactivadas. Los localizadores del ciclo se guardan con el proyecto, así que moverlos requiere `[writes] enabled = true` (`WRITES_DISABLED`). La herramienta mantiene `dry_run` en falso por defecto, como las demás de navegación.
 - **En segundos,** la posición se relee con la pantalla de segundos de Cubase, sin suponer compás ni tempo. Los localizadores no se pueden mover con la pantalla de segundos (verificado), así que se colocan llevando el cursor allí y usando «Set Left/Right Locator»; luego el cursor vuelve a su sitio.
 
 ### `cubase_set_tempo` (escritura)
@@ -229,7 +231,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 
 - **Entrada:** `left`, `right` y `dry_run`.
 - Coloca los localizadores, los relee y lanza «Split Loop».
-- **Corta todas las pistas** que tienen eventos en ese rango.
+- **Corta todas las pistas** que tienen eventos en ese rango, así que se rechaza con `NOT_ALLOWED` mientras `[writes] allowed_tracks` tenga pistas.
 - Los localizadores **se quedan** en los puntos de corte; restaurarlos enseguida podría adelantarse al comando. La salida incluye `previous_left` y `previous_right`, para restaurarlos después con `cubase_set_position`.
 
 ### `cubase_add_track_interactive` (escritura, con el usuario)
@@ -242,6 +244,8 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 
 - **Entrada:** `key`, `dry_run` y `force`.
 - Ejecuta un comando de la lista permitida. Es mejor usar las herramientas específicas.
+- **Se rechazan aquí** (`USE_DEDICATED_TOOL`, también en el ensayo): `file.save` y `file.save_new_version` (usa `cubase_save_project`, que comprueba `[writes] save` y verifica el archivo) y `project.remove_selected_tracks` (usa `cubase_remove_selected_tracks`, que comprueba la selección).
+- **Permiso:** los comandos actúan sobre la selección de la ventana de Cubase, que puede incluir cualquier pista; por eso todos, salvo los de navegación, necesitan las escrituras activadas y se rechazan con `NOT_ALLOWED` mientras `[writes] allowed_tracks` tenga pistas.
 
 | `key` | Clase |
 |---|---|
@@ -250,7 +254,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `edit.split_loop` | direct |
 | `addtrack.audio`, `addtrack.group`, `addtrack.folder`, `audio.detect_silence`, `file.export_audio_mixdown`, `file.import_audio` | dialog (exportar e importar: verificados, TW-1204 y TW-1203; el selector de importación bloquea Cubase mientras está abierto) |
 | `addtrack.marker`, `marker.insert`, `project.select_track_next`, `project.select_track_prev`, `transport.locate_next_marker`, `transport.locate_prev_marker` | direct |
-| `project.remove_selected_tracks` | confirm |
+| `project.remove_selected_tracks` | confirm (se rechaza aquí: usa `cubase_remove_selected_tracks`) |
 | `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.locators_to_selection` | unknown |
 | `automation.mode_touch`, `automation.mode_auto_latch`, `automation.mode_cross_over`, `automation.next_mode`, `automation.toggle_write_selected` | unknown (experimento TW-1206) |
 | `transport.start`, `transport.stop` | direct (verificado: reproduce y para; nunca graba) |
@@ -258,7 +262,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `transport.set_left_locator`, `transport.set_right_locator`, `transport.locate_next_event`, `transport.locate_selection`, `transport.locate_selection_end` | direct (verificado, TW-1211) |
 | `process.silence` | dialog (verificado, TW-1211: pregunta si el archivo de audio está compartido) |
 | `edit.select_events_under_cursor`, `transport.locate_prev_event`, `transport.to_left_locator`, `tool.range`, `tool.select` | unknown |
-| `file.save`, `file.save_new_version` | direct (verificado, TW-1202, en un proyecto ya guardado) |
+| `file.save`, `file.save_new_version` | direct (verificado, TW-1202, en un proyecto ya guardado; se rechaza aquí: usa `cubase_save_project`) |
 | `preset.next`, `preset.previous` | ui_selection (verificado, TW-1205: actúan sobre el editor de plugin con el foco) |
 
 ## Edición por rangos en segundos
@@ -295,7 +299,7 @@ Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
   3. vuelve a la herramienta de **Selección de objetos** (no puede saber cuál tenías antes);
   4. deja como estaban los localizadores, el cursor y la pista seleccionada.
 - **Verificación:** con `verify_track`, recorre los bordes de los eventos de esa pista con «Locate Next Event» (inicios y finales, sin distinguirlos) y comprueba que coinciden con lo esperado. Revisa hasta 48 bordes a partir de 1 s antes del rango.
-- **Errores:** `BAD_TIME`, `TRANSPORT_RUNNING`, `NO_RANGE_SELECTION` (Cubase no creó la selección, por ejemplo porque la ventana de proyecto no está delante), `SPLIT_FAILED` y `WRITES_DISABLED`.
+- **Errores:** `BAD_TIME`, `TRANSPORT_RUNNING`, `NO_RANGE_SELECTION` (Cubase no creó la selección, por ejemplo porque la ventana de proyecto no está delante), `SPLIT_FAILED`, `WRITES_DISABLED` y `NOT_ALLOWED` (con `track`, una pista fuera de `[writes] allowed_tracks`; sin `track`, cualquier edición mientras `allowed_tracks` tenga pistas, porque actúa sobre todas).
 - **Deshacer:** **Edición > Deshacer** en Cubase lo revierte, como se verificó con cada acción. No se guarda el proyecto.
 - **No incluida:** «Process > Silence» abre un diálogo si el archivo de audio lo comparten varios eventos.
 

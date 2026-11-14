@@ -4,6 +4,8 @@
   Dry runs always work, and so does *navigation* (selecting a track, moving the cursor), which
   does not modify the project.
 - ``allowed_tracks``: when not empty, only those track names may be modified (``NOT_ALLOWED``).
+  Operations that can change any track (range edits on every track, Cubase commands acting on the
+  window selection) are refused while it is set.
 - ``save``: saving the project file needs its own switch (``SAVE_DISABLED``), on top of ``enabled``.
 """
 
@@ -52,6 +54,16 @@ class WritePolicy:
                 f"track {track_name!r} is not in [writes] allowed_tracks",
                 code="NOT_ALLOWED",
                 details={"track": track_name, "allowed_tracks": list(self.allowed_tracks)},
+            )
+
+    def check_all_tracks(self, action: str) -> None:
+        """Raise unless writes are enabled and ``action``, which can change any track, is allowed."""
+        self.check_project_write()
+        if self.allowed_tracks:
+            raise PolicyError(
+                f"{action} can change any track, so it is refused while [writes] allowed_tracks is set",
+                code="NOT_ALLOWED",
+                details={"allowed_tracks": list(self.allowed_tracks)},
             )
 
     def describe(self) -> dict[str, object]:

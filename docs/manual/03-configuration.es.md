@@ -79,7 +79,7 @@ Si cambias los nombres de los puertos, el script de Cubase no los encontrará, p
 | Clave | Por defecto | Descripción |
 |---|---|---|
 | `enabled` | `false` | Interruptor general. Con `false`, las escrituras fallan con `WRITES_DISABLED`; los ensayos (`dry_run`) y la navegación siguen funcionando. |
-| `allowed_tracks` | `[]` | Nombres de pista que se pueden modificar. Vacío significa todas. Fuera de la lista: `NOT_ALLOWED`. |
+| `allowed_tracks` | `[]` | Nombres de pista que se pueden modificar. Vacío significa todas. Fuera de la lista: `NOT_ALLOWED`. Mientras tenga pistas, también se rechazan las operaciones que pueden cambiar cualquier pista: ediciones de rango y cortes en todas las pistas, y `cubase_run_command`. |
 | `save` | `false` | Permite que `cubase_save_project` **guarde el archivo del proyecto en disco**. Es independiente de `enabled`, y hacen falta las dos. Sin él: `SAVE_DISABLED`. Los ensayos funcionan siempre. |
 
 Qué cuenta como escritura:
