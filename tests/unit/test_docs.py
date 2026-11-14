@@ -40,7 +40,7 @@ def test_every_configuration_key_is_documented() -> None:
         assert f"## `[{section_name}]`" in CONFIG_DOC, section_name
         model = field.annotation
         assert model is not None
-        for key in model.model_fields:  # type: ignore[union-attr]
+        for key in model.model_fields:
             if f"`{key}`" not in CONFIG_DOC:
                 missing.append(f"{section_name}.{key}")
     assert missing == []

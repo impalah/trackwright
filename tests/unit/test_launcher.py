@@ -99,7 +99,7 @@ def test_spawn_detached_writes_stderr_to_the_log(tmp_path: Path) -> None:
 
 # ---------------------------------------------------------------- BridgeHost retry
 class Backend:
-    session_id = "s1"
+    session_id: str | None = "s1"
 
     def __init__(self) -> None:
         self.calls: list[str] = []
@@ -154,9 +154,12 @@ def test_host_never_retries_after_sending(short_dir: Path) -> None:
 
     threading.Thread(target=close_after_reading, daemon=True).start()
     ensured: list[bool] = []
-    host = BridgeHost(
-        BridgeClient(path), read_timeout=1, write_timeout=1, ensure_bridge=lambda: ensured.append(True) or True
-    )
+
+    def ensure() -> bool:
+        ensured.append(True)
+        return True
+
+    host = BridgeHost(BridgeClient(path), read_timeout=1, write_timeout=1, ensure_bridge=ensure)
     try:
         with pytest.raises(BridgeUnavailableError):
             host.call("da.param.set", {"id": 1})
@@ -253,7 +256,7 @@ def test_launch_errors(tmp_path: Path) -> None:
     with pytest.raises(PreconditionFailedError) as missing:
         service.launch_cubase(str(tmp_path / "missing.cpr"))
     assert missing.value.code == "NOT_FOUND"
-    with pytest.raises(PolicyError):
+    with pytest.raises(PolicyError, match=r"^WRITES_DISABLED"):
         make(fake, FakeLauncher(fake, running=False), writes=False).launch_cubase(dry_run=False)
     with pytest.raises(TrackwrightError) as unsupported:
         make(fake, None).launch_cubase()

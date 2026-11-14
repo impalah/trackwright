@@ -56,7 +56,7 @@ def test_missing_object(service: CubaseService, fake: FakeCubase) -> None:
 
 def test_policy(fake: FakeCubase) -> None:
     readonly = CubaseService(fake, WritePolicy(), sleep=lambda _s: None, settle_timeout=0.0)
-    with pytest.raises(PolicyError):
+    with pytest.raises(PolicyError, match=r"^WRITES_DISABLED"):
         readonly.set_project({"metronome": True}, dry_run=False)
 
 

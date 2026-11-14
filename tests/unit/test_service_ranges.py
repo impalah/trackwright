@@ -159,7 +159,7 @@ def test_bad_units(service: CubaseService) -> None:
 
 def test_policy_and_running_transport(fake: FakeCubase) -> None:
     readonly = CubaseService(fake, WritePolicy(), sleep=lambda _s: None, settle_timeout=0.0)
-    with pytest.raises(PolicyError):
+    with pytest.raises(PolicyError, match=r"^WRITES_DISABLED"):
         readonly.edit_range("2", "30", "delete", dry_run=False)
     service = CubaseService(fake, WritePolicy(enabled=True), sleep=lambda _s: None, settle_timeout=0.0)
     fake.studio_param("transport", "start").value = 1

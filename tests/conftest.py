@@ -7,6 +7,8 @@ from collections.abc import Iterator
 import pytest
 from loguru import logger
 
+from trackwright.fake import FakeCubase
+
 
 @pytest.fixture
 def anyio_backend() -> str:
@@ -33,3 +35,9 @@ def _isolated_config(
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.delenv("TRACKWRIGHT_CONFIG", raising=False)
     monkeypatch.setenv("TMPDIR", str(tmp_path_factory.mktemp("tmp")))
+
+
+@pytest.fixture
+def fake() -> FakeCubase:
+    """A fresh simulated Cubase (shared by the unit and contract tests, T-06)."""
+    return FakeCubase()

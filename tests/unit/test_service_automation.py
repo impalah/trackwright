@@ -159,7 +159,7 @@ def test_unknown_and_unbound_parameters(service: CubaseService) -> None:
 def test_policy_and_running_transport(fake: FakeCubase) -> None:
     readonly = CubaseService(fake, WritePolicy(), sleep=lambda _s: None, settle_timeout=0.0)
     assert readonly.record_automation("POC-TEST", "volume", pts(("2.1.1.0", 0.5))).dry_run is True
-    with pytest.raises(PolicyError):
+    with pytest.raises(PolicyError, match=r"^WRITES_DISABLED"):
         readonly.record_automation("POC-TEST", "volume", pts(("2.1.1.0", 0.5)), dry_run=False)
     service = CubaseService(fake, WritePolicy(enabled=True), sleep=lambda _s: None, settle_timeout=0.0)
     fake.playing = True

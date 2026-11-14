@@ -8,11 +8,6 @@ from trackwright.fake import FakeCubase
 
 
 @pytest.fixture
-def fake() -> FakeCubase:
-    return FakeCubase()
-
-
-@pytest.fixture
 def service(fake: FakeCubase) -> CubaseService:
     """Service over the simulator with writes enabled and no waiting."""
     return CubaseService(fake, WritePolicy(enabled=True), sleep=lambda _s: None, settle_timeout=0.0)

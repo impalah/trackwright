@@ -82,7 +82,7 @@ def test_policy_defaults_disable_writes() -> None:
     with pytest.raises(PolicyError) as exc:
         policy.check_project_write()
     assert exc.value.code == "WRITES_DISABLED"
-    with pytest.raises(PolicyError):
+    with pytest.raises(PolicyError, match=r"^WRITES_DISABLED"):  # writes off come before allowed_tracks
         policy.check_track("POC-TEST")
 
 
@@ -150,7 +150,7 @@ def test_fake_stale_session_and_unknown_op() -> None:
 
 def test_fake_bad_arguments() -> None:
     fake = FakeCubase()
-    for op, params in [
+    cases: list[tuple[str, dict[str, Any]]] = [
         ("da.object", {}),
         ("da.object", {"id": "x"}),
         ("da.param.setDisplay", {"id": fake.mixer.id, "tag": 1024, "value": 3}),
@@ -162,7 +162,8 @@ def test_fake_bad_arguments() -> None:
         ("transport.setTempo", {"bpm": 5}),
         ("cmd.run", {"key": "nope"}),
         ("pm.entries", {"slot": fake.mixer.id, "collection": 0}),
-    ]:
+    ]
+    for op, params in cases:
         with pytest.raises(HostError):
             fake.call(op, params)
 
@@ -224,3 +225,26 @@ def test_bridge_host_tracks_session_and_timeouts() -> None:
         host.call("ping")
     assert weird.value.code == "BRIDGE_ERROR"
     assert client.timeouts == [1.0, 4.0, 1.0, 1.0]
+
+
+@pytest.mark.parametrize(
+    "described", [{"type": "Plugin", "uniqueName": "UID-1"}, {"type": "Other", "uniqueName": "UID-0"}]
+)
+def test_fingerprint_checks_each_field_alone(described: dict[str, str]) -> None:
+    """T-01: a different type *or* a different unique name is a stale reference."""
+    from trackwright.core.refs import ObjectRef
+    from trackwright.errors import StaleReferenceError
+
+    ref = ObjectRef("s1", 7, "Plugin", "UID-0")
+    with pytest.raises(StaleReferenceError):
+        ref.check_fingerprint(described)
+
+
+@pytest.mark.parametrize("save", [True, False])
+@pytest.mark.parametrize("enabled", [True, False])
+def test_policy_from_config_keeps_every_field(enabled: bool, save: bool) -> None:
+    """T-01: from_config dropping a field (save!) would silently change what is allowed."""
+    from trackwright.config import WritesConfig
+
+    policy = WritePolicy.from_config(WritesConfig(enabled=enabled, save=save, allowed_tracks=("A",)))
+    assert (policy.enabled, policy.save, policy.allowed_tracks) == (enabled, save, ("A",))

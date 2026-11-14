@@ -104,8 +104,8 @@ class HostClient:
             self.duplicate_responses += 1
             return
         if rid:
-            self.late_responses.append(entry)
             logger.warning("late or unknown response rid={} op={}", rid, message.get("op"))
+            self.late_responses.append(entry)  # after the log line: whoever waits for it sees a finished entry
         else:
             self.unsolicited.append(entry)
 

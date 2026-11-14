@@ -97,7 +97,7 @@
 
 ### TW-1409 Endurecimiento de la suite de tests
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-14): T-01 a T-10, S-12 y S-13 (T-02 en parte en TW-1405). Nuevos: `test_protocol_properties.py` (Hypothesis), `tests/script/test_es5.py`, `tests/script/test_script_coverage.py`, `tests/script/node_harness.py`. Sin hacer: medir la cobertura JavaScript del script en `make test-node` (c8 necesita npm, una herramienta que el proyecto no usa); RESPONSE_TOO_LARGE no tiene test con Node (con el proyecto pequeño del arnés no se puede producir una respuesta tan grande)
 - **Hallazgos:** T-01, T-02, T-03, T-04, T-05, T-06, T-08, T-09, T-10, S-12, S-13.
 - **Alcance:** comprobar los códigos de error; tests de huella y de `from_config`; idas y vueltas del protocolo con distintos números de secuencia y en el límite de fragmento, más fuzzing basado en propiedades del entramado; tests parametrizados reentrantes; eventos en lugar de `sleep`; timeouts en el arnés de node; fixtures compartidas; la fixture de escritura en vivo limitada a la pista de pruebas; número exacto de comandos; `tests` bajo mypy; una comprobación ES5 del script; tests de node para las operaciones del script sin probar y cobertura JS en `make test-node`.
 

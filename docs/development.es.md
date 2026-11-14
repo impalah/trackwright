@@ -11,7 +11,8 @@
 - **Logs con loguru** (`from loguru import logger`).
   - El módulo `logging` solo se toca en `trackwright/logs.py`, para redirigir el de las dependencias.
   - Nunca se escribe en stdout, que pertenece al protocolo MCP con `serve`.
-- **Calidad obligatoria:** ruff (lint y formato), mypy `strict` y cobertura ≥ 95 %.
+- **Calidad obligatoria:** ruff (lint y formato), mypy `strict` (sobre `src` y `tests`) y cobertura ≥ 95 %.
+- **Convenciones de los tests:** comprobar el **código** del error, no solo la clase de la excepción; esperar a eventos (`tests.support.wait_for`), nunca un `sleep` fijo; los dobles compartidos están en `tests/support.py`, `tests/conftest.py` y `tests/script/node_harness.py`, para que los módulos de test no se importen entre sí. El entramado tiene tests basados en propiedades (Hypothesis) y el script de Cubase una comprobación de sintaxis ES5 (`tests/script/test_es5.py`).
 - **Issues:** cada cambio parte de una issue en [`docs/issues/`](issues/README.es.md), que se cierra con su commit.
 
 ## Integración continua

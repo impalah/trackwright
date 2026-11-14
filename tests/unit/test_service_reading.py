@@ -279,7 +279,7 @@ def test_status_reports_an_outdated_script(fake: FakeCubase) -> None:
             result = fake.call(op, params)
             return {**result, "scriptVersion": "1.0.0"} if op == "hello" else result
 
-    out = CubaseService(RealLooking(), WritePolicy()).status()  # type: ignore[arg-type]
+    out = CubaseService(RealLooking(), WritePolicy()).status()
     assert (out.script_version, out.packaged_script_version, out.script_outdated) == ("1.0.0", SCRIPT_VERSION, True)
 
 

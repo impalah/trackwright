@@ -41,7 +41,7 @@ Integration tests against the real Cubase are opt-in: `TRACKWRIGHT_INTEGRATION=1
 
 - **Toolchain: uv only.** Never pip, `uv pip`, venv, virtualenv, pipx, conda, poetry or requirements.txt. Never install anything globally; never use `sudo`.
 - **Logging with loguru, to stderr.** Never write to stdout from `serve` (it is the MCP channel); CLI commands print JSON on stdout.
-- **Quality:** ruff, mypy strict, coverage ≥ 95 % (currently ~98 %). Code identifiers, logs and CLI messages in English.
+- **Quality:** ruff, mypy strict (src and tests), coverage ≥ 95 % (currently ~98 %). Code identifiers, logs and CLI messages in English.
 - **Documentation is bilingual:** every document is English `X.md` plus Spanish `X.es.md`, updated together, each linking to its counterpart near the top; links stay in their language. `README.md` is also the PyPI page: no relative links there. `tests/unit/test_docs.py` enforces this, and that every tool, command key and config key is documented.
 - **Issues** live in `docs/issues/` (epics E01–E13, issues TW-NNNN); every change starts from an issue and its commit cites it. Results observed in real Cubase go to `docs/verification.md` (+ `.es.md`).
 - **Git:** remote `origin` = `git@github.com:impalah/trackwright.git` (branch `main`, tags `vX.Y.Z`). Commit and push only when asked; never force-push. Commit with

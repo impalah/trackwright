@@ -14,6 +14,7 @@ from typing import Any
 
 import pytest
 
+import trackwright
 from trackwright import installer
 from trackwright.cli import main
 from trackwright.config import Settings, load_settings
@@ -228,7 +229,7 @@ def test_server_command_variants(monkeypatch: pytest.MonkeyPatch) -> None:
     assert server_command(lambda _n: None) == ["uv", "--directory", str(REPO), "run", "trackwright", "serve"]
     monkeypatch.setattr(installer, "source_checkout", lambda: None)
     assert server_command(lambda _n: "/opt/bin/trackwright") == ["/opt/bin/trackwright", "serve"]
-    uvx = ["uvx", "--from", f"trackwright=={installer.trackwright.__version__}", "trackwright", "serve"]
+    uvx = ["uvx", "--from", f"trackwright=={trackwright.__version__}", "trackwright", "serve"]
     assert server_command(lambda _n: None) == uvx
     cached = "/Users/x/.cache/uv/archive-v0/abc/bin/trackwright"
     assert server_command(lambda _n: cached) == uvx
@@ -237,7 +238,7 @@ def test_server_command_variants(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_source_checkout_outside_the_repository(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     package = tmp_path / "site" / "lib" / "trackwright"
     package.mkdir(parents=True)
-    monkeypatch.setattr(installer.trackwright, "__file__", str(package / "__init__.py"))
+    monkeypatch.setattr(trackwright, "__file__", str(package / "__init__.py"))
     assert source_checkout() is None
 
 
@@ -302,7 +303,7 @@ def test_a_registration_pinned_to_another_version_is_reported(tmp_path: Path) ->
 def test_a_registration_of_this_version_is_fine(tmp_path: Path) -> None:
     class Current(Runner):
         def __call__(self, command: Sequence[str]) -> subprocess.CompletedProcess[str]:
-            out = f"Args: --from trackwright=={installer.trackwright.__version__} trackwright serve"
+            out = f"Args: --from trackwright=={trackwright.__version__} trackwright serve"
             return subprocess.CompletedProcess(list(command), 0, out, "")
 
     setup, _, _ = make(tmp_path, Prompter(), runner=Current())

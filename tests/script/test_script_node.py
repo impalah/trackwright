@@ -6,96 +6,21 @@ Python side and the script speak the same wire format.
 
 from __future__ import annotations
 
-import json
 import re
-import shutil
-import subprocess
-from collections.abc import Iterator
-from pathlib import Path
 from typing import Any
 
 import pytest
 
-from trackwright import ops, protocol
+from tests.script.node_harness import NODE, Harness
+from trackwright import ops
+from trackwright.commands import COMMANDS
 from trackwright.cubase import SCRIPT_PATH, SCRIPT_VERSION
 
 pytestmark = pytest.mark.node
-NODE = shutil.which("node")
-HARNESS = Path(__file__).with_name("harness.js")
 JsonObject = dict[str, Any]
 
 if NODE is None:  # pragma: no cover - depends on the machine
     pytest.skip("node is not installed: the MIDI Remote script tests need Node.js", allow_module_level=True)
-
-
-class Harness:
-    def __init__(self, script: Path = SCRIPT_PATH) -> None:
-        assert NODE is not None
-        self.proc = subprocess.Popen(
-            [NODE, str(HARNESS), str(script)],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        self.sid = ""
-        self._seq = 0
-        self._rid = 0
-
-    def step(self, **step: Any) -> JsonObject:
-        assert self.proc.stdin is not None
-        assert self.proc.stdout is not None
-        self.proc.stdin.write(json.dumps(step) + "\n")
-        self.proc.stdin.flush()
-        line = self.proc.stdout.readline()
-        assert line, self.proc.stderr.read() if self.proc.stderr else "harness died"
-        reply: JsonObject = json.loads(line)
-        return reply
-
-    def frames_for(
-        self, op: str, params: JsonObject | None = None, *, rid: str | None = None, sid: str | None = None
-    ) -> list[list[int]]:
-        self._rid += 1
-        self._seq += 1
-        request = protocol.make_request(op, rid or f"r{self._rid}", self.sid if sid is None else sid, params)
-        return protocol.build_frames(protocol.encode_payload(request), self._seq)
-
-    @staticmethod
-    def decode(sent: list[list[int]]) -> list[JsonObject]:
-        reassembler = protocol.Reassembler()
-        messages = []
-        for raw in sent:
-            frame = protocol.parse_frame(raw)
-            assert frame is not None, raw[:8]
-            payload = reassembler.feed(frame)
-            if payload is not None:
-                messages.append(protocol.decode_payload(payload))
-        return messages
-
-    def call(self, op: str, params: JsonObject | None = None, **kw: Any) -> JsonObject:
-        """Send a request, run idle ticks until it is answered, return the single response."""
-        replies = self.decode(self.step(frames=self.frames_for(op, params, **kw))["sent"])
-        ticks = 0
-        while not replies and ticks < 5:
-            replies = self.decode(self.step(idle=1)["sent"])
-            ticks += 1
-        assert len(replies) == 1, replies
-        return replies[0]
-
-    def close(self) -> None:
-        if self.proc.stdin:
-            self.proc.stdin.close()
-        self.proc.wait(timeout=5)
-
-
-@pytest.fixture
-def h() -> Iterator[Harness]:
-    harness = Harness()
-    hello = harness.call("hello")
-    assert hello["ok"], hello
-    harness.sid = hello["r"]["sessionId"]
-    yield harness
-    harness.close()
 
 
 def ids(h: Harness) -> dict[str, int]:
@@ -128,7 +53,7 @@ def test_capabilities(h: Harness) -> None:
     assert caps["directAccessCreated"] is True
     assert caps["mixerDirectAccessCreated"] is True
     assert caps["commandErrors"] == 0
-    assert caps["commandsBound"] >= 30
+    assert caps["commandsBound"] == len(COMMANDS)  # T-09: every command of the table is bound
 
 
 def test_channels_are_deduplicated(h: Harness) -> None:

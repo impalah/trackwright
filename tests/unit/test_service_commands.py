@@ -60,7 +60,7 @@ def test_run_command_unknown(service: CubaseService) -> None:
 
 
 def test_run_command_policy(readonly: CubaseService, fake: FakeCubase) -> None:
-    with pytest.raises(PolicyError):
+    with pytest.raises(PolicyError, match=r"^WRITES_DISABLED"):
         readonly.run_command("zoom.in", dry_run=False)
     assert readonly.run_command("project.select_track_prev", dry_run=False).status == "fired"
     assert fake.fired == ["project.select_track_prev"]
@@ -84,7 +84,7 @@ def test_markers_flow(service: CubaseService, fake: FakeCubase) -> None:
 def test_markers_errors(service: CubaseService, readonly: CubaseService, fake: FakeCubase) -> None:
     with pytest.raises(PreconditionFailedError):
         service.markers("delete_all")
-    with pytest.raises(PolicyError):
+    with pytest.raises(PolicyError, match=r"^WRITES_DISABLED"):
         readonly.markers("insert_at_cursor", dry_run=False)
     fake.can_perform_false.add("marker.insert")
     with pytest.raises(PreconditionFailedError) as exc:
@@ -122,7 +122,7 @@ def test_remove_respects_policy(fake: FakeCubase) -> None:
     from trackwright.core.policy import WritePolicy
 
     service = CubaseService(fake, WritePolicy(enabled=True, allowed_tracks=("Other",)))
-    with pytest.raises(PolicyError):
+    with pytest.raises(PolicyError, match=r"^NOT_ALLOWED"):
         service.remove_selected_tracks("POC-TEST", dry_run=False)
 
 
@@ -178,7 +178,7 @@ def test_add_track_interactive_folder_and_errors(
         service.add_track_interactive("start", "bus", "x")
     with pytest.raises(PreconditionFailedError):
         service.add_track_interactive("finish", "audio", "x")  # type: ignore[arg-type]
-    with pytest.raises(PolicyError):
+    with pytest.raises(PolicyError, match=r"^WRITES_DISABLED"):
         readonly.add_track_interactive("start", "audio", "x")
     fake.can_perform_false.add("addtrack.audio")
     with pytest.raises(PreconditionFailedError):

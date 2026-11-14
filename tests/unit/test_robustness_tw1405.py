@@ -13,8 +13,7 @@ from typing import Any
 
 import pytest
 
-from tests.support import ScriptedTransport
-from tests.unit.test_bridge import FakeHost
+from tests.support import FakeHost, ScriptedTransport
 from trackwright import bridge as bridge_module
 from trackwright import exports, launcher
 from trackwright.bridge import Bridge, BridgeClient, BridgeServer, prepare_socket_dir, run_bridge

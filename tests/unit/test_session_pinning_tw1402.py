@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from tests.unit.test_host import make
+from tests.support import make_host as make
 from trackwright.bridge import Bridge, BridgeClient, validate_request
 from trackwright.core.policy import WritePolicy
 from trackwright.core.service import CubaseService
@@ -38,7 +38,7 @@ def test_bridge_forwards_the_session_to_the_host() -> None:
     seen: list[str | None] = []
 
     class Host:
-        session_id = "s2"
+        session_id: str | None = "s2"
 
         def call(self, op: str, params: JsonObject | None = None, *, timeout: float | None = None,
                  session: str | None = None) -> Reply:  # fmt: skip
@@ -141,7 +141,7 @@ class LaggingHost:
 
 def test_service_writes_carry_the_pinned_session(fake: FakeCubase) -> None:
     host = LaggingHost(fake)
-    service = CubaseService(host, WritePolicy(enabled=True), sleep=lambda _s: None, settle_timeout=0.0)  # type: ignore[arg-type]
+    service = CubaseService(host, WritePolicy(enabled=True), sleep=lambda _s: None, settle_timeout=0.0)
     service.set_track_mix("POC-TEST", mute=True, dry_run=False)
     writes = [s for op, s in host.sessions if op == "da.param.set"]
     assert writes == [fake.session]
@@ -149,7 +149,7 @@ def test_service_writes_carry_the_pinned_session(fake: FakeCubase) -> None:
 
 def test_service_write_after_a_silent_reload_is_refused(fake: FakeCubase) -> None:
     host = LaggingHost(fake)
-    service = CubaseService(host, WritePolicy(enabled=True), sleep=lambda _s: None, settle_timeout=0.0)  # type: ignore[arg-type]
+    service = CubaseService(host, WritePolicy(enabled=True), sleep=lambda _s: None, settle_timeout=0.0)
     original = fake.call
 
     def reload_before_writing(op: str, params: JsonObject | None = None, *, session: str | None = None) -> JsonObject:

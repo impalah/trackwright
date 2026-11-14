@@ -4,6 +4,7 @@
 
 ## Sin publicar
 
+- **Endurecimiento de los tests** (TW-1409): los tests de la política comprueban el código del error; tests de la huella y de `from_config`; tests basados en propiedades del entramado (Hypothesis, nueva dependencia de desarrollo); una comprobación de sintaxis ES5 del script de Cubase; tests con Node de caminos del script que no tenían ninguno (lecturas, errores de protocolo, la cola de peticiones, la caducidad de fragmentos); esperas a eventos en lugar de pausas fijas; un tiempo máximo en el arnés de Node; dobles de test compartidos en lugar de tests que importan tests; los tests de escritura en directo limitados a la pista de pruebas; `mypy` comprueba también los tests. Se arregló una carrera en un test que podía imprimir un «logging error», registrando las respuestas tardías antes de guardarlas.
 - **Conformidad entre simulador y script** (TW-1408): un test envía las mismas operaciones al script real y al simulador y compara sus respuestas; el simulador coincide ahora con el script (campos de diagnóstico, el límite de 16 tags, `limit` 0 que devuelve un elemento) y con Cubase (un parámetro de canal que no existe se lee como `process: -1`, que Trackwright trata ahora como ausente). Los tests usan `fake.override()` en lugar de sustituir métodos privados.
 
 ## 0.4.0 — 2026-11-14

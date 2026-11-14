@@ -283,7 +283,7 @@ def test_set_tempo(service: CubaseService, fake: FakeCubase) -> None:
 
 
 def test_set_tempo_policy(readonly: CubaseService) -> None:
-    with pytest.raises(PolicyError):
+    with pytest.raises(PolicyError, match=r"^WRITES_DISABLED"):
         readonly.set_tempo(100, dry_run=False)
 
 

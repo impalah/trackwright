@@ -47,7 +47,8 @@ def test_packet_parser(aligned: bool) -> None:
 # ---------------------------------------------------------------- transport with a fake API
 class FakeApi:
     def __init__(self, sources: set[str] | None = None) -> None:
-        self.sources, self.destinations = sources or set(), set()
+        self.sources: set[str] = sources or set()
+        self.destinations: set[str] = set()
         self.sent: list[bytes] = []
         self.read_proc: Any = None
         self.disposed: list[int] = []

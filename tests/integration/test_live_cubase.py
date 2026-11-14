@@ -40,7 +40,9 @@ def live() -> Iterator[CubaseService]:
 def writer(live: CubaseService) -> CubaseService:
     if not WRITES or not TEST_TRACK:
         pytest.skip("set TRACKWRIGHT_ALLOW_WRITES=1 and TRACKWRIGHT_TEST_TRACK to run write tests")
-    return CubaseService(live.host, WritePolicy(enabled=True, allowed_tracks=()))
+    return CubaseService(
+        live.host, WritePolicy(enabled=True, allowed_tracks=(TEST_TRACK,))
+    )  # T-08: only the test track
 
 
 def test_status(live: CubaseService) -> None:

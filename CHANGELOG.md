@@ -4,6 +4,7 @@
 
 ## Unreleased
 
+- **Test-suite hardening** (TW-1409): policy tests assert the error code; tests for the fingerprint and `from_config`; property-based tests of the framing (Hypothesis, new dev dependency); an ES5 syntax check of the Cubase script; Node tests for script paths that had none (reads, protocol errors, the request queue, fragment expiry); waits on events instead of fixed sleeps; a time limit on the Node harness; shared test doubles instead of tests importing tests; the live write tests limited to the test track; `mypy` also checks the tests. A log race in a test that could print a "logging error" was fixed by logging late responses before recording them.
 - **Simulator and script conformance** (TW-1408): a test sends the same operations to the real script and to the simulator and compares their answers; the simulator now matches the script (diagnostic fields, the 16-tag limit, `limit` 0 returning one item) and Cubase (a missing channel parameter reads as `process: -1`, which Trackwright now treats as absent). Tests use `fake.override()` instead of replacing private methods.
 
 ## 0.4.0 — 2026-11-14

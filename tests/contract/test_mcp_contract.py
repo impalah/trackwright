@@ -61,11 +61,6 @@ STUDIO_EQ = "946051208E29496E804F64A825C8A047"
 
 
 @pytest.fixture
-def fake() -> FakeCubase:
-    return FakeCubase()
-
-
-@pytest.fixture
 async def client(fake: FakeCubase) -> AsyncIterator[Client]:
     service = CubaseService(fake, WritePolicy(enabled=True), sleep=lambda _s: None, settle_timeout=0.0)
     async with Client(build_server(service)) as connected:
@@ -281,7 +276,7 @@ async def test_set_project(client: Client) -> None:
 async def test_unexpected_errors_reach_the_client_with_a_code(client: Client, fake: FakeCubase) -> None:
     """TW-1403 (C-15): a bug is reported as INTERNAL_ERROR, not as a bare traceback."""
 
-    def broken(_p: object) -> object:
+    def broken(_p: dict[str, Any]) -> dict[str, Any]:
         raise KeyError("boom")
 
     fake.override("transport.get", broken)

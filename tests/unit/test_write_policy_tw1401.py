@@ -30,7 +30,7 @@ def test_run_command_refuses_keys_with_a_dedicated_tool(fake: FakeCubase, key: s
     with pytest.raises(PreconditionFailedError) as exc:
         service.run_command(key, dry_run=dry_run)
     assert code_of(exc) == "USE_DEDICATED_TOOL"
-    assert exc.value.details["tool"] == DEDICATED_TOOLS[key]  # type: ignore[attr-defined]
+    assert exc.value.details["tool"] == DEDICATED_TOOLS[key]
     assert fake.fired == []
 
 
@@ -69,7 +69,7 @@ def test_single_track_range_edit_honours_allowed_tracks(fake: FakeCubase) -> Non
     with pytest.raises(PolicyError) as exc:
         service.edit_range("2", "30", "delete", track="POC-INSTR", dry_run=False)
     assert code_of(exc) == "NOT_ALLOWED"
-    assert exc.value.details["track"] == "POC-INSTR"  # type: ignore[attr-defined]
+    assert exc.value.details["track"] == "POC-INSTR"
     assert fake.fired == []
 
 

@@ -95,7 +95,7 @@ def test_errors(importer: CubaseService, fake: FakeCubase, tmp_path: Path) -> No
 
 def test_policy(fake: FakeCubase, exports: FakeExports) -> None:
     service = CubaseService(fake, WritePolicy(), sleep=lambda _s: None, settle_timeout=0.0, exports=exports)  # type: ignore[arg-type]
-    with pytest.raises(PolicyError):
+    with pytest.raises(PolicyError, match=r"^WRITES_DISABLED"):
         service.import_audio("start", "POC-TEST", "150", dry_run=False)
 
 

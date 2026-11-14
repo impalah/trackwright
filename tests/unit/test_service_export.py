@@ -87,7 +87,7 @@ def test_errors(exporter: CubaseService, fake: FakeCubase) -> None:
 
 def test_policy(fake: FakeCubase, exports: FakeExports) -> None:
     service = CubaseService(fake, WritePolicy(), sleep=lambda _s: None, settle_timeout=0.0, exports=exports)  # type: ignore[arg-type]
-    with pytest.raises(PolicyError):
+    with pytest.raises(PolicyError, match=r"^WRITES_DISABLED"):
         service.export_mix("start", start="2", end="30", dry_run=False)
 
 

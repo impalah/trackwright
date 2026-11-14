@@ -97,7 +97,7 @@
 
 ### TW-1409 Test-suite hardening
 
-- **Status:** pending
+- **Status:** done (2026-11-14): T-01 to T-10, S-12 and S-13 (T-02 partly in TW-1405). New: `test_protocol_properties.py` (Hypothesis), `tests/script/test_es5.py`, `tests/script/test_script_coverage.py`, `tests/script/node_harness.py`. Not done: measuring the script's JavaScript coverage in `make test-node` (c8 needs npm, a toolchain the project does not use); RESPONSE_TOO_LARGE has no Node test (a response that large cannot be produced with the harness's small project)
 - **Findings:** T-01, T-02, T-03, T-04, T-05, T-06, T-08, T-09, T-10, S-12, S-13.
 - **Scope:** assert error codes; fingerprint and `from_config` tests; protocol round trips over sequence numbers and the fragment boundary, plus property-based fuzzing of the framing; re-entrant parametrized tests; events instead of `sleep`; timeouts in the node harness; shared fixtures; the live write fixture limited to the test track; exact command count; `tests` under mypy; an ES5 check of the script; node tests for the untested script operations and JS coverage in `make test-node`.
 

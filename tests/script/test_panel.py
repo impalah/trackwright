@@ -10,7 +10,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from tests.script.test_script_node import Harness
+from tests.script.node_harness import Harness
 from trackwright.cubase import SCRIPT_VERSION
 
 pytestmark = pytest.mark.node

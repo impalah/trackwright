@@ -90,7 +90,7 @@ def test_invalid_files_are_rejected(tmp_path: Path, content: str) -> None:
 def test_settings_are_immutable() -> None:
     settings = Settings()
     with pytest.raises(ValueError, match="frozen"):
-        settings.writes.enabled = True  # type: ignore[misc]
+        settings.writes.enabled = True
 
 
 def test_default_paths_are_expanded_and_absolute() -> None:

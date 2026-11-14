@@ -68,7 +68,7 @@ ignore = [
 [tool.mypy]
 python_version = "3.14"
 strict = true
-packages = ["trackwright"]
+files = ["src/trackwright", "tests"]  # T-10: the tests are type-checked too
 mypy_path = "src"
 
 [[tool.mypy.overrides]]
@@ -102,6 +102,7 @@ exclude_also = [
 [dependency-groups]
 dev = [
     "anyio>=4.16.0",
+    "hypothesis>=6.170.15",
     "mypy>=2.4.1",
     "pytest>=9.2.0",
     "pytest-cov>=7.1.0",

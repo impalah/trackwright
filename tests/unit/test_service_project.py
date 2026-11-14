@@ -102,7 +102,7 @@ def test_record_automation_in_three_four(service: CubaseService, fake: FakeCubas
     done = service.record_automation("POC-TEST", "volume", points, dry_run=False)
     assert done.verified is True, done.mismatches
     recorded = fake.automation[(fake.channel_by_title("POC-TEST").id, "volume")]
-    assert recorded[0] == (pytest.approx(6.0), pytest.approx(0.8))  # bar 3 in 3/4 = 6 quarter notes
+    assert recorded[0] == pytest.approx((6.0, 0.8))  # bar 3 in 3/4 = 6 quarter notes
 
 
 def test_unknown_signature_assumes_common_time(service: CubaseService, fake: FakeCubase) -> None:

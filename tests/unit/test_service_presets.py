@@ -66,5 +66,5 @@ def test_errors(with_plugin: CubaseService, fake: FakeCubase) -> None:
         with_plugin.plugin_preset("POC-TEST", 2, "next")
     assert empty.value.code == "EMPTY_SLOT"
     readonly = CubaseService(fake, WritePolicy(), sleep=lambda _s: None, settle_timeout=0.0)
-    with pytest.raises(PolicyError):
+    with pytest.raises(PolicyError, match=r"^WRITES_DISABLED"):
         readonly.plugin_preset("POC-TEST", 1, "next", dry_run=False)

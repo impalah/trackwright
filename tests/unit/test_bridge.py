@@ -10,6 +10,7 @@ from typing import Any
 
 import pytest
 
+from tests.support import FakeHost
 from trackwright.bridge import (
     MAX_LINE,
     Bridge,
@@ -20,7 +21,6 @@ from trackwright.bridge import (
 )
 from trackwright.errors import (
     BridgeUnavailableError,
-    HostError,
     ProtocolError,
     RequestTimeoutError,
     StaleSessionError,
@@ -29,28 +29,6 @@ from trackwright.errors import (
 from trackwright.host import Reply
 
 JsonObject = dict[str, Any]
-
-
-class FakeHost:
-    session_id: str | None = "s1"
-
-    def __init__(self) -> None:
-        self.calls: list[tuple[str, JsonObject | None, float | None]] = []
-
-    def call(
-        self, op: str, params: JsonObject | None = None, *, timeout: float | None = None, session: str | None = None
-    ) -> Reply:
-        self.calls.append((op, params, timeout))
-        if op == "da.object" and (params or {}).get("id") == -1:
-            raise HostError("object -1 is not valid", code="INVALID_OBJECT")
-        if op == "da.param.set" and (params or {}).get("value") == "late":
-            raise RequestTimeoutError("da.param.set timed out", outcome_unknown=True, details={"op": op})
-        if op == "da.params" and (params or {}).get("stale"):
-            raise StaleSessionError("expected session s2")
-        return Reply(op=op, rid="1-a", result={"echo": params}, via="sysex", duplicate=False, duration_ms=1.5)
-
-    def stats(self) -> JsonObject:
-        return {"session_id": self.session_id}
 
 
 @pytest.fixture
@@ -226,15 +204,19 @@ class _FakeSocket:
 
 
 @pytest.mark.parametrize(
-    ("fake", "error", "match"),
+    ("chunks", "exc", "error", "match"),
     [
-        (_FakeSocket(exc=TimeoutError()), RequestTimeoutError, "no answer"),
-        (_FakeSocket(chunks=[]), BridgeUnavailableError, "without answering"),
-        (_FakeSocket(chunks=[b"{bad\n"]), ProtocolError, "invalid response"),
-        (_FakeSocket(chunks=[b"[1]\n"]), ProtocolError, "not a JSON object"),
+        (None, TimeoutError(), RequestTimeoutError, "no answer"),
+        ([], None, BridgeUnavailableError, "without answering"),
+        ([b"{bad\n"], None, ProtocolError, "invalid response"),
+        ([b"[1]\n"], None, ProtocolError, "not a JSON object"),
     ],
 )
-def test_client_failure_modes(fake: _FakeSocket, error: type[Exception], match: str) -> None:
+def test_client_failure_modes(
+    chunks: list[bytes] | None, exc: Exception | None, error: type[Exception], match: str
+) -> None:
+    # T-03: the fake socket is built here; a shared parametrize value was consumed by the first run
+    fake = _FakeSocket(chunks=chunks, exc=exc)
     client = BridgeClient(Path("/nowhere"), connect=lambda: fake)  # type: ignore[arg-type,return-value]
     with pytest.raises(error, match=match):
         client.call("ping")

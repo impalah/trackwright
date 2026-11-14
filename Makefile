@@ -63,7 +63,7 @@ publish: build dist-check ## Upload to PyPI (needs UV_PUBLISH_TOKEN); a version 
 	$(UV) publish
 
 clean: ## Remove build and test artifacts
-	rm -rf dist build .coverage .coverage.* htmlcov coverage.xml .pytest_cache .mypy_cache .ruff_cache
+	rm -rf dist build .coverage .coverage.* htmlcov coverage.xml .pytest_cache .mypy_cache .ruff_cache .hypothesis
 	find src tests -type d -name __pycache__ -prune -exec rm -rf {} +
 
 # ------------------------------------------------------------------ running

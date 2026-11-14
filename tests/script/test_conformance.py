@@ -13,8 +13,8 @@ from typing import Any
 
 import pytest
 
+from tests.script.node_harness import NODE, Harness
 from tests.script.test_automation_controls import EXPECTED_KEYS
-from tests.script.test_script_node import NODE, Harness
 from trackwright.core.base import CHANNEL_TAGS
 from trackwright.cubase import SCRIPT_PATH
 from trackwright.errors import TrackwrightError
@@ -74,7 +74,7 @@ def both(pair: tuple[Harness, FakeCubase, JsonObject], op: str, params: JsonObje
     return script, simulated
 
 
-OPERATIONS = [
+OPERATIONS: list[tuple[str, JsonObject]] = [
     ("hello", {}),
     ("status", {}),
     ("capabilities", {}),

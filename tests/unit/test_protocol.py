@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from trackwright import protocol
 from trackwright.errors import ProtocolError
 
 
-def roundtrip(obj: dict[str, object], seq: int = 1) -> dict[str, object]:
+def roundtrip(obj: dict[str, Any], seq: int = 1) -> dict[str, Any]:
     reassembler = protocol.Reassembler()
     result = None
     for raw in protocol.build_frames(protocol.encode_payload(obj), seq):

@@ -1,59 +1,17 @@
 from __future__ import annotations
 
 import threading
-import time
 from typing import Any
 
 import pytest
 
-from tests.support import ScriptedTransport, fail, ok
+from tests.support import FakeScript, ScriptedTransport, ok, wait_for
+from tests.support import make_host as make
 from trackwright import protocol
 from trackwright.errors import HostError, ProtocolError, RequestTimeoutError, StaleSessionError, TrackwrightError
 from trackwright.host import HostClient
 
 JsonObject = dict[str, Any]
-
-
-class FakeScript:
-    """A tiny script: sessions, a parameter store and duplicate cache."""
-
-    def __init__(self) -> None:
-        self.session = "s1"
-        self.value = 0.5
-        self.executed: list[str] = []
-        self.cache: dict[str, JsonObject] = {}
-
-    def __call__(self, req: JsonObject) -> JsonObject | list[JsonObject] | None:
-        key = f"{req.get('sid')}/{req['rid']}"
-        if key in self.cache:
-            return {**self.cache[key], "dup": True}
-        op = req["op"]
-        if op not in ("hello", "ping") and req.get("sid") != self.session:
-            return fail(req, "STALE_SESSION", f"expected session {self.session}")
-        self.executed.append(op)
-        if op == "hello":
-            resp = ok(req, {"sessionId": self.session, "scriptVersion": "1.0.0", "host": {"appName": "Cubase"}})
-        elif op == "ping":
-            resp = ok(req, {"pong": True, "echo": (req.get("p") or {}).get("echo")})
-        elif op == "da.param.get":
-            resp = ok(req, {"process": self.value})
-        elif op == "da.param.set":
-            self.value = req["p"]["value"]
-            resp = ok(req, {"after": {"process": self.value}}, via="idle")
-        elif op == "silent":
-            return None
-        else:
-            resp = fail(req, "UNKNOWN_OP", op)
-        self.cache[key] = resp
-        return resp
-
-
-def make(script: FakeScript | None = None, **kw: Any) -> tuple[HostClient, ScriptedTransport, FakeScript]:
-    script = script or FakeScript()
-    transport = ScriptedTransport(script, **kw)
-    client = HostClient(transport, default_timeout=0.5)
-    client.open()
-    return client, transport, script
 
 
 def test_hello_negotiates_session() -> None:
@@ -119,7 +77,7 @@ def test_write_timeout_reports_unknown_outcome_and_is_not_retried() -> None:
         client.call("da.param.set", {"value": 0.9}, timeout=0.3)
     assert exc.value.outcome_unknown is True
     assert [r["op"] for r in transport.requests] == ["da.param.set"]
-    time.sleep(0.5)
+    wait_for(lambda: len(client.late_responses) == 1)  # T-04: wait for the event, not a fixed time
     assert script.value == 0.9  # it did run: the outcome really was unknown
     assert len(client.late_responses) == 1
 
@@ -184,7 +142,7 @@ def test_pending_rid_collision() -> None:
     client.session_id = "s1"
     thread = threading.Thread(target=lambda: client.request("ping", rid="same", timeout=0.4))
     thread.start()
-    time.sleep(0.05)
+    wait_for(lambda: "same" in client._pending)
     with pytest.raises(ProtocolError, match="already pending"):
         client.request("ping", rid="same")
     thread.join()
@@ -219,7 +177,7 @@ def test_write_lock_busy_is_not_sent() -> None:
     client.session_id = "s1"
     thread = threading.Thread(target=lambda: client.request("da.param.set", {"value": 0.2}, timeout=1.0))
     thread.start()
-    time.sleep(0.05)
+    wait_for(lambda: len(transport.requests) == 1)  # the first write holds the lock
     with pytest.raises(TrackwrightError) as exc:
         client.request("da.param.set", {"value": 0.7}, timeout=0.05)
     assert exc.value.code == "BUSY"
