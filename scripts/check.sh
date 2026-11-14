@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run every quality gate: lint, format, types, tests with coverage (>= 85 %).
+# Run every quality gate: lint, format, types, tests with coverage (>= 95 %).
 # Usage: scripts/check.sh            (from the repository root)
 set -euo pipefail
 cd "$(dirname "$0")/.."

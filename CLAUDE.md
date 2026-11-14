@@ -18,11 +18,13 @@ The `Makefile` wraps the usual tasks through uv (`make help`): `make check`, `ma
 
 ```sh
 uv sync
-scripts/check.sh                 # ruff check + ruff format --check + mypy strict + pytest with coverage (>= 85 %)
+scripts/check.sh                 # ruff check + ruff format --check + mypy strict + pytest with coverage (>= 95 %)
 uv run pytest tests/unit/test_docs.py   # documentation consistency
 uv run trackwright doctor        # read-only check of the whole chain against the real Cubase
 uv build                         # dist/ (wheel + sdist); check with: uvx twine check --strict dist/*
 ```
+
+CI: `.github/workflows/ci.yml` (GitHub Actions, macOS) runs the same gates on every push and PR.
 
 Integration tests against the real Cubase are opt-in: `TRACKWRIGHT_INTEGRATION=1` (reads), plus `TRACKWRIGHT_ALLOW_WRITES=1 TRACKWRIGHT_TEST_TRACK="POC-TEST"` (reversible writes). See `docs/development.md`.
 
@@ -39,7 +41,7 @@ Integration tests against the real Cubase are opt-in: `TRACKWRIGHT_INTEGRATION=1
 
 - **Toolchain: uv only.** Never pip, `uv pip`, venv, virtualenv, pipx, conda, poetry or requirements.txt. Never install anything globally; never use `sudo`.
 - **Logging with loguru, to stderr.** Never write to stdout from `serve` (it is the MCP channel); CLI commands print JSON on stdout.
-- **Quality:** ruff, mypy strict, coverage ≥ 85 % (currently ~98 %). Code identifiers, logs and CLI messages in English.
+- **Quality:** ruff, mypy strict, coverage ≥ 95 % (currently ~98 %). Code identifiers, logs and CLI messages in English.
 - **Documentation is bilingual:** every document is English `X.md` plus Spanish `X.es.md`, updated together, each linking to its counterpart near the top; links stay in their language. `README.md` is also the PyPI page: no relative links there. `tests/unit/test_docs.py` enforces this, and that every tool, command key and config key is documented.
 - **Issues** live in `docs/issues/` (epics E01–E13, issues TW-NNNN); every change starts from an issue and its commit cites it. Results observed in real Cubase go to `docs/verification.md` (+ `.es.md`).
 - **Git:** remote `origin` = `git@github.com:impalah/trackwright.git` (branch `main`, tags `vX.Y.Z`). Commit and push only when asked; never force-push. Commit with

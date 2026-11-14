@@ -33,7 +33,7 @@ typecheck: ## Type-check with mypy (strict)
 test: ## Run the tests (integration tests skip themselves)
 	$(UV) run pytest
 
-test-cov: ## Run the tests with coverage (fails below 85 %)
+test-cov: ## Run the tests with coverage (fails below 95 %)
 	$(UV) run pytest --cov --cov-report=term-missing
 
 test-node: ## Only the Cubase script tests (needs node)

@@ -36,6 +36,6 @@ Las issues documentan cada unidad de trabajo **antes** de implementarla. Al cerr
 - **Calidad:**
   - `uv run ruff check` y `uv run ruff format --check` sin errores;
   - `uv run mypy` en modo `strict` sin errores;
-  - cobertura de tests unitarios ≥ 85 % (`fail_under` en `pyproject.toml`).
+  - cobertura de tests unitarios ≥ 95 % (`fail_under` en `pyproject.toml`).
 - **Documentación:** cada funcionalidad visible para el usuario se refleja en los manuales (E08).
 - **Honestidad de la evidencia:** lo que solo se ha probado con el simulador se marca así; no se declara verificado contra Cubase sin una ejecución real registrada.

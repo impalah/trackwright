@@ -11,8 +11,12 @@
 - **Logging with loguru** (`from loguru import logger`).
   - The `logging` module is only touched in `trackwright/logs.py`, to redirect the dependencies' logging.
   - Nothing is ever written to stdout, which belongs to the MCP protocol under `serve`.
-- **Mandatory quality:** ruff (lint and format), mypy `strict` and coverage ≥ 85%.
+- **Mandatory quality:** ruff (lint and format), mypy `strict` and coverage ≥ 95%.
 - **Issues:** every change starts from an issue in [`docs/issues/`](issues/README.md), which is closed by its commit.
+
+## Continuous integration
+
+Every push to `main`, every tag and every pull request runs `.github/workflows/ci.yml` on GitHub Actions (macOS, because the default transport is CoreMIDI): `uv sync --locked`, `make check`, `make test-node`, `make build` and `make dist-check`. A red run must be fixed before publishing.
 
 ## Commands
 
@@ -40,7 +44,7 @@ uv run ruff check src tests     # lint
 uv run ruff format src tests    # format
 uv run mypy                     # types (strict)
 uv run pytest                   # tests (integration tests skip themselves)
-uv run pytest --cov             # with coverage (fails below 85%)
+uv run pytest --cov             # with coverage (fails below 95%)
 uv run pytest -m node           # only the Cubase script tests (needs node)
 uv build                        # wheel and sdist in dist/
 ```

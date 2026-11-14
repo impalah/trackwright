@@ -36,6 +36,6 @@ Issues document each unit of work **before** it is implemented. When an issue is
 - **Quality:**
   - `uv run ruff check` and `uv run ruff format --check` with no errors;
   - `uv run mypy` in `strict` mode with no errors;
-  - unit test coverage ≥ 85 % (`fail_under` in `pyproject.toml`).
+  - unit test coverage ≥ 95 % (`fail_under` in `pyproject.toml`).
 - **Documentation:** every user-visible feature is reflected in the manuals (E08).
 - **Honesty of evidence:** anything tested only with the simulator is marked as such; nothing is declared verified against Cubase without a recorded real run.
