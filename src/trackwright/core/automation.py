@@ -18,7 +18,7 @@ import time
 from collections.abc import Iterator
 from typing import Any
 
-from trackwright.core.base import MIXER, TAG_SELECTED, TAG_VOLUME, operation
+from trackwright.core.base import MIXER, TAG_SELECTED, TAG_VOLUME, converted_value, operation
 from trackwright.core.models import (
     AutomationPoint,
     AutomationRecordOut,
@@ -163,7 +163,11 @@ class AutomationMixin(ProjectMixin):
         if key == "pan":
             return self._child_of_type(item, "Panner"), TAG_PAN
         if match := SEND_KEY.match(key):
-            return self.children(int(self.section(item, "Sends")["id"]))[int(match.group(1)) - 1], TAG_SEND_LEVEL
+            sends = self.children(int(self.section(item, "Sends")["id"]))
+            index = int(match.group(1))
+            if not 1 <= index <= len(sends):
+                raise NotFoundError(f"send {index} does not exist (1..{len(sends)})", code="PARAM_NOT_FOUND")
+            return sends[index - 1], TAG_SEND_LEVEL
         if match := EQ_KEY.match(key):
             eq = self.resolve_target(item, "strip:eq")
             return eq, self._tag_by_title(eq, f"EQ {match.group(1)} {EQ_TITLES[match.group(2)]}")
@@ -181,9 +185,7 @@ class AutomationMixin(ProjectMixin):
 
     def _to_value(self, target: tuple[JsonObject, int], plain: float) -> float:
         obj, tag = target
-        value = float(
-            self.call("da.convert", {"id": obj["id"], "tag": tag, "plain": plain, **MIXER})["processFromPlain"]
-        )
+        value = converted_value(self.call("da.convert", {"id": obj["id"], "tag": tag, "plain": plain, **MIXER}))
         if not 0.0 <= value <= 1.0:
             raise PreconditionFailedError(
                 f"{plain} is outside the parameter's range", code="OUT_OF_RANGE", details={"normalized": value}
@@ -279,7 +281,11 @@ class AutomationMixin(ProjectMixin):
         self.policy.check_track(name)
         if self._is_playing():
             raise PreconditionFailedError("stop the transport before recording automation", code="TRANSPORT_RUNNING")
-        out.written = self._record(item, parameter, curve, start_beats)
+        out.written, out.complete = self._record(item, parameter, curve, start_beats)
+        if not out.complete:
+            out.notes.append(
+                f"playback stopped at {out.written[-1].position}, before the last point: the curve is incomplete"
+            )
         if verify:
             out.verified, out.mismatches = self._verify(item, parameter, curve, start_beats)
             if out.verified is False:
@@ -349,11 +355,14 @@ class AutomationMixin(ProjectMixin):
             previous = beat
             yield beat
 
-    def _record(self, item: JsonObject, key: str, curve: list[tuple[float, float]], start: float) -> list[WrittenPoint]:
+    def _record(
+        self, item: JsonObject, key: str, curve: list[tuple[float, float]], start: float
+    ) -> tuple[list[WrittenPoint], bool]:
+        """Write the curve while playing; return the points written and whether the last point was reached."""
         write_before = self._flag_state(item, TAG_WRITE)
         read_before = self._flag_state(item, TAG_READ)
         written: list[WrittenPoint] = []
-        touched = False
+        touched = complete = False
         try:
             self._flag(item, TAG_READ, False)  # existing automation must not fight the new curve
             self._flag(item, TAG_WRITE, True)
@@ -368,6 +377,7 @@ class AutomationMixin(ProjectMixin):
                 written.append(WrittenPoint(position=format_bars(from_beats(beat, self._meter())), value=value,
                                             display=result.get("display")))  # fmt: skip
                 if beat >= curve[-1][0]:
+                    complete = True
                     break
         finally:
             if touched:
@@ -377,7 +387,7 @@ class AutomationMixin(ProjectMixin):
             self._flag(item, TAG_READ, read_before)
         if not written:
             raise TrackwrightError("playback did not reach the first point; nothing was recorded", code="NOT_RECORDED")
-        return written
+        return written, complete
 
     def _verify(
         self, item: JsonObject, key: str, curve: list[tuple[float, float]], start: float

@@ -56,8 +56,8 @@ class ExportMixin(RangeMixin):
         return bounds[0], bounds[1]
 
     def _export_folder(self) -> Path | None:
-        folders = self.launcher.project_folders() if self.launcher is not None else []
-        return Path(folders[0]) / "Mixdown" if folders else None
+        folder, _unknown = self.project_folder()
+        return folder / "Mixdown" if folder else None
 
     @operation
     def export_mix(
@@ -82,9 +82,7 @@ class ExportMixin(RangeMixin):
         out = ExportOut(phase="start", status="planned", dry_run=dry_run, start=None, end=None,
                         expected_seconds=None, folder=str(guess) if guess else None, since=None)  # fmt: skip
         if start is not None and end is not None:
-            cursor = self._cursor_seconds(transport)
-            span = (self._seconds_of(transport, start, unit), self._seconds_of(transport, end, unit))
-            self._move_cursor_seconds(transport, cursor)
+            span = self._span_seconds(transport, start, end, unit)
             if not 0 <= span[0] < span[1]:
                 raise PreconditionFailedError("the range must have 0 <= start < end", code="BAD_TIME")
             out.start, out.end = format_seconds(span[0]), format_seconds(span[1])
@@ -102,8 +100,8 @@ class ExportMixin(RangeMixin):
             out.expected_seconds = round(span[1] - span[0], 3)
         else:
             cursor = self._cursor_seconds(transport)
-            self._set_locator_seconds(transport, "left", self._seconds_of(transport, str(start), unit))
-            self._set_locator_seconds(transport, "right", self._seconds_of(transport, str(end), unit))
+            self._set_locator_seconds(transport, "left", span[0])  # C-27: converted once, in the plan
+            self._set_locator_seconds(transport, "right", span[1])
             self._move_cursor_seconds(transport, cursor)
         if not self._performable("file.export_audio_mixdown"):
             raise TrackwrightError("Cubase cannot open the export dialog now (is another dialog open?)",
@@ -118,7 +116,7 @@ class ExportMixin(RangeMixin):
     def _confirm_export(self, since: float | None, expected: float | None, folder: str | None) -> ExportOut:
         if since is None:
             raise PreconditionFailedError("give 'since' from the start phase", code="BAD_REQUEST")
-        where = Path(folder).expanduser() if folder else self._export_folder()
+        where = Path(folder).expanduser().resolve() if folder else self._export_folder()
         out = ExportOut(phase="confirm", status="not_found", dry_run=False, start=None, end=None,
                         expected_seconds=expected, folder=str(where) if where else None, since=since)  # fmt: skip
         if where is None:

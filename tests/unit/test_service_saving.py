@@ -71,8 +71,17 @@ def test_new_version_needs_a_new_file(fake: FakeCubase, exports: FakeExports, mo
 
 def test_unknown_folder(fake: FakeCubase, exports: FakeExports) -> None:
     out = saver(fake, exports, launcher=False).save_project(dry_run=False)
-    assert (out.status, out.verified) == ("saved", None)
+    assert (out.status, out.verified) == ("fired", None)  # TW-1403 (C-06): never "saved" without evidence
     assert any("cannot be verified" in n for n in out.notes)
+    assert out.instructions and "check in Cubase" in out.instructions
+
+
+def test_several_open_projects_are_not_guessed(fake: FakeCubase, exports: FakeExports) -> None:
+    service = saver(fake, exports)
+    service.launcher.project_folders = lambda: ["/Projects/A", "/Projects/B"]  # type: ignore[method-assign, union-attr]
+    out = service.save_project(dry_run=False)
+    assert (out.status, out.folder, out.verified) == ("fired", None, None)
+    assert any("2 projects" in n for n in out.notes)
 
 
 def test_policy(fake: FakeCubase, exports: FakeExports) -> None:

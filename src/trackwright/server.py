@@ -104,6 +104,10 @@ async def run[T](fn: Callable[[], T]) -> T:
     except TrackwrightError as exc:
         logger.info("tool error {}", exc)
         raise tool_error(exc) from exc
+    except Exception as exc:  # C-15: a bug must still reach the client with a stable code, not a bare traceback
+        logger.exception("unexpected error in a tool")
+        error = TrackwrightError(f"unexpected error: {type(exc).__name__}: {exc}", code="INTERNAL_ERROR")
+        raise tool_error(error) from exc
 
 
 def build_server(service: CubaseService) -> MCPServer:
@@ -470,7 +474,8 @@ def build_server(service: CubaseService) -> MCPServer:
         annotations=WRITE,
         description="Record an automation curve on a track parameter: plays the project from just before the "
         "first point and moves the parameter through the points (linear in between). Audible. Optionally "
-        "verifies with a read-back pass. Positions assume 4/4. Give each point as plain (real units, preferred) "
+        "verifies with a read-back pass. Positions are bars in the project's time signature. "
+        "Give each point as plain (real units, preferred) "
         "or value.",
     )
     async def cubase_record_automation(

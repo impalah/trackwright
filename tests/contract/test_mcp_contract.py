@@ -275,3 +275,16 @@ async def test_set_project(client: Client) -> None:
     done = await call(client, "cubase_set_project", {"metronome": True, "click_level": 90, "dry_run": False})
     assert done["verified"] is True
     assert (await call(client, "cubase_get_project", {}))["metronome"]["active"] is True
+
+
+@pytest.mark.anyio
+async def test_unexpected_errors_reach_the_client_with_a_code(client: Client, fake: FakeCubase) -> None:
+    """TW-1403 (C-15): a bug is reported as INTERNAL_ERROR, not as a bare traceback."""
+
+    def broken(_p: object) -> object:
+        raise KeyError("boom")
+
+    fake._op_transport_get = broken  # type: ignore[assignment, method-assign]
+    result = await client.call_tool("cubase_get_transport", {})
+    assert result.is_error
+    assert "INTERNAL_ERROR" in str(result.content[0].text)  # type: ignore[union-attr]

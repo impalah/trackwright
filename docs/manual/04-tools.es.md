@@ -141,7 +141,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 - **Entrada:** cualquiera de estos ajustes, más `dry_run`:
   - interruptores (`true`/`false`): `cycle`, `metronome`, `precount`, `punch_in`, `punch_out`, `pre_roll` y `post_roll` (usar el pre-roll y el post-roll), `click_in_playback` y `click_in_record`;
   - `click_level`, de 0 a 127.
-- **Qué hace:** escribe cada ajuste en el objeto «Transporte» o «Metronome» de Cubase y lo relee. La salida da el valor antes, el pedido, el leído y `verified` de cada uno.
+- **Qué hace:** escribe cada ajuste en el objeto «Transporte» o «Metronome» de Cubase y lo relee. La salida da el valor antes, el pedido, el leído y `verified` de cada uno. Si una escritura falla o agota el tiempo, el error lista los ajustes ya aplicados (`applied`) y el que falló (`failed_setting`), con su valor releído tras un tiempo agotado; no se reintenta nada.
 - **Verificado en Cubase Elements:** los 9 interruptores y el nivel del clic (experimento TW-1210).
 - **No disponible:**
   - **compás:** Cubase no acepta escribirlo por esta vía; se cambia en la barra de transporte o en «Configuración del proyecto»;
@@ -183,6 +183,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 
 - **Entrada:** `track`, o bien `step` (`next` o `prev`).
 - La selección es única: deselecciona las demás pistas.
+- Con `step`, `verified` solo es `true` si la selección se movió (en la primera o la última pista no se mueve).
 
 ### `cubase_set_position` (navegación)
 
@@ -319,6 +320,7 @@ Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
   - `dry_run`, por defecto `true`.
 - **Ensayo:** muestra la carpeta del proyecto (deducida de los archivos de audio abiertos) y sus `.cpr` con fecha y tamaño, para saber qué se va a sobrescribir.
 - **Verificación:** algún `.cpr` de la carpeta con fecha posterior a la orden; con `new_version`, uno nuevo. Solo se leen nombres, tamaños y fechas.
+- **Carpeta desconocida:** si no se conoce la carpeta del proyecto, o parece haber varios proyectos abiertos, el estado es `fired` y `verified` es `null`: se pidió guardar, pero nada lo demuestra (un proyecto que nunca se guardó muestra *Guardar como*).
 - **Estados:** `saved` o `awaiting_user`. El segundo, si en 10 s no se escribió nada: probablemente hay un diálogo, como «Guardar como» en un proyecto que nunca se guardó.
 - **Verificado en Cubase Elements:** `Save` reescribió `TEST.cpr` en 1 s, y `Save New Version` creó `TEST-01.cpr`. Ninguno abrió diálogo.
 - **No se ofrecen** cerrar, revertir ni salir.
@@ -339,7 +341,7 @@ Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
 - **El usuario** elige el archivo y acepta las opciones. Cubase lo copia a la carpeta *Audio* del proyecto.
 - **Fase `confirm`** (misma pista, posición y archivo, más `since`):
   - si Cubase aún no responde: `awaiting_user`, porque el selector sigue abierto;
-  - si no, sondea la pista y busca bordes en la posición y en la posición más la duración. Devuelve `done` y `verified`, o `not_found` si se canceló o fue a otra parte;
+  - si no, sondea la pista y busca bordes en la posición y en la posición más la duración. Devuelve `done` y `verified`, o `not_found` si se canceló o fue a otra parte. Solo cuentan los bordes **nuevos**: la fase de inicio sondea la pista antes de abrir el diálogo, así que un evento que ya estaba en esa posición no confirma una importación cancelada, y cada posición esperada necesita su propio borde. Si la fase de inicio se hizo en otra sesión del servidor, no se conocen los bordes previos y `verified` es `null`;
   - `copied_to_project` lista las copias nuevas en `<proyecto>/Audio`, solo con el nombre.
 - **Verificado en Cubase Elements:** un tono de 3 s quedó en POC-TEST de 150 a 153 s.
 - **Deshacer** quita el evento, **no** la copia en disco.
@@ -433,7 +435,7 @@ Mecanismo verificado en Cubase Elements 15.0.30: el script tiene en la superfici
   4. «toca» el control, recorre la curva (lineal entre puntos) siguiendo la posición del cursor y lo «suelta»;
   5. para la reproducción y deja W y R como estaban.
   - Con `verify`, vuelve a reproducir con R activado y compara el valor leído con la curva (tolerancia 0,05).
-- **Salida:** la curva con el valor normalizado de cada punto (`points`), los valores escritos (`written`), `verified`, las discrepancias (`mismatches`) y notas.
+- **Salida:** la curva con el valor normalizado de cada punto (`points`), los valores escritos (`written`), `complete` (`false` si la reproducción se paró antes del último punto, por ejemplo porque el usuario pulsó Stop: la curva queda cortada), `verified`, las discrepancias (`mismatches`) y notas.
 - **Errores:** `PARAM_NOT_FOUND`, `OUT_OF_RANGE`, `NO_UNIT_CONVERSION`, `NOT_AUTOMATABLE` (no hay nada enlazado: slot vacío o Quick Control sin asignar), `TRANSPORT_RUNNING`, `NOT_RECORDED`, `BAD_TIME` y `WRITES_DISABLED`.
 - **Limitaciones:**
   - las posiciones usan el compás en la posición del cursor (`cubase_get_project`). Si hay cambios de compás a lo largo del proyecto, no se siguen; si Cubase no informa del compás, se supone 4/4;

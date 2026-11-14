@@ -45,7 +45,7 @@
 
 ### TW-1403 Results that say only what happened
 
-- **Status:** pending
+- **Status:** done in code (2026-11-14), tests next to each tool's tests (`test_service_import`, `_saving`, `_automation`, `_settings`, `_ranges`, `_writing`, `_reading`, contract); verification in Cubase pending. C-27 (export range converted once) was done here too, and the three project-folder helpers became `ServiceBase.project_folder()`.
 - **Findings:** C-05, C-06, C-07, C-11, C-12, C-13, C-14, C-15, C-16, C-17.
 - **Scope:**
   1. `import_audio`: probe the edges before opening the dialog; require new edges, each matched once.

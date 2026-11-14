@@ -18,6 +18,7 @@ from trackwright.errors import (
     HostError,
     NotFoundError,
     PreconditionFailedError,
+    RequestTimeoutError,
     StaleSessionError,
     TrackwrightError,
 )
@@ -69,6 +70,14 @@ _SLOT_SUFFIX = re.compile(r"-\d+$")
 _INACTIVE = object()
 
 
+def converted_value(converted: JsonObject) -> float:
+    """``processFromPlain`` of a ``da.convert`` answer (C-15: a missing value is an error with a code)."""
+    value = converted.get("processFromPlain")
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        raise TrackwrightError("Cubase did not convert the value", code="NO_UNIT_CONVERSION", details=converted)
+    return float(value)
+
+
 def operation[S: "ServiceBase", **P, R](fn: Callable[Concatenate[S, P], R]) -> Callable[Concatenate[S, P], R]:
     """Mark a public tool method: the script session is pinned for its whole duration.
 
@@ -106,6 +115,7 @@ class ServiceBase:
         self._sleep = sleep
         self._settle_timeout = settle_timeout
         self._local = threading.local()
+        self._import_baselines: dict[float, tuple[int, list[float]]] = {}  # TW-1403: edges before an import
 
     # ------------------------------------------------------------------ host access
     @contextmanager
@@ -151,6 +161,15 @@ class ServiceBase:
         if session is None:
             raise TrackwrightError("the Cubase script did not report a session", code="NO_SESSION")
         return session
+
+    def project_folder(self) -> tuple[Path | None, str | None]:
+        """The open project's folder and, when it is not known, why (C-13: never guess between projects)."""
+        folders = self.launcher.project_folders() if self.launcher is not None else []
+        if len(folders) == 1:
+            return Path(folders[0]), None
+        if not folders:
+            return None, "the project folder is unknown (Cubase has no audio file of the project open)"
+        return None, f"{len(folders)} projects seem to be open ({', '.join(folders)}): the folder is ambiguous"
 
     def wait_until(self, read: Callable[[], T], done: Callable[[T], bool]) -> T:
         """Re-read until ``done`` or the settle timeout (values that arrive through callbacks lag a little)."""
@@ -299,6 +318,17 @@ class ServiceBase:
             automatable=raw.get("automatable"),
             edit_locked=raw.get("editLock"),
         )
+
+    def write_parameter(self, op: str, params: JsonObject, object_id: int, tag: int) -> JsonObject:
+        """Run one parameter write; on timeout read the value back and report it (never retry)."""
+        try:
+            return self.call(op, params)
+        except RequestTimeoutError as exc:
+            try:
+                exc.details["read_back"] = self.read_parameter(object_id, tag)
+            except TrackwrightError as read_error:
+                exc.details["read_back_error"] = str(read_error)
+            raise
 
     def read_parameter(self, object_id: int, tag: int) -> JsonObject:
         raw = self.call("da.param.get", {"id": object_id, "tag": tag, **MIXER})

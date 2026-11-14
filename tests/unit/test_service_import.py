@@ -97,3 +97,24 @@ def test_policy(fake: FakeCubase, exports: FakeExports) -> None:
     service = CubaseService(fake, WritePolicy(), sleep=lambda _s: None, settle_timeout=0.0, exports=exports)  # type: ignore[arg-type]
     with pytest.raises(PolicyError):
         service.import_audio("start", "POC-TEST", "150", dry_run=False)
+
+
+def test_an_edge_already_there_does_not_confirm_a_cancelled_import(importer: CubaseService, fake: FakeCubase) -> None:
+    """TW-1403 (C-05): POC-TEST already has an event edge at 2.0 s; the import is cancelled."""
+    started = importer.import_audio("start", "POC-TEST", "2", dry_run=False)
+    fake.finish_import(None)
+    out = importer.import_audio("confirm", "POC-TEST", "2", since=started.since)
+    assert (out.status, out.verified) == ("not_found", False)
+
+
+def test_without_the_start_phase_the_result_is_not_verified(importer: CubaseService, fake: FakeCubase) -> None:
+    """A confirm whose start ran in another server session cannot tell old edges from new ones."""
+    out = importer.import_audio("confirm", "POC-TEST", "2", since=123.0)
+    assert (out.status, out.verified) == ("done", None)
+    assert any("before the import are unknown" in n for n in out.notes)
+
+
+def test_two_edges_near_the_start_do_not_stand_for_the_end() -> None:
+    from trackwright.core.importing import match_edges
+
+    assert match_edges([150.0, 150.05], [150.0, 153.0], 0.1) == [150.0]

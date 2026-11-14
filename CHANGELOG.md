@@ -6,6 +6,7 @@
 
 - **Write policy** (TW-1401): `cubase_run_command` refuses save and track removal (use the dedicated tools) and is refused, like range edits and splits on every track, while `[writes] allowed_tracks` is set; single-track range edits honour `allowed_tracks`; `cubase_set_parameter` refuses the channel's routing, name and selection; moving the cycle locators needs writes enabled.
 - **Session pinning through the bridge** (TW-1402): writes carry the session the tool pinned, so the script refuses them after a reload; a write with too little time left to wait for its answer is not sent (`BUSY`). **Restart the bridge after upgrading** (`pkill -f "trackwright bridge"`): an older bridge ignores the session.
+- **Truthful results** (TW-1403): an import is confirmed only by new event edges; a save without a known project folder is `fired`, not `saved`; an automation recording cut short reports `complete: false`; `cubase_set_project` reports what was applied when a write fails; several open projects are never guessed; unexpected errors reach the client as `INTERNAL_ERROR`.
 - **Breaking:** `track` is required in `cubase_set_parameter` and `cubase_insert_plugin`; their outputs include `track_uid` to reuse when applying a dry run.
 - **Code quality review** (`docs/quality-review.md`) and its remediation plan, epic E14: policy holes, session pinning in the bridge, truthful results, robustness, simulator/script conformance, mutation testing and CI.
 

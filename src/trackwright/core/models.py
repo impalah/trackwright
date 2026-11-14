@@ -239,7 +239,9 @@ class AutomationPoint(BaseModel):
     """One point of an automation curve (input): give ``plain`` (real units) or ``value`` (normalized)."""
 
     model_config = ConfigDict(extra="forbid")
-    position: str = Field(description="bar position, e.g. '9. 1. 1. 0' (bar. beat. 16th. tick); 4/4 assumed")
+    position: str = Field(
+        description="bar position, e.g. '9. 1. 1. 0' (bar. beat. 16th. tick), in the time signature at the cursor"
+    )
     plain: float | None = Field(
         default=None, description="value in real units (dB, Hz...), converted exactly by Cubase. Preferred."
     )
@@ -298,6 +300,9 @@ class AutomationRecordOut(_Out):
     start: str = Field(description="where playback starts (pre-roll before the first point)")
     points: list[ResolvedPoint] = Field(description="the curve, with the normalized value used for each point")
     written: list[WrittenPoint]
+    complete: bool | None = Field(
+        default=None, description="playback reached the last point (false: stopped early, the curve is cut)"
+    )
     verified: bool | None = Field(description="a read-back pass followed the curve (null when not verified)")
     mismatches: list[str] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)
@@ -417,7 +422,9 @@ class ProjectFileOut(_Out):
 class SaveOut(_Out):
     mode: Literal["save", "new_version"]
     dry_run: bool
-    status: Literal["planned", "saved", "awaiting_user"]
+    status: Literal["planned", "saved", "fired", "awaiting_user"] = Field(
+        description="'fired': requested but not verifiable (unknown project folder)"
+    )
     folder: str | None = Field(description="project folder (deduced from the audio files Cubase has open)")
     files_before: list[ProjectFileOut] = Field(default_factory=list, description=".cpr files, newest first")
     saved: ProjectFileOut | None = Field(default=None, description="the .cpr written by this save")

@@ -295,3 +295,11 @@ def test_wait_until_polls(fake: FakeCubase) -> None:
     values = iter([{"v": 0}, {"v": 0}, {"v": 1}])
     assert service.wait_until(lambda: next(values), lambda d: d["v"] == 1) == {"v": 1}
     assert sleeps == [0.1, 0.1]
+
+
+def test_step_that_does_not_move_is_not_verified(service: CubaseService, fake: FakeCubase) -> None:
+    """TW-1403 (C-14): at the last track 'next' does not move the selection."""
+    fake._op_sel_step = lambda _p: {}  # type: ignore[method-assign]
+    out = service.select_track(step="next")
+    assert out.selected_before == out.selected_after
+    assert out.verified is False

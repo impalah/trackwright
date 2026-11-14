@@ -225,3 +225,19 @@ def test_single_track_without_auto_select(service: CubaseService, fake: FakeCuba
     out = service.edit_range("2", "30", "delete", track="POC-TEST", dry_run=False)
     assert out.verified is True, out.mismatches
     assert edges(fake) == [0.0, 2.0, 30.0, 139.976]
+
+
+def test_bad_end_in_bars_puts_the_cursor_back(service: CubaseService, fake: FakeCubase) -> None:
+    """TW-1403 (C-12): converting the start moves the cursor; a bad end must not leave it there."""
+    before = fake.transport["locator"]
+    with pytest.raises(PreconditionFailedError) as exc:
+        service.edit_range("5. 1. 1. 0", "nonsense", "delete", unit="bars")
+    assert exc.value.code == "BAD_TIME"
+    assert fake.transport["locator"] == before
+
+
+def test_export_converts_the_range_once(service: CubaseService, fake: FakeCubase) -> None:
+    """TW-1403 (C-27): the apply step reuses the seconds computed for the plan."""
+    service.export_mix("start", start="2. 1. 1. 0", end="4. 1. 1. 0", unit="bars", dry_run=False)
+    bars_moves = [p for op, p in fake.calls if op == "transport.setTime" and p.get("display") == "primary"]
+    assert len(bars_moves) == 2  # start and end, once each

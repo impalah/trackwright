@@ -202,6 +202,11 @@ class ReadingMixin(ServiceBase):
         unchecked = 0
         for raw in data.get("events", []):
             oid = int(raw.get("id", -1))
+            if oid < 0:  # C-16: an event without an object (e.g. a project-level change) is not "gone"
+                tag = int(raw.get("t", -1))
+                events.append(ChangeEvent(kind=str(raw.get("k")), tag=tag if tag >= 0 else None, ref=None,
+                                          title=None, still_valid=None))  # fmt: skip
+                continue
             if oid not in described and len(described) < MAX_EVENT_LOOKUPS:
                 try:
                     described[oid] = self.call("da.object", {"id": oid, **MIXER})

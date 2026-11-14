@@ -23,6 +23,20 @@ from trackwright.exports import AUDIO_SUFFIXES
 
 EDGE_TOLERANCE = 0.01
 
+MAX_IMPORT_BASELINES = 16
+
+
+def match_edges(edges: list[float], wanted: list[float], tolerance: float) -> list[float]:
+    """One distinct edge per wanted position (C-05): two edges near the start do not stand for the end."""
+    found: list[float] = []
+    free = list(edges)
+    for target in wanted:
+        match = next((e for e in free if abs(e - target) <= tolerance), None)
+        if match is not None:
+            free.remove(match)
+            found.append(match)
+    return found
+
 
 class ImportMixin(ExportMixin):
     @operation
@@ -63,8 +77,11 @@ class ImportMixin(ExportMixin):
             raise TrackwrightError("Cubase cannot open the import dialog now (is another dialog open?)",
                                    code="CANNOT_PERFORM")  # fmt: skip
         self._select_channel(int(item["id"]))
+        # Edges already there before the import (C-05): only new edges can prove it happened.
+        before, _ = self.probe_edges(transport, max(at - 1.0, 0.0), until=at + (expected or 0.0) + 1.0)
         self._move_cursor_seconds(transport, at)
         out.since = time.time()
+        self._remember_import(out.since, int(item["id"]), before)
         self._range_cmd("file.import_audio")  # from here Cubase is blocked until the user closes the selector
         out.status = "awaiting_user"
         pick = f"press Cmd+Shift+G, paste {path} and open it" if path else "choose the audio file and open it"
@@ -104,12 +121,22 @@ class ImportMixin(ExportMixin):
         edges, _ = self.probe_edges(transport, max(at - 1.0, 0.0), until=at + (expected or 0.0) + 1.0)
         self._restore(transport, {}, cursor, selected)
         wanted = [at] + ([at + expected] if expected is not None else [])
-        found = [e for e in edges if any(abs(e - w) <= EDGE_TOLERANCE + SECONDS_TOLERANCE for w in wanted)]
+        baseline = self._import_baselines.get(since)
+        new_edges = edges if baseline is None or baseline[0] != item["id"] else [
+            e for e in edges if not any(abs(e - b) <= SECONDS_TOLERANCE for b in baseline[1])
+        ]  # fmt: skip
+        found = match_edges(new_edges, wanted, EDGE_TOLERANCE + SECONDS_TOLERANCE)
         out.edges_found = [format_seconds(e) for e in found]
-        project = self._project_folder_for_import()
+        project, _unknown = self.project_folder()
         if project is not None:
             out.copied_to_project = [Path(f.path).name for f in self.exports.find(project / "Audio", since)]
-        if len(found) == len(wanted):
+        if len(found) == len(wanted) and baseline is None:
+            out.status, out.verified = "done", None
+            out.notes.append(
+                "the edges before the import are unknown (the start phase ran in another server session): "
+                "an event that was already there would look the same; check in Cubase"
+            )
+        elif len(found) == len(wanted):
             out.status, out.verified = "done", True
         else:
             out.instructions = (
@@ -122,6 +149,7 @@ class ImportMixin(ExportMixin):
         out.notes.append("Undo in Cubase removes the event, not the copy in the project's Audio folder")
         return out
 
-    def _project_folder_for_import(self) -> Path | None:
-        folders = self.launcher.project_folders() if self.launcher is not None else []
-        return Path(folders[0]) if folders else None
+    def _remember_import(self, since: float, channel_id: int, edges: list[float]) -> None:
+        self._import_baselines[since] = (channel_id, edges)
+        while len(self._import_baselines) > MAX_IMPORT_BASELINES:
+            self._import_baselines.pop(next(iter(self._import_baselines)))

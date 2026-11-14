@@ -11,7 +11,7 @@ from typing import Any
 from trackwright.core.base import MIXER, operation
 from trackwright.core.models import ProjectSettingsOut, SettingChange
 from trackwright.core.project import ProjectMixin
-from trackwright.errors import NotFoundError, PreconditionFailedError
+from trackwright.errors import NotFoundError, PreconditionFailedError, TrackwrightError
 
 JsonObject = dict[str, Any]
 SWITCHES: dict[str, tuple[str, str]] = {  # setting -> (object type, parameter title)
@@ -61,10 +61,17 @@ class SettingsMixin(ProjectMixin):
         if dry_run:
             return out
         self.policy.check_project_write()
+        applied: list[SettingChange] = []
         for change, (name, oid, tag, value, _before) in zip(out.changes, plan, strict=True):
-            self.call("da.param.set", {"id": oid, "tag": tag, "value": value, **MIXER})
+            try:
+                self.write_parameter("da.param.set", {"id": oid, "tag": tag, "value": value, **MIXER}, oid, tag)
+            except TrackwrightError as exc:  # C-11: say what was already changed; never retry
+                exc.details["applied"] = [c.model_dump() for c in applied]
+                exc.details["failed_setting"] = name
+                raise
             change.after = self._read_setting(name, oid, tag, change.requested)
             change.verified = change.after == change.requested
+            applied.append(change)
         out.verified = all(c.verified for c in out.changes)
         return out
 

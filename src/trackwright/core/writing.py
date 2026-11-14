@@ -25,6 +25,7 @@ from trackwright.core.base import (
     TAG_SOLO,
     TAG_VOLUME,
     JsonObject,
+    converted_value,
     operation,
 )
 from trackwright.core.models import (
@@ -75,17 +76,6 @@ class WritingMixin(ProjectMixin):
     def _value(self, raw: JsonObject | None) -> Value | None:
         return None if raw is None else Value(process=raw.get("process"), display=raw.get("display"))
 
-    def _write(self, op: str, params: JsonObject, object_id: int, tag: int) -> JsonObject:
-        """Run one write; on timeout read the value back and report it (never retry)."""
-        try:
-            return self.call(op, params)
-        except RequestTimeoutError as exc:
-            try:
-                exc.details["read_back"] = self.read_parameter(object_id, tag)
-            except TrackwrightError as read_error:
-                exc.details["read_back_error"] = str(read_error)
-            raise
-
     def _change(self, before: JsonObject, requested: float | str, after: JsonObject | None, ok: bool | None) -> Change:
         before_value = self._value(before)
         assert before_value is not None
@@ -131,7 +121,7 @@ class WritingMixin(ProjectMixin):
             )
         if unit == "plain":
             converted = self.call("da.convert", {"id": obj["id"], "tag": tag, "plain": value, **MIXER})
-            process = float(converted["processFromPlain"])
+            process = converted_value(converted)
         elif unit == "process":
             process = value
         else:
@@ -153,7 +143,7 @@ class WritingMixin(ProjectMixin):
         params = {"id": obj["id"], "tag": tag, "value": process, **MIXER}
         if expect_title is not None:
             params["expectTitle"] = expect_title  # re-checked by the script in the same tick as the write
-        result = self._write("da.param.set", params, int(obj["id"]), tag)
+        result = self.write_parameter("da.param.set", params, int(obj["id"]), tag)
         after = result.get("after") or self.read_parameter(int(obj["id"]), tag)
         ok = after.get("process") is not None and abs(float(after["process"]) - process) <= tolerance
         return WriteOut(
@@ -205,7 +195,9 @@ class WritingMixin(ProjectMixin):
         for before, value in befores:
             tag = int(before["tag"])
             try:
-                result = self._write("da.param.set", {"id": oid, "tag": tag, "value": value, **MIXER}, oid, tag)
+                result = self.write_parameter(
+                    "da.param.set", {"id": oid, "tag": tag, "value": value, **MIXER}, oid, tag
+                )
             except TrackwrightError as exc:
                 # Earlier changes did happen: say so, so that nobody assumes the track is untouched.
                 exc.details["applied"] = [c.model_dump() for c in changes]
@@ -242,7 +234,7 @@ class WritingMixin(ProjectMixin):
                 changes=[self._change(before, new_name, None, None)],
             )
         self.policy.check_track(current)
-        result = self._write(
+        result = self.write_parameter(
             "da.param.setDisplay", {"id": oid, "tag": TAG_NAME, "value": new_name, **MIXER}, oid, TAG_NAME
         )
         after = result.get("after") or self.read_parameter(oid, TAG_NAME)
@@ -342,7 +334,10 @@ class WritingMixin(ProjectMixin):
             self.call("sel.step", {"direction": step})
             self.wait_until(base, lambda b: int(b.get("base", -1)) != before_id)
             after_id, after_name = self._selected_name()
-            return SelectOut(selected_before=before_name, selected_after=after_name, verified=after_id >= 0)
+            # C-14: at the first or last track the selection does not move, and that is not a success
+            return SelectOut(
+                selected_before=before_name, selected_after=after_name, verified=0 <= after_id != before_id
+            )
         item = self.resolve_track(TrackSelector.parse(track))
         self.call("da.param.set", {"id": item["id"], "tag": TAG_SELECTED, "value": 1, **MIXER})
         self.wait_until(base, lambda b: b.get("base") == item["id"])

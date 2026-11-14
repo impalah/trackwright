@@ -45,7 +45,7 @@
 
 ### TW-1403 Resultados que dicen solo lo que ocurrió
 
-- **Estado:** pendiente
+- **Estado:** hecha en el código (2026-11-14), con tests junto a los de cada herramienta (`test_service_import`, `_saving`, `_automation`, `_settings`, `_ranges`, `_writing`, `_reading`, contrato); falta la verificación en Cubase. Aquí también se hizo C-27 (el rango de exportación se convierte una sola vez), y las tres funciones de carpeta de proyecto pasaron a ser `ServiceBase.project_folder()`.
 - **Hallazgos:** C-05, C-06, C-07, C-11, C-12, C-13, C-14, C-15, C-16, C-17.
 - **Alcance:**
   1. `import_audio`: sondear los bordes antes de abrir el diálogo; exigir bordes nuevos, cada uno emparejado una sola vez.

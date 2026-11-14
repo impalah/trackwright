@@ -58,3 +58,26 @@ def test_policy(fake: FakeCubase) -> None:
     readonly = CubaseService(fake, WritePolicy(), sleep=lambda _s: None, settle_timeout=0.0)
     with pytest.raises(PolicyError):
         readonly.set_project({"metronome": True}, dry_run=False)
+
+
+def test_partial_failure_reports_what_was_applied(service: CubaseService, fake: FakeCubase) -> None:
+    """TW-1403 (C-11): a timeout on the second setting reads it back and lists the first one as applied."""
+    from trackwright.errors import RequestTimeoutError
+
+    original = fake.call
+    writes = 0
+
+    def second_write_times_out(op: str, params: dict[str, object] | None = None, **kw: object) -> dict[str, object]:
+        nonlocal writes
+        if op == "da.param.set":
+            writes += 1
+            if writes == 2:
+                raise RequestTimeoutError("no answer", outcome_unknown=True, details={"op": op})
+        return original(op, params, **kw)  # type: ignore[arg-type]
+
+    fake.call = second_write_times_out  # type: ignore[method-assign]
+    with pytest.raises(RequestTimeoutError) as exc:
+        service.set_project({"metronome": True, "cycle": True}, dry_run=False)
+    assert [c["setting"] for c in exc.value.details["applied"]] == ["metronome"]
+    assert exc.value.details["failed_setting"] == "cycle"
+    assert "read_back" in exc.value.details

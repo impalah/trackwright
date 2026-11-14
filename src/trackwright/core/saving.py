@@ -30,28 +30,25 @@ def _file(found: ExportedFile) -> ProjectFileOut:
 
 
 class SavingMixin(ServiceBase):
-    def _project_folder(self) -> Path | None:
-        folders = self.launcher.project_folders() if self.launcher is not None else []
-        return Path(folders[0]) if folders else None
-
     def _project_files(self, folder: Path | None, since: float = 0.0) -> list[ExportedFile]:
         return self.exports.find(folder, since, PROJECT_SUFFIXES) if folder else []
 
     @operation
     def save_project(self, mode: Literal["save", "new_version"] = "save", *, dry_run: bool = True) -> SaveOut:
-        folder = self._project_folder()
+        folder, unknown = self.project_folder()
         before = self._project_files(folder)
         out = SaveOut(mode=mode, dry_run=dry_run, status="planned", folder=str(folder) if folder else None,
                       files_before=[_file(f) for f in before], notes=[EFFECTS[mode]])  # fmt: skip
         if folder is None:
-            out.notes.append("the project folder is unknown (no audio file open): the save cannot be verified")
+            out.notes.append(f"{unknown}: the save cannot be verified")
         if dry_run:
             return out
         self.policy.check_save()
         started = time.time()
         self.call("cmd.run", {"key": SAVE_KEYS[mode]})
         if folder is None:
-            out.status = "saved"
+            out.status = "fired"  # C-06: nothing proves a file was written (a new project shows Save As)
+            out.instructions = "the save was requested but cannot be verified: check in Cubase that it was saved"
             return out
         names_before = {Path(f.path).name for f in before}
         deadline = time.monotonic() + SAVE_WAIT_SECONDS

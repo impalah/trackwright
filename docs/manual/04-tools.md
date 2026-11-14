@@ -141,7 +141,7 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 - **Input:** any of these settings, plus `dry_run`:
   - switches (`true`/`false`): `cycle`, `metronome`, `precount`, `punch_in`, `punch_out`, `pre_roll` and `post_roll` (use pre-roll and post-roll), `click_in_playback` and `click_in_record`;
   - `click_level`, from 0 to 127.
-- **What it does:** writes each setting to Cubase's `Transport` or `Metronome` object and reads it back. The output gives the before, requested and read-back values and `verified` for each one.
+- **What it does:** writes each setting to Cubase's `Transport` or `Metronome` object and reads it back. The output gives the before, requested and read-back values and `verified` for each one. If a write fails or times out, the error lists the settings already `applied` and the `failed_setting`, with its value read back after a timeout; nothing is retried.
 - **Verified in Cubase Elements:** the 9 switches and the click level (experiment TW-1210).
 - **Not available:**
   - **time signature:** Cubase does not accept writing it this way; change it in the Transport Bar or in "Project Setup";
@@ -183,6 +183,7 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 
 - **Input:** `track`, or `step` (`next` or `prev`).
 - Selection is exclusive: it deselects all other tracks.
+- With `step`, `verified` is `true` only if the selection moved (at the first or last track it does not).
 
 ### `cubase_set_position` (navigation)
 
@@ -319,6 +320,7 @@ Designed for podcast editing: it works in **seconds** and the time signature doe
   - `dry_run`, default `true`.
 - **Dry run:** shows the project folder (inferred from the open audio files) and its `.cpr` files with date and size, so you know what will be overwritten.
 - **Verification:** some `.cpr` in the folder with a date later than the command; with `new_version`, a new one. Only names, sizes and dates are read.
+- **Unknown folder:** when the project folder is unknown, or several projects seem to be open, the status is `fired` and `verified` is `null`: the save was requested, but nothing proves it (a project that was never saved shows *Save As*).
 - **States:** `saved` or `awaiting_user`. The latter if nothing was written within 10 s: there is probably a dialog, such as "Save As" on a project that was never saved.
 - **Verified in Cubase Elements:** `Save` rewrote `TEST.cpr` in 1 s, and `Save New Version` created `TEST-01.cpr`. Neither opened a dialog.
 - Closing, reverting and quitting are **not offered**.
@@ -339,7 +341,7 @@ Designed for podcast editing: it works in **seconds** and the time signature doe
 - **The user** chooses the file and accepts the options. Cubase copies it to the project's *Audio* folder.
 - **`confirm` phase** (same track, position and file, plus `since`):
   - if Cubase still does not respond: `awaiting_user`, because the file picker is still open;
-  - otherwise, it probes the track and looks for edges at the position and at the position plus the duration. It returns `done` and `verified`, or `not_found` if it was canceled or went somewhere else;
+  - otherwise, it probes the track and looks for edges at the position and at the position plus the duration. It returns `done` and `verified`, or `not_found` if it was canceled or went somewhere else. Only **new** edges count: the start phase probes the track before opening the dialog, so an event that was already at that position does not confirm a canceled import, and each expected position needs its own edge. If the start phase ran in another server session, the edges before are unknown and `verified` is `null`;
   - `copied_to_project` lists the new copies in `<project>/Audio`, by name only.
 - **Verified in Cubase Elements:** a 3 s tone ended up on POC-TEST from 150 to 153 s.
 - **Undo** removes the event, **not** the copy on disk.
@@ -433,7 +435,7 @@ Mechanism verified in Cubase Elements 15.0.30: the script has one control per pa
   4. "touches" the control, follows the curve (linear between points) according to the cursor position and "releases" it;
   5. stops playback and leaves W and R as they were.
   - With `verify`, it plays again with R enabled and compares the value read with the curve (tolerance 0.05).
-- **Output:** the curve with the normalized value of each point (`points`), the values written (`written`), `verified`, the discrepancies (`mismatches`) and notes.
+- **Output:** the curve with the normalized value of each point (`points`), the values written (`written`), `complete` (`false` when playback stopped before the last point, for example because the user pressed Stop: the curve is cut), `verified`, the discrepancies (`mismatches`) and notes.
 - **Errors:** `PARAM_NOT_FOUND`, `OUT_OF_RANGE`, `NO_UNIT_CONVERSION`, `NOT_AUTOMATABLE` (nothing is bound: empty slot or unassigned Quick Control), `TRANSPORT_RUNNING`, `NOT_RECORDED`, `BAD_TIME` and `WRITES_DISABLED`.
 - **Limitations:**
   - positions use the time signature at the cursor position (`cubase_get_project`). Time signature changes across the project are not followed; if Cubase does not report the time signature, 4/4 is assumed;

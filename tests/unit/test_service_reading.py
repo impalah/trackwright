@@ -254,3 +254,11 @@ def test_missing_session_is_an_error() -> None:
     with pytest.raises(TrackwrightError) as exc:
         CubaseService(NoSession(), WritePolicy()).session()
     assert exc.value.code == "NO_SESSION"
+
+
+def test_events_without_an_object_are_not_reported_as_gone(service: CubaseService, fake: FakeCubase) -> None:
+    """TW-1403 (C-16)."""
+    fake._event("project", -1)
+    out = service.poll_changes()
+    assert [(e.kind, e.ref, e.still_valid) for e in out.events] == [("project", None, None)]
+    assert not any(op == "da.object" for op, _ in fake.calls)

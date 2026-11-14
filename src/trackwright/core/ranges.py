@@ -64,6 +64,15 @@ class RangeMixin(ProjectMixin):
             return self._cursor_seconds(transport)
         raise PreconditionFailedError("unit must be 'seconds' or 'bars'", code="BAD_REQUEST")
 
+    def _span_seconds(self, transport: int, start: str, end: str, unit: str) -> tuple[float, float]:
+        """Both ends in seconds. Converting bars moves the cursor: it always goes back, even on a bad value."""
+        cursor = self._cursor_seconds(transport) if unit == "bars" else None
+        try:
+            return self._seconds_of(transport, start, unit), self._seconds_of(transport, end, unit)
+        finally:
+            if cursor is not None:
+                self._move_cursor_seconds(transport, cursor)
+
     def _transport_flag(self, transport: int, tag: int) -> bool:
         return float(self.call("da.param.get", {"id": transport, "tag": tag, **MIXER}).get("process") or 0) >= 0.5
 
@@ -116,9 +125,7 @@ class RangeMixin(ProjectMixin):
             raise PreconditionFailedError(f"action must be one of {sorted(ACTION_KEYS)}", code="BAD_REQUEST")
         transport = self._transport_id()
         cursor_before = self._cursor_seconds(transport)
-        start_s, end_s = self._seconds_of(transport, start, unit), self._seconds_of(transport, end, unit)
-        if unit == "bars":
-            self._move_cursor_seconds(transport, cursor_before)
+        start_s, end_s = self._span_seconds(transport, start, end, unit)
         if not 0 <= start_s < end_s:
             raise PreconditionFailedError("the range must have 0 <= start < end", code="BAD_TIME")
         if track is not None and action != "delete":

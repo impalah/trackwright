@@ -180,6 +180,31 @@ def test_transport_that_never_starts(service: CubaseService, fake: FakeCubase, m
     assert fake.fired[-1] == "transport.stop"
 
 
+def test_recording_cut_short_is_reported(
+    service: CubaseService, fake: FakeCubase, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """TW-1403 (C-07): the user pressed Stop before the last point: the curve is incomplete."""
+    monkeypatch.setattr(automation, "STALL_SECONDS", 0.0)
+    original = fake._op_transport_get
+
+    def stop_halfway(p: dict[str, object]) -> dict[str, object]:
+        if fake.playing and fake.position >= 8.0:  # beat 8 = bar 3, before the last point (bar 4)
+            fake.playing = False
+        return original(p)
+
+    fake._op_transport_get = stop_halfway  # type: ignore[method-assign]
+    out = service.record_automation("POC-TEST", "volume", pts(("2.1.1.0", 0.79), ("4.1.1.0", 0.4)),
+                                    dry_run=False, verify=False)  # fmt: skip
+    assert out.complete is False
+    assert any("incomplete" in n for n in out.notes)
+
+
+def test_full_recording_is_complete(service: CubaseService) -> None:
+    out = service.record_automation("POC-TEST", "pan", pts(("2.1.1.0", 0.5), ("3.1.1.0", 0.1)),
+                                    dry_run=False, verify=False)  # fmt: skip
+    assert out.complete is True
+
+
 def test_cursor_unavailable(service: CubaseService, fake: FakeCubase) -> None:
     fake.transport["locator"] = "garbage"
     with pytest.raises(TrackwrightError) as exc:
