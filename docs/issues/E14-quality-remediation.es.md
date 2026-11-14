@@ -2,7 +2,7 @@
 
 [English](E14-quality-remediation.md) · **Español**
 
-**Estado de la épica: pendiente.** Origen: la revisión de calidad del código del 2026-11-14, con cada hallazgo, su evidencia y su ubicación en [`docs/quality-review.es.md`](../quality-review.es.md). Los IDs de hallazgo (C-xx, I-xx, S-xx, F-xx, T-xx, R-xx) remiten a ese documento.
+**Estado de la épica: en curso.** Las fases 1 y 2 (TW-1401 a TW-1407) están hechas y verificadas en Cubase, y salen en la versión 0.4.0. Origen: la revisión de calidad del código del 2026-11-14, con cada hallazgo, su evidencia y su ubicación en [`docs/quality-review.es.md`](../quality-review.es.md). Los IDs de hallazgo (C-xx, I-xx, S-xx, F-xx, T-xx, R-xx) remiten a ese documento.
 
 **Orden:** cuatro fases, por riesgo. La fase 1 corrige las formas en que una escritura puede saltarse la configuración del usuario o una herramienta puede informar de algo que no ocurrió; debería publicarse antes que las funciones nuevas. Las fases 1 y 2 juntas forman la versión **0.4.0**: algunos cambios alteran los esquemas de las herramientas (C-04) y Trackwright sigue en alfa.
 

@@ -402,3 +402,10 @@ Cubase Elements 15.0.30, script 1.5.5, the test project. The bridge was restarte
   - `da.channels` with 17 tags → `BAD_REQUEST`; with 2 tags it lists the three channels;
   - `da.param.set` returns `guard` with `base` and `baseTitle` only; POC-TEST's mute set and restored;
   - write latency, 20 `da.param.set` on POC-TEST's mute: median 112 ms with 1.5.5 and 112 ms with 1.6.0. In a three-track project the tree walk removed by S-01 cost nothing measurable; one idle tick dominates.
+
+## 2026-11-14 — 0.4.0 prepared
+
+- `make check`: 547 passed, 6 skipped; `uv build` and `twine check --strict` correct; the wheel carries script 1.6.0 and the `Repository`, `Issues` and `Author` links.
+- **Upgrade rehearsal** in throwaway folders: `trackwright==0.3.0` from PyPI, whose `setup` installed script 1.5.5; then the 0.4.0 wheel. `bridge-stop` with no bridge answers `stopped: false`; `setup` replaced 1.5.5 with 1.6.0 (mode 0644) and listed the next steps.
+- Found while rehearsing: a server registered with `uvx --from trackwright==0.3.0` would keep running 0.3.0 after the upgrade. `setup` now warns when the registration pins another version; the upgrade steps of the changelog say how to replace it.
+- The 0.4.0 wheel installed in isolation: `doctor` against the user's bridge and Cubase, every check ok (script 1.6.0 = packaged).

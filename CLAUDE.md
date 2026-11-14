@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-**Trackwright** is an independent MCP server for controlling DAWs. The only implementation today is **Cubase** (15.0.20+, verified on Cubase Elements 15.0.30, macOS 27.2 Apple Silicon). Package and executable: `trackwright` (published on PyPI: 0.3.0, tag `v0.3.0`; release procedure in `docs/development.md`). License AGPL-3.0-or-later. Author: impalah.
+**Trackwright** is an independent MCP server for controlling DAWs. The only implementation today is **Cubase** (15.0.20+, verified on Cubase Elements 15.0.30, macOS 27.2 Apple Silicon). Package and executable: `trackwright` (published on PyPI: 0.3.0, tag `v0.3.0`; 0.4.0 prepared, requires Cubase script 1.6.0; release procedure in `docs/development.md`). License AGPL-3.0-or-later. Author: impalah.
 
 Chain: `MCP client ──stdio──► trackwright serve ──Unix socket──► trackwright bridge ──virtual MIDI (SysEx "TW")──► Cubase MIDI Remote script (Trackwright_Bridge.js)`.
 

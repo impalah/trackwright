@@ -38,7 +38,7 @@ trackwright version
 
 uv instala el ejecutable `trackwright` en `~/.local/bin`. Si el terminal no lo encuentra, ejecuta `uv tool update-shell` y abre otro terminal. Con esta instalación, **escribe los comandos de los manuales sin `uv run`**: `trackwright setup`, `trackwright doctor`…
 
-Para actualizar: `uv tool upgrade trackwright`, después `trackwright setup` (actualiza el script de Cubase si cambió) y reinicia Cubase.
+Para actualizar: `uv tool upgrade trackwright`, después `trackwright bridge-stop` (el servidor MCP arranca el puente nuevo cuando lo necesita), `trackwright setup` (actualiza el script de Cubase si cambió), y reinicia Cubase y tu cliente MCP. El [registro de cambios](../../CHANGELOG.es.md) indica los pasos de cada versión.
 
 Sigue en la [instalación guiada](#instalación-guiada-recomendada).
 

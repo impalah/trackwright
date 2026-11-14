@@ -282,3 +282,29 @@ def test_cli_setup(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pyte
 def test_cli_setup_rejects_unknown_steps() -> None:
     with pytest.raises(SystemExit):
         main(["setup", "--yes", "everything"])
+
+
+def test_a_registration_pinned_to_another_version_is_reported(tmp_path: Path) -> None:
+    """0.4.0: a uvx registration of 0.3.0 would keep running the old server after an upgrade."""
+
+    class Pinned(Runner):
+        def __call__(self, command: Sequence[str]) -> subprocess.CompletedProcess[str]:
+            self.calls.append(list(command))
+            out = "trackwright:\n  Command: uvx\n  Args: --from trackwright==0.3.0 trackwright serve"
+            return subprocess.CompletedProcess(list(command), 0, out, "")
+
+    setup, _, _ = make(tmp_path, Prompter(), runner=Pinned())
+    result = setup.step_claude()
+    assert (result.status, result.detail["reason"]) == ("skipped", "registered_other_version")
+    assert any("0.3.0" in step and "claude mcp remove" in step for step in setup.next_steps)
+
+
+def test_a_registration_of_this_version_is_fine(tmp_path: Path) -> None:
+    class Current(Runner):
+        def __call__(self, command: Sequence[str]) -> subprocess.CompletedProcess[str]:
+            out = f"Args: --from trackwright=={installer.trackwright.__version__} trackwright serve"
+            return subprocess.CompletedProcess(list(command), 0, out, "")
+
+    setup, _, _ = make(tmp_path, Prompter(), runner=Current())
+    assert setup.step_claude().detail["reason"] == "registered"
+    assert setup.next_steps == []

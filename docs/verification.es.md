@@ -402,3 +402,10 @@ Cubase Elements 15.0.30, script 1.5.5, el proyecto de pruebas. Se reinició el p
   - `da.channels` con 17 tags → `BAD_REQUEST`; con 2 tags lista los tres canales;
   - `da.param.set` devuelve `guard` solo con `base` y `baseTitle`; mute de POC-TEST activado y restaurado;
   - latencia de escritura, 20 `da.param.set` sobre el mute de POC-TEST: mediana de 112 ms con 1.5.5 y de 112 ms con 1.6.0. En un proyecto de tres pistas, el recorrido del árbol que quitó S-01 no costaba nada medible; domina un ciclo de idle.
+
+## 2026-11-14 — 0.4.0 preparada
+
+- `make check`: 547 pasados, 6 omitidos; `uv build` y `twine check --strict` correctos; el wheel lleva el script 1.6.0 y los enlaces `Repository`, `Issues` y `Author`.
+- **Ensayo de actualización** en carpetas desechables: `trackwright==0.3.0` desde PyPI, cuyo `setup` instaló el script 1.5.5; después, el wheel de la 0.4.0. `bridge-stop` sin puente responde `stopped: false`; `setup` sustituyó 1.5.5 por 1.6.0 (permisos 0644) y listó los pasos siguientes.
+- Encontrado durante el ensayo: un servidor registrado con `uvx --from trackwright==0.3.0` seguiría ejecutando la 0.3.0 tras actualizar. `setup` ahora avisa cuando el registro fija otra versión; los pasos de actualización del registro de cambios explican cómo sustituirlo.
+- El wheel de la 0.4.0 instalado aparte: `doctor` contra el puente y el Cubase del usuario, todas las comprobaciones bien (script 1.6.0 = el del paquete).

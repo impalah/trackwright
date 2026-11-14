@@ -97,7 +97,7 @@ Then use Copilot Chat in agent mode. The Trackwright tools appear in its tool li
 
 ## Update and uninstall
 
-- **Update:** `uv tool upgrade trackwright` and then `trackwright setup`, which updates the script if it changed. Restart Cubase.
+- **Update:** `uv tool upgrade trackwright`, `trackwright bridge-stop` (the MCP server starts the new bridge when it needs it) and `trackwright setup`, which updates the Cubase script if it changed. Restart Cubase and your MCP client. The changelog lists the steps of each version.
 - **Uninstall:**
   1. `claude mcp remove trackwright -s user`;
   2. `trackwright bridge-stop`;

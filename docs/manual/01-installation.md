@@ -38,7 +38,7 @@ trackwright version
 
 uv installs the `trackwright` executable in `~/.local/bin`. If the terminal can't find it, run `uv tool update-shell` and open a new terminal. With this installation, **type the commands in the manuals without `uv run`**: `trackwright setup`, `trackwright doctor`…
 
-To update: `uv tool upgrade trackwright`, then `trackwright setup` (it updates the Cubase script if it changed), and restart Cubase.
+To update: `uv tool upgrade trackwright`, then `trackwright bridge-stop` (the MCP server starts the new bridge when it needs it), `trackwright setup` (it updates the Cubase script if it changed), and restart Cubase and your MCP client. The [changelog](../../CHANGELOG.md) lists the steps of each version.
 
 Continue with the [guided installation](#guided-installation-recommended).
 

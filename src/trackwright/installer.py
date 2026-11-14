@@ -16,6 +16,7 @@ Claude Code registration.
 from __future__ import annotations
 
 import hashlib
+import re
 import shlex
 import shutil
 import subprocess
@@ -35,6 +36,7 @@ from trackwright.errors import TrackwrightError
 JsonObject = dict[str, Any]
 STEPS = ("script", "config", "claude")
 SERVER_NAME = "trackwright"
+PINNED_VERSION = re.compile(r"trackwright==([0-9][^\s,\]\"']*)")
 YES = frozenset({"y", "yes", "s", "si", "sí"})
 NO = frozenset({"n", "no"})
 StepStatus = Literal["done", "skipped", "declined", "manual", "failed"]
@@ -261,9 +263,22 @@ class Setup:
             return StepResult("claude", "manual", {"reason": "claude_not_found", "command": shown})
         existing = self.run_safely([claude, "mcp", "get", SERVER_NAME])
         if existing.returncode == 0:
+            registration = existing.stdout.strip()
             self.prompter.say(f"  the server '{SERVER_NAME}' is already registered: kept as it is")
             self.prompter.say(f"  to replace it: claude mcp remove {SERVER_NAME} -s user, then run setup again")
-            return StepResult("claude", "skipped", {"reason": "registered", "registration": existing.stdout.strip()})
+            pinned = PINNED_VERSION.search(registration)
+            if pinned and pinned.group(1) != trackwright.__version__:
+                # A uvx registration pins a version: after upgrading it would keep running the old server.
+                warning = (
+                    f"the registration runs trackwright {pinned.group(1)}, not {trackwright.__version__}: replace it "
+                    f"(claude mcp remove {SERVER_NAME} -s user, then trackwright setup)"
+                )
+                self.prompter.say(f"  WARNING: {warning}")
+                self.next_steps.append(warning)
+                return StepResult(
+                    "claude", "skipped", {"reason": "registered_other_version", "registration": registration}
+                )
+            return StepResult("claude", "skipped", {"reason": "registered", "registration": registration})
         shown = shlex.join([claude, *add])
         self.prompter.say(f"  command: {shown}")
         if not self.ask("claude", "Register the MCP server in Claude Code (user scope)?"):

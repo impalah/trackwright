@@ -1,6 +1,6 @@
 [project]
 name = "trackwright"
-version = "0.3.0"
+version = "0.4.0"
 description = "Independent MCP server for controlling digital audio workstations (DAWs). First implementation: Cubase, through a MIDI Remote script"
 readme = "README.md"
 authors = [

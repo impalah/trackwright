@@ -2,7 +2,7 @@
 
 **English** · [Español](E14-quality-remediation.es.md)
 
-**Epic status: pending.** Origin: the code-quality review of 2026-11-14, with every finding, its evidence and its location in [`docs/quality-review.md`](../quality-review.md). Finding IDs (C-xx, I-xx, S-xx, F-xx, T-xx, R-xx) refer to that document.
+**Epic status: in progress.** Phases 1 and 2 (TW-1401 to TW-1407) are done and verified in Cubase, and go out in version 0.4.0. Origin: the code-quality review of 2026-11-14, with every finding, its evidence and its location in [`docs/quality-review.md`](../quality-review.md). Finding IDs (C-xx, I-xx, S-xx, F-xx, T-xx, R-xx) refer to that document.
 
 **Order:** four phases, by risk. Phase 1 fixes ways in which a write can bypass the user's configuration or a tool can report something that did not happen; it should be released before new features. Phases 1 and 2 together make version **0.4.0**: some changes alter tool schemas (C-04) and Trackwright is still alpha.
 

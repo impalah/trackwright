@@ -2,8 +2,19 @@
 
 [English](CHANGELOG.md) · **Español**
 
-## Sin publicar
+## 0.4.0 — 2026-11-14
 
+Fases 1 y 2 de la remediación de calidad (épica E14): seguridad y resultados veraces, robustez del puente y del script de Cubase. Requiere el **script de Cubase 1.6.0**.
+
+**Actualizar desde 0.3.0:**
+
+1. `uv tool upgrade trackwright`
+2. `trackwright bridge-stop`: el puente que arrancó la 0.3.0 ignora la sesión que llevan ahora las escrituras. El servidor MCP arranca otro cuando lo necesita.
+3. `trackwright setup`: instala el script 1.6.0 (muestra lo que sustituye y pregunta); después, **reinicia Cubase**.
+4. Reinicia tu cliente MCP (en Claude Code, `/mcp`) para que cargue las herramientas nuevas. Si registraste el servidor con `uvx --from trackwright==0.3.0`, ese registro sigue ejecutando la 0.3.0: `setup` ahora lo avisa; sustitúyelo con `claude mcp remove trackwright -s user` y `trackwright setup`.
+5. `trackwright doctor`: «script loaded in Cubase» debe indicar 1.6.0.
+
+- **Cambio incompatible:** `track` es obligatorio en `cubase_set_parameter` y `cubase_insert_plugin`; sus salidas incluyen `track_uid` para reutilizarlo al aplicar un ensayo.
 - **Política de escrituras** (TW-1401): `cubase_run_command` rechaza guardar y borrar pistas (usa las herramientas específicas) y se rechaza, como las ediciones de rango y los cortes en todas las pistas, mientras `[writes] allowed_tracks` tenga pistas; las ediciones de rango en una pista respetan `allowed_tracks`; `cubase_set_parameter` rechaza el enrutado, el nombre y la selección del canal; mover los localizadores del ciclo necesita las escrituras activadas.
 - **Sesión fijada a través del puente** (TW-1402): las escrituras llevan la sesión que fijó la herramienta, así que el script las rechaza tras una recarga; una escritura con muy poco tiempo para esperar su respuesta no se envía (`BUSY`). **Reinicia el puente tras actualizar** (`trackwright bridge-stop`): un puente anterior ignora la sesión.
 - **Resultados veraces** (TW-1403): una importación solo se confirma con bordes de evento nuevos; un guardado sin carpeta de proyecto conocida queda en `fired`, no en `saved`; una grabación de automatización interrumpida indica `complete: false`; `cubase_set_project` informa de lo aplicado cuando falla una escritura; nunca se adivina entre varios proyectos abiertos; los errores inesperados llegan al cliente como `INTERNAL_ERROR`.
@@ -12,8 +23,9 @@
 - **`trackwright bridge-stop`** (y `make bridge-stop`): para el puente en marcha a través del pid que él mismo indica. El `pkill -f "trackwright bridge"` documentado no encontraba un puente arrancado automáticamente, que se ejecuta como `python -m trackwright --config … bridge`.
 - **Versión del script en ejecución** (TW-1407): `doctor` comprueba que Cubase ejecuta el script del paquete (tras actualizar sin reiniciar Cubase falla y explica qué hacer), y `cubase_status` indica `script_outdated`.
 - **Script de Cubase 1.6.0** (TW-1406): las escrituras de parámetros ya no recorren el árbol del mezclador; cada ámbito de DirectAccess comprueba su propia activación; `da.channels` admite como mucho 16 tags; las peticiones aún en cola cuando se desactiva la página reciben `NOT_ACTIVE`; `page.mOnIdle` nunca lanza excepciones a Cubase; los nombres heredados (`toString`) no son operaciones ni comandos; las peticiones incompletas caducan a los ~6 s en vez de ~225 s; `RESPONSE_TOO_LARGE` conserva `op` y `via`. Instálalo con `trackwright setup` y reinicia Cubase.
-- **Cambio incompatible:** `track` es obligatorio en `cubase_set_parameter` y `cubase_insert_plugin`; sus salidas incluyen `track_uid` para reutilizarlo al aplicar un ensayo.
 - **Revisión de calidad del código** (`docs/quality-review.es.md`) y su plan de remediación, la épica E14: agujeros de la política de escrituras, fijación de sesión en el puente, resultados veraces, robustez, conformidad entre simulador y script, mutation testing e integración continua.
+- **Enlaces del proyecto:** `Repository` e `Issues` (GitHub) en los metadatos del paquete; el README enlaza en GitHub la versión en castellano, la documentación y la licencia, enlaces que también funcionan en PyPI.
+- **Documentación:** la instalación desde el código fuente clona el repositorio de GitHub; las rutas locales se sustituyen por otras genéricas.
 
 ## 0.3.0 — 2026-11-13
 
