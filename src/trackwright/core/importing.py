@@ -15,9 +15,9 @@ from typing import Literal
 from trackwright.core.base import operation
 from trackwright.core.exporting import ExportMixin
 from trackwright.core.models import ImportOut
-from trackwright.core.project import SECONDS_TOLERANCE, format_seconds
-from trackwright.core.ranges import TAG_RECORD, TAG_START
 from trackwright.core.refs import TrackSelector
+from trackwright.core.tags import Transport
+from trackwright.core.timefmt import SECONDS_TOLERANCE, format_seconds
 from trackwright.errors import PreconditionFailedError, RequestTimeoutError, TrackwrightError
 from trackwright.exports import AUDIO_SUFFIXES
 
@@ -71,12 +71,12 @@ class ImportMixin(ExportMixin):
         if dry_run:
             return out
         self.policy.check_track(out.track)
-        if self._transport_flag(transport, TAG_START) or self._transport_flag(transport, TAG_RECORD):
+        if self._transport_flag(transport, Transport.START) or self._transport_flag(transport, Transport.RECORD):
             raise PreconditionFailedError("stop the transport before importing", code="TRANSPORT_RUNNING")
         if not self._performable("file.import_audio"):
             raise TrackwrightError("Cubase cannot open the import dialog now (is another dialog open?)",
                                    code="CANNOT_PERFORM")  # fmt: skip
-        self._select_channel(int(item["id"]))
+        self.select_channel(int(item["id"]))
         # Edges already there before the import (C-05): only new edges can prove it happened.
         before, _ = self.probe_edges(transport, max(at - 1.0, 0.0), until=at + (expected or 0.0) + 1.0)
         self._move_cursor_seconds(transport, at)
@@ -117,7 +117,7 @@ class ImportMixin(ExportMixin):
         at = self._seconds_of(transport, position, unit)
         out.track, out.position = self.track_info(item).name, format_seconds(at)
         selected = self.call("da.base").get("base")
-        self._select_channel(int(item["id"]))
+        self.select_channel(int(item["id"]))
         edges, _ = self.probe_edges(transport, max(at - 1.0, 0.0), until=at + (expected or 0.0) + 1.0)
         self._restore(transport, {}, cursor, selected)
         wanted = [at] + ([at + expected] if expected is not None else [])

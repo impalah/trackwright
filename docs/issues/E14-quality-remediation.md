@@ -117,7 +117,7 @@
 
 ### TW-1412 Core refactoring
 
-- **Status:** pending
+- **Status:** done (2026-11-14), no behavior change (all tests and the mutation score unchanged: 680 of 781 killed): `ServiceBase.paged()` replaces five pagination loops; `core/timefmt.py`; `ServiceBase.select_channel()` and `cursor_bars()` replace three and two copies; `core/tags.py` with `Channel`, `Panner`, `Send`, `Transport`, `Slot`; the time signature passed explicitly; bridge counters under a lock; public `bridge.socket_is_alive`; `bridge.unwrap` shared by the client and `BridgeHost`; `JsonObject` defined once (`jsontypes.py`). C-25: the unused reference checks and `STALE_REF` deleted, manuals corrected. C-27 was done in TW-1403
 - **Findings:** C-21, C-22, C-23, C-25, C-26, C-27, I-14, I-16, I-17.
 - **Scope:** `_paged()` helper; `core/timefmt.py`; selection, folder and cursor helpers on `ServiceBase`; `core/tags.py` with namespaced Cubase tags; remove or document unused code; explicit time signature; bridge counters under a lock; a small `ipc` module; one response-unwrapping helper. No behavior change: the suite and the mutation score must not drop.
 

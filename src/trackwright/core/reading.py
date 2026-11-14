@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from trackwright.core.base import MIXER, JsonObject, ServiceBase, operation
+from trackwright.core.base import MIXER, ServiceBase, operation
 from trackwright.core.models import (
     ChangeEvent,
     ChangesOut,
@@ -24,6 +24,7 @@ from trackwright.core.models import (
 from trackwright.core.refs import TrackSelector
 from trackwright.cubase import SCRIPT_VERSION
 from trackwright.errors import NotFoundError, TrackwrightError
+from trackwright.jsontypes import JsonObject
 
 MAX_FILTER_SCAN = 500
 MAX_EVENT_LOOKUPS = 20

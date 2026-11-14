@@ -9,15 +9,14 @@ parameters. Presets cannot be chosen or read by name.
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Literal
 
 from trackwright.core.base import MIXER, ServiceBase, operation
 from trackwright.core.models import PresetStepOut
 from trackwright.core.refs import TrackSelector
+from trackwright.core.tags import Slot
 from trackwright.errors import PreconditionFailedError
 
-JsonObject = dict[str, Any]
-TAG_EDIT = 4101
 METERS = ("Vu", "Gain Red", "Max", "Gain Reduction", " PH", "Meter")
 KEYS = {"next": "preset.next", "previous": "preset.previous"}
 EDITOR_SETTLE_SECONDS = 1.0
@@ -26,22 +25,17 @@ EDITOR_SETTLE_SECONDS = 1.0
 class PresetMixin(ServiceBase):
     def _plugin_values(self, plugin: int) -> dict[str, tuple[float, str]]:
         values: dict[str, tuple[float, str]] = {}
-        offset = 0
-        while True:
-            page = self.call("da.params", {"id": plugin, "offset": offset, "limit": 25, **MIXER})
-            for param in page.get("items", []):
-                title = str(param.get("title"))
-                if title and not any(m in title for m in METERS):
-                    values[title] = (float(param.get("process") or 0), str(param.get("display")))
-            offset += len(page.get("items", []))
-            if not page.get("items") or offset >= int(page.get("total", 0)):
-                return values
+        for param in self.paged("da.params", {"id": plugin}, 25):
+            title = str(param.get("title"))
+            if title and not any(m in title for m in METERS):
+                values[title] = (float(param.get("process") or 0), str(param.get("display")))
+        return values
 
     def _editor_open(self, slot: int) -> bool:
-        return float(self.call("da.param.get", {"id": slot, "tag": TAG_EDIT, **MIXER}).get("process") or 0) >= 0.5
+        return float(self.call("da.param.get", {"id": slot, "tag": Slot.EDIT, **MIXER}).get("process") or 0) >= 0.5
 
     def _set_editor(self, slot: int, open_: bool) -> None:
-        self.call("da.param.set", {"id": slot, "tag": TAG_EDIT, "value": 1.0 if open_ else 0.0, **MIXER})
+        self.call("da.param.set", {"id": slot, "tag": Slot.EDIT, "value": 1.0 if open_ else 0.0, **MIXER})
         self.wait_until(lambda: self._editor_open(slot), open_.__eq__)
 
     @operation

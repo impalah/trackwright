@@ -12,11 +12,12 @@ from __future__ import annotations
 from typing import Literal
 
 from trackwright.commands import COMMANDS, CommandSpec
-from trackwright.core.base import JsonObject, ServiceBase, operation
+from trackwright.core.base import ServiceBase, operation
 from trackwright.core.models import CommandOut, CommandStatus
 from trackwright.core.refs import TrackSelector
-from trackwright.core.writing import bars_tuple, format_bars
+from trackwright.core.timefmt import bars_tuple, format_bars
 from trackwright.errors import NotFoundError, PreconditionFailedError
+from trackwright.jsontypes import JsonObject
 
 TRACK_KINDS = {"audio": "addtrack.audio", "group": "addtrack.group", "folder": "addtrack.folder"}
 MARKER_ACTIONS = {
@@ -135,10 +136,10 @@ class CommandingMixin(ServiceBase):
             return self._out(spec, dry_run=True, can=can, status="planned", verified=None)
         if key not in NAVIGATION_COMMANDS:
             self.policy.check_project_write()
-        before = self._cursor()
+        before = self.cursor_bars() or None
         self._fire(spec)
         if key in NAVIGATION_COMMANDS:
-            after = self._cursor()
+            after = self.cursor_bars() or None
             return self._out(
                 spec,
                 dry_run=False,
@@ -156,10 +157,6 @@ class CommandingMixin(ServiceBase):
             instructions="marker tracks are not visible through the API: check in Cubase",
             details={"cursor": before},
         )
-
-    def _cursor(self) -> str | None:
-        raw = (self.call("transport.get").get("primary") or {}).get("locator")
-        return str(raw["time"]) if isinstance(raw, dict) else None
 
     # ------------------------------------------------------------------ removing tracks
     @operation

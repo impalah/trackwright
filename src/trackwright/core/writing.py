@@ -12,22 +12,7 @@ Navigation (selecting a track, moving the cursor) changes no project data and is
 
 from __future__ import annotations
 
-import re
-
-from trackwright.core.base import (
-    MIXER,
-    TAG_INPUT,
-    TAG_MUTE,
-    TAG_NAME,
-    TAG_OUTPUT,
-    TAG_RECORD,
-    TAG_SELECTED,
-    TAG_SOLO,
-    TAG_VOLUME,
-    JsonObject,
-    converted_value,
-    operation,
-)
+from trackwright.core.base import MIXER, converted_value, operation
 from trackwright.core.models import (
     Change,
     InsertPluginOut,
@@ -38,37 +23,25 @@ from trackwright.core.models import (
     Value,
     WriteOut,
 )
-from trackwright.core.project import SECONDS_TOLERANCE, ProjectMixin, format_seconds, parse_seconds
+from trackwright.core.project import ProjectMixin
 from trackwright.core.refs import TrackSelector
+from trackwright.core.tags import Channel
+from trackwright.core.timefmt import SECONDS_TOLERANCE, bars_tuple, format_bars, format_seconds, parse_seconds
 from trackwright.errors import NotFoundError, PreconditionFailedError, RequestTimeoutError, TrackwrightError
+from trackwright.jsontypes import JsonObject
 
-BARS_RE = re.compile(r"^\s*(\d+)\s*\.\s*(\d+)\s*\.\s*(\d+)\s*\.\s*(\d+)\s*$")
 TEMPO_TOLERANCE = 0.01
-
-
-def bars_tuple(text: str) -> tuple[int, int, int, int] | None:
-    match = BARS_RE.match(text)
-    if not match:
-        return None
-    bar, beat, sixteenth, ticks = (int(g) for g in match.groups())
-    return bar, beat, sixteenth, ticks
-
-
-def format_bars(position: tuple[int, int, int, int]) -> str:
-    """Cubase's own rendering, e.g. ``"3. 1. 1.  0"`` (ticks right-aligned on three characters)."""
-    bar, beat, sixteenth, ticks = position
-    return f"{bar}. {beat}. {sixteenth}.{ticks:>3}"
 
 
 # Channel parameters that set_parameter refuses (TW-1401): writing the routing disconnects the track
 # ("Sin bus" in the simulator's record of the POC); name and selection have their own verified tools.
 PROTECTED_CHANNEL_TAGS = {
-    TAG_INPUT: "input routing",
-    TAG_OUTPUT: "output routing",
-    TAG_NAME: "track name",
-    TAG_SELECTED: "selection",
+    Channel.INPUT: "input routing",
+    Channel.OUTPUT: "output routing",
+    Channel.NAME: "track name",
+    Channel.SELECTED: "selection",
 }
-PROTECTED_TAG_TOOLS = {TAG_NAME: "cubase_rename_track", TAG_SELECTED: "cubase_select_track"}
+PROTECTED_TAG_TOOLS = {Channel.NAME: "cubase_rename_track", Channel.SELECTED: "cubase_select_track"}
 
 
 class WritingMixin(ProjectMixin):
@@ -109,7 +82,9 @@ class WritingMixin(ProjectMixin):
                 f"channel parameter {tag} ({PROTECTED_CHANNEL_TAGS[tag]}) cannot be written with this tool",
                 code="READ_ONLY_PARAM",
                 details={
-                    "use": "cubase_rename_track / cubase_select_track" if tag in (TAG_NAME, TAG_SELECTED) else None
+                    "use": "cubase_rename_track / cubase_select_track"
+                    if tag in (Channel.NAME, Channel.SELECTED)
+                    else None
                 },
             )
         before = self.read_parameter(int(obj["id"]), tag)
@@ -170,10 +145,10 @@ class WritingMixin(ProjectMixin):
         if volume is not None:
             if not 0.0 <= volume <= 1.0:
                 raise PreconditionFailedError("volume is a normalized value in [0, 1]", code="OUT_OF_RANGE")
-            wanted.append((TAG_VOLUME, volume))
+            wanted.append((Channel.VOLUME, volume))
         wanted += [
             (tag, 1.0 if flag else 0.0)
-            for tag, flag in ((TAG_MUTE, mute), (TAG_SOLO, solo), (TAG_RECORD, record_arm))
+            for tag, flag in ((Channel.MUTE, mute), (Channel.SOLO, solo), (Channel.RECORD_ARM, record_arm))
             if flag is not None
         ]
         if not wanted:
@@ -224,7 +199,7 @@ class WritingMixin(ProjectMixin):
         if new_name in others:
             raise PreconditionFailedError(f"another track is already called {new_name!r}", code="NAME_CONFLICT")
         oid = int(item["id"])
-        before = self.read_parameter(oid, TAG_NAME)
+        before = self.read_parameter(oid, Channel.NAME)
         if dry_run:
             return WriteOut(
                 track_uid=f"uid:{item['uid']}",
@@ -235,9 +210,9 @@ class WritingMixin(ProjectMixin):
             )
         self.policy.check_track(current)
         result = self.write_parameter(
-            "da.param.setDisplay", {"id": oid, "tag": TAG_NAME, "value": new_name, **MIXER}, oid, TAG_NAME
+            "da.param.setDisplay", {"id": oid, "tag": Channel.NAME, "value": new_name, **MIXER}, oid, Channel.NAME
         )
-        after = result.get("after") or self.read_parameter(oid, TAG_NAME)
+        after = result.get("after") or self.read_parameter(oid, Channel.NAME)
         title = self.call("da.object", {"id": oid, **MIXER}).get("title")
         ok = after.get("display") == new_name and title == new_name
         return WriteOut(
@@ -339,8 +314,7 @@ class WritingMixin(ProjectMixin):
                 selected_before=before_name, selected_after=after_name, verified=0 <= after_id != before_id
             )
         item = self.resolve_track(TrackSelector.parse(track))
-        self.call("da.param.set", {"id": item["id"], "tag": TAG_SELECTED, "value": 1, **MIXER})
-        self.wait_until(base, lambda b: b.get("base") == item["id"])
+        self.select_channel(int(item["id"]))
         after_id, after_name = self._selected_name()
         return SelectOut(selected_before=before_name, selected_after=after_name, verified=after_id == item["id"])
 
@@ -393,7 +367,7 @@ class WritingMixin(ProjectMixin):
         transport = self._transport_id()
         if which == "cursor":
             landed = self._move_cursor_seconds(transport, seconds)
-            after = TimePosition(time=self._cursor_bars(), format="Compases+Tiempos")
+            after = TimePosition(time=self.cursor_bars(), format="Compases+Tiempos")
             return PositionOut(dry_run=False, which=which, requested=text, before=before, after=after,
                                verified=abs(landed - seconds) <= SECONDS_TOLERANCE,
                                note=f"cursor at {format_seconds(landed)} (read back in seconds)")  # fmt: skip

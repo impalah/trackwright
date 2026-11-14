@@ -19,7 +19,7 @@ from pathlib import Path
 
 from loguru import logger
 
-from trackwright.bridge import _socket_is_alive, prepare_socket_dir
+from trackwright.bridge import prepare_socket_dir, socket_is_alive
 from trackwright.config import BridgeConfig, CubaseConfig
 from trackwright.errors import BridgeUnavailableError, PreconditionFailedError
 
@@ -73,7 +73,7 @@ class BridgeLauncher:
         *,
         config_path: Path | None = None,
         spawn: Spawn = _spawn_detached,
-        alive: Callable[[Path], bool] = _socket_is_alive,
+        alive: Callable[[Path], bool] = socket_is_alive,
         sleep: Callable[[float], None] = time.sleep,
         clock: Callable[[], float] = time.monotonic,
     ) -> None:

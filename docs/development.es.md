@@ -69,8 +69,11 @@ src/trackwright/
   hostport.py       # puerto hacia Cubase usado por el servidor (BridgeHost)
   fake.py           # FakeCubase: simulador para tests y --simulate
   commands.py       # comandos de Cubase con su clase observada
-  core/             # dominio: referencias, política, modelos, servicio
-  server.py         # servidor MCP: registro de las 21 herramientas
+  jsontypes.py      # JsonObject, el único alias de tipo JSON
+  core/             # dominio: servicio (base + mixins), política, modelos, referencias
+    tags.py         # tags de parámetros de Cubase por objeto (Channel, Transport, Slot...)
+    timefmt.py      # formatos de compases y segundos de los visores de Cubase
+  server.py         # servidor MCP: registro de las 32 herramientas
   cubase/           # Trackwright_Bridge.js e instalador
 tests/
   unit/             # tests unitarios (simulador, sockets reales en /tmp)

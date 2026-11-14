@@ -9,37 +9,16 @@ so they are found by type. Parameters are matched by their (English, internal) t
 from __future__ import annotations
 
 import re
-from typing import Any, Literal
+from typing import Literal
 
 from trackwright.core.base import MIXER, ServiceBase, operation
 from trackwright.core.models import Metronome, ProjectOut, Roll, Signature, Span
+from trackwright.core.tags import Transport
+from trackwright.core.timefmt import SECONDS_TOLERANCE, format_seconds, parse_seconds
 from trackwright.errors import NotFoundError, TrackwrightError
+from trackwright.jsontypes import JsonObject
 
-JsonObject = dict[str, Any]
 DEVICE_ROOT_SCAN = 64
-TAG_SIGNATURE = 4027  # Transport "signature" (verified in Cubase 15)
-TAG_TIME_BARS, TAG_TIME_SECONDS = 4023, 4101  # Transport "time" / "time2": the cursor (verified, TW-1211)
-SECONDS_TOLERANCE = 0.0015
-CLOCK = re.compile(r"^\s*(?:(\d+):)?(?:(\d+):)?(\d+(?:\.\d+)?)\s*$")
-
-
-def parse_seconds(text: str) -> float | None:
-    """'2', '2.5', '1:30', '0:01:30.250' → seconds; ``None`` when it is not a time."""
-    match = CLOCK.match(text)
-    if match is None:
-        return None
-    first, second, seconds = match.groups()
-    hours, minutes = (first, second) if second is not None else (None, first)
-    return int(hours or 0) * 3600 + int(minutes or 0) * 60 + float(seconds)
-
-
-def format_seconds(seconds: float) -> str:
-    """Seconds → 'h:mm:ss.mmm', the format of Cubase's seconds display."""
-    millis = round(max(seconds, 0.0) * 1000)
-    hours, rest = divmod(millis, 3_600_000)
-    minutes, rest = divmod(rest, 60_000)
-    return f"{hours}:{minutes:02d}:{rest // 1000:02d}.{rest % 1000:03d}"
-
 
 UNAVAILABLE = {
     "sample_rate": "not exposed by the MIDI Remote API (Project Setup dialog only)",
@@ -87,27 +66,17 @@ class ProjectMixin(ServiceBase):
     def _studio_objects(self) -> dict[str, int]:
         root: int = self._device_root()
         found: dict[str, int] = {}
-        offset = 0
-        while True:
-            page = self.call("da.children", {"id": root, "offset": offset, "limit": 50, **MIXER})
-            for child in page.get("items", []):
-                found.setdefault(str(child.get("type")), int(child["id"]))
-            offset += len(page.get("items", []))
-            if not page.get("items") or offset >= int(page.get("total", 0)):
-                return found
+        for child in self.paged("da.children", {"id": root}, 50):
+            found.setdefault(str(child.get("type")), int(child["id"]))
+        return found
 
     def _params_by_title(self, oid: int | None) -> dict[str, JsonObject]:
         if oid is None:
             return {}
         out: dict[str, JsonObject] = {}
-        offset = 0
-        while True:
-            page = self.call("da.params", {"id": oid, "offset": offset, "limit": 25, **MIXER})
-            for param in page.get("items", []):
-                out.setdefault(str(param.get("title")), param)
-            offset += len(page.get("items", []))
-            if not page.get("items") or offset >= int(page.get("total", 0)):
-                return out
+        for param in self.paged("da.params", {"id": oid}, 25):
+            out.setdefault(str(param.get("title")), param)
+        return out
 
     # ------------------------------------------------------------------ time in seconds (TW-1211)
     def _transport_id(self) -> int:
@@ -117,15 +86,13 @@ class ProjectMixin(ServiceBase):
         return transport
 
     def _cursor_seconds(self, transport: int) -> float:
-        display = str(self.call("da.param.get", {"id": transport, "tag": TAG_TIME_SECONDS, **MIXER}).get("display"))
+        display = str(
+            self.call("da.param.get", {"id": transport, "tag": Transport.TIME_SECONDS, **MIXER}).get("display")
+        )
         seconds = parse_seconds(display)
         if seconds is None:
             raise TrackwrightError(f"unexpected cursor time {display!r}", code="UNAVAILABLE")
         return seconds
-
-    def _cursor_bars(self) -> str:
-        raw = (self.call("transport.get").get("primary") or {}).get("locator") or {}
-        return str(raw.get("time", ""))
 
     def _move_cursor_seconds(self, transport: int, seconds: float) -> float:
         """Put the cursor at ``seconds`` through the seconds display (verified) and return where it landed."""
@@ -141,7 +108,7 @@ class ProjectMixin(ServiceBase):
         locator's bar position, which must equal the cursor's.
         """
         self._move_cursor_seconds(transport, seconds)
-        target = self._cursor_bars()
+        target = self.cursor_bars()
         field = "cycleLeft" if which == "left" else "cycleRight"
         self.call("cmd.run", {"key": f"transport.set_{which}_locator"})
 
@@ -157,7 +124,7 @@ class ProjectMixin(ServiceBase):
             transport = self._studio_objects().get("Transport")
             if transport is None:
                 return None
-            param = self.call("da.param.get", {"id": transport, "tag": TAG_SIGNATURE, **MIXER})
+            param = self.call("da.param.get", {"id": transport, "tag": Transport.SIGNATURE, **MIXER})
         except TrackwrightError:
             return None
         if param.get("title") != "signature":

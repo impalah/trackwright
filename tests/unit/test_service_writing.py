@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from trackwright.core.service import CubaseService
-from trackwright.core.writing import bars_tuple, format_bars
+from trackwright.core.timefmt import bars_tuple, format_bars
 from trackwright.errors import (
     NotFoundError,
     PolicyError,

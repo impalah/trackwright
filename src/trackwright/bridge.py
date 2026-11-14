@@ -24,7 +24,7 @@ import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Protocol
 
 from loguru import logger
 
@@ -36,6 +36,7 @@ from trackwright.errors import (
     TrackwrightError,
 )
 from trackwright.host import Reply
+from trackwright.jsontypes import JsonObject
 from trackwright.ops import ALL_OPS, WRITE_OPS
 from trackwright.transport import Transport
 
@@ -47,7 +48,6 @@ MAX_SOCKET_PATH = 104  # sun_path on macOS
 READ_TIMEOUT = MAX_TIMEOUT + 5.0
 """Seconds a client has to send its request line (I-05)."""
 LOCAL_OPS = frozenset({"bridge.status"})
-JsonObject = dict[str, Any]
 
 
 class HostBackend(Protocol):
@@ -101,7 +101,8 @@ def prepare_socket_dir(directory: Path) -> Path:
     return directory
 
 
-def _socket_is_alive(path: Path) -> bool:
+def socket_is_alive(path: Path) -> bool:
+    """Whether a bridge accepts connections on ``path`` (used by the launcher too)."""
     try:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as probe:
             probe.settimeout(0.5)
@@ -120,6 +121,7 @@ class Bridge:
         self.started_at = time.time()
         self.requests = 0
         self.errors = 0
+        self._counters = threading.Lock()  # I-14: one handler thread per client
 
     def status(self) -> JsonObject:
         return {
@@ -131,7 +133,8 @@ class Bridge:
         }
 
     def handle(self, obj: object) -> JsonObject:
-        self.requests += 1
+        with self._counters:
+            self.requests += 1
         started = time.monotonic()
         try:
             op, params, timeout, session = validate_request(obj)
@@ -139,11 +142,13 @@ class Bridge:
                 return {"ok": True, "result": self.status()}
             reply = self.host.call(op, params, timeout=timeout, session=session)
         except TrackwrightError as exc:
-            self.errors += 1
+            with self._counters:
+                self.errors += 1
             logger.debug("request failed: {}", exc)
             return {"ok": False, "error": exc.to_dict(), "meta": self._meta(started)}
         except Exception as exc:
-            self.errors += 1
+            with self._counters:
+                self.errors += 1
             op_name = obj.get("op") if isinstance(obj, dict) else None
             logger.exception("unexpected error handling {}", op_name)  # I-15: not the params (track names...)
             outcome = "unknown" if op_name in WRITE_OPS else "not_executed_or_lost"
@@ -207,7 +212,7 @@ class BridgeServer:
             )
         prepare_socket_dir(self.socket_path.parent)
         if self.socket_path.exists():
-            if _socket_is_alive(self.socket_path):
+            if socket_is_alive(self.socket_path):
                 raise BridgeUnavailableError(f"another bridge is already listening on {self.socket_path}")
             self.socket_path.unlink()
         handler = type("BoundHandler", (_Handler,), {"bridge": self.bridge})
@@ -269,6 +274,15 @@ def error_from_dict(error: JsonObject) -> TrackwrightError:
     return TrackwrightError(message, code=code, details=details)
 
 
+def unwrap(response: JsonObject) -> JsonObject:
+    """The ``result`` of a bridge response, or the error it carries raised (I-17: shared by every caller)."""
+    if not response.get("ok"):
+        error = response.get("error")
+        raise error_from_dict(error if isinstance(error, dict) else {})
+    result = response.get("result")
+    return result if isinstance(result, dict) else {}
+
+
 class BridgeClient:
     """Client used by the MCP server and the CLI to reach the bridge."""
 
@@ -324,12 +338,7 @@ class BridgeClient:
 
     def call(self, op: str, params: JsonObject | None = None, *, timeout: float = 3.0) -> JsonObject:
         """Like :meth:`request` but return ``result`` or raise the error it carries."""
-        response = self.request(op, params, timeout=timeout)
-        if not response.get("ok"):
-            error = response.get("error")
-            raise error_from_dict(error if isinstance(error, dict) else {})
-        result = response.get("result")
-        return result if isinstance(result, dict) else {}
+        return unwrap(self.request(op, params, timeout=timeout))
 
 
 # ---------------------------------------------------------------------------- entry point

@@ -14,8 +14,9 @@ from typing import Literal
 
 from trackwright.core.base import operation
 from trackwright.core.models import ExportedFileOut, ExportOut
-from trackwright.core.project import format_seconds
-from trackwright.core.ranges import TAG_RECORD, TAG_START, RangeMixin
+from trackwright.core.ranges import RangeMixin
+from trackwright.core.tags import Transport
+from trackwright.core.timefmt import format_seconds
 from trackwright.errors import PreconditionFailedError, TrackwrightError
 
 DURATION_TOLERANCE = 0.15
@@ -50,7 +51,7 @@ class ExportMixin(RangeMixin):
         for field in ("cycleLeft", "cycleRight"):
             bars = str((primary.get(field) or {}).get("time", ""))
             self.call("transport.setTime", {"which": "locator", "display": "primary", "time": bars})
-            self.wait_until(self._cursor_bars, bars.__eq__)
+            self.wait_until(self.cursor_bars, bars.__eq__)
             bounds.append(self._cursor_seconds(transport))
         self._move_cursor_seconds(transport, cursor)
         return bounds[0], bounds[1]
@@ -92,7 +93,7 @@ class ExportMixin(RangeMixin):
         if dry_run:
             return out
         self.policy.check_project_write()
-        if self._transport_flag(transport, TAG_START) or self._transport_flag(transport, TAG_RECORD):
+        if self._transport_flag(transport, Transport.START) or self._transport_flag(transport, Transport.RECORD):
             raise PreconditionFailedError("stop the transport before exporting", code="TRANSPORT_RUNNING")
         if out.expected_seconds is None:
             span = self._locators_around_all_audio(transport)

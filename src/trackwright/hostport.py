@@ -9,13 +9,12 @@ Two implementations:
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, Protocol
+from typing import Protocol
 
-from trackwright.bridge import BridgeClient, error_from_dict
+from trackwright.bridge import BridgeClient, unwrap
 from trackwright.errors import BridgeUnavailableError
+from trackwright.jsontypes import JsonObject
 from trackwright.ops import WRITE_OPS
-
-JsonObject = dict[str, Any]
 
 
 class HostPort(Protocol):
@@ -72,8 +71,4 @@ class BridgeHost:
         meta = response.get("meta")
         if isinstance(meta, dict) and isinstance(meta.get("session_id"), str):
             self._session_id = meta["session_id"]
-        if not response.get("ok"):
-            error = response.get("error")
-            raise error_from_dict(error if isinstance(error, dict) else {})
-        result = response.get("result")
-        return result if isinstance(result, dict) else {}
+        return unwrap(response)

@@ -26,9 +26,9 @@ from typing import Any
 from trackwright.commands import COMMANDS
 from trackwright.cubase import SCRIPT_VERSION
 from trackwright.errors import HostError, RequestTimeoutError, StaleSessionError, TrackwrightError
+from trackwright.jsontypes import JsonObject
 from trackwright.ops import SESSIONLESS_OPS
 
-JsonObject = dict[str, Any]
 BARS = "Compases+Tiempos"
 SECONDS = "Segundos"
 

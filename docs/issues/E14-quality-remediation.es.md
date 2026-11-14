@@ -117,7 +117,7 @@
 
 ### TW-1412 Refactorización del núcleo
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-14), sin cambios de comportamiento (todos los tests y la puntuación de mutación se mantienen: 680 de 781 muertos): `ServiceBase.paged()` sustituye cinco bucles de paginación; `core/timefmt.py`; `ServiceBase.select_channel()` y `cursor_bars()` sustituyen tres y dos copias; `core/tags.py` con `Channel`, `Panner`, `Send`, `Transport`, `Slot`; el compás se pasa de forma explícita; contadores del puente bajo un cerrojo; `bridge.socket_is_alive` pública; `bridge.unwrap` compartida por el cliente y `BridgeHost`; `JsonObject` definido una sola vez (`jsontypes.py`). C-25: se borraron las comprobaciones de referencias sin uso y `STALE_REF`, y se corrigieron los manuales. C-27 se hizo en TW-1403
 - **Hallazgos:** C-21, C-22, C-23, C-25, C-26, C-27, I-14, I-16, I-17.
 - **Alcance:** función auxiliar `_paged()`; `core/timefmt.py`; funciones auxiliares de selección, carpeta y cursor en `ServiceBase`; `core/tags.py` con los tags de Cubase en espacios de nombres; eliminar o documentar el código sin usar; compás explícito; contadores del puente bajo un cerrojo; un pequeño módulo `ipc`; una sola función auxiliar para desempaquetar respuestas. Sin cambios de comportamiento: ni la suite ni la puntuación de mutación pueden bajar.
 

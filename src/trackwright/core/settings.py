@@ -6,14 +6,12 @@ DirectAccess write and read back; the time signature does not (its value is outs
 
 from __future__ import annotations
 
-from typing import Any
-
 from trackwright.core.base import MIXER, operation
 from trackwright.core.models import ProjectSettingsOut, SettingChange
 from trackwright.core.project import ProjectMixin
 from trackwright.errors import NotFoundError, PreconditionFailedError, TrackwrightError
+from trackwright.jsontypes import JsonObject
 
-JsonObject = dict[str, Any]
 SWITCHES: dict[str, tuple[str, str]] = {  # setting -> (object type, parameter title)
     "cycle": ("Transport", "cycle"),
     "metronome": ("Transport", "metronomeOn"),

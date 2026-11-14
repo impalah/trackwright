@@ -17,16 +17,15 @@ import threading
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Any
 
 from loguru import logger
 
 from trackwright import protocol
 from trackwright.errors import ProtocolError, RequestTimeoutError, StaleSessionError, TrackwrightError, host_error
+from trackwright.jsontypes import JsonObject
 from trackwright.ops import WRITE_OPS
 from trackwright.transport import Transport
 
-JsonObject = dict[str, Any]
 MIN_WRITE_BUDGET = 0.25
 """Seconds a write needs left to be worth sending (one idle tick is ~110 ms)."""
 _HISTORY = 50

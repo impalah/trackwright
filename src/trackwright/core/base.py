@@ -9,11 +9,12 @@ import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Concatenate, Protocol, TypeVar
+from typing import Concatenate, Protocol, TypeVar
 
 from trackwright.core.models import ParameterInfo, TrackInfo, Value
 from trackwright.core.policy import WritePolicy
 from trackwright.core.refs import ObjectRef, TrackSelector
+from trackwright.core.tags import CHANNEL_TAGS, Channel
 from trackwright.errors import (
     NotFoundError,
     PreconditionFailedError,
@@ -23,9 +24,9 @@ from trackwright.errors import (
 )
 from trackwright.exports import ExportedFile, ExportInspector
 from trackwright.hostport import HostPort
+from trackwright.jsontypes import JsonObject
 from trackwright.ops import WRITE_OPS
 
-JsonObject = dict[str, Any]
 T = TypeVar("T")
 
 
@@ -52,17 +53,6 @@ class AppLauncher(Protocol):
 
 
 MIXER: JsonObject = {"scope": "mixer"}
-CHANNEL_TAGS = (1024, 4000, 1025, 1027, 1028, 4101, 4102)
-TAG_NAME, TAG_SELECTED, TAG_VOLUME, TAG_MUTE, TAG_SOLO, TAG_RECORD, TAG_INPUT, TAG_OUTPUT = (
-    1024,
-    4000,
-    1025,
-    1027,
-    1028,
-    4002,
-    4101,
-    4102,
-)
 _SLOT_SUFFIX = re.compile(r"-\d+$")
 
 
@@ -220,20 +210,20 @@ class ServiceBase:
             v = value(tag)
             return None if v is None else str(v.get("display"))
 
-        volume = value(TAG_VOLUME)
+        volume = value(Channel.VOLUME)
         return TrackInfo(
             track=f"uid:{item['uid']}",
             uid=str(item["uid"]),
-            name=text(TAG_NAME) or str(item.get("title", "")),
+            name=text(Channel.NAME) or str(item.get("title", "")),
             type=str(item.get("type", "")),
             ref=self.ref_for(item),
             mixer_index=item.get("mixerIndex"),
-            selected=bool(flag(TAG_SELECTED)),
+            selected=bool(flag(Channel.SELECTED)),
             volume=Value(process=volume.get("process"), display=volume.get("display")) if volume else None,
-            mute=flag(TAG_MUTE),
-            solo=flag(TAG_SOLO),
-            input=text(TAG_INPUT),
-            output=text(TAG_OUTPUT),
+            mute=flag(Channel.MUTE),
+            solo=flag(Channel.SOLO),
+            input=text(Channel.INPUT),
+            output=text(Channel.OUTPUT),
         )
 
     def resolve_track(self, selector: TrackSelector) -> JsonObject:
@@ -266,13 +256,29 @@ class ServiceBase:
         return matches[0]
 
     # ------------------------------------------------------------------ targets inside a track
-    def children(self, object_id: int) -> list[JsonObject]:
-        items: list[JsonObject] = []
+    def select_channel(self, channel_id: int) -> None:
+        """Select a mixer channel and wait until Cubase reports it as the base (C-22: one helper for all)."""
+        self.call("da.param.set", {"id": channel_id, "tag": Channel.SELECTED, "value": 1, **MIXER})
+        self.wait_until(lambda: self.call("da.base"), lambda base: base.get("base") == channel_id)
+
+    def cursor_bars(self) -> str:
+        """The cursor in the primary (bars) display, or ``""`` when Cubase does not report it."""
+        raw = (self.call("transport.get").get("primary") or {}).get("locator")
+        return str(raw.get("time", "")) if isinstance(raw, dict) else ""
+
+    def paged(self, op: str, params: JsonObject, page_size: int) -> Iterator[JsonObject]:
+        """Every item of a paged DirectAccess listing (``da.children``, ``da.params``), fetched lazily."""
+        offset = 0
         while True:
-            page = self.call("da.children", {"id": object_id, "offset": len(items), "limit": 50, **MIXER})
-            items.extend(page.get("items", []))
-            if not page.get("items") or len(items) >= int(page.get("total", 0)):
-                return items
+            page = self.call(op, {**params, "offset": offset, "limit": page_size, **MIXER})
+            items = page.get("items", [])
+            yield from items
+            offset += len(items)
+            if not items or offset >= int(page.get("total", 0)):
+                return
+
+    def children(self, object_id: int) -> list[JsonObject]:
+        return list(self.paged("da.children", {"id": object_id}, 50))
 
     def section(self, track: JsonObject, kind: str) -> JsonObject:
         for child in self.children(int(track["id"])):

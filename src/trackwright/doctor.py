@@ -12,8 +12,7 @@ from trackwright.bridge import BridgeClient
 from trackwright.config import Settings
 from trackwright.cubase import SCRIPT_VERSION, script_status
 from trackwright.errors import TrackwrightError
-
-JsonObject = dict[str, Any]
+from trackwright.jsontypes import JsonObject
 
 
 def run_doctor(settings: Settings) -> JsonObject:

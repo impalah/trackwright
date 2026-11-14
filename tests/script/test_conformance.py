@@ -15,7 +15,7 @@ import pytest
 
 from tests.script.node_harness import NODE, Harness
 from tests.script.test_automation_controls import EXPECTED_KEYS
-from trackwright.core.base import CHANNEL_TAGS
+from trackwright.core.tags import CHANNEL_TAGS
 from trackwright.cubase import SCRIPT_PATH
 from trackwright.errors import TrackwrightError
 from trackwright.fake import FakeCubase

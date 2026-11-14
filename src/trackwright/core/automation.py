@@ -16,9 +16,8 @@ import itertools
 import re
 import time
 from collections.abc import Iterator
-from typing import Any
 
-from trackwright.core.base import MIXER, TAG_SELECTED, TAG_VOLUME, converted_value, operation
+from trackwright.core.base import MIXER, converted_value, operation
 from trackwright.core.models import (
     AutomationPoint,
     AutomationRecordOut,
@@ -30,14 +29,14 @@ from trackwright.core.models import (
 )
 from trackwright.core.project import ProjectMixin
 from trackwright.core.refs import TrackSelector
-from trackwright.core.writing import bars_tuple, format_bars
+from trackwright.core.tags import Channel, Panner, Send
+from trackwright.core.timefmt import bars_tuple, format_bars
 from trackwright.errors import NotFoundError, PreconditionFailedError, TrackwrightError
+from trackwright.jsontypes import JsonObject
 
-TAG_WRITE, TAG_READ = 4013, 4014
 MAX_POINTS = 64
 VERIFY_TOLERANCE = 0.05
 TICKS_PER_BEAT = 480
-TAG_PAN, TAG_SEND_LEVEL = 4201, 4097
 PREFILTER_TITLES = {"gain": "PreGain", "lowcut": "LC-Freq", "highcut": "HC-Freq"}
 EQ_TITLES = {"gain": "Gain", "freq": "Freq", "q": "Q"}
 SEND_KEY = re.compile(r"^send([1-8])\.level$")
@@ -45,7 +44,6 @@ EQ_KEY = re.compile(r"^eq([1-4])\.(gain|freq|q)$")
 PREFILTER_KEY = re.compile(r"^prefilter\.(gain|lowcut|highcut)$")
 INSERT_KEY = re.compile(r"^insert([1-8])\.p[1-8]$")
 STALL_SECONDS = 2.0
-JsonObject = dict[str, Any]
 
 
 Meter = tuple[int, int]
@@ -90,16 +88,12 @@ class AutomationMixin(ProjectMixin):
             )
         return {str(c["key"]): c for c in listed.get("controls", [])}
 
-    def _select(self, item: JsonObject) -> None:
-        self.call("da.param.set", {"id": item["id"], "tag": TAG_SELECTED, "value": 1, "scope": "mixer"})
-        self.wait_until(lambda: self.call("da.base"), lambda b: b.get("base") == item["id"])
-
-    def _cursor_beats(self) -> float:
+    def _cursor_beats(self, meter: Meter = COMMON_TIME) -> float:
         raw = (self.call("transport.get").get("primary") or {}).get("locator") or {}
         position = bars_tuple(str(raw.get("time", "")))
         if position is None:
             raise TrackwrightError("the cursor position is not available", code="UNAVAILABLE")
-        return to_beats(position, self._meter())
+        return to_beats(position, meter)
 
     def _is_playing(self) -> bool:
         first = self._cursor_beats()
@@ -127,10 +121,6 @@ class AutomationMixin(ProjectMixin):
         return float(self.read_parameter(int(item["id"]), tag).get("process") or 0) >= 0.5
 
     # ------------------------------------------------------------------ time signature (TW-1209)
-    def _meter(self) -> Meter:
-        meter: Meter = getattr(self._local, "meter", COMMON_TIME)
-        return meter
-
     def _read_meter(self) -> tuple[Meter, str]:
         signature = self.current_signature()
         if signature is None or signature.numerator is None or signature.denominator is None:
@@ -146,28 +136,23 @@ class AutomationMixin(ProjectMixin):
         raise NotFoundError(f"the track has no {kind}", code="NO_UNIT_CONVERSION")
 
     def _tag_by_title(self, obj: JsonObject, title: str) -> int:
-        offset = 0
-        while True:
-            page = self.call("da.params", {"id": obj["id"], "offset": offset, "limit": 25, **MIXER})
-            for param in page.get("items", []):
-                if param.get("title") == title:
-                    return int(param["tag"])
-            offset += len(page.get("items", []))
-            if not page.get("items") or offset >= int(page.get("total", 0)):
-                raise NotFoundError(f"parameter {title!r} not found on {obj.get('title')}", code="NO_UNIT_CONVERSION")
+        for param in self.paged("da.params", {"id": obj["id"]}, 25):
+            if param.get("title") == title:
+                return int(param["tag"])
+        raise NotFoundError(f"parameter {title!r} not found on {obj.get('title')}", code="NO_UNIT_CONVERSION")
 
     def _da_parameter(self, item: JsonObject, key: str, control: JsonObject) -> tuple[JsonObject, int]:
         """The DirectAccess object and tag behind an automation control (for exact unit conversion)."""
         if key == "volume":
-            return item, TAG_VOLUME
+            return item, Channel.VOLUME
         if key == "pan":
-            return self._child_of_type(item, "Panner"), TAG_PAN
+            return self._child_of_type(item, "Panner"), Panner.PAN
         if match := SEND_KEY.match(key):
             sends = self.children(int(self.section(item, "Sends")["id"]))
             index = int(match.group(1))
             if not 1 <= index <= len(sends):
                 raise NotFoundError(f"send {index} does not exist (1..{len(sends)})", code="PARAM_NOT_FOUND")
-            return sends[index - 1], TAG_SEND_LEVEL
+            return sends[index - 1], Send.LEVEL
         if match := EQ_KEY.match(key):
             eq = self.resolve_target(item, "strip:eq")
             return eq, self._tag_by_title(eq, f"EQ {match.group(1)} {EQ_TITLES[match.group(2)]}")
@@ -199,7 +184,7 @@ class AutomationMixin(ProjectMixin):
         )
 
     def _bound_control(self, item: JsonObject, parameter: str) -> tuple[JsonObject, AutomationTarget]:
-        self._select(item)
+        self.select_channel(int(item["id"]))
         controls = self._auto_controls()
         if parameter not in controls:
             raise NotFoundError(f"unknown automation parameter {parameter!r}", code="PARAM_NOT_FOUND",
@@ -217,7 +202,7 @@ class AutomationMixin(ProjectMixin):
     def list_automation_targets(self, track: str) -> AutomationTargetsOut:
         """Parameters of ``track`` that can be automated. Selects the track (the controls follow the selection)."""
         item = self.resolve_track(TrackSelector.parse(track))
-        self._select(item)
+        self.select_channel(int(item["id"]))
         controls = self._auto_controls()
         targets = [self._target(key, c) for key, c in controls.items()]
         return AutomationTargetsOut(track=self.track_info(item).name, targets=targets)
@@ -259,9 +244,9 @@ class AutomationMixin(ProjectMixin):
         name = self.track_info(item).name
         control, target = self._bound_control(item, parameter)
         resolved = self._resolve_points(item, parameter, control, points)
-        self._local.meter, signature_note = self._read_meter()
-        curve = self._validate_points(resolved, self._meter())
-        numerator, denominator = self._meter()
+        meter, signature_note = self._read_meter()  # C-26: passed explicitly, no thread-local state
+        curve = self._validate_points(resolved, meter)
+        numerator, denominator = meter
         start_beats = max(curve[0][0] - numerator * 4 / denominator * pre_roll_bars, 0.0)
         out = AutomationRecordOut(
             dry_run=dry_run,
@@ -270,7 +255,7 @@ class AutomationMixin(ProjectMixin):
             title=target.title,
             value_before=target.value,
             display_before=target.display,
-            start=format_bars(from_beats(start_beats, self._meter())),
+            start=format_bars(from_beats(start_beats, meter)),
             points=resolved,
             written=[],
             verified=None,
@@ -281,13 +266,13 @@ class AutomationMixin(ProjectMixin):
         self.policy.check_track(name)
         if self._is_playing():
             raise PreconditionFailedError("stop the transport before recording automation", code="TRANSPORT_RUNNING")
-        out.written, out.complete = self._record(item, parameter, curve, start_beats)
+        out.written, out.complete = self._record(item, parameter, curve, start_beats, meter)
         if not out.complete:
             out.notes.append(
                 f"playback stopped at {out.written[-1].position}, before the last point: the curve is incomplete"
             )
         if verify:
-            out.verified, out.mismatches = self._verify(item, parameter, curve, start_beats)
+            out.verified, out.mismatches = self._verify(item, parameter, curve, start_beats, meter)
             if out.verified is False:
                 out.notes.append("the read-back did not follow the curve: check the automation lane in Cubase")
         out.notes.append("with read automation (R) on, the recorded curve controls the parameter")
@@ -325,10 +310,10 @@ class AutomationMixin(ProjectMixin):
             curve.append((curve[0][0] + 1, curve[0][1]))
         return curve
 
-    def _play_from(self, start_beats: float) -> None:
+    def _play_from(self, start_beats: float, meter: Meter) -> None:
         self.call(
             "transport.setTime",
-            {"which": "locator", "display": "primary", "time": format_bars(from_beats(start_beats, self._meter()))},
+            {"which": "locator", "display": "primary", "time": format_bars(from_beats(start_beats, meter))},
         )
         self.call("cmd.run", {"key": "transport.start"})
 
@@ -340,13 +325,13 @@ class AutomationMixin(ProjectMixin):
         """Upper bound for a pass: 2 s per beat (below 30 BPM) plus 10 s to start."""
         return time.monotonic() + 10.0 + max(end_beats - start_beats, 1.0) * 2.0
 
-    def _positions(self, start: float, end: float) -> Iterator[float]:
+    def _positions(self, start: float, end: float, meter: Meter) -> Iterator[float]:
         """Yield cursor positions (beats) while the transport advances; stop if it stalls for STALL_SECONDS."""
         deadline = self._deadline(start, end)
         previous: float | None = None
         last_progress = time.monotonic()
         while time.monotonic() < deadline:
-            beat = self._cursor_beats()
+            beat = self._cursor_beats(meter)
             now = time.monotonic()
             if beat != previous:
                 last_progress = now
@@ -356,25 +341,25 @@ class AutomationMixin(ProjectMixin):
             yield beat
 
     def _record(
-        self, item: JsonObject, key: str, curve: list[tuple[float, float]], start: float
+        self, item: JsonObject, key: str, curve: list[tuple[float, float]], start: float, meter: Meter
     ) -> tuple[list[WrittenPoint], bool]:
         """Write the curve while playing; return the points written and whether the last point was reached."""
-        write_before = self._flag_state(item, TAG_WRITE)
-        read_before = self._flag_state(item, TAG_READ)
+        write_before = self._flag_state(item, Channel.WRITE_AUTOMATION)
+        read_before = self._flag_state(item, Channel.READ_AUTOMATION)
         written: list[WrittenPoint] = []
         touched = complete = False
         try:
-            self._flag(item, TAG_READ, False)  # existing automation must not fight the new curve
-            self._flag(item, TAG_WRITE, True)
-            self._play_from(start)
-            for beat in self._positions(start, curve[-1][0]):
+            self._flag(item, Channel.READ_AUTOMATION, False)  # existing automation must not fight the new curve
+            self._flag(item, Channel.WRITE_AUTOMATION, True)
+            self._play_from(start, meter)
+            for beat in self._positions(start, curve[-1][0], meter):
                 if beat < curve[0][0]:
                     self._sleep(0.02)
                     continue
                 value = interpolate(curve, beat)
                 result = self.call("auto.control", {"key": key, "value": value, **({} if touched else {"touch": True})})
                 touched = True
-                written.append(WrittenPoint(position=format_bars(from_beats(beat, self._meter())), value=value,
+                written.append(WrittenPoint(position=format_bars(from_beats(beat, meter)), value=value,
                                             display=result.get("display")))  # fmt: skip
                 if beat >= curve[-1][0]:
                     complete = True
@@ -383,23 +368,23 @@ class AutomationMixin(ProjectMixin):
             if touched:
                 self.call("auto.control", {"key": key, "touch": False})
             self._stop()
-            self._flag(item, TAG_WRITE, write_before)
-            self._flag(item, TAG_READ, read_before)
+            self._flag(item, Channel.WRITE_AUTOMATION, write_before)
+            self._flag(item, Channel.READ_AUTOMATION, read_before)
         if not written:
             raise TrackwrightError("playback did not reach the first point; nothing was recorded", code="NOT_RECORDED")
         return written, complete
 
     def _verify(
-        self, item: JsonObject, key: str, curve: list[tuple[float, float]], start: float
+        self, item: JsonObject, key: str, curve: list[tuple[float, float]], start: float, meter: Meter
     ) -> tuple[bool, list[str]]:
-        read_before = self._flag_state(item, TAG_READ)
+        read_before = self._flag_state(item, Channel.READ_AUTOMATION)
         mismatches: list[str] = []
         checked = 0
         try:
-            self._flag(item, TAG_READ, True)
-            self._play_from(start)
+            self._flag(item, Channel.READ_AUTOMATION, True)
+            self._play_from(start, meter)
             pending = list(curve)
-            for beat in self._positions(start, curve[-1][0]):
+            for beat in self._positions(start, curve[-1][0], meter):
                 if not pending:
                     break
                 if beat + 1e-9 < pending[0][0]:
@@ -409,12 +394,10 @@ class AutomationMixin(ProjectMixin):
                 value = self._auto_controls()[key].get("value")
                 checked += 1
                 if not isinstance(value, int | float) or abs(value - expected) > VERIFY_TOLERANCE:
-                    mismatches.append(
-                        f"{format_bars(from_beats(beat, self._meter()))}: expected {expected:.3f}, read {value}"
-                    )
+                    mismatches.append(f"{format_bars(from_beats(beat, meter))}: expected {expected:.3f}, read {value}")
                 while pending and pending[0][0] <= beat + 1e-9:
                     pending.pop(0)
         finally:
             self._stop()
-            self._flag(item, TAG_READ, read_before)
+            self._flag(item, Channel.READ_AUTOMATION, read_before)
         return checked > 0 and not mismatches, mismatches

@@ -24,7 +24,7 @@ import sys
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Literal, Protocol, TextIO
+from typing import Literal, Protocol, TextIO
 
 from loguru import logger
 
@@ -32,8 +32,8 @@ import trackwright
 from trackwright.config import Settings, load_settings
 from trackwright.cubase import SCRIPT_PATH, install_script, script_status
 from trackwright.errors import TrackwrightError
+from trackwright.jsontypes import JsonObject
 
-JsonObject = dict[str, Any]
 STEPS = ("script", "config", "claude")
 SERVER_NAME = "trackwright"
 PINNED_VERSION = re.compile(r"trackwright==([0-9][^\s,\]\"']*)")

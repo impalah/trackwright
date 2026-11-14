@@ -5,9 +5,9 @@ from __future__ import annotations
 import pytest
 
 from trackwright.core.policy import WritePolicy
-from trackwright.core.project import format_seconds, parse_seconds
 from trackwright.core.ranges import compare_edges, expected_edge
 from trackwright.core.service import CubaseService
+from trackwright.core.timefmt import format_seconds, parse_seconds
 from trackwright.errors import PolicyError, PreconditionFailedError
 from trackwright.fake import FakeCubase
 

@@ -4,6 +4,7 @@
 
 ## Unreleased
 
+- **Core refactoring** (TW-1412), no behavior change: one pagination helper, time formats in `core/timefmt.py`, Cubase tags by object in `core/tags.py`, shared selection and cursor helpers, the time signature passed explicitly, one `JsonObject`. Removed: the reference checks no tool used and the `STALE_REF` error the manuals mentioned.
 - **Live integration tests** (TW-1411): 20 of the 32 tools now have repeatable tests against the real Cubase (reads, and reversible writes on the test track).
 - **Mutation testing** (TW-1410): `make mutation` runs mutmut on the safety modules (87.3 % of mutants killed); new tests close the gaps it found, the most important being that `BridgeHost` must never retry a request whose sending is uncertain.
 - **Test-suite hardening** (TW-1409): policy tests assert the error code; tests for the fingerprint and `from_config`; property-based tests of the framing (Hypothesis, new dev dependency); an ES5 syntax check of the Cubase script; Node tests for script paths that had none (reads, protocol errors, the request queue, fragment expiry); waits on events instead of fixed sleeps; a time limit on the Node harness; shared test doubles instead of tests importing tests; the live write tests limited to the test track; `mypy` also checks the tests. A log race in a test that could print a "logging error" was fixed by logging late responses before recording them.

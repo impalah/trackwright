@@ -264,13 +264,13 @@ def test_launch_errors(tmp_path: Path) -> None:
 
 
 def test_liveness_probe_gets_no_answer_and_no_warning(short_dir: Path) -> None:
-    from trackwright.bridge import _socket_is_alive
+    from trackwright.bridge import socket_is_alive
 
     config = BridgeConfig(socket_dir=short_dir)
     server = BridgeServer(Bridge(Backend()), config.socket_path)
     server.serve_in_thread()
     try:
-        assert _socket_is_alive(config.socket_path) is True
+        assert socket_is_alive(config.socket_path) is True
         assert BridgeClient(config.socket_path).call("hello")["op"] == "hello"
     finally:
         server.stop()

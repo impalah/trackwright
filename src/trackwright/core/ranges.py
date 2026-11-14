@@ -18,11 +18,12 @@ import itertools
 import math
 from typing import Literal
 
-from trackwright.core.base import MIXER, TAG_SELECTED, operation
+from trackwright.core.base import MIXER, operation
 from trackwright.core.models import RangeEditOut
-from trackwright.core.project import SECONDS_TOLERANCE, ProjectMixin, format_seconds, parse_seconds
+from trackwright.core.project import ProjectMixin
 from trackwright.core.refs import TrackSelector
-from trackwright.core.writing import bars_tuple, format_bars
+from trackwright.core.tags import Transport
+from trackwright.core.timefmt import SECONDS_TOLERANCE, bars_tuple, format_bars, format_seconds, parse_seconds
 from trackwright.errors import PreconditionFailedError, TrackwrightError
 
 RangeAction = Literal["delete", "delete_time", "cut_time", "insert_silence", "crop"]
@@ -40,7 +41,6 @@ EFFECTS: dict[str, str] = {
     "insert_silence": "inserts silence as long as the range at its start, moving everything after it later",
     "crop": "keeps only the range and removes everything outside it",
 }
-TAG_START, TAG_RECORD = 4015, 4019
 MAX_EDGES = 48
 MAX_ROUNDS = 6  # single-track deletion: events hidden under others only show up after those are deleted
 PROBE_MARGIN = 1.0  # seconds before the range where the probe starts
@@ -60,7 +60,7 @@ class RangeMixin(ProjectMixin):
             if position is None:
                 raise PreconditionFailedError(f"bad position {value!r}: use '9. 1. 1. 0'", code="BAD_TIME")
             self.call("transport.setTime", {"which": "locator", "display": "primary", "time": format_bars(position)})
-            self.wait_until(self._cursor_bars, lambda now: bars_tuple(now) == position)
+            self.wait_until(self.cursor_bars, lambda now: bars_tuple(now) == position)
             return self._cursor_seconds(transport)
         raise PreconditionFailedError("unit must be 'seconds' or 'bars'", code="BAD_REQUEST")
 
@@ -75,10 +75,6 @@ class RangeMixin(ProjectMixin):
 
     def _transport_flag(self, transport: int, tag: int) -> bool:
         return float(self.call("da.param.get", {"id": transport, "tag": tag, **MIXER}).get("process") or 0) >= 0.5
-
-    def _select_channel(self, channel_id: int) -> None:
-        self.call("da.param.set", {"id": channel_id, "tag": TAG_SELECTED, "value": 1, "scope": "mixer"})
-        self.wait_until(lambda: self.call("da.base"), lambda base: base.get("base") == channel_id)
 
     def _range_cmd(self, key: str) -> None:
         self.call("cmd.run", {"key": key})
@@ -158,7 +154,7 @@ class RangeMixin(ProjectMixin):
             self.policy.check_track(self.track_info(target).name)
         else:
             self.policy.check_all_tracks("an edit on every track")
-        if self._transport_flag(transport, TAG_START) or self._transport_flag(transport, TAG_RECORD):
+        if self._transport_flag(transport, Transport.START) or self._transport_flag(transport, Transport.RECORD):
             raise PreconditionFailedError("stop the transport before editing", code="TRANSPORT_RUNNING")
         if target is not None:
             self._delete_on_track(out, transport, (start_s, end_s), int(target["id"]), cursor_before)
@@ -196,7 +192,7 @@ class RangeMixin(ProjectMixin):
         steps = 0
         try:
             self._range_cmd("tool.select")
-            self._select_channel(channel)
+            self.select_channel(channel)
             before = self.probe_edges(transport, probe_from)
             for cut in (start, end):
                 self._clear_selection()
@@ -217,7 +213,7 @@ class RangeMixin(ProjectMixin):
             self._clear_selection()
             out.notes.append("the Object Selection tool is active")
             self._restore(transport, {}, cursor_before, selected)
-        self._select_channel(channel)
+        self.select_channel(channel)
         after = self.probe_edges(transport, probe_from)
         self._restore(transport, {}, cursor_before, selected)
         out.edges_before = [format_seconds(e) for e in before[0]]
@@ -274,7 +270,7 @@ class RangeMixin(ProjectMixin):
         before: tuple[list[float], bool] | None = None
         try:
             if probe_item is not None:
-                self._select_channel(int(str(probe_item["id"])))
+                self.select_channel(int(str(probe_item["id"])))
                 before = self.probe_edges(transport, probe_from)
             left = self._set_locator_seconds(transport, "left", start)
             right = self._set_locator_seconds(transport, "right", end)
@@ -299,7 +295,7 @@ class RangeMixin(ProjectMixin):
             out.notes.append("the Object Selection tool is active again")
             self._restore(transport, locators, cursor_before, selected)
         if probe_item is not None and before is not None and out.applied:
-            self._select_channel(int(str(probe_item["id"])))
+            self.select_channel(int(str(probe_item["id"])))
             after = self.probe_edges(transport, probe_from)
             self._restore(transport, locators, cursor_before, selected)
             out.edges_before = [format_seconds(e) for e in before[0]]
@@ -317,7 +313,7 @@ class RangeMixin(ProjectMixin):
             self._move_cursor_seconds(transport, cursor)
         if isinstance(selected, int) and selected >= 0:
             with contextlib.suppress(TrackwrightError):
-                self._select_channel(selected)
+                self.select_channel(selected)
 
 
 def expected_edge(action: str, start: float, end: float, edge: float) -> float | None:

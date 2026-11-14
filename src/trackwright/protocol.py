@@ -23,9 +23,9 @@ import json
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Any
 
 from trackwright.errors import ProtocolError
+from trackwright.jsontypes import JsonObject
 
 PROTOCOL_VERSION = 1
 MANUFACTURER_ID = 0x7D
@@ -35,8 +35,6 @@ MAX_FRAGMENT_PAYLOAD = 240
 MAX_FRAGMENTS = 64
 MAX_MESSAGE_BYTES = MAX_FRAGMENT_PAYLOAD * MAX_FRAGMENTS
 SEQ_MODULO = 1 << 14
-
-JsonObject = dict[str, Any]
 
 
 def encode_payload(obj: JsonObject) -> bytes:
