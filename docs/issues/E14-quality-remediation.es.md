@@ -83,7 +83,7 @@
 
 ### TW-1407 Comprobar la versión del script en ejecución
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-14): comprobación «script loaded in Cubase» en `doctor` y `script_outdated` / `packaged_script_version` en `cubase_status` (null en el simulador); tests en `test_cli_serve_doctor.py` y `test_service_reading.py`; `doctor` comprobado contra Cubase (script 1.5.5 = el del paquete)
 - **Hallazgos:** S-04.
 - **Alcance:** `doctor` compara la versión del script que ejecuta Cubase con la empaquetada; `cubase_status` informa `script_outdated`; la pista dice que hay que reiniciar Cubase.
 

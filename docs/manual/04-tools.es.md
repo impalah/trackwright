@@ -77,7 +77,7 @@ No modifican nada.
 
 ### `cubase_status`
 
-Estado de la conexión: versión del script, aplicación y versión de Cubase, acceso al mezclador y al transporte, número de comandos y política de escritura. `simulated: true` indica que responde el simulador, no Cubase.
+Estado de la conexión: versión del script, aplicación y versión de Cubase, acceso al mezclador y al transporte, número de comandos y política de escritura. `simulated: true` indica que responde el simulador, no Cubase. `script_outdated: true` indica que Cubase ejecuta otro script que el que instala este Trackwright (`packaged_script_version`): instálalo con `trackwright setup` y reinicia Cubase.
 
 ### `cubase_list_tracks`
 

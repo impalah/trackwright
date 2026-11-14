@@ -14,7 +14,7 @@ from tests.support import ScriptedTransport, ok
 from trackwright.bridge import run_bridge
 from trackwright.cli import main, make_service
 from trackwright.config import BridgeConfig, Settings, load_settings
-from trackwright.cubase import install_script
+from trackwright.cubase import SCRIPT_VERSION, install_script
 from trackwright.fake import FakeCubase
 from trackwright.hostport import BridgeHost
 
@@ -58,9 +58,12 @@ def test_doctor_reports_what_to_fix(tmp_path: Path, socket_dir: Path, capsys: py
     assert "Cubase answers" not in failing
 
 
+RUNNING = [SCRIPT_VERSION]
+
+
 def script(req: JsonObject) -> JsonObject | None:
     if req["op"] == "hello":
-        return ok(req, {"sessionId": "s1", "scriptVersion": "1.0.0", "host": {"appName": "Cubase"}})
+        return ok(req, {"sessionId": "s1", "scriptVersion": RUNNING[0], "host": {"appName": "Cubase"}})
     return None  # Cubase never answers anything else
 
 
@@ -87,7 +90,26 @@ def test_doctor_all_green(bridge: BridgeConfig, tmp_path: Path, capsys: pytest.C
     report = json.loads(capsys.readouterr().out)
     assert all(c["ok"] for c in report["checks"])
     answers = next(c for c in report["checks"] if c["check"] == "Cubase answers")
-    assert answers["detail"]["script"] == "1.0.0"
+    assert answers["detail"]["script"] == SCRIPT_VERSION
+
+
+def test_doctor_notices_an_old_script_still_loaded(
+    bridge: BridgeConfig, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """TW-1407 (S-04): installed but Cubase was not restarted: the old script still answers."""
+    script_dir = tmp_path / "scripts"
+    cfg = write_config(tmp_path, bridge.socket_dir, script_dir)
+    install_script(load_settings(cfg).script.install_dir, apply=True)
+    RUNNING[0] = "1.0.0"
+    try:
+        assert main(["--config", str(cfg), "doctor"]) == 1
+    finally:
+        RUNNING[0] = SCRIPT_VERSION
+    report = json.loads(capsys.readouterr().out)
+    loaded = next(c for c in report["checks"] if c["check"] == "script loaded in Cubase")
+    assert loaded["ok"] is False
+    assert loaded["detail"] == {"running": "1.0.0", "packaged": SCRIPT_VERSION}
+    assert "restart Cubase" in loaded["fix"]
 
 
 def test_doctor_when_cubase_is_silent(socket_dir: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

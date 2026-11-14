@@ -10,7 +10,7 @@ from typing import Any
 
 from trackwright.bridge import BridgeClient
 from trackwright.config import Settings
-from trackwright.cubase import script_status
+from trackwright.cubase import SCRIPT_VERSION, script_status
 from trackwright.errors import TrackwrightError
 
 JsonObject = dict[str, Any]
@@ -48,7 +48,15 @@ def run_doctor(settings: Settings) -> JsonObject:
     if bridge_ok:
         try:
             hello = client.call("hello", timeout=settings.bridge.request_timeout)
-            check("Cubase answers", True, {"script": hello.get("scriptVersion"), "host": hello.get("host")})
+            running = hello.get("scriptVersion")
+            check("Cubase answers", True, {"script": running, "host": hello.get("host")})
+            check(
+                "script loaded in Cubase",
+                running == SCRIPT_VERSION,
+                {"running": running, "packaged": SCRIPT_VERSION},
+                f"Cubase is running script {running}, but this Trackwright installs {SCRIPT_VERSION}: "
+                "install it ('trackwright setup') and restart Cubase, which does not reload scripts by itself",
+            )
         except TrackwrightError as exc:
             check(
                 "Cubase answers",

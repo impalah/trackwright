@@ -83,7 +83,7 @@
 
 ### TW-1407 Check the running script version
 
-- **Status:** pending
+- **Status:** done (2026-11-14): `doctor` check "script loaded in Cubase" and `script_outdated` / `packaged_script_version` in `cubase_status` (null in the simulator); tests in `test_cli_serve_doctor.py` and `test_service_reading.py`; `doctor` checked against Cubase (script 1.5.5 = packaged)
 - **Findings:** S-04.
 - **Scope:** `doctor` compares the script version Cubase is running with the packaged one; `cubase_status` reports `script_outdated`; the hint says to restart Cubase.
 

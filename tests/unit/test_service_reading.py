@@ -262,3 +262,26 @@ def test_events_without_an_object_are_not_reported_as_gone(service: CubaseServic
     out = service.poll_changes()
     assert [(e.kind, e.ref, e.still_valid) for e in out.events] == [("project", None, None)]
     assert not any(op == "da.object" for op, _ in fake.calls)
+
+
+def test_status_reports_an_outdated_script(fake: FakeCubase) -> None:
+    """TW-1407 (S-04): against a real (non-simulated) host, a different running script is flagged."""
+    from trackwright.core.policy import WritePolicy
+    from trackwright.cubase import SCRIPT_VERSION
+
+    class RealLooking:
+        simulated = False
+
+        def __init__(self) -> None:
+            self.session_id = fake.session
+
+        def call(self, op: str, params: dict[str, object] | None = None, **kw: object) -> dict[str, object]:
+            result = fake.call(op, params)
+            return {**result, "scriptVersion": "1.0.0"} if op == "hello" else result
+
+    out = CubaseService(RealLooking(), WritePolicy()).status()  # type: ignore[arg-type]
+    assert (out.script_version, out.packaged_script_version, out.script_outdated) == ("1.0.0", SCRIPT_VERSION, True)
+
+
+def test_status_in_the_simulator_is_never_outdated(service: CubaseService) -> None:
+    assert service.status().script_outdated is None

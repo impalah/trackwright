@@ -22,6 +22,7 @@ from trackwright.core.models import (
     TransportOut,
 )
 from trackwright.core.refs import TrackSelector
+from trackwright.cubase import SCRIPT_VERSION
 from trackwright.errors import NotFoundError, TrackwrightError
 
 MAX_FILTER_SCAN = 500
@@ -35,7 +36,10 @@ class ReadingMixin(ServiceBase):
         caps = self.call("capabilities")
         capabilities: JsonObject = caps.get("capabilities") or {}
         host: JsonObject = caps.get("host") or hello.get("host") or {}
+        running = hello.get("scriptVersion")
         return StatusOut(
+            packaged_script_version=SCRIPT_VERSION,
+            script_outdated=None if running is None or self.host.simulated else running != SCRIPT_VERSION,
             connected=True,
             simulated=bool(self.host.simulated or capabilities.get("simulated")),
             session=self.host.session_id or hello.get("sessionId"),

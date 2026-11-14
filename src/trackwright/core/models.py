@@ -61,6 +61,12 @@ class StatusOut(_Out):
     simulated: bool = Field(description="true when answering from the built-in simulator, not Cubase")
     session: str | None
     script_version: str | None
+    packaged_script_version: str | None = Field(default=None, description="the script this Trackwright installs")
+    script_outdated: bool | None = Field(
+        default=None,
+        description="Cubase runs another script than the packaged one: "
+        "install it (trackwright setup) and restart Cubase",
+    )
     host_app: str | None
     host_version: str | None
     insert_slots: int | None

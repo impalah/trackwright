@@ -10,6 +10,7 @@
 - **Continuous integration** (TW-1404): GitHub Actions on macOS runs `make check`, the Node tests of the Cubase script and the package build on every push and pull request; coverage threshold raised to 95 %.
 - **Bridge robustness** (TW-1405): a refused second bridge no longer deletes the live socket (and opens no MIDI ports); listen backlog 128 and a second probe before autostart; per-client read timeout; bounded SysEx buffer; a stray frame no longer destroys a reassembly and a full table drops its oldest entry; every socket error is a `BRIDGE_UNAVAILABLE` error; subprocess timeouts; no symlinked socket directory; atomic script install; `--log-level` is validated.
 - **`trackwright bridge-stop`** (and `make bridge-stop`): stops the running bridge through the pid it reports. The documented `pkill -f "trackwright bridge"` did not match an autostarted bridge, which runs as `python -m trackwright --config … bridge`.
+- **Running script version** (TW-1407): `doctor` checks that Cubase runs the packaged script (after an upgrade without restarting Cubase it fails with the fix), and `cubase_status` reports `script_outdated`.
 - **Breaking:** `track` is required in `cubase_set_parameter` and `cubase_insert_plugin`; their outputs include `track_uid` to reuse when applying a dry run.
 - **Code quality review** (`docs/quality-review.md`) and its remediation plan, epic E14: policy holes, session pinning in the bridge, truthful results, robustness, simulator/script conformance, mutation testing and CI.
 
