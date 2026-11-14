@@ -67,7 +67,7 @@ src/trackwright/
   ops.py            # operaciones del script (lecturas, escrituras)
   bridge.py         # daemon con socket Unix y su cliente
   hostport.py       # puerto hacia Cubase usado por el servidor (BridgeHost)
-  fake.py           # FakeCubase: simulador para tests y --simulate
+  fake/             # FakeCubase, el simulador para tests y --simulate: núcleo, edición, automatización, escrituras, lecturas
   commands.py       # comandos de Cubase con su clase observada
   jsontypes.py      # JsonObject, el único alias de tipo JSON
   core/             # dominio: servicio (base + mixins), política, modelos, referencias
@@ -114,7 +114,7 @@ Las escrituras se restauran al terminar. Estos tests usan tu configuración real
 2. Si necesita una operación nueva del script:
    - añádela en `cubase/Trackwright_Bridge.js`;
    - añádela en `ops.py`;
-   - impleméntala en `fake.py`, con la misma forma de resultado;
+   - impleméntala en el paquete `fake/` (lecturas en `reads.py`, escrituras en `writes.py`), con la misma forma de resultado; `tests/script/test_conformance.py` la compara con el script;
    - cúbrela en `tests/script/test_script_node.py`. El test `test_script_ops_match_python_ops` falla si las listas no coinciden.
 3. **Lógica** en el mixin adecuado de `core/`: `reading.py`, `writing.py` o `commanding.py`.
    - Las escrituras usan `dry_run`, la política y la verificación por relectura.

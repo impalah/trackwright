@@ -4,6 +4,7 @@
 
 ## Sin publicar
 
+- **Paquete del simulador** (TW-1414): `trackwright.fake` es ahora un paquete por capas (núcleo, edición, automatización, escrituras, lecturas), con los mismos nombres públicos.
 - **Consistencia de la API MCP** (TW-1413). **Cambios incompatibles:**
   - `cubase_remove_selected_tracks` pasa a ser `cubase_remove_selected_track`: borra exactamente una pista;
   - `cubase_select_track` recibe `step: "previous"` (antes `"prev"`), como `cubase_plugin_preset`;

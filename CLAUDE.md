@@ -34,7 +34,7 @@ Integration tests against the real Cubase are opt-in: `TRACKWRIGHT_INTEGRATION=1
 - `protocol.py` (SysEx framing), `coremidi.py` / `transport.py`, `bridge.py` (daemon + client), `host.py`, `hostport.py`, `ops.py` (script operations: read vs write allowlist).
 - `core/`: `CubaseService` built from mixins (reading, writing, commanding, automation, project, settings, ranges, exporting, importing, saving, presets, lifecycle), `policy.py` (write policy), `models.py`, `refs.py`.
 - `server.py`: registers the 32 `cubase_*` MCP tools. `commands.py`: Cubase commands with their observed class (`direct`, `dialog`, `confirm`, `ui_selection`, `unknown`); keys must match `COMMANDS` in the script.
-- `fake.py`: `FakeCubase` simulator (tests and `serve --simulate`). Passing against it proves nothing about real Cubase.
+- `fake/`: `FakeCubase` simulator, in layers (core, editing, automation, writes, reads) (tests and `serve --simulate`). Passing against it proves nothing about real Cubase.
 - `experiments/twNNNN/`: throwaway probes against real Cubase, each with a README of what was observed.
 
 ## Project rules (from the user)

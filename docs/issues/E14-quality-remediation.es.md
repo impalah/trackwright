@@ -129,7 +129,7 @@
 
 ### TW-1414 Dividir el simulador
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-14): paquete `fake/` con `model.py`, `timeline.py`, `core.py`, `editing.py`, `automation.py`, `writes.py`, `reads.py` y `doubles.py` (el módulo más grande tiene 413 líneas; antes, 1185); las capas heredan unas de otras para que mypy compruebe cada llamada; los mismos nombres públicos; sin cambios de comportamiento
 - **Hallazgos:** F-05.
 - **Alcance:** paquete `fake/` con la emulación del protocolo, el modelo de edición y los dobles de test; sin cambios de comportamiento.
 

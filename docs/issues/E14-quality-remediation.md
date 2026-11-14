@@ -129,7 +129,7 @@
 
 ### TW-1414 Split the simulator
 
-- **Status:** pending
+- **Status:** done (2026-11-14): package `fake/` with `model.py`, `timeline.py`, `core.py`, `editing.py`, `automation.py`, `writes.py`, `reads.py` and `doubles.py` (largest module 413 lines, was 1185); the layers subclass each other so mypy checks every call; same public names; no behavior change
 - **Findings:** F-05.
 - **Scope:** `fake/` package with protocol emulation, the editing model and the test doubles; no behavior change.
 

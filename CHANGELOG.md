@@ -4,6 +4,7 @@
 
 ## Unreleased
 
+- **Simulator package** (TW-1414): `trackwright.fake` is now a package of layers (core, editing, automation, writes, reads), with the same public names.
 - **MCP API consistency** (TW-1413). **Breaking:**
   - `cubase_remove_selected_tracks` is now `cubase_remove_selected_track`: it removes exactly one track;
   - `cubase_select_track` takes `step: "previous"` (was `"prev"`), as `cubase_plugin_preset`;
