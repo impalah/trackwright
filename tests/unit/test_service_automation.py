@@ -120,7 +120,7 @@ def test_verify_reports_mismatches(service: CubaseService, fake: FakeCubase) -> 
         fake.automation.clear()  # Cubase did not keep anything
         return out
 
-    fake._op_auto_control = lossy  # type: ignore[method-assign]
+    fake.override("auto.control", lossy)
     out = service.record_automation("POC-TEST", "pan", pts(("2.1.1.0", 0.9), ("3.1.1.0", 0.1)), dry_run=False)
     assert out.verified is False
     assert out.mismatches
@@ -192,7 +192,7 @@ def test_recording_cut_short_is_reported(
             fake.playing = False
         return original(p)
 
-    fake._op_transport_get = stop_halfway  # type: ignore[method-assign]
+    fake.override("transport.get", stop_halfway)
     out = service.record_automation("POC-TEST", "volume", pts(("2.1.1.0", 0.79), ("4.1.1.0", 0.4)),
                                     dry_run=False, verify=False)  # fmt: skip
     assert out.complete is False
@@ -268,7 +268,7 @@ def test_conversion_mapping(service: CubaseService, fake: FakeCubase, parameter:
         seen.append(p)
         return original(p)
 
-    fake._op_da_convert = spy  # type: ignore[method-assign]
+    fake.override("da.convert", spy)
     out = service.convert_value("POC-TEST", parameter, plain=-12)
     assert out.value == pytest.approx(0.25)
     obj = fake.objects[int(seen[0]["id"])]  # type: ignore[call-overload]

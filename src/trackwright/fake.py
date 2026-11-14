@@ -76,6 +76,52 @@ class Obj:
     has_events: bool = False
 
 
+# DirectAccess methods the script reports in capabilities.methods (TW-1408: same shape as the script)
+DIRECT_ACCESS_METHODS = (
+    "pm.getNumberOfPluginCollections",
+    "pm.getPluginCollectionByIndex",
+    "pm.getIndexOfDefaultPluginCollection",
+    "pm.getIndexOfActivePluginCollection",
+    "pm.trySetSlotPlugin",
+    "pm.resetSlotPlugin",
+    "activate",
+    "deactivate",
+    "update",
+    "getBaseObjectID",
+    "getNumberOfChildObjects",
+    "getChildObjectID",
+    "getObjectUniqueName",
+    "getObjectTypeName",
+    "getObjectUniqueIDString",
+    "getObjectTitle",
+    "getNumberOfParameters",
+    "getParameterTagByIndex",
+    "getParameterTitle",
+    "getParameterProcessValue",
+    "setParameterProcessValue",
+    "getParameterDisplayValue",
+    "getParameterDisplayUnits",
+    "getParameterProcessValueType",
+    "isParameterAutomatable",
+    "convertParameterProcessValueToPlain",
+    "convertParameterPlainToProcessValue",
+    "getParameterEditLockState",
+    "getParameterDefaultProcessValue",
+    "getMixerChannelIndex",
+    "getMixerChannelZone",
+    "isMixerChannelVisible",
+    "setParameterDisplayValue",
+)
+
+
+MAX_CHANNEL_TAGS = 16
+
+
+def clamp_limit(value: float, maximum: int) -> int:
+    """Like the script's ``clampLimit``: at least 1 (verified in Cubase: ``limit`` 0 returns one item)."""
+    return 1 if value < 1 else min(int(value), maximum)
+
+
 class FakeCubase:
     """In-memory host. Use the helper methods (``remove``, ``reload_script``...) to drive scenarios."""
 
@@ -140,6 +186,7 @@ class FakeCubase:
         self.events: list[JsonObject] = []
         self.event_seq = 0
         self.calls: list[tuple[str, JsonObject]] = []
+        self.overrides: dict[str, Callable[[JsonObject], JsonObject]] = {}
         self.fail_next: dict[str, TrackwrightError] = {}
         self.can_perform_false: set[str] = {"edit.undo", "edit.redo", "edit.paste"}
 
@@ -337,11 +384,15 @@ class FakeCubase:
             raise RequestTimeoutError(f"no answer from Cubase for {op}", outcome_unknown=op not in SESSIONLESS_OPS)
         if op in self.fail_next:
             raise self.fail_next.pop(op)
-        handler = getattr(self, "_op_" + op.replace(".", "_"), None)
+        handler = self.overrides.get(op) or getattr(self, "_op_" + op.replace(".", "_"), None)
         if handler is None:
             raise HostError(f"unknown op {op}", code="UNKNOWN_OP")
         result: JsonObject = handler(p)
         return result
+
+    def override(self, op: str, handler: Callable[[JsonObject], JsonObject]) -> None:
+        """Answer ``op`` with ``handler`` (tests: simulate a Cubase behaviour without touching internals)."""
+        self.overrides[op] = handler
 
     def request_with_session(self, op: str, sid: str, params: JsonObject | None = None) -> JsonObject:
         """Like the script: refuse a foreign session id (used to test stale sessions)."""
@@ -462,6 +513,15 @@ class FakeCubase:
             "queue": 0,
             "dupInFlightDropped": 0,
             "lastError": "",
+            # diagnostics the script reports too (TW-1408: same shape as the script)
+            "idleTicks": 0,
+            "deviceIdleTicks": 0,
+            "sysexIn": len(self.calls),
+            "framesRejected": 0,
+            "pendingAssemblies": 0,
+            "changedObjects": 0,
+            "changedParameters": 0,
+            "removedObjects": 0,
             "simulated": True,
         }
 
@@ -475,6 +535,15 @@ class FakeCubase:
             "commandsBound": len(COMMANDS),
             "commandErrors": 0,
             "writePolicy": "open",
+            # fields the script reports too (TW-1408: same shape as the script)
+            "makeDirectAccess": True,
+            "directAccessError": None,
+            "mixerDirectAccessError": None,
+            "panel": {"enabled": True, "errors": []},
+            "automationControls": {"enabled": True, "count": len(self.AUTO_KEYS), "errors": []},
+            "pageMOnIdle": True,
+            "methods": dict.fromkeys(DIRECT_ACCESS_METHODS, True),
+            "pluginManager": True,
             "simulated": True,
         }
         return {"capabilities": caps, "host": self._host()}
@@ -516,7 +585,7 @@ class FakeCubase:
     def _op_da_children(self, p: JsonObject) -> JsonObject:
         obj = self._live(int(self._num(p, "id")))
         offset = int(self._num(p, "offset", 0))
-        limit = min(int(self._num(p, "limit", 20)), 50)
+        limit = clamp_limit(self._num(p, "limit", 20), 50)
         items = [self._describe(self.objects[c]) | {"index": i} for i, c in enumerate(obj.children) if i >= offset][
             :limit
         ]
@@ -525,7 +594,7 @@ class FakeCubase:
     def _op_da_params(self, p: JsonObject) -> JsonObject:
         obj = self._live(int(self._num(p, "id")))
         offset = int(self._num(p, "offset", 0))
-        limit = min(int(self._num(p, "limit", 10)), 25)
+        limit = clamp_limit(self._num(p, "limit", 10), 25)
         tags = list(obj.params)
         items = [self._describe_param(obj, t) | {"index": i} for i, t in enumerate(tags) if i >= offset][:limit]
         return {"id": obj.id, "total": len(tags), "offset": offset, "items": items}
@@ -547,8 +616,10 @@ class FakeCubase:
         if base < 0:
             return {"base": base, "total": 0, "items": [], "duplicates": []}
         offset = int(self._num(p, "offset", 0))
-        limit = min(int(self._num(p, "limit", 16)), 32)
+        limit = clamp_limit(self._num(p, "limit", 16), 32)
         tags = p.get("tags") or [1024, 4000, 1025, 1027, 1028, 4101, 4102]
+        if len(tags) > MAX_CHANNEL_TAGS:  # like script 1.6.0 (S-03)
+            raise HostError(f"at most {MAX_CHANNEL_TAGS} tags", code="BAD_REQUEST")
         children = [*self.channels, self.channels[-1]] if base == self.mixer.id else self.objects[base].children
         items: list[JsonObject] = []
         duplicates: list[JsonObject] = []
@@ -568,7 +639,9 @@ class FakeCubase:
                     "process": obj.params[t].value,
                 }
                 if t in obj.params
-                else None
+                # verified in Cubase (2026-11-14): a missing tag reads as process -1 and an empty display, with
+                # the title of another parameter ("Nombre"); the script passes it through
+                else {"title": "Nombre", "display": "", "process": -1}
                 for t in tags
             }
             items.append(
@@ -601,7 +674,7 @@ class FakeCubase:
         if int(self._num(p, "collection")) != 0 or not slot.params.get(4125):
             raise HostError("collection not found", code="NOT_FOUND")
         offset = int(self._num(p, "offset", 0))
-        limit = min(int(self._num(p, "limit", 20)), 40)
+        limit = clamp_limit(self._num(p, "limit", 20), 40)
         needle = str(p.get("filter") or "").lower()
         matched = [
             e | {"index": i}

@@ -142,7 +142,7 @@ def test_split_at_locators_validation(service: CubaseService, fake: FakeCubase) 
     for left, right in [("x", "4.1.1.0"), ("4.1.1.0", "2.1.1.0")]:
         with pytest.raises(PreconditionFailedError):
             service.split_at_locators(left, right)
-    fake._op_transport_setTime = lambda p: {}  # type: ignore[method-assign]
+    fake.override("transport.setTime", lambda p: {})
     with pytest.raises(PreconditionFailedError) as exc:
         service.split_at_locators("2.1.1.0", "4.1.1.0", dry_run=False)
     assert exc.value.code == "VERIFY_FAILED"

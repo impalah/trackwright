@@ -91,7 +91,7 @@
 
 ### TW-1408 Simulator and script conformance
 
-- **Status:** pending
+- **Status:** done (2026-11-14): `tests/script/test_conformance.py` (26 tests: shapes, errors, clamping, copied lists); simulator aligned with the script and with Cubase (checked live: missing tag → `process` -1, `limit` 0 → one item); `track_info` treats `process` -1 as absent; `FakeCubase.override()` replaces the 16 assignments of private handlers in the tests
 - **Findings:** F-01, F-02, F-04, F-06, S-11.
 - **Scope:** a parametrized test that sends the same operations to the node harness (real script) and to `FakeCubase` and compares keys, clamping and error codes; a decision on missing tags verified in Cubase; tests that the automation-key and plugin lists match; every op in `ALL_OPS` has a simulator handler; a public `override(op, fn)` hook; named script constants checked by a test.
 

@@ -60,7 +60,7 @@ def test_tw1004_insert_read_back_failure_keeps_the_write_timeout(service: Cubase
             raise RequestTimeoutError("da.object late", outcome_unknown=False)
         return original(p)
 
-    fake._op_da_object = slow_object  # type: ignore[method-assign]
+    fake.override("da.object", slow_object)
     with pytest.raises(RequestTimeoutError) as exc:
         service.insert_plugin("POC-TEST", 1, STUDIO_EQ, dry_run=False)
     assert exc.value.outcome_unknown is True
@@ -75,7 +75,7 @@ def test_tw1006_partial_mix_changes_are_reported(service: CubaseService, fake: F
             raise RequestTimeoutError("mute late", outcome_unknown=True)
         return original(p)
 
-    fake._op_da_param_set = fail_on_mute  # type: ignore[method-assign]
+    fake.override("da.param.set", fail_on_mute)
     with pytest.raises(RequestTimeoutError) as exc:
         service.set_track_mix("POC-INSTR", volume=0.5, mute=True, dry_run=False)
     applied = exc.value.details["applied"]
@@ -126,7 +126,7 @@ def test_tw1012_removal_that_lands_late_is_seen(fake: FakeCubase) -> None:
         return original_channels(p)
 
     fake._apply_command = delayed  # type: ignore[method-assign]
-    fake._op_da_channels = channels  # type: ignore[method-assign]
+    fake.override("da.channels", channels)
     out = service.remove_selected_tracks("POC-TEST", dry_run=False)
     assert out.status == "done"
 

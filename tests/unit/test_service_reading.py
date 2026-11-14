@@ -111,7 +111,7 @@ def test_list_available_plugins(service: CubaseService) -> None:
 
 def test_list_available_plugins_without_collection(service: CubaseService, fake: FakeCubase) -> None:
     original = fake._op_pm_collections
-    fake._op_pm_collections = lambda p: {**original(p), "total": 0, "activeIndex": -1}  # type: ignore[method-assign]
+    fake.override("pm.collections", lambda p: {**original(p), "total": 0, "activeIndex": -1})
     with pytest.raises(NotFoundError) as exc:
         service.list_available_plugins("selected", 1)
     assert exc.value.code == "NO_COLLECTION"
@@ -173,7 +173,7 @@ def test_get_transport(service: CubaseService, fake: FakeCubase) -> None:
     assert out.cursor.format == "Compases+Tiempos"
     assert out.tempo_bpm == 120
     original = fake._op_transport_get
-    fake._op_transport_get = lambda p: {**original(p), "primary": {}}  # type: ignore[method-assign]
+    fake.override("transport.get", lambda p: {**original(p), "primary": {}})
     with pytest.raises(TrackwrightError) as exc:
         service.get_transport()
     assert exc.value.code == "UNAVAILABLE"
@@ -194,7 +194,7 @@ def test_poll_changes(service: CubaseService, fake: FakeCubase) -> None:
 
 def test_poll_changes_with_drops(service: CubaseService, fake: FakeCubase) -> None:
     original = fake._op_events
-    fake._op_events = lambda p: {**original(p), "dropped": 3}  # type: ignore[method-assign]
+    fake.override("events", lambda p: {**original(p), "dropped": 3})
     assert "dropped" in service.poll_changes().advice
 
 
@@ -212,7 +212,7 @@ def test_script_reload_during_a_tool_stops_before_writing(service: CubaseService
         fake.reload_script()  # Cubase reloads the script between the tool's reads
         return original(p)
 
-    fake._op_da_param_get = reload_then_read  # type: ignore[method-assign]
+    fake.override("da.param.get", reload_then_read)
     with pytest.raises(StaleSessionError, match="before any further write"):
         service.set_track_mix("POC-INSTR", mute=True, dry_run=False)
     assert not any(op == "da.param.set" for op, _ in fake.calls)

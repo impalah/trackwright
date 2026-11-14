@@ -421,3 +421,9 @@ Cubase Elements 15.0.30, script 1.5.5, the test project. The bridge was restarte
 - **CI:** the first GitHub Actions run (push of `a342347`) passed every step on macOS: environment, lint/format/types/tests with coverage, Node tests of the script, build and `twine check`.
 - **PyPI:** the user published 0.4.0 with `make publish`. The wheel and the sdist on PyPI have the same SHA-256 as the local build of commit `fc506e1` (tag `v0.4.0`); the metadata has the `Repository`, `Issues` and `Author` links.
 - `uvx --refresh trackwright@0.4.0 version` from an unrelated folder answers `0.4.0`. Without `--refresh`, uv first said no 0.4.0 existed: its cached index was older than the upload.
+
+## 2026-11-14 — TW-1408: what the simulator must imitate
+
+Two questions the conformance test raised, asked to Cubase Elements 15.0.30 (reads only, test project):
+- `da.channels` with a tag the channels do not have (9999): every channel answers `{"title": "Nombre", "display": "", "process": -1}` — a title of another parameter, an empty display and `process` -1. The script passes it through; the simulator returned `null`. Both now return the same, and `track_info` treats `process: -1` as absent.
+- `da.children` with `limit` 0: one item (of 6), because the script clamps the limit to at least 1. The simulator returned none; it now clamps the same way.

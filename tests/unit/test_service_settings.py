@@ -31,7 +31,7 @@ def test_apply_and_read_back(service: CubaseService, fake: FakeCubase) -> None:
 
 def test_not_verified_when_cubase_ignores_it(service: CubaseService, fake: FakeCubase) -> None:
     original = fake._op_da_param_set
-    fake._op_da_param_set = lambda p: {} if p.get("tag") == 4022 else original(p)  # type: ignore[method-assign]
+    fake.override("da.param.set", lambda p: {} if p.get("tag") == 4022 else original(p))
     out = service.set_project({"cycle": True, "metronome": True}, dry_run=False)
     assert out.verified is False
     assert [c.verified for c in out.changes] == [False, True]

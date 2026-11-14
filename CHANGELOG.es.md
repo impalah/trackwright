@@ -2,6 +2,10 @@
 
 [English](CHANGELOG.md) · **Español**
 
+## Sin publicar
+
+- **Conformidad entre simulador y script** (TW-1408): un test envía las mismas operaciones al script real y al simulador y compara sus respuestas; el simulador coincide ahora con el script (campos de diagnóstico, el límite de 16 tags, `limit` 0 que devuelve un elemento) y con Cubase (un parámetro de canal que no existe se lee como `process: -1`, que Trackwright trata ahora como ausente). Los tests usan `fake.override()` en lugar de sustituir métodos privados.
+
 ## 0.4.0 — 2026-11-14
 
 Fases 1 y 2 de la remediación de calidad (épica E14): seguridad y resultados veraces, robustez del puente y del script de Cubase. Requiere el **script de Cubase 1.6.1**.

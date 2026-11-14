@@ -421,3 +421,9 @@ Cubase Elements 15.0.30, script 1.5.5, el proyecto de pruebas. Se reinició el p
 - **CI:** la primera ejecución de GitHub Actions (push de `a342347`) pasó todos los pasos en macOS: entorno, lint/formato/tipos/tests con cobertura, tests con Node del script, construcción y `twine check`.
 - **PyPI:** el usuario publicó la 0.4.0 con `make publish`. El wheel y el sdist de PyPI tienen el mismo SHA-256 que la construcción local del commit `fc506e1` (etiqueta `v0.4.0`); los metadatos llevan los enlaces `Repository`, `Issues` y `Author`.
 - `uvx --refresh trackwright@0.4.0 version` desde otra carpeta responde `0.4.0`. Sin `--refresh`, uv dijo primero que no existía la 0.4.0: su índice en caché era anterior a la subida.
+
+## 2026-11-14 — TW-1408: qué debe imitar el simulador
+
+Dos preguntas que planteó el test de conformidad, hechas a Cubase Elements 15.0.30 (solo lecturas, proyecto de pruebas):
+- `da.channels` con un tag que los canales no tienen (9999): cada canal responde `{"title": "Nombre", "display": "", "process": -1}`: el título de otro parámetro, una visualización vacía y `process` -1. El script lo pasa tal cual; el simulador devolvía `null`. Ahora ambos devuelven lo mismo, y `track_info` trata `process: -1` como ausente.
+- `da.children` con `limit` 0: un elemento (de 6), porque el script fija el límite en 1 como mínimo. El simulador no devolvía ninguno; ahora recorta igual.

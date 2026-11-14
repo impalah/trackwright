@@ -284,7 +284,7 @@ async def test_unexpected_errors_reach_the_client_with_a_code(client: Client, fa
     def broken(_p: object) -> object:
         raise KeyError("boom")
 
-    fake._op_transport_get = broken  # type: ignore[assignment, method-assign]
+    fake.override("transport.get", broken)
     result = await client.call_tool("cubase_get_transport", {})
     assert result.is_error
     assert "INTERNAL_ERROR" in str(result.content[0].text)  # type: ignore[union-attr]

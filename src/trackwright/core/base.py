@@ -210,7 +210,8 @@ class ServiceBase:
 
         def value(tag: int) -> JsonObject | None:
             v = values.get(str(tag))
-            return v if isinstance(v, dict) else None
+            # TW-1408 (F-02): Cubase reports a parameter the channel lacks as process -1 (verified)
+            return v if isinstance(v, dict) and v.get("process") != -1 else None
 
         def flag(tag: int) -> bool | None:
             v = value(tag)

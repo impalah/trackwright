@@ -91,6 +91,8 @@ tests/
 
 `FakeCubase` reproduce los comportamientos verificados en la POC. Un test que pasa contra el simulador **no** prueba nada sobre Cubase real: para eso están los tests de integración.
 
+`tests/script/test_conformance.py` mantiene honesto al simulador: envía las mismas operaciones al script real (con Node) y a `FakeCubase` y compara las respuestas por estructura, códigos de error y recortes de valores, además de las listas copiadas entre ambos lados (claves de automatización, tags por defecto de los canales, un manejador del simulador por operación). Cuando un test necesite que Cubase se comporte de otra forma, usa `fake.override(op, handler)` en lugar de sustituir métodos privados.
+
 ## Tests de integración
 
 Necesitan el puente en marcha y Cubase abierto con un proyecto desechable.

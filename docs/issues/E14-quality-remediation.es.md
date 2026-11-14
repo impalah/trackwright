@@ -91,7 +91,7 @@
 
 ### TW-1408 Conformidad entre el simulador y el script
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-14): `tests/script/test_conformance.py` (26 tests: estructuras, errores, recortes, listas copiadas); simulador alineado con el script y con Cubase (comprobado en directo: tag ausente → `process` -1, `limit` 0 → un elemento); `track_info` trata `process` -1 como ausente; `FakeCubase.override()` sustituye las 16 asignaciones de manejadores privados en los tests
 - **Hallazgos:** F-01, F-02, F-04, F-06, S-11.
 - **Alcance:** un test parametrizado que envía las mismas operaciones al arnés de node (script real) y a `FakeCubase` y compara claves, recortes de valores y códigos de error; una decisión sobre los tags que faltan, verificada en Cubase; tests de que coinciden las listas de claves de automatización y de plugins; toda operación de `ALL_OPS` tiene un manejador en el simulador; un gancho público `override(op, fn)`; constantes del script con nombre comprobadas por un test.
 

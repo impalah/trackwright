@@ -2,6 +2,10 @@
 
 **English** · [Español](CHANGELOG.es.md)
 
+## Unreleased
+
+- **Simulator and script conformance** (TW-1408): a test sends the same operations to the real script and to the simulator and compares their answers; the simulator now matches the script (diagnostic fields, the 16-tag limit, `limit` 0 returning one item) and Cubase (a missing channel parameter reads as `process: -1`, which Trackwright now treats as absent). Tests use `fake.override()` instead of replacing private methods.
+
 ## 0.4.0 — 2026-11-14
 
 Phases 1 and 2 of the quality remediation (epic E14): safety and truthful results, bridge and Cubase script robustness. Requires the **Cubase script 1.6.1**.

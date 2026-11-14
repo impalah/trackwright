@@ -129,7 +129,7 @@ def test_set_parameter_timeout_read_back_failure(service: CubaseService, fake: F
 
 def test_set_parameter_unverified(service: CubaseService, fake: FakeCubase) -> None:
     original = fake._op_da_param_set
-    fake._op_da_param_set = lambda p: {**original(p), "after": {"process": 0.1, "display": "x"}}  # type: ignore[method-assign]
+    fake.override("da.param.set", lambda p: {**original(p), "after": {"process": 0.1, "display": "x"}})
     out = service.set_parameter("POC-TEST", "channel", 1025, 0.5, dry_run=False)
     assert out.verified is False
     assert out.note is not None
@@ -268,7 +268,7 @@ def test_set_position_dry_run_and_errors(service: CubaseService, fake: FakeCubas
 
 
 def test_set_position_not_reached(service: CubaseService, fake: FakeCubase) -> None:
-    fake._op_transport_setTime = lambda p: {}  # type: ignore[method-assign]
+    fake.override("transport.setTime", lambda p: {})
     assert service.set_position("cursor", "5.1.1.0").verified is False
 
 
@@ -299,7 +299,7 @@ def test_wait_until_polls(fake: FakeCubase) -> None:
 
 def test_step_that_does_not_move_is_not_verified(service: CubaseService, fake: FakeCubase) -> None:
     """TW-1403 (C-14): at the last track 'next' does not move the selection."""
-    fake._op_sel_step = lambda _p: {}  # type: ignore[method-assign]
+    fake.override("sel.step", lambda _p: {})
     out = service.select_track(step="next")
     assert out.selected_before == out.selected_after
     assert out.verified is False
