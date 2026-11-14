@@ -10,7 +10,7 @@
 2. **Si Cubase muestra un diálogo** al arrancar (Steinberg Hub, elección de proyecto, dispositivo de audio), respóndelo tú y abre un proyecto. El script empieza a responder cuando hay un proyecto abierto.
 3. **Al terminar,** cierra Cubase tú; Trackwright nunca lo cierra. El puente arrancado automáticamente sigue en segundo plano. Para pararlo:
    ```sh
-   pkill -f "trackwright bridge"
+   trackwright bridge-stop
    ```
 
 También puedes arrancar el puente a mano en una terminal, como antes (`uv run trackwright bridge`), y pararlo con **Ctrl+C**. Si ya está en marcha, `serve` lo usa y no arranca otro.
@@ -19,6 +19,7 @@ También puedes arrancar el puente a mano en una terminal, como antes (`uv run t
 
 ```sh
 uv run trackwright bridge-status   # pid, peticiones, sesión del script, respuestas tardías, errores
+uv run trackwright bridge-stop     # para el puente (por ejemplo, tras actualizar Trackwright)
 uv run trackwright ping            # ida y vuelta Python → Cubase → Python
 uv run trackwright doctor          # diagnóstico completo con soluciones
 ```

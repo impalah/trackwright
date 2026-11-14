@@ -4,7 +4,7 @@
 .DEFAULT_GOAL := help
 .PHONY: help sync lint format format-check typecheck test test-cov test-node test-integration \
 	test-integration-write check build dist-check publish-test publish clean version doctor ping \
-	bridge bridge-status serve-sim script-status script-install script-install-apply setup
+	bridge bridge-status bridge-stop serve-sim script-status script-install script-install-apply setup
 
 UV ?= uv
 TEST_TRACK ?= POC-TEST
@@ -81,6 +81,9 @@ bridge: ## Run the bridge in the foreground (Ctrl+C to stop); normally serve sta
 
 bridge-status: ## Show the bridge status
 	$(UV) run trackwright bridge-status
+
+bridge-stop: ## Stop the running bridge (for example after upgrading)
+	$(UV) run trackwright bridge-stop
 
 serve-sim: ## Run the MCP server on stdio against the built-in Cubase simulator
 	$(UV) run trackwright serve --simulate

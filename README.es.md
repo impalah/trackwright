@@ -100,7 +100,7 @@ Después usa Copilot Chat en modo agente. Las herramientas de Trackwright aparec
 - **Actualizar:** `uv tool upgrade trackwright` y después `trackwright setup`, que actualiza el script si cambió. Reinicia Cubase.
 - **Desinstalar:**
   1. `claude mcp remove trackwright -s user`;
-  2. `pkill -f "trackwright bridge"`;
+  2. `trackwright bridge-stop`;
   3. `uv tool uninstall trackwright`;
   4. borra `~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/` y `~/.config/trackwright/`, y quita la superficie en la pestaña MIDI Remote de Cubase.
 

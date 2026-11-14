@@ -183,5 +183,5 @@ Each write is undone when the test finishes.
 
 1. Delete the `~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/` folder.
 2. In Cubase, remove the **Trackwright – Bridge** surface from the MIDI Remote tab.
-3. Remove the server from Claude Code (`claude mcp remove trackwright -s user`), stop the bridge (`pkill -f "trackwright bridge"`) and uninstall Trackwright: `uv tool uninstall trackwright`, or delete the repository if you installed it from source.
+3. Remove the server from Claude Code (`claude mcp remove trackwright -s user`), stop the bridge (`trackwright bridge-stop`) and uninstall Trackwright: `uv tool uninstall trackwright`, or delete the repository if you installed it from source.
 4. If you created it, delete `~/.config/trackwright/`.

@@ -183,5 +183,5 @@ Cada escritura se deshace al terminar la prueba.
 
 1. Borra la carpeta `~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/`.
 2. En Cubase, elimina la superficie **Trackwright – Bridge** de la pestaña MIDI Remote.
-3. Quita el servidor de Claude Code (`claude mcp remove trackwright -s user`), para el puente (`pkill -f "trackwright bridge"`) y desinstala Trackwright: `uv tool uninstall trackwright`, o borra el repositorio si lo instalaste desde el código fuente.
+3. Quita el servidor de Claude Code (`claude mcp remove trackwright -s user`), para el puente (`trackwright bridge-stop`) y desinstala Trackwright: `uv tool uninstall trackwright`, o borra el repositorio si lo instalaste desde el código fuente.
 4. Si lo creaste, borra `~/.config/trackwright/`.

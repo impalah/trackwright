@@ -188,3 +188,34 @@ def test_bad_log_level_is_a_usage_error() -> None:
 
 def test_log_level_is_case_insensitive(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["--log-level", "debug", "version"]) == 0
+
+
+# ---------------------------------------------------------------- bridge-stop (found while verifying TW-1405)
+def test_bridge_stop_when_not_running(sock_dir: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    cfg = tmp_path / "c.toml"
+    cfg.write_text(f'[bridge]\nsocket_dir = "{sock_dir}"\n', encoding="utf-8")
+    assert main(["--config", str(cfg), "bridge-stop"]) == 0
+    assert '"stopped": false' in capsys.readouterr().out
+
+
+def test_bridge_stop_signals_the_bridge_pid(
+    live: BridgeServer, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    """The autostarted bridge runs as `python -m trackwright --config … bridge`: `trackwright bridge-stop`
+    does not match it, so the command asks the bridge for its pid instead."""
+    import os
+
+    killed: list[tuple[int, int]] = []
+
+    def fake_kill(pid: int, sig: int) -> None:
+        killed.append((pid, sig))
+        live.stop()  # the bridge exits and removes its socket
+
+    monkeypatch.setattr(os, "kill", fake_kill)
+    cfg = tmp_path / "c.toml"
+    cfg.write_text(f'[bridge]\nsocket_dir = "{live.socket_path.parent}"\n', encoding="utf-8")
+    assert main(["--config", str(cfg), "bridge-stop"]) == 0
+    import signal
+
+    assert killed == [(os.getpid(), signal.SIGTERM)]
+    assert '"stopped": true' in capsys.readouterr().out

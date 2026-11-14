@@ -55,6 +55,32 @@ def cmd_bridge_status(_args: argparse.Namespace, settings: Settings) -> int:
     return 0
 
 
+def cmd_bridge_stop(_args: argparse.Namespace, settings: Settings, *, wait: float = 5.0) -> int:
+    """Stop the running bridge (SIGTERM to the pid it reports). Its MIDI ports disappear with it."""
+    import os  # noqa: PLC0415
+    import signal  # noqa: PLC0415
+    import time  # noqa: PLC0415
+
+    from trackwright.bridge import BridgeClient  # noqa: PLC0415
+    from trackwright.errors import BridgeUnavailableError  # noqa: PLC0415
+
+    try:
+        status = BridgeClient(settings.bridge.socket_path).call(
+            "bridge.status", timeout=settings.bridge.request_timeout
+        )
+    except BridgeUnavailableError:
+        emit({"stopped": False, "reason": "the bridge is not running"})
+        return 0
+    pid = int(status["pid"])
+    os.kill(pid, signal.SIGTERM)
+    deadline = time.monotonic() + wait
+    while settings.bridge.socket_path.exists() and time.monotonic() < deadline:
+        time.sleep(0.1)
+    stopped = not settings.bridge.socket_path.exists()
+    emit({"stopped": stopped, "pid": pid})
+    return 0 if stopped else 1
+
+
 def cmd_ping(args: argparse.Namespace, settings: Settings) -> int:
     from trackwright.bridge import BridgeClient  # noqa: PLC0415
 
@@ -153,6 +179,7 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("config", help="print the effective configuration").set_defaults(handler=cmd_config)
     sub.add_parser("bridge", help="run the bridge daemon (keep it running)").set_defaults(handler=cmd_bridge)
     sub.add_parser("bridge-status", help="show the bridge status").set_defaults(handler=cmd_bridge_status)
+    sub.add_parser("bridge-stop", help="stop the running bridge").set_defaults(handler=cmd_bridge_stop)
     serve = sub.add_parser("serve", help="run the MCP server on stdio (started by the MCP client)")
     serve.add_argument("--simulate", action="store_true", help="answer from the built-in Cubase simulator")
     serve.set_defaults(handler=cmd_serve)
