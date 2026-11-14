@@ -409,3 +409,9 @@ Cubase Elements 15.0.30, script 1.5.5, the test project. The bridge was restarte
 - **Upgrade rehearsal** in throwaway folders: `trackwright==0.3.0` from PyPI, whose `setup` installed script 1.5.5; then the 0.4.0 wheel. `bridge-stop` with no bridge answers `stopped: false`; `setup` replaced 1.5.5 with 1.6.0 (mode 0644) and listed the next steps.
 - Found while rehearsing: a server registered with `uvx --from trackwright==0.3.0` would keep running 0.3.0 after the upgrade. `setup` now warns when the registration pins another version; the upgrade steps of the changelog say how to replace it.
 - The 0.4.0 wheel installed in isolation: `doctor` against the user's bridge and Cubase, every check ok (script 1.6.0 = packaged).
+
+## 2026-11-14 — Script 1.6.1: the panel explains the faders
+
+- Installed by the user (`trackwright script install --apply`, replacing 1.6.0) and loaded by restarting Cubase.
+- **Seen by the user:** the three fixed lines under the track name ("Faders on the right:", "automation (Trackwright)", "do not move or map them") are visible on the surface.
+- `doctor`: every check ok, "script loaded in Cubase" 1.6.1 = packaged; `capabilities.panel`: enabled, no errors; integration tests (reads and reversible writes on POC-TEST): 5 passed.

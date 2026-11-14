@@ -409,3 +409,9 @@ Cubase Elements 15.0.30, script 1.5.5, el proyecto de pruebas. Se reinició el p
 - **Ensayo de actualización** en carpetas desechables: `trackwright==0.3.0` desde PyPI, cuyo `setup` instaló el script 1.5.5; después, el wheel de la 0.4.0. `bridge-stop` sin puente responde `stopped: false`; `setup` sustituyó 1.5.5 por 1.6.0 (permisos 0644) y listó los pasos siguientes.
 - Encontrado durante el ensayo: un servidor registrado con `uvx --from trackwright==0.3.0` seguiría ejecutando la 0.3.0 tras actualizar. `setup` ahora avisa cuando el registro fija otra versión; los pasos de actualización del registro de cambios explican cómo sustituirlo.
 - El wheel de la 0.4.0 instalado aparte: `doctor` contra el puente y el Cubase del usuario, todas las comprobaciones bien (script 1.6.0 = el del paquete).
+
+## 2026-11-14 — Script 1.6.1: el panel explica los faders
+
+- Instalado por el usuario (`trackwright script install --apply`, sustituyendo a 1.6.0) y cargado al reiniciar Cubase.
+- **Visto por el usuario:** las tres líneas fijas bajo el nombre de la pista («Faders on the right:», «automation (Trackwright)», «do not move or map them») se ven en la superficie.
+- `doctor`: todas las comprobaciones bien, «script loaded in Cubase» 1.6.1 = el del paquete; `capabilities.panel`: activado, sin errores; tests de integración (lecturas y escrituras reversibles en POC-TEST): 5 pasados.
