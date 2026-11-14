@@ -15,13 +15,13 @@
 
 ### TW-1401 Cerrar los agujeros de la política de escritura
 
-- **Estado:** hecha en el código (2026-11-14), con tests en `tests/unit/test_write_policy_tw1401.py`; falta la verificación en Cubase (Cubase estaba cerrado).
+- **Estado:** hecha (2026-11-14); tests en `tests/unit/test_write_policy_tw1401.py`; verificada en Cubase (ver verification.es.md)
 - **Decisiones:**
   - `cubase_run_command` rechaza `file.save`, `file.save_new_version` y `project.remove_selected_tracks` con `USE_DEDICATED_TOOL`, incluso con permiso: las herramientas específicas comprueban y verifican más.
   - Nuevo `WritePolicy.check_all_tracks()`: todo lo que puede cambiar cualquier pista (los comandos de Cubase, que actúan sobre la selección de la ventana, y las ediciones de rango y cortes en todas las pistas) se rechaza con `NOT_ALLOWED` mientras `allowed_tracks` tenga pistas.
   - Los localizadores del ciclo necesitan las escrituras activadas; `cubase_set_position` mantiene `dry_run=false` por defecto, como las demás herramientas de navegación (excepción documentada).
   - La protección del enrutado dentro del script de Cubase pasa a TW-1406 (script 1.6.0), para agrupar los cambios del script; la de Python ya cubre todos los caminos MCP.
-  - `edit.select_none` antes de *Select in Loop* solo está probado con el simulador; hay que comprobarlo en Cubase con una edición de rango en el proyecto de pruebas.
+  - `edit.select_none` antes de *Select in Loop*: comprobado en Cubase con una edición de rango en el proyecto de pruebas, deshecha después (2026-11-14).
 - **Hallazgos:** C-01, C-02, C-03, C-08, C-10, C-09.
 - **Alcance:**
   1. `run_command`: política por clave. `file.save` y `file.save_new_version` → `check_save()`. Las claves que tienen una herramienta propia con guarda (eliminación de pistas, ediciones de rango) se rechazan, o solo se permiten cuando `allowed_tracks` está vacío; documentar cuál de las dos.
@@ -35,7 +35,7 @@
 
 ### TW-1402 Las escrituras llegan siempre al objeto y a la sesión que vio quien llama
 
-- **Estado:** hecha en el código (2026-11-14), con tests en `tests/unit/test_session_pinning_tw1402.py`; falta la verificación en Cubase (Cubase estaba cerrado). La petición IPC tiene un campo opcional `session`, que solo se conserva en las escrituras; un puente anterior lo ignora, así que hay que reiniciar el puente tras actualizar. Margen mínimo: 0,25 s (`MIN_WRITE_BUDGET`).
+- **Estado:** hecha (2026-11-14); tests en `tests/unit/test_session_pinning_tw1402.py`; verificada en Cubase (ver verification.es.md). La petición IPC tiene un campo opcional `session`, que solo se conserva en las escrituras; un puente anterior lo ignora, así que hay que reiniciar el puente tras actualizar. Margen mínimo: 0,25 s (`MIN_WRITE_BUDGET`)
 - **Hallazgos:** I-02, C-04, I-03.
 - **Alcance:**
   1. La petición IPC de una escritura lleva el id de sesión fijado; el puente lo reenvía tal cual (sin `hello` implícito ni sustitución), así que la comprobación `STALE_SESSION` del script rechaza una escritura tras una recarga.
@@ -45,7 +45,7 @@
 
 ### TW-1403 Resultados que dicen solo lo que ocurrió
 
-- **Estado:** hecha en el código (2026-11-14), con tests junto a los de cada herramienta (`test_service_import`, `_saving`, `_automation`, `_settings`, `_ranges`, `_writing`, `_reading`, contrato); falta la verificación en Cubase. Aquí también se hizo C-27 (el rango de exportación se convierte una sola vez), y las tres funciones de carpeta de proyecto pasaron a ser `ServiceBase.project_folder()`.
+- **Estado:** hecha en el código (2026-11-14), con tests junto a los de cada herramienta (`test_service_import`, `_saving`, `_automation`, `_settings`, `_ranges`, `_writing`, `_reading`, contrato). Sin comprobar en directo: importar, guardar sin carpeta conocida y una grabación interrumpida necesitan un diálogo o reproducción; los tests unitarios los cubren con el simulador. Aquí también se hizo C-27 (el rango de exportación se convierte una sola vez), y las tres funciones de carpeta de proyecto pasaron a ser `ServiceBase.project_folder()`.
 - **Hallazgos:** C-05, C-06, C-07, C-11, C-12, C-13, C-14, C-15, C-16, C-17.
 - **Alcance:**
   1. `import_audio`: sondear los bordes antes de abrir el diálogo; exigir bordes nuevos, cada uno emparejado una sola vez.

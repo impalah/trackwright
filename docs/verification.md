@@ -376,3 +376,18 @@ Details in [experiments/tw1211/README.md](../experiments/tw1211/README.md).
 - The user published with `make publish` (build, `twine check --strict`, `uv publish`) from the commit tagged `v0.3.0`.
 - The first attempt was rejected with `403 Invalid or non-existent authentication information`: the token stored in the Keychain had exactly 128 characters, truncated by the interactive prompt of `security add-generic-password -w`. With a new token stored from the clipboard the upload worked. Nothing was uploaded by the failed attempt.
 - **Checked afterwards:** the PyPI JSON API reports `trackwright` 0.3.0, `License-Expression: AGPL-3.0-or-later`, `Requires-Python: >=3.14` and the `Author` URL; the SHA-256 of the wheel and the sdist on PyPI match the local `dist/`; `uvx trackwright@0.3.0 version` from an unrelated folder downloads it from PyPI and answers `0.3.0`.
+
+## 2026-11-14 — E14 phase 1 (TW-1401, TW-1402) in Cubase
+
+Cubase Elements 15.0.30, script 1.5.5, the test project. The bridge was restarted with the new code (an older bridge ignores the session field).
+
+- **Policy refusals** (TW-1401), with a policy of `enabled = true`, `save = false`, `allowed_tracks = ["POC-TEST"]`; for each case, the write operations sent to Cubase were recorded: none.
+  - `cubase_run_command("file.save")` → `USE_DEDICATED_TOOL`; `marker.insert` → `NOT_ALLOWED`;
+  - `edit_range` on POC-INSTR → `NOT_ALLOWED`; on every track → `NOT_ALLOWED`; `split_at_locators` → `NOT_ALLOWED`;
+  - `set_parameter` on the channel's output (4102) and input (4101) routing → `READ_ONLY_PARAM`;
+  - moving `cycle_left` with writes disabled → `WRITES_DISABLED`.
+- **Session through the bridge** (TW-1402):
+  - a `da.param.set` sent with a made-up session was refused by the script with `STALE_SESSION`; POC-TEST's mute did not change;
+  - `cubase_set_track_mix` on POC-TEST (mute on, then off) sent both writes with the current session; both verified, `track_uid` returned; mute restored.
+- **Selection cleared before *Select in Loop*** (TW-1401): `edit_range("19", "20", "delete", verify_track="POC-TEST")` on every track ran `edit.select_none` before `tool.range` and `edit.select_in_loop`; result verified (new edges at 19 s and 20 s inside the 18–22 s event); `Edit > Undo` brought POC-TEST's edges back exactly.
+- **Not checked live:** the TW-1403 changes that need a dialog or playback (import, save without a known folder, a recording cut short); they are covered by unit tests against the simulator.

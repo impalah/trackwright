@@ -376,3 +376,18 @@ Detalle en [experiments/tw1211/README.md](../experiments/tw1211/README.es.md).
 - El usuario publicó con `make publish` (construcción, `twine check --strict`, `uv publish`) desde el commit etiquetado `v0.3.0`.
 - El primer intento se rechazó con `403 Invalid or non-existent authentication information`: el token guardado en el Llavero tenía exactamente 128 caracteres, cortado por la petición interactiva de `security add-generic-password -w`. Con un token nuevo guardado desde el portapapeles la subida funcionó. El intento fallido no subió nada.
 - **Comprobado después:** la API JSON de PyPI da `trackwright` 0.3.0, `License-Expression: AGPL-3.0-or-later`, `Requires-Python: >=3.14` y la URL `Author`; el SHA-256 del wheel y del sdist en PyPI coincide con el `dist/` local; `uvx trackwright@0.3.0 version` desde otra carpeta lo descarga de PyPI y responde `0.3.0`.
+
+## 2026-11-14 — Fase 1 de E14 (TW-1401, TW-1402) en Cubase
+
+Cubase Elements 15.0.30, script 1.5.5, el proyecto de pruebas. Se reinició el puente con el código nuevo (un puente anterior ignora el campo de sesión).
+
+- **Rechazos de la política** (TW-1401), con una política `enabled = true`, `save = false`, `allowed_tracks = ["POC-TEST"]`; en cada caso se registraron las operaciones de escritura enviadas a Cubase: ninguna.
+  - `cubase_run_command("file.save")` → `USE_DEDICATED_TOOL`; `marker.insert` → `NOT_ALLOWED`;
+  - `edit_range` en POC-INSTR → `NOT_ALLOWED`; en todas las pistas → `NOT_ALLOWED`; `split_at_locators` → `NOT_ALLOWED`;
+  - `set_parameter` sobre el enrutado de salida (4102) y de entrada (4101) del canal → `READ_ONLY_PARAM`;
+  - mover `cycle_left` con las escrituras desactivadas → `WRITES_DISABLED`.
+- **Sesión a través del puente** (TW-1402):
+  - un `da.param.set` enviado con una sesión inventada lo rechazó el script con `STALE_SESSION`; el mute de POC-TEST no cambió;
+  - `cubase_set_track_mix` en POC-TEST (mute activado y luego desactivado) envió las dos escrituras con la sesión actual; ambas verificadas, con `track_uid` en la salida; mute restaurado.
+- **Selección borrada antes de *Select in Loop*** (TW-1401): `edit_range("19", "20", "delete", verify_track="POC-TEST")` en todas las pistas lanzó `edit.select_none` antes de `tool.range` y `edit.select_in_loop`; resultado verificado (bordes nuevos en 19 s y 20 s dentro del evento de 18–22 s); `Edit > Undo` devolvió exactamente los bordes de POC-TEST.
+- **Sin comprobar en directo:** los cambios de TW-1403 que necesitan un diálogo o reproducción (importar, guardar sin carpeta conocida, una grabación interrumpida); están cubiertos por tests unitarios con el simulador.
