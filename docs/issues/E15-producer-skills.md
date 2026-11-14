@@ -42,7 +42,7 @@
 
 ### TW-1503 Analyzer module
 
-- **Status:** pending
+- **Status:** done (2026-11-14): `trackwright.analysis` (`reader.py`: `probe` and `measure` in blocks of 500 windows; `detect.py`: `noise_floor`, `SilenceCriteria`, `find_silences`). Decisions: the level of a window is the RMS over its samples and all channels (out-of-phase channels do not cancel); the floor is the 10th percentile without digital silence; the relative threshold (floor + 10 dB by default) only applies when it stays below the 90th percentile, otherwise only digital silence counts (a continuous tone or a file of pure noise has no silence to find); padding is not applied at the file's ends. Defaults: 20 ms windows, minimum 2 s, padding 0.25 s, merge gap 0.3 s. Tests in `tests/unit/test_analysis.py` (100 % of the package, Hypothesis properties). Run on the real TW-1501 export: the three silences of 3 s or more found where they are in the project, the 1 s one ignored, noise floor −63 dB
 - **Scope:** `trackwright/analysis/`, with no Cubase dependency (pure functions over samples):
   1. Read in blocks with soundfile; mix to mono for the measurement.
   2. RMS in windows of about 20 ms, in dBFS; peak.

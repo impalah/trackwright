@@ -24,6 +24,7 @@ classifiers = [
 dependencies = [
     "loguru>=0.8.0,<1",
     "mcp>=2.3.0,<3",  # TW-1415: a major version may change the tool API
+    "numpy>=2.3,<3",
     "pydantic>=2.14.3,<3",
     # TW-1302: on macOS the bridge uses CoreMIDI through ctypes (nothing to compile). The mido + python-rtmidi
     # transport (trackwright.transport.MidiTransport) is kept for other platforms or as a fallback: uncomment
@@ -31,6 +32,7 @@ dependencies = [
     # (it needs the Xcode command line tools).
     # "mido>=1.3.3",
     # "python-rtmidi>=1.5.8",
+    "soundfile>=0.13,<1",
 ]
 
 [project.urls]
@@ -73,6 +75,11 @@ python_version = "3.14"
 strict = true
 files = ["src/trackwright", "tests"]  # T-10: the tests are type-checked too
 mypy_path = "src"
+
+
+[[tool.mypy.overrides]]
+module = ["soundfile"]  # no type information shipped; used only in trackwright.analysis.reader
+ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
 module = ["mido", "mido.*", "rtmidi", "rtmidi.*"]

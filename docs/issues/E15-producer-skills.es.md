@@ -42,7 +42,7 @@
 
 ### TW-1503 Módulo analizador
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-14): `trackwright.analysis` (`reader.py`: `probe` y `measure` por bloques de 500 ventanas; `detect.py`: `noise_floor`, `SilenceCriteria`, `find_silences`). Decisiones: el nivel de una ventana es el RMS sobre sus muestras y todos los canales (los canales en contrafase no se anulan); el ruido de fondo es el percentil 10 sin el silencio digital; el umbral relativo (ruido de fondo + 10 dB por defecto) solo se aplica si queda por debajo del percentil 90; si no, solo cuenta el silencio digital (un tono continuo o un archivo de puro ruido no tiene silencios que encontrar); los márgenes no se aplican en los extremos del archivo. Valores por defecto: ventanas de 20 ms, mínimo 2 s, margen 0,25 s, unión de huecos de 0,3 s. Tests en `tests/unit/test_analysis.py` (100 % del paquete, propiedades con Hypothesis). Ejecutado sobre la exportación real de TW-1501: los tres silencios de 3 s o más encontrados donde están en el proyecto, el de 1 s ignorado, ruido de fondo −63 dB
 - **Alcance:** `trackwright/analysis/`, sin dependencia de Cubase (funciones puras sobre muestras):
   1. Lectura por bloques con soundfile; mezcla a mono para la medida.
   2. RMS en ventanas de unos 20 ms, en dBFS; pico.

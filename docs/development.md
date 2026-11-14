@@ -70,6 +70,7 @@ src/trackwright/
   hostport.py       # port to Cubase used by the server (BridgeHost)
   fake/             # FakeCubase, the simulator for tests and --simulate: core, editing, automation, writes, reads
   commands.py       # Cubase commands with their observed class
+  analysis/         # audio analysis (numpy + soundfile): window levels, noise floor, silences; no Cubase
   jsontypes.py      # JsonObject, the one JSON type alias
   core/             # domain: service (base + mixins), policy, models, references
     tags.py         # Cubase parameter tags by object (Channel, Transport, Slot...)

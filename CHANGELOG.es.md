@@ -4,6 +4,7 @@
 
 ## Sin publicar
 
+- **Analizador de audio** (TW-1503): el paquete `trackwright.analysis` lee archivos WAV, AIFF, FLAC y Ogg por bloques (numpy y soundfile, dependencias nuevas) y encuentra el ruido de fondo y los silencios, con un umbral relativo al ruido de fondo o absoluto, una duración mínima, márgenes y unión de ruidos breves. Aún no se expone como herramienta (TW-1504).
 - **Configuración `[analysis]`** (TW-1502): leer archivos de audio es una capacidad propia, desactivada por defecto (`ANALYSIS_DISABLED`) y limitada por `max_seconds` (`TOO_LONG`); `trackwright setup` la pregunta (`--analysis`), y `cubase_status` y `trackwright doctor` la muestran. La herramienta de análisis llega en TW-1504.
 - **Higiene del repositorio** (TW-1415): pre-commit (ruff, mypy), Dependabot (uv y GitHub Actions), CONTRIBUTING y SECURITY (inglés y castellano), plantillas de issue y de pull request; reglas de ruff PT, PERF, FURB, ASYNC y TRY; pytest falla con avisos y con tests colgados; dependencias de ejecución limitadas por debajo de su siguiente versión mayor (`mcp<3`, `pydantic<3`, `loguru<1`).
 - **Paquete del simulador** (TW-1414): `trackwright.fake` es ahora un paquete por capas (núcleo, edición, automatización, escrituras, lecturas), con los mismos nombres públicos.
