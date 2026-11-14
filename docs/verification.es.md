@@ -427,3 +427,20 @@ Cubase Elements 15.0.30, script 1.5.5, el proyecto de pruebas. Se reinició el p
 Dos preguntas que planteó el test de conformidad, hechas a Cubase Elements 15.0.30 (solo lecturas, proyecto de pruebas):
 - `da.channels` con un tag que los canales no tienen (9999): cada canal responde `{"title": "Nombre", "display": "", "process": -1}`: el título de otro parámetro, una visualización vacía y `process` -1. El script lo pasa tal cual; el simulador devolvía `null`. Ahora ambos devuelven lo mismo, y `track_info` trata `process: -1` como ausente.
 - `da.children` con `limit` 0: un elemento (de 6), porque el script fija el límite en 1 como mínimo. El simulador no devolvía ninguno; ahora recorta igual.
+
+## 2026-11-14 — TW-1410: mutation testing de los módulos de seguridad
+
+mutmut 3.8.1 con `uv run --with`, 4 trabajadores, ~2 minutos para 899 mutantes.
+
+| Módulo | Mutantes | Muertos | Puntuación |
+|---|---|---|---|
+| `protocol` | 198 | 188 | 94,9 % |
+| `hostport` | 63 | 62 | 98,4 % |
+| `host` | 406 | 338 | 83,3 % |
+| `core/policy` | 63 | 49 | 77,8 % |
+| `core/refs` | 169 | 110 | 65,1 % |
+
+- **Primera ejecución** (protocol, policy, refs): 72 % muertos. Supervivientes con sentido: invertir la comprobación de `save` en `check_save` no rompía ningún test seleccionado; opciones de la codificación JSON; límites `>`/`>=`; el descarte del ensamblado más antiguo; un selector `name:` de una letra. Tests en `tests/unit/test_mutation_edges.py`.
+- **Con `host` y `hostport`:** el superviviente más grave era `BridgeHost` reintentando cuando no se sabe si la petición se envió (`sent is False` en lugar de `is not False`), justo el caso que prohíbe la regla de no reintentar; sus tests están en `test_launcher.py`, que mutmut no puede ejecutar. Además: escrituras que perdían su sesión, el plazo del llamante que no llegaba a cada paso interno, los límites de los historiales y los textos de error. Tests en `tests/unit/test_mutation_host.py` (28).
+- **Supervivientes restantes, revisados uno a uno:** textos de mensajes y argumentos de logs; cambios equivalentes en Python (`"ascii"`/`"ASCII"`, `allow_nan=None`, `code=None` donde el código por defecto es el mismo, valores iniciales sin efecto, una rama a la que no se puede llegar tras esperar el cerrojo); y `ObjectRef.decode`/`check_*`, que ninguna herramienta llama (C-25, TW-1412).
+- **Puntuación sin `core/refs`:** 637 de 730 mutantes muertos, 87,3 % (objetivo: 85 %). No queda ningún superviviente que cambie el comportamiento en `protocol`, `policy`, `hostport` ni `host`.

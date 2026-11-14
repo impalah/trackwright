@@ -4,7 +4,7 @@
 .DEFAULT_GOAL := help
 .PHONY: help sync lint format format-check typecheck test test-cov test-node test-integration \
 	test-integration-write check build dist-check publish-test publish clean version doctor ping \
-	bridge bridge-status bridge-stop serve-sim script-status script-install script-install-apply setup
+	mutation bridge bridge-status bridge-stop serve-sim script-status script-install script-install-apply setup
 
 UV ?= uv
 TEST_TRACK ?= POC-TEST
@@ -48,6 +48,11 @@ test-integration-write: ## Reversible write tests on TEST_TRACK (default POC-TES
 
 check: lint format-check typecheck test-cov ## Every quality gate (same as scripts/check.sh)
 
+mutation: ## Mutation testing of the safety modules (mutmut, minutes; see [tool.mutmut])
+	rm -rf mutants
+	$(UV) run --with mutmut==3.8.1 mutmut run --max-children 4
+	$(UV) run --with mutmut==3.8.1 mutmut results
+
 # ------------------------------------------------------------------ packaging
 build: ## Build the wheel and the sdist in dist/ (replaces the previous ones)
 	rm -rf dist
@@ -63,7 +68,7 @@ publish: build dist-check ## Upload to PyPI (needs UV_PUBLISH_TOKEN); a version 
 	$(UV) publish
 
 clean: ## Remove build and test artifacts
-	rm -rf dist build .coverage .coverage.* htmlcov coverage.xml .pytest_cache .mypy_cache .ruff_cache .hypothesis
+	rm -rf dist build .coverage .coverage.* htmlcov coverage.xml .pytest_cache .mypy_cache .ruff_cache .hypothesis mutants
 	find src tests -type d -name __pycache__ -prune -exec rm -rf {} +
 
 # ------------------------------------------------------------------ running

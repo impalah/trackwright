@@ -103,7 +103,7 @@
 
 ### TW-1410 Pruebas de mutación
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-14): `[tool.mutmut]` y `make mutation`; 87,3 % de mutantes muertos en `protocol`, `policy`, `ops`, `host` y `hostport` (puntuaciones en verification.es.md); 33 tests nuevos para matar los supervivientes con sentido. Aún fuera del alcance: `core/writing.py`, `base.py`, `ranges.py`, `automation.py` y `bridge.py` (los siguientes objetivos del plan); los supervivientes de `core/refs` esperan a la decisión de C-25 en TW-1412
 - **Plan:** sección «Plan de pruebas de mutación» de la revisión.
 - **Alcance:** configuración `[tool.mutmut]` y un objetivo `make mutation` (`uv run --with mutmut==3.8.1`); objetivos en el orden del plan; eliminar o registrar como equivalente cada mutante superviviente de los módulos de seguridad; meta ≥ 85 % eliminados en ellos, excluidos los mutantes que solo cambian textos; ejecutarlo antes de cada versión y anotar la puntuación en el registro de verificación.
 - **Depende de:** TW-1409 (T-03 rompe la línea base).

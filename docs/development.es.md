@@ -121,10 +121,21 @@ Las escrituras se restauran al terminar. Estos tests usan tu configuración real
 7. **Documentación:** una sección en `docs/manual/04-tools.md` y la misma en su traducción, `docs/manual/04-tools.es.md`. `tests/unit/test_docs.py` falla si falta. Todo documento se escribe en inglés (`X.md`) con su traducción al castellano (`X.es.md`), y se actualizan a la vez.
 8. `scripts/check.sh` en verde y commit que cite la issue.
 
+
+## Mutation testing
+
+`make mutation` ejecuta mutmut 3 (con `uv run --with`, no es una dependencia del proyecto) sobre los módulos de seguridad listados en `[tool.mutmut]` de `pyproject.toml`: `protocol`, `core/policy`, `core/refs`, `ops`, `host` y `hostport`. Tarda un par de minutos; ejecútalo antes de publicar, no en cada push. Después:
+
+- `uv run --with mutmut==3.8.1 mutmut results` lista los mutantes supervivientes; `mutmut show <nombre>` muestra uno;
+- un superviviente que cambia el comportamiento necesita un test (ver `tests/unit/test_mutation_edges.py` y `test_mutation_host.py`); uno que solo cambia el texto de un mensaje, un argumento de un log o algo equivalente en Python se anota como tal;
+- los tests que arrancan subprocesos o sockets reales (`test_launcher.py`, `test_bridge.py`, `test_robustness_tw1405.py`) hacen fallar a los trabajadores de mutmut: déjalos fuera de `pytest_add_cli_args_test_selection`.
+
+Objetivo: al menos el 85 % de los mutantes muertos en estos módulos. Las puntuaciones de cada ejecución están en el registro de verificación.
+
 ## Publicar una versión
 
 1. Actualiza `version` en `pyproject.toml` y el registro de cambios (`CHANGELOG.md` y `CHANGELOG.es.md`); `uv sync` actualiza `uv.lock`.
-2. `make check` y commit.
+2. `make check` y `make mutation` (ver la sección anterior), y commit.
 3. Publica (lo hace el usuario, con su propio token):
    ```sh
    UV_PUBLISH_TOKEN="$(security find-generic-password -a "$USER" -s pypi-token -w)" make publish

@@ -108,3 +108,31 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.17.4",
 ]
+
+# Mutation testing (TW-1410): `make mutation` runs mutmut through `uv run --with` (no project dependency).
+[tool.mutmut]
+source_paths = [
+    "src/trackwright/protocol.py",
+    "src/trackwright/core/policy.py",
+    "src/trackwright/core/refs.py",
+    "src/trackwright/ops.py",
+    "src/trackwright/host.py",
+    "src/trackwright/hostport.py",
+]
+pytest_add_cli_args_test_selection = [
+    "tests/unit/test_protocol.py",
+    "tests/unit/test_protocol_properties.py",
+    "tests/unit/test_core_basics.py",
+    "tests/unit/test_write_policy_tw1401.py",
+    "tests/unit/test_host.py",
+    "tests/unit/test_service_writing.py",
+    "tests/unit/test_service_commands.py",
+    "tests/unit/test_service_ranges.py",
+    "tests/unit/test_service_saving.py",
+    "tests/unit/test_mutation_edges.py",
+    "tests/unit/test_mutation_host.py",
+    "tests/unit/test_session_pinning_tw1402.py",
+    "tests/unit/test_core_basics.py",
+]
+pytest_add_cli_args = ["-p", "no:cacheprovider", "-q", "-x"]
+also_copy = ["src", "tests", "docs", "README.md", "README.es.md", "CHANGELOG.md", "CHANGELOG.es.md", "CLAUDE.md", "LICENSE"]

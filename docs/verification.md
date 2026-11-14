@@ -427,3 +427,20 @@ Cubase Elements 15.0.30, script 1.5.5, the test project. The bridge was restarte
 Two questions the conformance test raised, asked to Cubase Elements 15.0.30 (reads only, test project):
 - `da.channels` with a tag the channels do not have (9999): every channel answers `{"title": "Nombre", "display": "", "process": -1}` — a title of another parameter, an empty display and `process` -1. The script passes it through; the simulator returned `null`. Both now return the same, and `track_info` treats `process: -1` as absent.
 - `da.children` with `limit` 0: one item (of 6), because the script clamps the limit to at least 1. The simulator returned none; it now clamps the same way.
+
+## 2026-11-14 — TW-1410: mutation testing of the safety modules
+
+mutmut 3.8.1 through `uv run --with`, 4 workers, ~2 minutes for 899 mutants.
+
+| Module | Mutants | Killed | Score |
+|---|---|---|---|
+| `protocol` | 198 | 188 | 94.9 % |
+| `hostport` | 63 | 62 | 98.4 % |
+| `host` | 406 | 338 | 83.3 % |
+| `core/policy` | 63 | 49 | 77.8 % |
+| `core/refs` | 169 | 110 | 65.1 % |
+
+- **First run** (protocol, policy, refs): 72 % killed. Meaningful survivors: inverting the `save` check in `check_save` broke no selected test; JSON encoding options; `>`/`>=` boundaries; the eviction of the oldest assembly; a one-letter `name:` selector. Tests in `tests/unit/test_mutation_edges.py`.
+- **With `host` and `hostport`:** the most serious survivor was `BridgeHost` retrying when the send outcome is uncertain (`sent is False` instead of `is not False`), the case the never-retry rule forbids; its tests live in `test_launcher.py`, which mutmut cannot run. Also: writes losing their session, the caller's deadline not reaching every internal step, history bounds and error texts. Tests in `tests/unit/test_mutation_host.py` (28).
+- **Remaining survivors, all reviewed:** message texts and log arguments; changes equivalent in Python (`"ascii"`/`"ASCII"`, `allow_nan=None`, `code=None` where the default code is the same, initial values with no effect, a branch that cannot be reached after the lock wait); and `ObjectRef.decode`/`check_*`, which no tool calls (C-25, TW-1412).
+- **Score without `core/refs`:** 637 of 730 mutants killed, 87.3 % (goal: 85 %). No survivor that changes behavior is left in `protocol`, `policy`, `hostport` or `host`.

@@ -121,10 +121,21 @@ Writes are restored at the end. These tests use your real configuration: they do
 7. **Documentation:** a section in `docs/manual/04-tools.md` and the same in its Spanish translation, `docs/manual/04-tools.es.md`. `tests/unit/test_docs.py` fails if it is missing. Every document is written in English (`X.md`) with its Spanish translation (`X.es.md`), updated together.
 8. `scripts/check.sh` green and a commit that cites the issue.
 
+
+## Mutation testing
+
+`make mutation` runs mutmut 3 (through `uv run --with`, not a project dependency) on the safety modules listed in `[tool.mutmut]` of `pyproject.toml`: `protocol`, `core/policy`, `core/refs`, `ops`, `host` and `hostport`. It takes a couple of minutes; run it before a release, not on every push. Then:
+
+- `uv run --with mutmut==3.8.1 mutmut results` lists the surviving mutants; `mutmut show <name>` shows one;
+- a survivor that changes behavior needs a test (see `tests/unit/test_mutation_edges.py` and `test_mutation_host.py`); one that only changes a message text, a log argument or something equivalent in Python is recorded as such;
+- tests that start subprocesses or real sockets (`test_launcher.py`, `test_bridge.py`, `test_robustness_tw1405.py`) crash mutmut's workers: keep them out of `pytest_add_cli_args_test_selection`.
+
+Goal: at least 85 % of the mutants killed in these modules. The scores of each run are in the verification log.
+
 ## Releasing a version
 
 1. Update `version` in `pyproject.toml` and the changelog (`CHANGELOG.md` and `CHANGELOG.es.md`); `uv sync` updates `uv.lock`.
-2. `make check`, then commit.
+2. `make check` and `make mutation` (see the section above), then commit.
 3. Publish (the user does it, with their own token):
    ```sh
    UV_PUBLISH_TOKEN="$(security find-generic-password -a "$USER" -s pypi-token -w)" make publish

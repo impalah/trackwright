@@ -103,7 +103,7 @@
 
 ### TW-1410 Mutation testing
 
-- **Status:** pending
+- **Status:** done (2026-11-14): `[tool.mutmut]` and `make mutation`; 87.3 % killed on `protocol`, `policy`, `ops`, `host` and `hostport` (scores in verification.md); 33 tests added to kill the meaningful survivors. Not yet in scope: `core/writing.py`, `base.py`, `ranges.py`, `automation.py` and `bridge.py` (next targets of the plan); the `core/refs` survivors wait for the C-25 decision in TW-1412
 - **Plan:** section "Mutation testing plan" of the review.
 - **Scope:** `[tool.mutmut]` configuration and a `make mutation` target (`uv run --with mutmut==3.8.1`); targets in the order of the plan; kill or record as equivalent every surviving mutant of the safety modules; goal ≥ 85 % killed there, string-only mutants excluded; run before each release and record the score in the verification log.
 - **Depends on:** TW-1409 (T-03 breaks the baseline).
