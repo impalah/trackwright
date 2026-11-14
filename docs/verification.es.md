@@ -392,3 +392,13 @@ Cubase Elements 15.0.30, script 1.5.5, el proyecto de pruebas. Se reinició el p
 - **Selección borrada antes de *Select in Loop*** (TW-1401): `edit_range("19", "20", "delete", verify_track="POC-TEST")` en todas las pistas lanzó `edit.select_none` antes de `tool.range` y `edit.select_in_loop`; resultado verificado (bordes nuevos en 19 s y 20 s dentro del evento de 18–22 s); `Edit > Undo` devolvió exactamente los bordes de POC-TEST.
 - **A través de la capa MCP** (Claude Code reconectado al servidor nuevo): los esquemas de las herramientas exigen `track` en `cubase_set_parameter` y `cubase_insert_plugin`; un ensayo de `cubase_set_parameter` sobre el volumen de POC-TEST devolvió `track_uid`; el enrutado de salida (4102) se rechazó con `READ_ONLY_PARAM` y `cubase_run_command("file.save")` con `USE_DEDICATED_TOOL`.
 - **Sin comprobar en directo:** los cambios de TW-1403 que necesitan un diálogo o reproducción (importar, guardar sin carpeta conocida, una grabación interrumpida); están cubiertos por tests unitarios con el simulador.
+
+## 2026-11-14 — Fase 2 de E14 (TW-1405, TW-1406, TW-1407) en Cubase
+
+- **Puente** (TW-1405): reiniciado con el código nuevo. El `pkill -f "trackwright bridge"` documentado no paraba el puente arrancado automáticamente (se ejecuta como `python -m trackwright --config … bridge`); el nuevo `trackwright bridge-stop` lo paró (con el pid de `bridge.status`), el lanzador arrancó otro y Cubase se reconectó en 3 s. `bridge.status` informa de `duplicate_responses`.
+- **Versión del script en ejecución** (TW-1407): `doctor` dio «script loaded in Cubase» con 1.5.5 = la del paquete antes de actualizar, y 1.6.0 = la del paquete después.
+- **Script 1.6.0** (TW-1406): instalado con permiso del usuario (sustituyó a 1.5.5; permisos 0644) y cargado al reiniciar el usuario Cubase («Trackwright 1.6.0» en la superficie).
+  - `doctor`: todas las comprobaciones bien; tests de integración (lecturas y escrituras reversibles en POC-TEST): 5 pasados;
+  - `da.channels` con 17 tags → `BAD_REQUEST`; con 2 tags lista los tres canales;
+  - `da.param.set` devuelve `guard` solo con `base` y `baseTitle`; mute de POC-TEST activado y restaurado;
+  - latencia de escritura, 20 `da.param.set` sobre el mute de POC-TEST: mediana de 112 ms con 1.5.5 y de 112 ms con 1.6.0. En un proyecto de tres pistas, el recorrido del árbol que quitó S-01 no costaba nada medible; domina un ciclo de idle.

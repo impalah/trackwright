@@ -69,14 +69,14 @@
 
 ### TW-1405 Bridge and IPC robustness
 
-- **Status:** done in code (2026-11-14), tests in `tests/unit/test_robustness_tw1405.py` and `test_protocol.py`. I-13 (resolved export folder) was done in TW-1403, and `afinfo` now gets a resolved path. The socket path length is checked by the bridge, not the configuration (commands that do not use the socket must keep working)
+- **Status:** done (2026-11-14; running in the user's bridge), tests in `tests/unit/test_robustness_tw1405.py` and `test_protocol.py`. I-13 (resolved export folder) was done in TW-1403, and `afinfo` now gets a resolved path. The socket path length is checked by the bridge, not the configuration (commands that do not use the socket must keep working)
 - **Findings:** I-01, I-04, I-05, I-06, I-07, I-08, I-09, I-10, I-11, I-12, I-13, I-15, I-18, I-19.
 - **Scope:** unlink only a socket this instance bound, and open MIDI after the liveness check; listen backlog 128 and "busy" handling in autostart; server read timeout; caps in `SysExAssembler`; reassembler that drops only the stray frame and evicts the oldest assembly; every `OSError` mapped to `BridgeUnavailableError` (with `sent` unknown) and socket path length validated; subprocess timeouts; duplicate-response counter; no symlinks for the socket directory; atomic script install; resolved export folder; shorter error logs; `except OSError:`; `--log-level` choices.
 - **Tests:** the probes P2–P5 and F2–F3 of the review as unit tests.
 
 ### TW-1406 Cubase script robustness (script 1.6.0)
 
-- **Status:** done in code (2026-11-14): script 1.6.0, node tests in `tests/script/test_script_node.py`; installed in the user's Cubase (with permission) and waiting for a Cubase restart to be verified. Decision: no routing guard inside the script — the slot parameter 4101 ("Edición") is legitimately written by `cubase_plugin_preset`, so the script cannot refuse a tag number without knowing the object type; the Python guard (TW-1401) covers every MCP path and the bridge only accepts Trackwright's own requests. Baseline before installing: `da.param.set` median 112 ms (script 1.5.5, n=20)
+- **Status:** done (2026-11-14): script 1.6.0, node tests in `tests/script/test_script_node.py`; installed with permission and verified in Cubase after the user restarted it (see verification.md). Decision: no routing guard inside the script — the slot parameter 4101 ("Edición") is legitimately written by `cubase_plugin_preset`, so the script cannot refuse a tag number without knowing the object type; the Python guard (TW-1401) covers every MCP path and the bridge only accepts Trackwright's own requests. Write latency 112 ms median before and after (three-track project)
 - **Findings:** S-01, S-02, S-03, S-05, S-06, S-07, S-08, S-09, F-03.
 - **Scope:** drop the guard walk and `expectChannelTitle`; active flag per scope; cap on `da.channels` tags; reply `NOT_ACTIVE` to queued requests on deactivation; `try/catch` in `mOnIdle`; `hasOwnProperty` lookups; assembly expiry ~50 ticks; one error-envelope helper.
 - **Verification in Cubase:** install with permission, restart Cubase, `doctor`, the live integration tests and a write latency comparison before/after S-01.

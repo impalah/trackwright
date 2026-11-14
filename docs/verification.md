@@ -392,3 +392,13 @@ Cubase Elements 15.0.30, script 1.5.5, the test project. The bridge was restarte
 - **Selection cleared before *Select in Loop*** (TW-1401): `edit_range("19", "20", "delete", verify_track="POC-TEST")` on every track ran `edit.select_none` before `tool.range` and `edit.select_in_loop`; result verified (new edges at 19 s and 20 s inside the 18–22 s event); `Edit > Undo` brought POC-TEST's edges back exactly.
 - **Through the MCP layer** (Claude Code reconnected to the new server): the tool schemas require `track` in `cubase_set_parameter` and `cubase_insert_plugin`; a `cubase_set_parameter` dry run on POC-TEST's volume returned `track_uid`; the output routing (4102) was refused with `READ_ONLY_PARAM` and `cubase_run_command("file.save")` with `USE_DEDICATED_TOOL`.
 - **Not checked live:** the TW-1403 changes that need a dialog or playback (import, save without a known folder, a recording cut short); they are covered by unit tests against the simulator.
+
+## 2026-11-14 — E14 phase 2 (TW-1405, TW-1406, TW-1407) in Cubase
+
+- **Bridge** (TW-1405): restarted with the new code. The documented `pkill -f "trackwright bridge"` did not stop the autostarted bridge (it runs as `python -m trackwright --config … bridge`); the new `trackwright bridge-stop` stopped it (pid from `bridge.status`), the launcher started a new one and Cubase reconnected in 3 s. `bridge.status` reports `duplicate_responses`.
+- **Running script version** (TW-1407): `doctor` reported "script loaded in Cubase" with 1.5.5 = packaged before the upgrade, and 1.6.0 = packaged after it.
+- **Script 1.6.0** (TW-1406): installed with the user's permission (it replaced 1.5.5; mode 0644) and loaded by the user restarting Cubase ("Trackwright 1.6.0" on the surface).
+  - `doctor`: every check ok; integration tests (reads and reversible writes on POC-TEST): 5 passed;
+  - `da.channels` with 17 tags → `BAD_REQUEST`; with 2 tags it lists the three channels;
+  - `da.param.set` returns `guard` with `base` and `baseTitle` only; POC-TEST's mute set and restored;
+  - write latency, 20 `da.param.set` on POC-TEST's mute: median 112 ms with 1.5.5 and 112 ms with 1.6.0. In a three-track project the tree walk removed by S-01 cost nothing measurable; one idle tick dominates.
