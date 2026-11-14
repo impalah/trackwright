@@ -42,6 +42,10 @@ enabled = true
 allowed_tracks = ["POC-TEST", "Voz"]   # vacío = todas las pistas
 save = false                           # true = cubase_save_project puede guardar el .cpr
 
+[analysis]
+enabled = false                        # true = se pueden leer y analizar los archivos de audio que exportes
+max_seconds = 14400                    # archivo más largo que se analiza (4 horas)
+
 [logging]
 level = "INFO"
 file = "~/Library/Logs/trackwright/trackwright.log"
@@ -85,6 +89,15 @@ Si cambias los nombres de los puertos, el script de Cubase no los encontrará, p
 Qué cuenta como escritura:
 - **Escritura** (sujeta a `[writes]`): parámetros, mezcla, nombre, plugins, tempo, marcadores, borrado y división de eventos, comandos.
 - **Navegación** (siempre permitida): seleccionar una pista, mover el cursor o los localizadores, saltar entre marcadores.
+
+## `[analysis]`
+
+Lectura de audio (TW-1502). Trackwright solo lee las muestras de un archivo de audio para medirlo (silencios, ruido de fondo, niveles): no cambia nada en Cubase ni envía nada a ningún sitio, solo devuelve las medidas. Es independiente de `[writes]`.
+
+| Clave | Por defecto | Descripción |
+|---|---|---|
+| `enabled` | `false` | Permite leer archivos de audio para analizarlos. Sin ella: `ANALYSIS_DISABLED`. |
+| `max_seconds` | `14400` | Archivo más largo que se analiza, en segundos (4 horas; de 1 a 86400). Los más largos: `TOO_LONG`. |
 
 ## `[logging]`
 

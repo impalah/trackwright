@@ -4,7 +4,8 @@ Lookup order for the file:
 1. the path in ``TRACKWRIGHT_CONFIG`` (must exist);
 2. ``~/.config/trackwright/config.toml`` (optional).
 
-Defaults are safe: **writes are disabled** until ``[writes] enabled = true``.
+Defaults are safe: **writes are disabled** until ``[writes] enabled = true``, and audio is never read until
+``[analysis] enabled = true``.
 """
 
 from __future__ import annotations
@@ -72,6 +73,14 @@ class WritesConfig(_Section):
     """Allow cubase_save_project to save the project file on disk (TW-1202). Separate from ``enabled``."""
 
 
+class AnalysisConfig(_Section):
+    enabled: bool = False
+    """Allow Trackwright to read the samples of audio files to analyze them (TW-1502). While false, analysis
+    fails with ``ANALYSIS_DISABLED``. Read-only: nothing in Cubase changes and nothing is sent anywhere."""
+    max_seconds: float = Field(default=14_400.0, ge=1.0, le=86_400.0)
+    """Longest file that will be analyzed, in seconds (default 4 hours); longer files are refused."""
+
+
 class LoggingConfig(_Section):
     level: Literal["TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     file: Path | None = None
@@ -109,6 +118,7 @@ class CubaseConfig(_Section):
 class Settings(_Section):
     bridge: BridgeConfig = Field(default_factory=BridgeConfig)
     writes: WritesConfig = Field(default_factory=WritesConfig)
+    analysis: AnalysisConfig = Field(default_factory=AnalysisConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     script: ScriptConfig = Field(default_factory=ScriptConfig)
     cubase: CubaseConfig = Field(default_factory=CubaseConfig)

@@ -51,6 +51,10 @@ enabled = {writes}
 # Allow cubase_save_project to save the project file on disk (needs enabled = true). Only on explicit request.
 save = {save}
 # allowed_tracks = ["My test track"]   # optional: restrict writes to these track names (empty = all tracks)
+
+[analysis]
+# Allow reading the samples of audio files you export, to find silences and measure noise. Read-only.
+enabled = {analysis}
 """
 
 
@@ -146,6 +150,7 @@ class Setup:
         assume_yes: Sequence[str] = (),
         writes: bool | None = None,
         save: bool | None = None,
+        analysis: bool | None = None,
         runner: Runner | None = None,
         which: Callable[[str], str | None] | None = None,
         doctor: Callable[[Settings], JsonObject] | None = None,
@@ -156,6 +161,7 @@ class Setup:
         self.assume_yes = frozenset(assume_yes)
         self.writes = writes
         self.save = save
+        self.analysis = analysis
         self.runner = runner or run_command
         self.which = which or shutil.which
         self._doctor = doctor
@@ -232,7 +238,12 @@ class Setup:
             return StepResult("config", "skipped", {"reason": "exists", "path": str(self.config_file)})
         writes = self.answer("config", self.writes, "Allow Trackwright to modify the open Cubase project (writes)?")
         save = writes and self.answer("config", self.save, "Allow it to save the project file when asked (save)?")
-        content = CONFIG_TEMPLATE.format(writes=str(writes).lower(), save=str(save).lower())
+        analysis = self.answer(
+            "config", self.analysis, "Allow it to read audio files you export, to analyze them (analysis)?"
+        )
+        content = CONFIG_TEMPLATE.format(
+            writes=str(writes).lower(), save=str(save).lower(), analysis=str(analysis).lower()
+        )
         self.prompter.say("  content:")
         for line in content.splitlines():
             self.prompter.say(f"    {line}")
@@ -248,7 +259,9 @@ class Setup:
         except (TrackwrightError, OSError) as exc:
             return self.failed("config", exc)
         logger.info("created {}", self.config_file)
-        return StepResult("config", "done", {"path": str(self.config_file), "writes": writes, "save": save})
+        return StepResult(
+            "config", "done", {"path": str(self.config_file), "writes": writes, "save": save, "analysis": analysis}
+        )
 
     # ------------------------------------------------------------------ 3. claude
     def step_claude(self) -> StepResult:

@@ -97,7 +97,7 @@ def statuses(result: JsonObject) -> dict[str, str]:
 
 
 def test_interactive_yes_to_everything(tmp_path: Path) -> None:
-    prompter = Prompter(True, True, False, True, True)  # script; writes, save; create config; register
+    prompter = Prompter(True, True, False, True, True, True)  # script; writes, save, analysis; create; register
     setup, script_dir, runner = make(tmp_path, prompter)
     result = setup.run()
 
@@ -110,6 +110,7 @@ def test_interactive_yes_to_everything(tmp_path: Path) -> None:
     loaded = load_settings(config)
     assert loaded.writes.enabled is True
     assert loaded.writes.save is False
+    assert loaded.analysis.enabled is True  # TW-1502
     assert "enabled = true" in prompter.text  # the content is shown before asking
     assert runner.calls[-1][:6] == ["/bin/claude", "mcp", "add", "--scope", "user", "trackwright"]
     assert runner.calls[-1][6] == "--"
@@ -120,7 +121,7 @@ def test_interactive_yes_to_everything(tmp_path: Path) -> None:
 
 
 def test_declining_changes_nothing(tmp_path: Path) -> None:
-    prompter = Prompter(False, False, False, False)  # script; writes; create config; register
+    prompter = Prompter(False, False, False, False, False)  # script; writes; analysis; create config; register
     setup, script_dir, runner = make(tmp_path, prompter)
     result = setup.run()
 
@@ -128,7 +129,7 @@ def test_declining_changes_nothing(tmp_path: Path) -> None:
     assert not (script_dir / SCRIPT_NAME).exists()
     assert not (tmp_path / "cfg").exists()
     assert [c[1:3] for c in runner.calls] == [["mcp", "get"]]
-    assert len(prompter.questions) == 4  # save is not asked when writes are off
+    assert len(prompter.questions) == 5  # save is not asked when writes are off; analysis is
     assert any("register the MCP server" in s for s in result["next_steps"])
 
 
@@ -170,7 +171,12 @@ def test_yes_flags_apply_without_asking(tmp_path: Path) -> None:
 
 def test_writes_and_save_flags(tmp_path: Path) -> None:
     setup, _, _ = make(tmp_path, Prompter(), assume_yes=["config"], writes=True, save=True)
-    assert setup.step_config().detail == {"path": str(tmp_path / "cfg" / "config.toml"), "writes": True, "save": True}
+    assert setup.step_config().detail == {
+        "path": str(tmp_path / "cfg" / "config.toml"),
+        "writes": True,
+        "save": True,
+        "analysis": False,  # --yes config without --analysis: off
+    }
 
 
 def test_save_needs_writes(tmp_path: Path) -> None:
@@ -187,7 +193,7 @@ def test_claude_not_on_path_shows_the_command(tmp_path: Path) -> None:
 
 
 def test_registration_failure(tmp_path: Path) -> None:
-    setup, _, _ = make(tmp_path, Prompter(True, False, False, True), runner=Runner(add_code=1))
+    setup, _, _ = make(tmp_path, Prompter(True, False, False, False, True), runner=Runner(add_code=1))
     result = setup.run()
     assert result["ok"] is False
     claude = next(s for s in result["steps"] if s["step"] == "claude")
@@ -309,3 +315,11 @@ def test_a_registration_of_this_version_is_fine(tmp_path: Path) -> None:
     setup, _, _ = make(tmp_path, Prompter(), runner=Current())
     assert setup.step_claude().detail["reason"] == "registered"
     assert setup.next_steps == []
+
+
+def test_analysis_flag_is_independent_of_writes(tmp_path: Path) -> None:
+    """TW-1502: reading audio changes nothing in Cubase, so it does not need writes."""
+    setup, _, _ = make(tmp_path, Prompter(), assume_yes=["config"], writes=False, analysis=True)
+    assert setup.step_config().detail["analysis"] is True
+    loaded = load_settings(tmp_path / "cfg" / "config.toml")
+    assert (loaded.writes.enabled, loaded.analysis.enabled) == (False, True)

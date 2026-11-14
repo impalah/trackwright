@@ -91,6 +91,7 @@ Las preguntas salen por la salida de error; por la salida estándar, un resumen 
 | `--yes script`, `--yes config`, `--yes claude` | Aplica ese paso sin preguntar. Se repite para varios pasos; no hay un «sí a todo» implícito. |
 | `--writes` / `--no-writes` | Al crear la configuración, permite o no las escrituras. Con `--yes config` y sin esta opción: no. |
 | `--save` / `--no-save` | Igual para el guardado del proyecto. Solo cuenta con las escrituras permitidas. |
+| `--analysis` / `--no-analysis` | Igual para leer archivos de audio y analizarlos. Independiente de las escrituras. |
 | `--config RUTA` (antes de `setup`) | Crea o usa la configuración en otra ruta. |
 
 `setup` nunca usa `sudo`, ni cambia ajustes de Cubase, IAC o Accesibilidad. Después sigue en el paso 6 (activar el script en Cubase).

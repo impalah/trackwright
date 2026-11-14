@@ -31,7 +31,7 @@
 
 ### TW-1502 Reading audio: a new capability with its own switch
 
-- **Status:** pending
+- **Status:** done (2026-11-14): `[analysis] enabled` (default `false`, `ANALYSIS_DISABLED`) and `max_seconds` (default 14400 s, `TOO_LONG`), checked by `WritePolicy.check_analysis()`; independent of `[writes]`; `setup` asks for it (`--analysis`); `cubase_status.analysis_enabled` and a `doctor` check; configuration chapter and SECURITY. A size limit was not added: the analyzer reads in blocks, so the duration bounds the work. Tests in `tests/unit/test_analysis_policy_tw1502.py`; the contract test for the tool goes with TW-1504
 - **Why:** today Trackwright never reads audio (`cubase_export_mix` reads only name, size, date and duration). Reading the samples of a file is a new capability and must be explicit.
 - **Scope:**
   1. `[analysis] enabled` in the configuration, `false` by default; `ANALYSIS_DISABLED` when off. `trackwright setup` asks for it as another step.

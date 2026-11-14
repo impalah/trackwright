@@ -42,6 +42,10 @@ enabled = true
 allowed_tracks = ["POC-TEST", "Voice"] # empty = all tracks
 save = false                           # true = cubase_save_project can save the .cpr
 
+[analysis]
+enabled = false                        # true = audio files you export can be read and analyzed
+max_seconds = 14400                    # longest file analyzed (4 hours)
+
 [logging]
 level = "INFO"
 file = "~/Library/Logs/trackwright/trackwright.log"
@@ -85,6 +89,15 @@ If you change the port names, the Cubase script won't find them, because it has 
 What counts as a write:
 - **Write** (subject to `[writes]`): parameters, mixing, name, plugins, tempo, markers, event deletion and splitting, commands.
 - **Navigation** (always allowed): selecting a track, moving the cursor or the locators, jumping between markers.
+
+## `[analysis]`
+
+Reading audio (TW-1502). Trackwright only reads the samples of an audio file to measure it (silences, noise floor, levels): nothing in Cubase changes and nothing is sent anywhere, only the measurements are returned. It is independent of `[writes]`.
+
+| Key | Default | Description |
+|---|---|---|
+| `enabled` | `false` | Allows reading audio files to analyze them. Without it: `ANALYSIS_DISABLED`. |
+| `max_seconds` | `14400` | Longest file analyzed, in seconds (4 hours; from 1 to 86400). Longer files: `TOO_LONG`. |
 
 ## `[logging]`
 

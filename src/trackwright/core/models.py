@@ -75,6 +75,7 @@ class StatusOut(_Out):
     commands_bound: int | None
     writes_enabled: bool
     allowed_tracks: list[str]
+    analysis_enabled: bool = Field(default=False, description="[analysis] enabled: audio files may be read")
 
 
 class TrackListOut(_Out):

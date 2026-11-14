@@ -73,4 +73,5 @@ def run_doctor(settings: Settings) -> JsonObject:
             "allowed_tracks": list(settings.writes.allowed_tracks),
         },
     )
+    check("analysis", True, {"enabled": settings.analysis.enabled, "max_seconds": settings.analysis.max_seconds})
     return {"ok": all(c["ok"] for c in checks), "checks": checks}

@@ -115,7 +115,7 @@ def make_service(settings: Settings, *, simulate: bool) -> Any:
     from trackwright.core.policy import WritePolicy  # noqa: PLC0415
     from trackwright.core.service import CubaseService  # noqa: PLC0415
 
-    policy = WritePolicy.from_config(settings.writes)
+    policy = WritePolicy.from_config(settings.writes, settings.analysis)
     if simulate:
         from trackwright.fake import FakeCubase, FakeExports, FakeLauncher  # noqa: PLC0415
 
@@ -159,7 +159,13 @@ def cmd_setup(args: argparse.Namespace, settings: Settings) -> int:
 
     config_file, _explicit = config_path(args.config)
     result = Setup(
-        settings, config_file, ConsolePrompter(), assume_yes=args.yes, writes=args.writes, save=args.save
+        settings,
+        config_file,
+        ConsolePrompter(),
+        assume_yes=args.yes,
+        writes=args.writes,
+        save=args.save,
+        analysis=args.analysis,
     ).run()
     emit(result)
     return 0 if result["ok"] else 1
@@ -198,6 +204,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     setup.add_argument(
         "--save", action=argparse.BooleanOptionalAction, help="new configuration: allow saving (default: ask; no)"
+    )
+    setup.add_argument(
+        "--analysis",
+        action=argparse.BooleanOptionalAction,
+        help="new configuration: allow reading audio files to analyze them (default: ask; no)",
     )
     setup.set_defaults(handler=cmd_setup)
     script = sub.add_parser("script", help="install or check the Cubase MIDI Remote script")
