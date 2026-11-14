@@ -26,6 +26,7 @@ Issues document each unit of work **before** it is implemented. When an issue is
 | E12 | Extended features (startup, save, import and export, presets, automation, project properties, range editing). **Closed** (TW-1201 to TW-1212) | [E12-extended-features.md](E12-extended-features.md) |
 | E13 | Distribution: guided installation, CoreMIDI transport without compilation, and distribution channel | [E13-distribution.md](E13-distribution.md) |
 | E14 | Quality remediation (from the code-quality review of 2026-11-14) | [E14-quality-remediation.md](E14-quality-remediation.md) |
+| E15 | Producer skills: Claude Code plugin and audio analysis | [E15-producer-skills.md](E15-producer-skills.md) |
 
 ## Criteria common to all issues
 

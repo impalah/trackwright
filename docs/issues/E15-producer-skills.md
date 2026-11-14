@@ -1,0 +1,111 @@
+# E15 — Producer skills: Claude Code plugin and audio analysis
+
+**English** · [Español](E15-producer-skills.es.md)
+
+**Epic status: pending.** Goal: practical requests such as "cut the silences longer than 3 seconds in track X" or "add a noise gate to the voice track", built on the MCP server. Two parts: an **audio analyzer** in the server (Cubase's API cannot read track contents, so silences and noise levels must be measured outside Cubase), and a **Claude Code plugin** with skills in the open Agent Skills format, published from this same repository.
+
+**Decisions (2026-11-14):**
+- **Same repository.** The skills name the tools and depend on their contracts; in one repository a test catches a renamed tool in the same commit. To be reconsidered only if the skills become independent of Trackwright (several DAWs, other servers) or need another license; until then they are AGPL-3.0-or-later like the rest.
+- **Server and skills, each with its job.** The server does the safe, atomic operations and the deterministic analysis, and keeps the safety (dry runs, write policy, verification by reading back): a skill only gives instructions to the model and cannot enforce anything. The skills carry the producer's judgment: order of the steps, thresholds, what to show the user and when to ask.
+- **Standard skills.** `SKILL.md` uses only the fields of the Agent Skills standard (`name`, `description`, `license`, `compatibility`, `metadata`, `allowed-tools`), not the Claude Code-only ones, so the same files can be tried later in other clients. Skills name tools by their short name (`cubase_edit_range`): inside a plugin, the full name gets a prefix (`mcp__plugin_<plugin>_<server>__<tool>`).
+- **Analysis of an export, not of the project's files.** The file in the project's Audio folder is not what plays on the timeline (offsets, trims, several events, clip gain, fades, plugins), and the API cannot read the events to convert file time to project time. An export between the locators is aligned with the project from the left locator and contains what really plays (verified in TW-1204: Cubase Elements exports between the locators).
+- **numpy + soundfile.** soundfile reads WAV, AIFF and FLAC, including 32-bit float (the standard `wave` module does not), and ships libsndfile in its wheel: installed with uv, nothing to compile or install on the system. Ruled out: ffmpeg (a system binary, outside "uv only"), pydub (needs ffmpeg), librosa (heavy for this), neural voice detection (torch, hundreds of MB).
+- **VS Code and GitHub Copilot: out of this epic.** Plugins already work in Claude Code's VS Code extension (documented). A test with Copilot and a possible VS Code extension stay for later (see "Out of scope").
+
+**References (checked 2026-11-14):** Claude Code plugins ([overview](https://code.claude.com/docs/en/plugins/overview.md), [manifest](https://code.claude.com/docs/en/plugins/manifest-reference.md), [marketplace](https://code.claude.com/docs/en/plugins/create-marketplace.md), [CLI](https://code.claude.com/docs/en/plugins/cli-reference.md)), [skills](https://code.claude.com/docs/en/skills.md) and [MCP](https://code.claude.com/docs/en/mcp.md).
+
+**Rules for the whole epic:** the same as E14 (a failing test before each fix, bilingual documentation, results seen in Cubase recorded in the verification log). Skills are tried against the disposable test project and its `POC-TEST` track; nothing is applied without the user's confirmation.
+
+## Phase 1 — Audio analysis in the server
+
+### TW-1501 Exporting one track, checked in Cubase
+
+- **Status:** pending
+- **Why first:** the analysis plan depends on it, and it is unknown today.
+- **Scope (experiment in `experiments/tw1501/`, with its README):**
+  1. Whether the "Export Audio Mixdown" dialog of Cubase Elements 15 can export one track's channel instead of Stereo Out. If not: Stereo Out with the track in solo (and the solo undone afterwards), or the user chooses.
+  2. Alignment: sample 0 of the exported file = the left locator (measured with a click or a known edge in the test project).
+  3. The format and sample rate Cubase proposes, and whether 32-bit float WAV is available.
+  4. Whether insert plugins and the channel fader are included (they would change the levels measured).
+- **Result:** recorded in `docs/verification.md`; it decides the export step of TW-1506 and what `cubase_export_mix` needs (perhaps nothing).
+
+### TW-1502 Reading audio: a new capability with its own switch
+
+- **Status:** pending
+- **Why:** today Trackwright never reads audio (`cubase_export_mix` reads only name, size, date and duration). Reading the samples of a file is a new capability and must be explicit.
+- **Scope:**
+  1. `[analysis] enabled` in the configuration, `false` by default; `ANALYSIS_DISABLED` when off. `trackwright setup` asks for it as another step.
+  2. Only files the user exported and Trackwright confirmed, or a path given explicitly; read-only; never sent anywhere, only the measurements are returned.
+  3. Limits: maximum duration and size, refused with a clear code instead of filling memory (reading in blocks).
+  4. SECURITY.md (+ `.es`) and the configuration chapter of the manual.
+- **Tests:** policy tests like those of `[writes]`; a contract test that the tool is refused when disabled.
+
+### TW-1503 Analyzer module
+
+- **Status:** pending
+- **Scope:** `trackwright/analysis/`, with no Cubase dependency (pure functions over samples):
+  1. Read in blocks with soundfile; mix to mono for the measurement.
+  2. RMS in windows of about 20 ms, in dBFS; peak.
+  3. Noise floor: a low percentile of the window levels (for example the 10th).
+  4. Silences: spans below a threshold (absolute in dBFS, or relative to the noise floor) lasting at least a minimum; padding kept before and after each cut so words are not clipped; spans merged when the gap between them is shorter than a minimum.
+  5. Dependencies: `numpy` and `soundfile`, with an upper bound on the next major version like the rest.
+- **Tests:** synthetic signals (tone, silence, noise at a known level): exact spans within one window; property tests (Hypothesis): spans ordered, not overlapping, inside the file, all at least the minimum duration; a file with no silence and a file that is all silence.
+
+### TW-1504 Tool `cubase_analyze_audio`
+
+- **Status:** pending
+- **Scope:**
+  1. **Input:** the file (from the `confirm` phase of `cubase_export_mix`) and the project time of its start (the left locator, which that tool knows); threshold, minimum duration and padding, with documented defaults for spoken voice.
+  2. **Output:** silences in **project seconds** (start, end, duration, level), noise floor, peak and RMS of the whole file, and the parameters used. A list capped like the other tools (`clamp_limit`), with the total.
+  3. Annotations: `READ` (it changes nothing in Cubase).
+  4. Section in `docs/manual/04-tools.md` (+ `.es`); the number of tools in the documentation rises to 33.
+- **Tests:** service and contract tests with a WAV generated in the test; live: an export of the test project, with the silences found checked against the timeline.
+
+## Phase 2 — Claude Code plugin
+
+### TW-1505 Plugin and marketplace structure
+
+- **Status:** pending
+- **Scope:**
+  1. `plugins/claude-code/` with `.claude-plugin/plugin.json` (`name: "trackwright"`, version, description, author, homepage, repository, license) and `skills/`.
+  2. `.mcp.json` of the plugin: the server started as `uvx trackwright==X.Y.Z serve`, with the version that matches the plugin. **To check:** the documentation shows `npx` but says nothing about `uvx`; if it fails, document the alternative.
+  3. `.claude-plugin/marketplace.json` at the repository root (the repository is the marketplace), with `"source": "./plugins/claude-code"`. Installation: `claude plugin marketplace add impalah/trackwright` and `claude plugin install trackwright@<marketplace>`.
+  4. **Conflict with the current installation:** a user who registered `trackwright` with `claude mcp add` would have two servers with the same tools. Document which one to remove (both share the bridge thanks to its lock, but the client would see duplicated tools) and make `trackwright doctor` warn about it if it can be detected.
+  5. **Tests in `tests/unit/test_plugin.py`:** every tool a skill names exists in `server.py`; the frontmatter uses only standard fields; the plugin's version and the `trackwright==` pin in `.mcp.json` match `pyproject.toml`; `plugin.json` and `marketplace.json` are valid JSON with the same name.
+  6. `claude plugin validate plugins/claude-code --strict` before each release (documented in the release procedure). Whether CI can run it (it needs the `claude` CLI on the runner) is decided here.
+- **Verification:** `claude --plugin-dir plugins/claude-code` in a session against the real Cubase: the skills appear (`/trackwright:<skill>`) and the tools answer.
+
+### TW-1506 Skill `podcast-silence-trim`
+
+- **Status:** pending (needs TW-1501 to TW-1505)
+- **Flow:**
+  1. Identify the track and the range (whole project by default) with the read tools; confirm them with the user.
+  2. Export (`cubase_export_mix`, two phases: the user completes the dialog) and confirm.
+  3. `cubase_analyze_audio` with the user's criteria (for example "longer than 3 s") or the voice defaults.
+  4. Show the proposed cuts (list, total time removed) and ask. Nothing is cut without a yes.
+  5. Apply with `cubase_edit_range` (`delete_time`) **from the end to the start**, so earlier positions do not move; dry run first, as the server instructions say.
+  6. Report what was cut; say how to undo it (Edit > Undo, once per cut).
+- **Decisions to record:** whether the cut acts on every track (podcast with several voices in sync, the usual case: `cubase_edit_range` acts on every track in the range) or only on one; what happens with music beds.
+- **Verification:** on the test project, with a known number of silences; undone afterwards.
+
+### TW-1507 Skill `noise-gate`
+
+- **Status:** pending (needs TW-1503 to TW-1505)
+- **Flow:**
+  1. Find a gate among the available plugins (`cubase_list_available_plugins`); which one Cubase Elements ships is **unknown** and is checked here, not assumed.
+  2. Measure the noise floor of the track (export and `cubase_analyze_audio`) and propose the threshold a few dB above it.
+  3. `cubase_insert_plugin` and `cubase_set_parameter` with dry runs, the threshold in real units; read back.
+  4. Explain to the user how to listen and adjust (attack, release), which Trackwright cannot judge.
+- **Verification:** on `POC-TEST`; the plugin removed afterwards.
+
+### TW-1508 Documentation and release
+
+- **Status:** pending
+- **Scope:** a manual chapter "Claude Code plugin and skills" (+ `.es`): installation, the skills and what they ask, how they relate to the tools; README section; CHANGELOG; CLAUDE.md (code map). Release: the version that includes this epic (it may be 0.5.0 together with the API changes of E14, if they are released at once).
+
+## Out of scope (possible later epics)
+
+- **GitHub Copilot in VS Code:** try the same skills and the server with `.vscode/mcp.json`, without an extension; record the result and update the "not tested" note.
+- **VS Code extension:** only if the above works and one-click installation for other people is worth a TypeScript project with its own releases.
+- **MCP prompts** in the server, for workflows that must work in any MCP client.
+- **Voice detection** (speech versus breaths), **loudness** (LUFS for podcast, `pyloudnorm`) and other producer skills.
