@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import re
-import shutil
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -75,9 +75,13 @@ def install_script(install_dir: Path, *, apply: bool, source: Path = SCRIPT_PATH
     status = script_status(install_dir, source)
     if not apply or status.state == "up_to_date":
         return status, False
-    if status.destination.is_symlink():
-        raise PreconditionFailedError(f"refusing to overwrite a symbolic link: {status.destination}")
+    if status.destination.is_symlink() or install_dir.is_symlink():
+        raise PreconditionFailedError(f"refusing to write through a symbolic link: {status.destination}")
     install_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(source, status.destination)
+    # I-12: write a temporary file next to it and rename it, so Cubase never reads a half-written script
+    # and a symlink created in between is replaced, not followed.
+    with tempfile.NamedTemporaryFile(dir=install_dir, prefix=".tw-", suffix=".js", delete=False) as tmp:
+        tmp.write(source.read_bytes())
+    Path(tmp.name).replace(status.destination)
     logger.info("installed {} {} at {}", SCRIPT_NAME, _version_of(source), status.destination)
     return script_status(install_dir, source), True

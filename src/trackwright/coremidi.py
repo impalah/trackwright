@@ -31,6 +31,7 @@ COREMIDI = "/System/Library/Frameworks/CoreMIDI.framework/CoreMIDI"
 COREFOUNDATION = "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation"
 UTF8 = 0x08000100  # kCFStringEncodingUTF8
 SYSEX_START, SYSEX_END = 0xF0, 0xF7
+MAX_SYSEX_BYTES = 4096  # a Trackwright frame is at most ~250 bytes
 PACKET_HEADER = 10  # MIDITimeStamp (UInt64) + length (UInt16)
 
 MIDIObjectRef = ctypes.c_uint32
@@ -44,6 +45,7 @@ class SysExAssembler:
     def __init__(self) -> None:
         self._buffer: list[int] | None = None
         self.non_sysex = 0
+        self.oversized = 0
 
     def feed(self, data: bytes | Sequence[int]) -> Iterator[list[int]]:
         """Yield the data bytes (without ``F0``/``F7``) of every message completed by ``data``."""
@@ -59,6 +61,9 @@ class SysExAssembler:
                 elif byte & 0x80:  # another status byte: the SysEx was cut
                     self._buffer = None
                     self.non_sysex += 1
+                elif len(self._buffer) >= MAX_SYSEX_BYTES:  # I-06: bounded memory without an F7
+                    self._buffer = None
+                    self.oversized += 1
                 else:
                     self._buffer.append(byte)
             elif byte & 0x80:

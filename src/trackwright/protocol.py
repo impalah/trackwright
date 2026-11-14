@@ -149,13 +149,13 @@ class Reassembler:
         self.expire()
         assembly = self._pending.get(frame.seq)
         if assembly is None:
-            if len(self._pending) >= self.max_pending:
+            if len(self._pending) >= self.max_pending:  # I-07: make room by dropping the oldest, not the new one
+                oldest = min(self._pending, key=lambda seq: self._pending[seq].started)
+                del self._pending[oldest]
                 self.dropped += 1
-                raise ProtocolError("too many pending assemblies")
             assembly = _Assembly(count=frame.count, started=self._clock())
             self._pending[frame.seq] = assembly
-        if assembly.count != frame.count:
-            del self._pending[frame.seq]
+        if assembly.count != frame.count:  # I-07: a stray frame must not destroy a legitimate assembly
             self.dropped += 1
             raise ProtocolError("fragment count mismatch")
         if frame.index in assembly.parts:

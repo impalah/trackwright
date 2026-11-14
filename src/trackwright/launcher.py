@@ -26,6 +26,7 @@ from trackwright.errors import BridgeUnavailableError, PreconditionFailedError
 Spawn = Callable[[Sequence[str], Path], None]
 Run = Callable[[Sequence[str]], int]
 Output = Callable[[Sequence[str]], str]
+BUSY_PROBES = 3
 PROJECT_AUDIO = re.compile(r"^(/.+?)/Audio/[^/]+$")
 
 
@@ -42,12 +43,24 @@ def _spawn_detached(argv: Sequence[str], log_path: Path) -> None:
         )
 
 
+SUBPROCESS_TIMEOUT = 30.0
+TIMED_OUT = 124
+
+
 def _run(argv: Sequence[str]) -> int:
-    return subprocess.run(list(argv), capture_output=True, check=False).returncode  # noqa: S603
+    try:
+        return subprocess.run(list(argv), capture_output=True, check=False, timeout=SUBPROCESS_TIMEOUT).returncode  # noqa: S603
+    except subprocess.TimeoutExpired:  # I-09: never block a tool forever
+        logger.warning("{} did not finish in {:g} s", argv[0], SUBPROCESS_TIMEOUT)
+        return TIMED_OUT
 
 
 def _output(argv: Sequence[str]) -> str:
-    result = subprocess.run(list(argv), capture_output=True, check=False, text=True, timeout=10)  # noqa: S603
+    try:
+        result = subprocess.run(list(argv), capture_output=True, check=False, text=True, timeout=10)  # noqa: S603
+    except subprocess.TimeoutExpired:
+        logger.warning("{} did not finish in 10 s", argv[0])
+        return ""
     return result.stdout
 
 
@@ -84,12 +97,12 @@ class BridgeLauncher:
     def ensure(self) -> bool:
         """Return ``True`` when this call started the bridge, ``False`` when it was already running."""
         socket_path = self.config.socket_path
-        if self._alive(socket_path):
+        if self._alive_or_busy(socket_path):
             return False
         directory = prepare_socket_dir(self.config.socket_dir)
         with (directory / "autostart.lock").open("w") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)  # another MCP server may be starting it right now
-            if self._alive(socket_path):
+            if self._alive_or_busy(socket_path):
                 return False
             logger.info("starting the bridge (log: {})", self.log_path)
             self._spawn(self.argv(), self.log_path)
@@ -103,6 +116,16 @@ class BridgeLauncher:
             f"the bridge did not start within {self.config.autostart_timeout:g} s; see {self.log_path}",
             details={"log": str(self.log_path)},
         )
+
+    def _alive_or_busy(self, socket_path: Path) -> bool:
+        """I-04: a socket file that refuses one probe may be a busy bridge, not a dead one: probe again."""
+        if self._alive(socket_path):
+            return True
+        for _ in range(BUSY_PROBES if socket_path.exists() else 0):
+            self._sleep(0.2)
+            if self._alive(socket_path):
+                return True
+        return False
 
 
 class CubaseLauncher:

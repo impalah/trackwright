@@ -120,13 +120,43 @@ def test_reassembly_limits_and_expiry() -> None:
     now = [0.0]
     reassembler = protocol.Reassembler(max_pending=2, max_age_s=5.0, clock=lambda: now[0])
     reassembler.feed(protocol.Frame(seq=1, index=0, count=2, data=b"a"))
+    now[0] = 1.0
     reassembler.feed(protocol.Frame(seq=2, index=0, count=2, data=b"a"))
-    with pytest.raises(ProtocolError, match="too many"):
-        reassembler.feed(protocol.Frame(seq=3, index=0, count=2, data=b"a"))
-    now[0] = 6.0
+    # TW-1405 (I-07): a full table drops its oldest assembly, so new messages still get through
+    reassembler.feed(protocol.Frame(seq=3, index=0, count=2, data=b"a"))
+    assert reassembler.pending == 2
+    assert reassembler.dropped == 1
+    assert reassembler.feed(protocol.Frame(seq=3, index=1, count=2, data=b"b")) == b"ab"
+    assert reassembler.feed(protocol.Frame(seq=1, index=1, count=2, data=b"b")) is None  # seq 1 was dropped
+    now[0] = 8.0
     assert reassembler.expire() == 2
     assert reassembler.pending == 0
     assert reassembler.dropped == 3
+
+
+def test_a_stray_frame_does_not_destroy_an_assembly() -> None:
+    """TW-1405 (I-07): same sequence number, different count: only the stray frame is rejected."""
+    reassembler = protocol.Reassembler()
+    reassembler.feed(protocol.Frame(seq=5, index=0, count=2, data=b"a"))
+    with pytest.raises(ProtocolError, match="count mismatch"):
+        reassembler.feed(protocol.Frame(seq=5, index=0, count=3, data=b"x"))
+    assert reassembler.feed(protocol.Frame(seq=5, index=1, count=2, data=b"b")) == b"ab"
+
+
+@pytest.mark.parametrize("seq", [0, 127, 128, 16383])
+@pytest.mark.parametrize("size", [1, protocol.MAX_FRAGMENT_PAYLOAD, protocol.MAX_FRAGMENT_PAYLOAD + 1])
+def test_frames_round_trip_for_every_sequence_and_size(seq: int, size: int) -> None:
+    """TW-1405/T-02: sequence numbers above 127 and the fragment boundary survive the round trip."""
+    payload = bytes(range(97, 123)) * (size // 26 + 1)
+    payload = payload[:size]
+    reassembler = protocol.Reassembler()
+    result = None
+    for frame in protocol.build_frames(payload, seq):
+        parsed = protocol.parse_frame(frame)
+        assert parsed is not None
+        assert parsed.seq == seq
+        result = reassembler.feed(parsed)
+    assert result == payload
 
 
 def test_make_request() -> None:

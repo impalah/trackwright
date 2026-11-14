@@ -18,7 +18,10 @@ Output = Callable[[Sequence[str]], str]
 
 
 def _afinfo(argv: Sequence[str]) -> str:
-    result = subprocess.run(list(argv), capture_output=True, check=False, text=True, timeout=15)  # noqa: S603
+    try:
+        result = subprocess.run(list(argv), capture_output=True, check=False, text=True, timeout=15)  # noqa: S603
+    except subprocess.TimeoutExpired:  # I-09: an unknown duration, not a crash
+        return ""
     return result.stdout
 
 
@@ -35,7 +38,7 @@ class ExportInspector:
         self._output = output
 
     def duration(self, path: Path) -> float | None:
-        match = DURATION.search(self._output(["/usr/bin/afinfo", str(path)]))
+        match = DURATION.search(self._output(["/usr/bin/afinfo", str(path.resolve())]))  # I-13: never an option
         return float(match.group(1)) if match else None
 
     def find(self, folder: Path, since: float, suffixes: frozenset[str] = AUDIO_SUFFIXES) -> list[ExportedFile]:

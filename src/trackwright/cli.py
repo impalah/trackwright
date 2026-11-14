@@ -142,7 +142,12 @@ def cmd_setup(args: argparse.Namespace, settings: Settings) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="trackwright", description="Trackwright: MCP server for Cubase.")
     parser.add_argument("--config", type=Path, help="configuration file (default: $TRACKWRIGHT_CONFIG or ~/.config)")
-    parser.add_argument("--log-level", help="override the configured log level")
+    parser.add_argument(
+        "--log-level",
+        type=str.upper,
+        choices=["TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"],
+        help="override the configured log level",
+    )
     sub = parser.add_subparsers(dest="command", required=True, metavar="COMMAND")
     sub.add_parser("version", help="print the version").set_defaults(handler=cmd_version)
     sub.add_parser("config", help="print the effective configuration").set_defaults(handler=cmd_config)

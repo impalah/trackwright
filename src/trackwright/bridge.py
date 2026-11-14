@@ -43,6 +43,9 @@ MAX_LINE = 64 * 1024
 MIN_TIMEOUT = 0.05
 MAX_TIMEOUT = 30.0
 MAX_SESSION_LEN = 64
+MAX_SOCKET_PATH = 104  # sun_path on macOS
+READ_TIMEOUT = MAX_TIMEOUT + 5.0
+"""Seconds a client has to send its request line (I-05)."""
 LOCAL_OPS = frozenset({"bridge.status"})
 JsonObject = dict[str, Any]
 
@@ -86,7 +89,9 @@ def validate_request(obj: object) -> tuple[str, JsonObject, float, str | None]:
 def prepare_socket_dir(directory: Path) -> Path:
     """Create the private socket directory (0700) and refuse it if another user could use it."""
     directory.mkdir(mode=0o700, parents=True, exist_ok=True)
-    info = directory.stat()
+    if directory.is_symlink():  # I-11: stat/chmod would follow it to a directory chosen by someone else
+        raise BridgeUnavailableError(f"socket directory {directory} is a symbolic link; refusing it")
+    info = directory.lstat()
     if info.st_uid != os.getuid():
         raise BridgeUnavailableError(f"socket directory {directory} belongs to another user")
     if stat.S_IMODE(info.st_mode) & 0o077:
@@ -101,7 +106,7 @@ def _socket_is_alive(path: Path) -> bool:
         with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as probe:
             probe.settimeout(0.5)
             probe.connect(str(path))
-    except ConnectionRefusedError, FileNotFoundError, TimeoutError, OSError:
+    except OSError:  # refused, missing, timed out, or a path the OS rejects
         return False
     return True
 
@@ -139,8 +144,8 @@ class Bridge:
             return {"ok": False, "error": exc.to_dict(), "meta": self._meta(started)}
         except Exception as exc:
             self.errors += 1
-            logger.exception("unexpected error handling {}", obj)
             op_name = obj.get("op") if isinstance(obj, dict) else None
+            logger.exception("unexpected error handling {}", op_name)  # I-15: not the params (track names...)
             outcome = "unknown" if op_name in WRITE_OPS else "not_executed_or_lost"
             error = TrackwrightError(
                 f"internal bridge error: {exc}", code="INTERNAL_ERROR", details={"op": op_name, "outcome": outcome}
@@ -156,9 +161,14 @@ class Bridge:
 
 class _Handler(socketserver.StreamRequestHandler):
     bridge: Bridge
+    timeout = READ_TIMEOUT  # I-05: a client that never finishes its line does not hold a thread forever
 
     def handle(self) -> None:
-        line = self.rfile.readline(MAX_LINE + 1)
+        try:
+            line = self.rfile.readline(MAX_LINE + 1)
+        except TimeoutError:
+            logger.warning("IPC client sent no complete request in {:g} s", READ_TIMEOUT)
+            return
         if not line:
             return  # a liveness probe: connected and closed without a request
         if len(line) > MAX_LINE:
@@ -174,6 +184,11 @@ class _Handler(socketserver.StreamRequestHandler):
             logger.warning("IPC client disconnected before the response")
 
 
+class _UnixServer(socketserver.ThreadingUnixStreamServer):
+    request_queue_size = 128  # I-04: bursts of clients must not be refused (the default backlog is 5)
+    daemon_threads = True
+
+
 class BridgeServer:
     """Unix socket server around a :class:`Bridge`."""
 
@@ -181,8 +196,15 @@ class BridgeServer:
         self.bridge = bridge
         self.socket_path = socket_path
         self._server: socketserver.ThreadingUnixStreamServer | None = None
+        self._bound: os.stat_result | None = None  # I-01: the socket file this instance created
 
     def start(self) -> None:
+        if len(str(self.socket_path).encode()) >= MAX_SOCKET_PATH:  # I-08: say it, instead of a raw OSError
+            raise BridgeUnavailableError(
+                f"the socket path is too long ({len(str(self.socket_path))} bytes, the limit is {MAX_SOCKET_PATH}): "
+                "set a shorter [bridge] socket_dir",
+                details={"socket": str(self.socket_path)},
+            )
         prepare_socket_dir(self.socket_path.parent)
         if self.socket_path.exists():
             if _socket_is_alive(self.socket_path):
@@ -191,11 +213,11 @@ class BridgeServer:
         handler = type("BoundHandler", (_Handler,), {"bridge": self.bridge})
         previous = os.umask(0o077)
         try:
-            self._server = socketserver.ThreadingUnixStreamServer(str(self.socket_path), handler)
+            self._server = _UnixServer(str(self.socket_path), handler)
         finally:
             os.umask(previous)
-        self._server.daemon_threads = True
         self.socket_path.chmod(0o600)
+        self._bound = self.socket_path.lstat()
         logger.info("bridge listening on {}", self.socket_path)
 
     def serve_forever(self) -> None:
@@ -217,8 +239,19 @@ class BridgeServer:
             self._server.shutdown()
             self._server.server_close()
             self._server = None
-        self.socket_path.unlink(missing_ok=True)
+        if self._bound is not None and self._owns_socket_file():
+            self.socket_path.unlink(missing_ok=True)
+        self._bound = None
         logger.info("bridge stopped")
+
+    def _owns_socket_file(self) -> bool:
+        """I-01: never delete a socket another bridge created (for example after this one was refused)."""
+        try:
+            current = self.socket_path.lstat()
+        except FileNotFoundError:
+            return False
+        assert self._bound is not None
+        return (current.st_ino, current.st_dev) == (self._bound.st_ino, self._bound.st_dev)
 
 
 # ---------------------------------------------------------------------------- client
@@ -275,6 +308,10 @@ class BridgeClient:
             raise RequestTimeoutError(
                 f"no answer from the bridge for {op}", outcome_unknown=True, details={"op": op}
             ) from exc
+        except OSError as exc:  # I-08: reset, broken pipe, path too long...: an error with a code, not a traceback
+            raise BridgeUnavailableError(
+                f"cannot talk to the bridge at {self.socket_path}: {exc}", details={"op": op, "sent": "unknown"}
+            ) from exc
         if not buffer:
             raise BridgeUnavailableError("the bridge closed the connection without answering")
         try:
@@ -323,9 +360,10 @@ def run_bridge(
         transport or make_transport(settings),
         default_timeout=settings.request_timeout,
     )
-    host.open()
     server = BridgeServer(Bridge(host), settings.socket_path)
+    server.start()  # I-01: refuse (another bridge is listening) before creating any MIDI port
     try:
+        host.open()
         server.serve_in_thread()
         if threading.current_thread() is threading.main_thread():
             for signum in (signal.SIGINT, signal.SIGTERM):

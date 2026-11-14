@@ -67,6 +67,7 @@ class HostClient:
         self._reassembler = protocol.Reassembler()
         self.late_responses: deque[JsonObject] = deque(maxlen=_HISTORY)
         self.unsolicited: deque[JsonObject] = deque(maxlen=_HISTORY)
+        self.duplicate_responses = 0
         self.protocol_errors: deque[str] = deque(maxlen=_HISTORY)
         self.session_changes: list[JsonObject] = []
 
@@ -99,7 +100,10 @@ class HostClient:
                 pending.event.set()
                 return
         entry = {"received_at": time.time(), "message": message}
-        if pending is None and rid:
+        if pending is not None:  # I-10: a second copy of an answer already received
+            self.duplicate_responses += 1
+            return
+        if rid:
             self.late_responses.append(entry)
             logger.warning("late or unknown response rid={} op={}", rid, message.get("op"))
         else:
@@ -249,6 +253,7 @@ class HostClient:
             "pending": len(self._pending),
             "late_responses": list(self.late_responses)[-10:],
             "unsolicited": len(self.unsolicited),
+            "duplicate_responses": self.duplicate_responses,
             "protocol_errors": list(self.protocol_errors)[-10:],
             "session_changes": self.session_changes[-10:],
             "transport": self.transport.stats(),
