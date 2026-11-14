@@ -35,7 +35,7 @@ El asistente llama de nuevo con `phase: "confirm"`. Trackwright busca la pista e
 
 El asistente debería:
 1. seleccionarlo con `cubase_select_track`;
-2. ensayar `cubase_remove_selected_tracks` con `expect_selected: "POC-GROUP"`, que solo actúa si la selección coincide **exactamente** (si no, `SELECTION_MISMATCH`);
+2. ensayar `cubase_remove_selected_track` con `expect_selected: "POC-GROUP"`, que solo actúa si la selección coincide **exactamente** (si no, `SELECTION_MISMATCH`);
 3. con tu confirmación, aplicarlo.
 
 Respuestas posibles:

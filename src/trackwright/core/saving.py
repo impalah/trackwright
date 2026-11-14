@@ -59,7 +59,7 @@ class SavingMixin(ServiceBase):
                 break
             self._sleep(0.5)
         if written:
-            out.status, out.saved, out.verified = "saved", _file(written[0]), True
+            out.status, out.saved, out.verified = "done", _file(written[0]), True
         else:
             out.status, out.verified = "awaiting_user", False
             out.instructions = (

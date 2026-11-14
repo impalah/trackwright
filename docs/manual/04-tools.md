@@ -23,7 +23,7 @@ Only tracks that have a **mixer channel** (audio, instrument, group, FX, outputs
 | Value | What it is |
 |---|---|
 | `channel` | The channel parameters: name (1024), volume (1025), mute (1027), solo (1028), selection (4000), record arm (4002)… |
-| `insert:N` | The plugin loaded in insert slot N (1–8). |
+| `insert:N` | The plugin loaded in insert slot N, from 1 to the number of slots of your Cubase (8 in Elements; `cubase_status` gives `insert_slots`). |
 | `strip:eq` | The channel strip EQ. |
 
 ### References (`ref`) and sessions
@@ -181,7 +181,7 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 
 ### `cubase_select_track` (navigation)
 
-- **Input:** `track`, or `step` (`next` or `prev`).
+- **Input:** `track`, or `step` (`next` or `previous`).
 - Selection is exclusive: it deselects all other tracks.
 - With `step`, `verified` is `true` only if the selection moved (at the first or last track it does not).
 
@@ -222,7 +222,7 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 - With no next marker, `locate_next` goes to the end of the last event in the project; with no previous one, `locate_prev` goes to the start. They do not stop at the locators.
 - Track and marker creation cannot be read through the API, so it returns `verified: "not_observable"`.
 
-### `cubase_remove_selected_tracks` (destructive)
+### `cubase_remove_selected_track` (destructive)
 
 - **Input:** `expect_selected` and `dry_run`.
 - It only acts if the given track is the **only** selected track (`SELECTION_MISMATCH`, with the list of selected tracks), because the Cubase command deletes all selected tracks. Select it first with `cubase_select_track`.
@@ -232,8 +232,8 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 
 ### `cubase_split_at_locators` (destructive)
 
-- **Input:** `left`, `right` and `dry_run`.
-- Sets the locators, reads them back and runs "Split Loop".
+- **Input:** `left`, `right`, `unit` (`bars`, the default, or `seconds`) and `dry_run`.
+- Sets the locators, reads them back and runs "Split Loop". In seconds, the locators are placed by moving the cursor and using "Set Left/Right Locator" (the seconds display cannot move them); the cursor goes back, and the output adds `left_bars` and `right_bars`.
 - **Splits every track** that has events in that range, so it is refused with `NOT_ALLOWED` while `[writes] allowed_tracks` is set.
 - The locators **stay** at the split points; restoring them immediately could get ahead of the command. The output includes `previous_left` and `previous_right`, so you can restore them later with `cubase_set_position`.
 
@@ -247,7 +247,7 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 
 - **Input:** `key`, `dry_run` and `force`.
 - Runs a command from the allowlist. The specific tools are preferable.
-- **Refused here** (`USE_DEDICATED_TOOL`, also in a dry run): `file.save` and `file.save_new_version` (use `cubase_save_project`, which checks `[writes] save` and verifies the file) and `project.remove_selected_tracks` (use `cubase_remove_selected_tracks`, which checks the selection).
+- **Refused here** (`USE_DEDICATED_TOOL`, also in a dry run): `file.save` and `file.save_new_version` (use `cubase_save_project`, which checks `[writes] save` and verifies the file) and `project.remove_selected_tracks` (use `cubase_remove_selected_track`, which checks the selection).
 - **Permission:** commands act on the selection in the Cubase window, which may include any track, so every command except navigation needs writes enabled and is refused with `NOT_ALLOWED` while `[writes] allowed_tracks` is set.
 
 | `key` | Class |
@@ -257,7 +257,7 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 | `edit.split_loop` | direct |
 | `addtrack.audio`, `addtrack.group`, `addtrack.folder`, `audio.detect_silence`, `file.export_audio_mixdown`, `file.import_audio` | dialog (export and import: verified, TW-1204 and TW-1203; the import file picker blocks Cubase while it is open) |
 | `addtrack.marker`, `marker.insert`, `project.select_track_next`, `project.select_track_prev`, `transport.locate_next_marker`, `transport.locate_prev_marker` | direct |
-| `project.remove_selected_tracks` | confirm (refused here: use `cubase_remove_selected_tracks`) |
+| `project.remove_selected_tracks` | confirm (refused here: use `cubase_remove_selected_track`) |
 | `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.locators_to_selection` | unknown |
 | `automation.mode_touch`, `automation.mode_auto_latch`, `automation.mode_cross_over`, `automation.next_mode`, `automation.toggle_write_selected` | unknown (experiment TW-1206) |
 | `transport.start`, `transport.stop` | direct (verified: plays and stops; never records) |
@@ -321,7 +321,7 @@ Designed for podcast editing: it works in **seconds** and the time signature doe
 - **Dry run:** shows the project folder (inferred from the open audio files) and its `.cpr` files with date and size, so you know what will be overwritten.
 - **Verification:** some `.cpr` in the folder with a date later than the command; with `new_version`, a new one. Only names, sizes and dates are read.
 - **Unknown folder:** when the project folder is unknown, or several projects seem to be open, the status is `fired` and `verified` is `null`: the save was requested, but nothing proves it (a project that was never saved shows *Save As*).
-- **States:** `saved` or `awaiting_user`. The latter if nothing was written within 10 s: there is probably a dialog, such as "Save As" on a project that was never saved.
+- **States:** `done` or `awaiting_user`. The latter if nothing was written within 10 s: there is probably a dialog, such as "Save As" on a project that was never saved.
 - **Verified in Cubase Elements:** `Save` rewrote `TEST.cpr` in 1 s, and `Save New Version` created `TEST-01.cpr`. Neither opened a dialog.
 - Closing, reverting and quitting are **not offered**.
 

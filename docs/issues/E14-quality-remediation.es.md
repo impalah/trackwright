@@ -123,7 +123,7 @@
 
 ### TW-1413 Coherencia de la API MCP
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-14): ver el registro de cambios para los cambios incompatibles (nombre de herramienta, `previous`, `done`); `split_at_locators` en segundos; numeración de slots y claves de automatización alineadas con lo que vincula el script; `UnavailableError` y clases coincidentes para `VERIFY_FAILED` y `NOT_FOUND`; formato del cursor leído de Cubase. `split_at_locators` en segundos y el formato del cursor comprobados en Cubase
 - **Hallazgos:** C-18, C-19, C-20, C-24.
 - **Alcance:** una sola forma de escribir anterior/siguiente, segundos o compases en todos los sitios donde se acepta una posición, un nombre en singular para la herramienta de eliminación de pistas, un solo vocabulario de estados, una única fuente de verdad para la numeración de slots, clases de excepción que correspondan a sus códigos, el formato de tiempo leído de Cubase. **Incompatible para los clientes:** publicar en una versión menor con una nota en el changelog.
 

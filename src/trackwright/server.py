@@ -79,7 +79,8 @@ Rules for using these tools:
 
 TrackArg = Annotated[str, Field(description='"selected", "uid:<UID>" (from cubase_list_tracks) or an exact track name')]
 TargetArg = Annotated[
-    str, Field(description="'channel' (track parameters), 'insert:N' (plugin in slot N) or 'strip:eq'")
+    str,
+    Field(description="'channel' (track parameters), 'insert:N' (plugin in slot N, 1..insert_slots) or 'strip:eq'"),
 ]
 DryRunArg = Annotated[bool, Field(description="true (default): only return the plan; false: apply it")]
 TimeArg = Annotated[str, Field(description="'3. 1. 1. 0' (bar. beat. 16th. tick) or, with unit=seconds, '0:00:02.000'")]
@@ -128,7 +129,11 @@ def build_server(service: CubaseService) -> MCPServer:
     async def cubase_get_selected_channel() -> SelectedChannelOut:
         return await run(service.get_selected_channel)
 
-    @server.tool(annotations=READ, description="The 8 insert slots of a track and the plugin loaded in each.")
+    @server.tool(
+        annotations=READ,
+        description="The insert slots of a track and the plugin loaded in each "
+        "(8 in Cubase Elements; cubase_status gives insert_slots).",
+    )
     async def cubase_list_inserts(track: TrackArg = "selected") -> InsertsOut:
         return await run(lambda: service.list_inserts(track))
 
@@ -234,7 +239,7 @@ def build_server(service: CubaseService) -> MCPServer:
     @server.tool(annotations=NAVIGATE, description="Select a track, or the next/previous one. Single selection.")
     async def cubase_select_track(
         track: Annotated[str | None, Field(description="track selector; omit when using step")] = None,
-        step: Literal["next", "prev"] | None = None,
+        step: Literal["next", "previous"] | None = None,
     ) -> SelectOut:
         return await run(lambda: service.select_track(track, step))
 
@@ -267,12 +272,17 @@ def build_server(service: CubaseService) -> MCPServer:
         annotations=DESTRUCTIVE,
         description="Remove the selected track. expect_selected must match the current selection exactly.",
     )
-    async def cubase_remove_selected_tracks(expect_selected: TrackArg, dry_run: DryRunArg = True) -> CommandOut:
-        return await run(lambda: service.remove_selected_tracks(expect_selected, dry_run=dry_run))
+    async def cubase_remove_selected_track(expect_selected: TrackArg, dry_run: DryRunArg = True) -> CommandOut:
+        return await run(lambda: service.remove_selected_track(expect_selected, dry_run=dry_run))
 
     @server.tool(annotations=DESTRUCTIVE, description="Split every event crossing the given locators (all tracks).")
-    async def cubase_split_at_locators(left: TimeArg, right: TimeArg, dry_run: DryRunArg = True) -> CommandOut:
-        return await run(lambda: service.split_at_locators(left, right, dry_run=dry_run))
+    async def cubase_split_at_locators(
+        left: TimeArg,
+        right: TimeArg,
+        unit: Annotated[Literal["bars", "seconds"], Field(description="how left and right are given")] = "bars",
+        dry_run: DryRunArg = True,
+    ) -> CommandOut:
+        return await run(lambda: service.split_at_locators(left, right, unit=unit, dry_run=dry_run))
 
     @server.tool(
         annotations=WRITE,
@@ -341,7 +351,7 @@ def build_server(service: CubaseService) -> MCPServer:
     )
     async def cubase_plugin_preset(
         track: TrackArg,
-        slot: Annotated[int, Field(ge=1, le=16, description="insert slot number")],
+        slot: Annotated[int, Field(ge=1, le=16, description="insert slot number, 1..insert_slots of cubase_status")],
         direction: Literal["next", "previous"],
         dry_run: DryRunArg = True,
     ) -> PresetStepOut:

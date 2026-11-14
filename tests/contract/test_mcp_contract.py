@@ -52,7 +52,7 @@ NAVIGATION_TOOLS = {
 DESTRUCTIVE_TOOLS = {
     "cubase_save_project",
     "cubase_edit_range",
-    "cubase_remove_selected_tracks",
+    "cubase_remove_selected_track",
     "cubase_split_at_locators",
     "cubase_run_command",
 }
@@ -157,7 +157,7 @@ async def test_command_tools(client: Client, fake: FakeCubase) -> None:
     assert confirmed["verified"] is True
     split = await call(client, "cubase_split_at_locators", {"left": "2.1.1.0", "right": "4.1.1.0", "dry_run": False})
     assert split["verified"] == "not_observable"
-    removed = await call(client, "cubase_remove_selected_tracks", {"expect_selected": "Vox", "dry_run": False})
+    removed = await call(client, "cubase_remove_selected_track", {"expect_selected": "Vox", "dry_run": False})
     assert removed["status"] == "done"
     run = await call(client, "cubase_run_command", {"key": "zoom.in"})
     assert run["status"] == "planned"
@@ -166,7 +166,7 @@ async def test_command_tools(client: Client, fake: FakeCubase) -> None:
 async def test_errors_are_readable_tool_errors(client: Client) -> None:
     assert "TRACK_NOT_FOUND" in await call_error(client, "cubase_list_inserts", {"track": "Nope"})
     assert "SELECTION_MISMATCH" in await call_error(
-        client, "cubase_remove_selected_tracks", {"expect_selected": "POC-INSTR", "dry_run": False}
+        client, "cubase_remove_selected_track", {"expect_selected": "POC-INSTR", "dry_run": False}
     )
     text = await call_error(client, "cubase_set_tempo", {"bpm": 500})
     assert "500" in text or "less than or equal" in text

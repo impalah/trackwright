@@ -17,7 +17,7 @@ JsonObject = dict[str, Any]
 def test_tw1002_refuses_when_several_tracks_are_selected(service: CubaseService, fake: FakeCubase) -> None:
     fake.channel_by_title("POC-INSTR").params[4000].value = 1  # a second track selected in the GUI
     with pytest.raises(PreconditionFailedError) as exc:
-        service.remove_selected_tracks("POC-TEST", dry_run=False)
+        service.remove_selected_track("POC-TEST", dry_run=False)
     assert exc.value.code == "SELECTION_MISMATCH"
     assert exc.value.details["selected"] == ["POC-INSTR", "POC-TEST"]
     assert fake.fired == []
@@ -127,7 +127,7 @@ def test_tw1012_removal_that_lands_late_is_seen(fake: FakeCubase) -> None:
 
     fake._apply_command = delayed  # type: ignore[method-assign]
     fake.override("da.channels", channels)
-    out = service.remove_selected_tracks("POC-TEST", dry_run=False)
+    out = service.remove_selected_track("POC-TEST", dry_run=False)
     assert out.status == "done"
 
 

@@ -14,7 +14,13 @@ from trackwright.bridge import Bridge, BridgeClient, BridgeServer
 from trackwright.config import BridgeConfig, CubaseConfig
 from trackwright.core.policy import WritePolicy
 from trackwright.core.service import CubaseService
-from trackwright.errors import BridgeUnavailableError, PolicyError, PreconditionFailedError, TrackwrightError
+from trackwright.errors import (
+    BridgeUnavailableError,
+    NotFoundError,
+    PolicyError,
+    PreconditionFailedError,
+    TrackwrightError,
+)
 from trackwright.fake import FakeCubase, FakeLauncher
 from trackwright.hostport import BridgeHost
 from trackwright.launcher import BridgeLauncher, CubaseLauncher, _spawn_detached
@@ -253,7 +259,7 @@ def test_launch_errors(tmp_path: Path) -> None:
     with pytest.raises(PreconditionFailedError) as bad:
         service.launch_cubase("song.txt")
     assert bad.value.code == "BAD_REQUEST"
-    with pytest.raises(PreconditionFailedError) as missing:
+    with pytest.raises(NotFoundError) as missing:
         service.launch_cubase(str(tmp_path / "missing.cpr"))
     assert missing.value.code == "NOT_FOUND"
     with pytest.raises(PolicyError, match=r"^WRITES_DISABLED"):

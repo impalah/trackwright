@@ -453,3 +453,8 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 - **New reversible write tests** (7 pass with the earlier ones): volume through `set_parameter`, rename, selection, tempo and metronome, each restored in `finally`.
 - **Incident in the first run:** the rename test renamed POC-TEST to "TW-RENAME-TEST" and then could not rename it back: its policy allowed only `POC-TEST`, and the track was no longer called that. The name was restored by hand at once (verified), and the test now allows both names. After the corrected run every track has its name, volume 0.00 dB, no mute, tempo 120 and the metronome off, as before.
 - **Live coverage:** 20 of the 32 tools have a repeatable live test (6 before). Still manual, because they open dialogs, play audio or remove things: `insert_plugin`, `remove_selected_tracks`, `split_at_locators`, `add_track_interactive`, `run_command`, `edit_range`, `plugin_preset`, `save_project`, `import_audio`, `export_mix`, `launch` and `record_automation`; their checks are in this log.
+
+## 2026-11-14 — TW-1413: split in seconds and the cursor format, in Cubase
+
+- `split_at_locators("19", "20", unit="seconds")` on the test project: the locators went to `10. 3. 1. 0` and `11. 1. 1. 0` (19 s and 20 s at 120 BPM in 4/4), Split Loop ran, and POC-TEST got new event edges at 19 s and 20 s. `Edit > Undo` brought its edges back exactly; the locators stay at the split points, as documented.
+- `set_position("cursor", "1.5", unit="seconds")` answers with the cursor's bar position and the format Cubase reports (`Compases+Tiempos` in this Spanish Cubase), no longer a text written in the code.

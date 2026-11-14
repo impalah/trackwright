@@ -23,7 +23,7 @@ Solo se ven las pistas que tienen **canal de mezclador** (audio, instrumento, gr
 | Valor | Qué es |
 |---|---|
 | `channel` | Los parámetros del canal: nombre (1024), volumen (1025), mute (1027), solo (1028), selección (4000), armado (4002)… |
-| `insert:N` | El plugin cargado en el slot de inserción N (1–8). |
+| `insert:N` | El plugin cargado en el slot de inserción N, de 1 al número de slots de tu Cubase (8 en Elements; `cubase_status` da `insert_slots`). |
 | `strip:eq` | El EQ del channel strip. |
 
 ### Referencias `ref` y sesiones
@@ -181,7 +181,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 
 ### `cubase_select_track` (navegación)
 
-- **Entrada:** `track`, o bien `step` (`next` o `prev`).
+- **Entrada:** `track`, o bien `step` (`next` o `previous`).
 - La selección es única: deselecciona las demás pistas.
 - Con `step`, `verified` solo es `true` si la selección se movió (en la primera o la última pista no se mueve).
 
@@ -222,7 +222,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 - Sin un marcador siguiente, `locate_next` lleva al final del último evento del proyecto; sin uno anterior, `locate_prev` lleva al inicio. No se detienen en los localizadores.
 - La creación de pistas y marcadores no se puede leer desde la API, así que devuelve `verified: "not_observable"`.
 
-### `cubase_remove_selected_tracks` (destructiva)
+### `cubase_remove_selected_track` (destructiva)
 
 - **Entrada:** `expect_selected` y `dry_run`.
 - Solo actúa si la indicada es la **única** pista seleccionada (`SELECTION_MISMATCH`, con la lista de las seleccionadas), porque el comando de Cubase borra todas las seleccionadas. Selecciónala antes con `cubase_select_track`.
@@ -232,8 +232,8 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 
 ### `cubase_split_at_locators` (destructiva)
 
-- **Entrada:** `left`, `right` y `dry_run`.
-- Coloca los localizadores, los relee y lanza «Split Loop».
+- **Entrada:** `left`, `right`, `unit` (`bars`, por defecto, o `seconds`) y `dry_run`.
+- Coloca los localizadores, los relee y lanza «Split Loop». En segundos, los localizadores se colocan moviendo el cursor y usando «Set Left/Right Locator» (el visor de segundos no puede moverlos); el cursor vuelve a su sitio, y la salida añade `left_bars` y `right_bars`.
 - **Corta todas las pistas** que tienen eventos en ese rango, así que se rechaza con `NOT_ALLOWED` mientras `[writes] allowed_tracks` tenga pistas.
 - Los localizadores **se quedan** en los puntos de corte; restaurarlos enseguida podría adelantarse al comando. La salida incluye `previous_left` y `previous_right`, para restaurarlos después con `cubase_set_position`.
 
@@ -247,7 +247,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 
 - **Entrada:** `key`, `dry_run` y `force`.
 - Ejecuta un comando de la lista permitida. Es mejor usar las herramientas específicas.
-- **Se rechazan aquí** (`USE_DEDICATED_TOOL`, también en el ensayo): `file.save` y `file.save_new_version` (usa `cubase_save_project`, que comprueba `[writes] save` y verifica el archivo) y `project.remove_selected_tracks` (usa `cubase_remove_selected_tracks`, que comprueba la selección).
+- **Se rechazan aquí** (`USE_DEDICATED_TOOL`, también en el ensayo): `file.save` y `file.save_new_version` (usa `cubase_save_project`, que comprueba `[writes] save` y verifica el archivo) y `project.remove_selected_tracks` (usa `cubase_remove_selected_track`, que comprueba la selección).
 - **Permiso:** los comandos actúan sobre la selección de la ventana de Cubase, que puede incluir cualquier pista; por eso todos, salvo los de navegación, necesitan las escrituras activadas y se rechazan con `NOT_ALLOWED` mientras `[writes] allowed_tracks` tenga pistas.
 
 | `key` | Clase |
@@ -257,7 +257,7 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 | `edit.split_loop` | direct |
 | `addtrack.audio`, `addtrack.group`, `addtrack.folder`, `audio.detect_silence`, `file.export_audio_mixdown`, `file.import_audio` | dialog (exportar e importar: verificados, TW-1204 y TW-1203; el selector de importación bloquea Cubase mientras está abierto) |
 | `addtrack.marker`, `marker.insert`, `project.select_track_next`, `project.select_track_prev`, `transport.locate_next_marker`, `transport.locate_prev_marker` | direct |
-| `project.remove_selected_tracks` | confirm (se rechaza aquí: usa `cubase_remove_selected_tracks`) |
+| `project.remove_selected_tracks` | confirm (se rechaza aquí: usa `cubase_remove_selected_track`) |
 | `project.selected_to_new_folder`, `transport.return_to_zero`, `transport.locators_to_selection` | unknown |
 | `automation.mode_touch`, `automation.mode_auto_latch`, `automation.mode_cross_over`, `automation.next_mode`, `automation.toggle_write_selected` | unknown (experimento TW-1206) |
 | `transport.start`, `transport.stop` | direct (verificado: reproduce y para; nunca graba) |
@@ -321,7 +321,7 @@ Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
 - **Ensayo:** muestra la carpeta del proyecto (deducida de los archivos de audio abiertos) y sus `.cpr` con fecha y tamaño, para saber qué se va a sobrescribir.
 - **Verificación:** algún `.cpr` de la carpeta con fecha posterior a la orden; con `new_version`, uno nuevo. Solo se leen nombres, tamaños y fechas.
 - **Carpeta desconocida:** si no se conoce la carpeta del proyecto, o parece haber varios proyectos abiertos, el estado es `fired` y `verified` es `null`: se pidió guardar, pero nada lo demuestra (un proyecto que nunca se guardó muestra *Guardar como*).
-- **Estados:** `saved` o `awaiting_user`. El segundo, si en 10 s no se escribió nada: probablemente hay un diálogo, como «Guardar como» en un proyecto que nunca se guardó.
+- **Estados:** `done` o `awaiting_user`. El segundo, si en 10 s no se escribió nada: probablemente hay un diálogo, como «Guardar como» en un proyecto que nunca se guardó.
 - **Verificado en Cubase Elements:** `Save` reescribió `TEST.cpr` en 1 s, y `Save New Version` creó `TEST-01.cpr`. Ninguno abrió diálogo.
 - **No se ofrecen** cerrar, revertir ni salir.
 

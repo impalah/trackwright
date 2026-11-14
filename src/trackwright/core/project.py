@@ -15,7 +15,7 @@ from trackwright.core.base import MIXER, ServiceBase, operation
 from trackwright.core.models import Metronome, ProjectOut, Roll, Signature, Span
 from trackwright.core.tags import Transport
 from trackwright.core.timefmt import SECONDS_TOLERANCE, format_seconds, parse_seconds
-from trackwright.errors import NotFoundError, TrackwrightError
+from trackwright.errors import TrackwrightError, UnavailableError
 from trackwright.jsontypes import JsonObject
 
 DEVICE_ROOT_SCAN = 64
@@ -61,7 +61,7 @@ class ProjectMixin(ServiceBase):
                     return int(oid)
             except TrackwrightError:
                 continue
-        raise NotFoundError("Cubase's Device Root object was not found", code="UNAVAILABLE")
+        raise UnavailableError("Cubase's Device Root object was not found")
 
     def _studio_objects(self) -> dict[str, int]:
         root: int = self._device_root()
@@ -82,7 +82,7 @@ class ProjectMixin(ServiceBase):
     def _transport_id(self) -> int:
         transport = self._studio_objects().get("Transport")
         if transport is None:
-            raise NotFoundError("Cubase's Transport object was not found", code="UNAVAILABLE")
+            raise UnavailableError("Cubase's Transport object was not found")
         return transport
 
     def _cursor_seconds(self, transport: int) -> float:
@@ -91,7 +91,7 @@ class ProjectMixin(ServiceBase):
         )
         seconds = parse_seconds(display)
         if seconds is None:
-            raise TrackwrightError(f"unexpected cursor time {display!r}", code="UNAVAILABLE")
+            raise UnavailableError(f"unexpected cursor time {display!r}")
         return seconds
 
     def _move_cursor_seconds(self, transport: int, seconds: float) -> float:
@@ -137,7 +137,7 @@ class ProjectMixin(ServiceBase):
         transport = self._params_by_title(objects.get("Transport"))
         metronome = self._params_by_title(objects.get("Metronome"))
         if not transport:
-            raise NotFoundError("Cubase's Transport object was not found", code="UNAVAILABLE")
+            raise UnavailableError("Cubase's Transport object was not found")
 
         def flag(params: dict[str, JsonObject], title: str) -> bool | None:
             param = params.get(title)

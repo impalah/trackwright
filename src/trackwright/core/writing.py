@@ -304,9 +304,9 @@ class WritingMixin(ProjectMixin):
             return self.call("da.base")
 
         if step is not None:
-            if step not in ("next", "prev"):
-                raise PreconditionFailedError("step must be 'next' or 'prev'", code="BAD_REQUEST")
-            self.call("sel.step", {"direction": step})
+            if step not in ("next", "previous"):  # TW-1413 (C-18): the same word as in cubase_plugin_preset
+                raise PreconditionFailedError("step must be 'next' or 'previous'", code="BAD_REQUEST")
+            self.call("sel.step", {"direction": "prev" if step == "previous" else "next"})
             self.wait_until(base, lambda b: int(b.get("base", -1)) != before_id)
             after_id, after_name = self._selected_name()
             # C-14: at the first or last track the selection does not move, and that is not a success
@@ -367,7 +367,9 @@ class WritingMixin(ProjectMixin):
         transport = self._transport_id()
         if which == "cursor":
             landed = self._move_cursor_seconds(transport, seconds)
-            after = TimePosition(time=self.cursor_bars(), format="Compases+Tiempos")
+            raw = (self.call("transport.get").get("primary") or {}).get("locator") or {}
+            # C-24: the format as Cubase names it (it follows the UI language), not a hard-coded Spanish text
+            after = TimePosition(time=str(raw.get("time", "")), format=raw.get("format"))
             return PositionOut(dry_run=False, which=which, requested=text, before=before, after=after,
                                verified=abs(landed - seconds) <= SECONDS_TOLERANCE,
                                note=f"cursor at {format_seconds(landed)} (read back in seconds)")  # fmt: skip

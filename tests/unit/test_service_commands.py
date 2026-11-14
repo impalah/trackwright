@@ -9,7 +9,7 @@ import pytest
 from trackwright.commands import COMMANDS
 from trackwright.core.service import CubaseService
 from trackwright.cubase import SCRIPT_PATH
-from trackwright.errors import NotFoundError, PolicyError, PreconditionFailedError
+from trackwright.errors import NotFoundError, PolicyError, PreconditionFailedError, VerificationFailedError
 from trackwright.fake import FakeCubase
 
 
@@ -94,24 +94,24 @@ def test_markers_errors(service: CubaseService, readonly: CubaseService, fake: F
 
 # ---------------------------------------------------------------- remove selected tracks
 def test_remove_selected_track(service: CubaseService, fake: FakeCubase) -> None:
-    plan = service.remove_selected_tracks("POC-TEST")
+    plan = service.remove_selected_track("POC-TEST")
     assert plan.status == "planned"
     assert plan.details["track"] == "POC-TEST"
-    out = service.remove_selected_tracks("POC-TEST", dry_run=False)
+    out = service.remove_selected_track("POC-TEST", dry_run=False)
     assert (out.status, out.verified) == ("done", True)
     assert [t.name for t in service.list_tracks().tracks] == ["Stereo Out", "POC-INSTR"]
 
 
 def test_remove_requires_matching_selection(service: CubaseService, fake: FakeCubase) -> None:
     with pytest.raises(PreconditionFailedError) as exc:
-        service.remove_selected_tracks("POC-INSTR", dry_run=False)
+        service.remove_selected_track("POC-INSTR", dry_run=False)
     assert exc.value.code == "SELECTION_MISMATCH"
     assert fake.fired == []
 
 
 def test_remove_track_with_events_waits_for_confirmation(service: CubaseService, fake: FakeCubase) -> None:
     fake.channel_by_title("POC-TEST").has_events = True
-    out = service.remove_selected_tracks("POC-TEST", dry_run=False)
+    out = service.remove_selected_track("POC-TEST", dry_run=False)
     assert out.status == "pending_confirmation"
     assert out.verified is False
     fake.confirm_pending_removal()
@@ -123,7 +123,7 @@ def test_remove_respects_policy(fake: FakeCubase) -> None:
 
     service = CubaseService(fake, WritePolicy(enabled=True, allowed_tracks=("Other",)))
     with pytest.raises(PolicyError, match=r"^NOT_ALLOWED"):
-        service.remove_selected_tracks("POC-TEST", dry_run=False)
+        service.remove_selected_track("POC-TEST", dry_run=False)
 
 
 # ---------------------------------------------------------------- split at locators
@@ -143,7 +143,7 @@ def test_split_at_locators_validation(service: CubaseService, fake: FakeCubase) 
         with pytest.raises(PreconditionFailedError):
             service.split_at_locators(left, right)
     fake.override("transport.setTime", lambda p: {})
-    with pytest.raises(PreconditionFailedError) as exc:
+    with pytest.raises(VerificationFailedError) as exc:  # TW-1413 (C-20): the class matches the code
         service.split_at_locators("2.1.1.0", "4.1.1.0", dry_run=False)
     assert exc.value.code == "VERIFY_FAILED"
     assert fake.fired == []
@@ -204,3 +204,20 @@ def test_locate_next_prefers_a_marker_before_the_end(service: CubaseService, fak
     fake.last_event_end = "70. 4. 4. 97"
     service.set_position("cursor", "2.1.1.0")
     assert service.markers("locate_next", dry_run=False).details["cursor_after"] == "5. 1. 1.  0"
+
+
+def test_split_at_locators_in_seconds(service: CubaseService, fake: FakeCubase) -> None:
+    """TW-1413 (C-18): like the other range tools, the locators can be given in seconds."""
+    plan = service.split_at_locators("2", "0:00:06", unit="seconds")
+    assert (plan.details["left"], plan.details["right"]) == ("0:00:02.000", "0:00:06.000")
+    done = service.split_at_locators("2", "6", unit="seconds", dry_run=False)
+    assert done.status == "done"
+    assert fake.fired[-1] == "edit.split_loop"
+    assert done.details["left_bars"] and done.details["right_bars"]
+    for bad in (("6", "2"), ("x", "2")):
+        with pytest.raises(PreconditionFailedError) as exc:
+            service.split_at_locators(*bad, unit="seconds")
+        assert exc.value.code == "BAD_TIME"
+    with pytest.raises(PreconditionFailedError) as unit:
+        service.split_at_locators("2", "6", unit="beats")  # type: ignore[arg-type]
+    assert unit.value.code == "BAD_REQUEST"

@@ -12,11 +12,12 @@ from __future__ import annotations
 from typing import Literal
 
 from trackwright.commands import COMMANDS, CommandSpec
-from trackwright.core.base import ServiceBase, operation
+from trackwright.core.base import operation
 from trackwright.core.models import CommandOut, CommandStatus
+from trackwright.core.project import ProjectMixin
 from trackwright.core.refs import TrackSelector
-from trackwright.core.timefmt import bars_tuple, format_bars
-from trackwright.errors import NotFoundError, PreconditionFailedError
+from trackwright.core.timefmt import bars_tuple, format_bars, format_seconds, parse_seconds
+from trackwright.errors import NotFoundError, PreconditionFailedError, VerificationFailedError
 from trackwright.jsontypes import JsonObject
 
 TRACK_KINDS = {"audio": "addtrack.audio", "group": "addtrack.group", "folder": "addtrack.folder"}
@@ -30,7 +31,7 @@ MARKER_ACTIONS = {
 DEDICATED_TOOLS = {
     "file.save": "cubase_save_project",
     "file.save_new_version": "cubase_save_project",
-    "project.remove_selected_tracks": "cubase_remove_selected_tracks",
+    "project.remove_selected_tracks": "cubase_remove_selected_track",
 }
 NAVIGATION_COMMANDS = frozenset(
     {
@@ -42,7 +43,31 @@ NAVIGATION_COMMANDS = frozenset(
 )
 
 
-class CommandingMixin(ServiceBase):
+Position = tuple[int, int, int, int]
+
+
+def parse_locators(
+    left: str, right: str, unit: str
+) -> tuple[tuple[float, float] | None, tuple[Position, Position] | None]:
+    """The two locators in seconds or in bars (exactly one is not None); BAD_TIME when invalid or reversed."""
+    if unit == "seconds":  # TW-1413 (C-18): seconds like the other range tools
+        left_s, right_s = parse_seconds(left), parse_seconds(right)
+        if left_s is None or right_s is None:
+            raise PreconditionFailedError("seconds look like '2.5', '1:30' or '0:01:30.000'", code="BAD_TIME")
+        if not 0 <= left_s < right_s:
+            raise PreconditionFailedError("the left locator must be before the right one", code="BAD_TIME")
+        return (left_s, right_s), None
+    if unit != "bars":
+        raise PreconditionFailedError("unit must be 'bars' or 'seconds'", code="BAD_REQUEST")
+    left_pos, right_pos = bars_tuple(left), bars_tuple(right)
+    if left_pos is None or right_pos is None:
+        raise PreconditionFailedError("locators look like '2. 1. 1. 0'", code="BAD_TIME")
+    if left_pos >= right_pos:
+        raise PreconditionFailedError("the left locator must be before the right one", code="BAD_TIME")
+    return None, (left_pos, right_pos)
+
+
+class CommandingMixin(ProjectMixin):
     # ------------------------------------------------------------------ core
     def _spec(self, key: str) -> CommandSpec:
         spec = COMMANDS.get(key)
@@ -160,7 +185,7 @@ class CommandingMixin(ServiceBase):
 
     # ------------------------------------------------------------------ removing tracks
     @operation
-    def remove_selected_tracks(self, expect_selected: str, *, dry_run: bool = True) -> CommandOut:
+    def remove_selected_track(self, expect_selected: str, *, dry_run: bool = True) -> CommandOut:
         spec = self._spec("project.remove_selected_tracks")
         expected = self.resolve_track(TrackSelector.parse(expect_selected))
         base = int(self.call("da.base").get("base", -1))
@@ -199,17 +224,21 @@ class CommandingMixin(ServiceBase):
 
     # ------------------------------------------------------------------ split at locators
     @operation
-    def split_at_locators(self, left: str, right: str, *, dry_run: bool = True) -> CommandOut:
+    def split_at_locators(
+        self, left: str, right: str, *, unit: Literal["bars", "seconds"] = "bars", dry_run: bool = True
+    ) -> CommandOut:
         spec = self._spec("edit.split_loop")
-        left_pos, right_pos = bars_tuple(left), bars_tuple(right)
-        if left_pos is None or right_pos is None:
-            raise PreconditionFailedError("locators look like '2. 1. 1. 0'", code="BAD_TIME")
-        if left_pos >= right_pos:
-            raise PreconditionFailedError("the left locator must be before the right one", code="BAD_TIME")
+        seconds, bars = parse_locators(left, right, unit)
+        left_pos, right_pos = bars if bars else (None, None)
+        if seconds:
+            left_text, right_text = format_seconds(seconds[0]), format_seconds(seconds[1])
+        else:
+            assert bars is not None
+            left_text, right_text = format_bars(bars[0]), format_bars(bars[1])
         previous = dict(self.call("transport.get").get("primary") or {})
         details: dict[str, str | int | float | bool | None] = {
-            "left": format_bars(left_pos),
-            "right": format_bars(right_pos),
+            "left": left_text,
+            "right": right_text,
             # The locators are left at the split points: restoring them right away could race with the
             # command, which Cubase runs in its own idle tick. Report them so they can be restored.
             "previous_left": (previous.get("cycleLeft") or {}).get("time"),
@@ -221,8 +250,19 @@ class CommandingMixin(ServiceBase):
                 spec, dry_run=True, can=self._can_perform(spec.key), status="planned", verified=None, details=details
             )
         self.policy.check_all_tracks("Split Loop")
-        for which, text in (("cycleLeft", format_bars(left_pos)), ("cycleRight", format_bars(right_pos))):
-            self.call("transport.setTime", {"which": which, "display": "primary", "time": text})
+        if seconds is not None:
+            # The locators cannot be set through the seconds display (verified, TW-1211): cursor, then Set Locator.
+            transport = self._transport_id()
+            cursor = self._cursor_seconds(transport)
+            try:
+                left_pos = bars_tuple(self._set_locator_seconds(transport, "left", seconds[0]))
+                right_pos = bars_tuple(self._set_locator_seconds(transport, "right", seconds[1]))
+            finally:
+                self._move_cursor_seconds(transport, cursor)
+            details["left_bars"], details["right_bars"] = (format_bars(p) if p else None for p in (left_pos, right_pos))
+        else:
+            for which, text in (("cycleLeft", left_text), ("cycleRight", right_text)):
+                self.call("transport.setTime", {"which": which, "display": "primary", "time": text})
         locators = self.wait_until(
             lambda: dict(self.call("transport.get").get("primary") or {}),
             lambda p: (
@@ -234,7 +274,7 @@ class CommandingMixin(ServiceBase):
             bars_tuple(str((locators.get("cycleLeft") or {}).get("time", ""))) != left_pos
             or bars_tuple(str((locators.get("cycleRight") or {}).get("time", ""))) != right_pos
         ):
-            raise PreconditionFailedError("the locators could not be set; nothing was split", code="VERIFY_FAILED")
+            raise VerificationFailedError("the locators could not be set; nothing was split", code="VERIFY_FAILED")
         can = self._can_perform(spec.key)
         if can is False:
             raise PreconditionFailedError(

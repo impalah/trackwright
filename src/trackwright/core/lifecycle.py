@@ -7,7 +7,7 @@ from pathlib import Path
 
 from trackwright.core.base import ServiceBase, operation
 from trackwright.core.models import LaunchOut
-from trackwright.errors import PreconditionFailedError, TrackwrightError
+from trackwright.errors import NotFoundError, PreconditionFailedError, TrackwrightError
 
 POLL_SECONDS = 1.0
 
@@ -70,5 +70,5 @@ class LifecycleMixin(ServiceBase):
         if path.suffix.lower() != ".cpr":
             raise PreconditionFailedError("project must be a Cubase .cpr file", code="BAD_REQUEST")
         if not path.is_file():
-            raise PreconditionFailedError(f"project not found: {path}", code="NOT_FOUND")
+            raise NotFoundError(f"project not found: {path}", code="NOT_FOUND")
         return path.resolve()

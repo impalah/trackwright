@@ -18,7 +18,7 @@ from trackwright.core.models import ImportOut
 from trackwright.core.refs import TrackSelector
 from trackwright.core.tags import Transport
 from trackwright.core.timefmt import SECONDS_TOLERANCE, format_seconds
-from trackwright.errors import PreconditionFailedError, RequestTimeoutError, TrackwrightError
+from trackwright.errors import NotFoundError, PreconditionFailedError, RequestTimeoutError, TrackwrightError
 from trackwright.exports import AUDIO_SUFFIXES
 
 EDGE_TOLERANCE = 0.01
@@ -55,7 +55,7 @@ class ImportMixin(ExportMixin):
         expected = None
         if path is not None:
             if not path.is_file() or path.suffix.lower() not in AUDIO_SUFFIXES:
-                raise PreconditionFailedError(f"not an audio file: {path}", code="NOT_FOUND")
+                raise NotFoundError(f"not an audio file: {path}", code="NOT_FOUND")
             expected = self.exports.duration(path)
         if phase == "confirm":
             return self._confirm_import(track, position, unit, path=path, expected=expected, since=since)

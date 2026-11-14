@@ -9,7 +9,7 @@ from __future__ import annotations
 from trackwright.core.base import MIXER, operation
 from trackwright.core.models import ProjectSettingsOut, SettingChange
 from trackwright.core.project import ProjectMixin
-from trackwright.errors import NotFoundError, PreconditionFailedError, TrackwrightError
+from trackwright.errors import PreconditionFailedError, TrackwrightError, UnavailableError
 from trackwright.jsontypes import JsonObject
 
 SWITCHES: dict[str, tuple[str, str]] = {  # setting -> (object type, parameter title)
@@ -45,7 +45,7 @@ class SettingsMixin(ProjectMixin):
             kind, title = SWITCHES.get(name, CLICK_LEVEL)
             param = params[kind].get(title)
             if param is None or objects.get(kind) is None:
-                raise NotFoundError(f"Cubase does not expose {kind}/{title}", code="UNAVAILABLE")
+                raise UnavailableError(f"Cubase does not expose {kind}/{title}")
             value = int(requested) / 127 if name == "click_level" else (1.0 if requested else 0.0)
             plan.append((name, int(objects[kind]), int(param["tag"]), value, self._setting_value(name, param)))
         out = ProjectSettingsOut(

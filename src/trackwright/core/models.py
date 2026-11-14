@@ -428,7 +428,7 @@ class ProjectFileOut(_Out):
 class SaveOut(_Out):
     mode: Literal["save", "new_version"]
     dry_run: bool
-    status: Literal["planned", "saved", "fired", "awaiting_user"] = Field(
+    status: Literal["planned", "done", "fired", "awaiting_user"] = Field(
         description="'fired': requested but not verifiable (unknown project folder)"
     )
     folder: str | None = Field(description="project folder (deduced from the audio files Cubase has open)")

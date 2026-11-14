@@ -35,7 +35,7 @@ The assistant calls again with `phase: "confirm"`. Trackwright looks for the tra
 
 The assistant should:
 1. select it with `cubase_select_track`;
-2. dry-run `cubase_remove_selected_tracks` with `expect_selected: "POC-GROUP"`, which only acts if the selection matches **exactly** (otherwise, `SELECTION_MISMATCH`);
+2. dry-run `cubase_remove_selected_track` with `expect_selected: "POC-GROUP"`, which only acts if the selection matches **exactly** (otherwise, `SELECTION_MISMATCH`);
 3. with your confirmation, apply it.
 
 Possible responses:

@@ -4,6 +4,12 @@
 
 ## Sin publicar
 
+- **Consistencia de la API MCP** (TW-1413). **Cambios incompatibles:**
+  - `cubase_remove_selected_tracks` pasa a ser `cubase_remove_selected_track`: borra exactamente una pista;
+  - `cubase_select_track` recibe `step: "previous"` (antes `"prev"`), como `cubase_plugin_preset`;
+  - `cubase_save_project` indica `status: "done"` (antes `"saved"`), como las demás herramientas.
+
+  Además: `cubase_split_at_locators` acepta `unit: "seconds"`; la numeración de slots sigue `insert_slots` (8 en Cubase Elements) y las claves de automatización solo aceptan los envíos (1-4) y slots de inserción (1-2) que vincula el script; cada clase de error coincide con su código (`VERIFY_FAILED`, `NOT_FOUND`, `UNAVAILABLE`); el formato del cursor se lee de Cubase en lugar de ser un texto en castellano escrito en el código.
 - **Refactorización del núcleo** (TW-1412), sin cambios de comportamiento: una única función de paginación, formatos de tiempo en `core/timefmt.py`, tags de Cubase por objeto en `core/tags.py`, funciones de selección y cursor compartidas, el compás pasado de forma explícita, un único `JsonObject`. Eliminados: las comprobaciones de referencias que no usaba ninguna herramienta y el error `STALE_REF` que mencionaban los manuales.
 - **Tests de integración en directo** (TW-1411): 20 de las 32 herramientas tienen ya tests repetibles contra el Cubase real (lecturas, y escrituras reversibles en la pista de pruebas).
 - **Mutation testing** (TW-1410): `make mutation` ejecuta mutmut sobre los módulos de seguridad (87,3 % de mutantes muertos); tests nuevos cierran los huecos que encontró, el más importante que `BridgeHost` no debe reintentar nunca una petición cuyo envío es incierto.

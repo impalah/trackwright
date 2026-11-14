@@ -31,7 +31,7 @@ from trackwright.core.project import ProjectMixin
 from trackwright.core.refs import TrackSelector
 from trackwright.core.tags import Channel, Panner, Send
 from trackwright.core.timefmt import bars_tuple, format_bars
-from trackwright.errors import NotFoundError, PreconditionFailedError, TrackwrightError
+from trackwright.errors import NotFoundError, PreconditionFailedError, TrackwrightError, UnavailableError
 from trackwright.jsontypes import JsonObject
 
 MAX_POINTS = 64
@@ -39,10 +39,10 @@ VERIFY_TOLERANCE = 0.05
 TICKS_PER_BEAT = 480
 PREFILTER_TITLES = {"gain": "PreGain", "lowcut": "LC-Freq", "highcut": "HC-Freq"}
 EQ_TITLES = {"gain": "Gain", "freq": "Freq", "q": "Q"}
-SEND_KEY = re.compile(r"^send([1-8])\.level$")
+SEND_KEY = re.compile(r"^send([1-4])\.level$")  # the script binds sends 1-4
 EQ_KEY = re.compile(r"^eq([1-4])\.(gain|freq|q)$")
 PREFILTER_KEY = re.compile(r"^prefilter\.(gain|lowcut|highcut)$")
-INSERT_KEY = re.compile(r"^insert([1-8])\.p[1-8]$")
+INSERT_KEY = re.compile(r"^insert([12])\.p[1-8]$")  # the script binds slots 1-2 (TW-1413, C-19)
 STALL_SECONDS = 2.0
 
 
@@ -92,7 +92,7 @@ class AutomationMixin(ProjectMixin):
         raw = (self.call("transport.get").get("primary") or {}).get("locator") or {}
         position = bars_tuple(str(raw.get("time", "")))
         if position is None:
-            raise TrackwrightError("the cursor position is not available", code="UNAVAILABLE")
+            raise UnavailableError("the cursor position is not available")
         return to_beats(position, meter)
 
     def _is_playing(self) -> bool:

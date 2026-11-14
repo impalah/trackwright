@@ -123,7 +123,7 @@
 
 ### TW-1413 MCP API consistency
 
-- **Status:** pending
+- **Status:** done (2026-11-14): see the changelog for the breaking changes (tool rename, `previous`, `done`); `split_at_locators` in seconds; slot numbering and automation keys aligned with what the script binds; `UnavailableError` and matching classes for `VERIFY_FAILED` and `NOT_FOUND`; cursor format read from Cubase. `split_at_locators` in seconds and the cursor format checked in Cubase
 - **Findings:** C-18, C-19, C-20, C-24.
 - **Scope:** one spelling for previous/next, seconds or bars wherever a position is accepted, a singular name for the track-removal tool, one status vocabulary, one source of truth for slot numbering, exception classes that match their codes, the time format read from Cubase. **Breaking for clients:** release in a minor version with a changelog note.
 

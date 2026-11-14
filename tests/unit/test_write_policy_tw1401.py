@@ -124,9 +124,9 @@ def test_the_cursor_is_navigation(fake: FakeCubase) -> None:
 
 
 # ---------------------------------------------------------------- removal when Cubase cannot (C-10)
-def test_remove_selected_tracks_refuses_when_cubase_cannot(fake: FakeCubase) -> None:
+def test_remove_selected_track_refuses_when_cubase_cannot(fake: FakeCubase) -> None:
     fake.can_perform_false.add("project.remove_selected_tracks")
     with pytest.raises(PreconditionFailedError) as exc:
-        make(fake, enabled=True).remove_selected_tracks("POC-TEST", dry_run=False)
+        make(fake, enabled=True).remove_selected_track("POC-TEST", dry_run=False)
     assert code_of(exc) == "CANNOT_PERFORM"
     assert fake.fired == []

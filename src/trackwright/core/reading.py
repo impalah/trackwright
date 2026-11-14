@@ -23,7 +23,7 @@ from trackwright.core.models import (
 )
 from trackwright.core.refs import TrackSelector
 from trackwright.cubase import SCRIPT_VERSION
-from trackwright.errors import NotFoundError, TrackwrightError
+from trackwright.errors import NotFoundError, TrackwrightError, UnavailableError
 from trackwright.jsontypes import JsonObject
 
 MAX_FILTER_SCAN = 500
@@ -182,9 +182,7 @@ class ReadingMixin(ServiceBase):
         data = self.call("transport.get")
         primary: JsonObject = data.get("primary") or {}
         if not data.get("available") or not primary.get("locator"):
-            raise TrackwrightError(
-                "transport values have not arrived yet; move the cursor once in Cubase and retry", code="UNAVAILABLE"
-            )
+            raise UnavailableError("transport values have not arrived yet; move the cursor once in Cubase and retry")
 
         def position(key: str) -> TimePosition | None:
             raw = primary.get(key)

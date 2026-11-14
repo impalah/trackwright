@@ -10,7 +10,7 @@ from trackwright.core.automation import from_beats, to_beats
 from trackwright.core.models import AutomationPoint
 from trackwright.core.project import parse_signature
 from trackwright.core.service import CubaseService
-from trackwright.errors import NotFoundError
+from trackwright.errors import UnavailableError
 from trackwright.fake import FakeCubase, FakeLauncher
 from trackwright.launcher import CubaseLauncher
 
@@ -61,14 +61,14 @@ def test_device_root_found_by_scanning(service: CubaseService, fake: FakeCubase)
     fake.objects[7] = root
     assert service.get_project().signature is not None
     del fake.objects[7]
-    with pytest.raises(NotFoundError):
+    with pytest.raises(UnavailableError):
         service.get_project()
     assert service.current_signature() is None
 
 
 def test_missing_transport(service: CubaseService, fake: FakeCubase) -> None:
     fake.studio["root"].children = [c for c in fake.studio["root"].children if c != fake.studio["transport"].id]
-    with pytest.raises(NotFoundError):
+    with pytest.raises(UnavailableError):
         service.get_project()
     assert service.current_signature() is None
 

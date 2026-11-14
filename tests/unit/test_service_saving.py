@@ -42,7 +42,7 @@ def test_save_is_verified_by_the_file_date(fake: FakeCubase, exports: FakeExport
 
     fake._apply_command = write  # type: ignore[method-assign]
     out = saver(fake, exports).save_project(dry_run=False)
-    assert (out.status, out.verified) == ("saved", True)
+    assert (out.status, out.verified) == ("done", True)
     assert out.saved is not None and (out.saved.name, out.saved.size_bytes) == ("Demo.cpr", 210)
 
 

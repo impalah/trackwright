@@ -97,6 +97,12 @@ class PreconditionFailedError(TrackwrightError):
     default_code = "PRECONDITION_FAILED"
 
 
+class UnavailableError(TrackwrightError):
+    """Cubase does not expose something right now (an object, a value that has not arrived yet)."""
+
+    default_code = "UNAVAILABLE"
+
+
 class VerificationFailedError(TrackwrightError):
     """The operation ran but reading the state back does not show the requested result."""
 

@@ -6,7 +6,7 @@ import pytest
 
 from trackwright.core.policy import WritePolicy
 from trackwright.core.service import CubaseService
-from trackwright.errors import NotFoundError, PolicyError, PreconditionFailedError
+from trackwright.errors import PolicyError, PreconditionFailedError, UnavailableError
 from trackwright.fake import FakeCubase
 
 
@@ -50,7 +50,7 @@ def test_validation(service: CubaseService, settings: dict[str, bool | int], cod
 
 def test_missing_object(service: CubaseService, fake: FakeCubase) -> None:
     fake.studio["root"].children.remove(fake.studio["metronome"].id)
-    with pytest.raises(NotFoundError):
+    with pytest.raises(UnavailableError):
         service.set_project({"click_level": 10})
 
 

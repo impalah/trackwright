@@ -8,7 +8,7 @@ import pytest
 
 from trackwright.core.policy import WritePolicy
 from trackwright.core.service import CubaseService
-from trackwright.errors import PolicyError, PreconditionFailedError, TrackwrightError
+from trackwright.errors import NotFoundError, PolicyError, PreconditionFailedError, TrackwrightError
 from trackwright.fake import FakeCubase, FakeExports, FakeLauncher
 
 
@@ -77,7 +77,7 @@ def test_without_file_only_the_start_is_checked(importer: CubaseService, fake: F
 
 
 def test_errors(importer: CubaseService, fake: FakeCubase, tmp_path: Path) -> None:
-    with pytest.raises(PreconditionFailedError) as missing:
+    with pytest.raises(NotFoundError) as missing:
         importer.import_audio("start", "POC-TEST", "150", file=str(tmp_path / "nope.wav"))
     assert missing.value.code == "NOT_FOUND"
     with pytest.raises(PreconditionFailedError):
