@@ -67,7 +67,7 @@ Los errores llegan como error de herramienta, con el formato `CÓDIGO: mensaje |
 | `TIMEOUT` | Cubase no respondió a tiempo. En escrituras: resultado desconocido. |
 | `WRITES_DISABLED`, `NOT_ALLOWED` | La configuración no permite esa escritura. |
 | `TRACK_NOT_FOUND`, `TRACK_AMBIGUOUS`, `NO_SELECTION` | No se puede resolver la pista. |
-| `STALE_REF`, `INVALID_OBJECT` | La referencia es de otra sesión o el objeto ya no existe. |
+| `INVALID_OBJECT` | El objeto ya no existe (por ejemplo, se borró en Cubase). |
 | `CANNOT_PERFORM` | Cubase dice que ahora no se puede ejecutar ese comando. |
 | `PRECONDITION_FAILED` y otros (`SLOT_OCCUPIED`, `NAME_CONFLICT`, `SELECTION_MISMATCH`…) | El estado actual no permite la operación. |
 

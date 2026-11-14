@@ -15,7 +15,6 @@ from trackwright.core.models import ParameterInfo, TrackInfo, Value
 from trackwright.core.policy import WritePolicy
 from trackwright.core.refs import ObjectRef, TrackSelector
 from trackwright.errors import (
-    HostError,
     NotFoundError,
     PreconditionFailedError,
     RequestTimeoutError,
@@ -341,7 +340,3 @@ class ServiceBase:
     def plugin_uid(unique_name: str) -> str:
         """The plugin's type UID: its unique name without the ``-N`` instance suffix."""
         return _SLOT_SUFFIX.sub("", unique_name)
-
-    @staticmethod
-    def is_host_code(exc: TrackwrightError, code: str) -> bool:
-        return isinstance(exc, HostError) and exc.code == code

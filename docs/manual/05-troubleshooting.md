@@ -46,10 +46,10 @@ They are the 45 automation controls of `cubase_record_automation`, bound to the 
 - **Cause:** Cubase doesn't reload modified scripts on its own.
 - **Solution:** restart Cubase. `cubase_status` will show the loaded version (`script_version`).
 
-## `STALE_REF` or `STALE_SESSION`
+## `STALE_SESSION`
 
-- **Cause:** Cubase restarted or reloaded the script, and the internal identifiers changed. They are also **reused** for other objects, so an old `ref` could point to a different object. Trackwright detects this and refuses to use it.
-- **Solution:** list again (`cubase_list_tracks`, `cubase_list_inserts`). To refer to tracks, use the `uid:` selectors, which are stable.
+- **Cause:** Cubase restarted or reloaded the script while a tool was running, and the internal identifiers changed. They are also **reused** for other objects, so Trackwright stops before any further write.
+- **Solution:** run the tool again. To refer to tracks, use the `uid:` selectors, which are stable. The `ref` values in the outputs are informative and change with each session.
 
 ## `TIMEOUT` on a write
 

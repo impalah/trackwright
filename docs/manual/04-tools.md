@@ -67,7 +67,7 @@ Errors arrive as tool errors, in the format `CODE: message | details: {...}`. Th
 | `TIMEOUT` | Cubase did not respond in time. For writes: outcome unknown. |
 | `WRITES_DISABLED`, `NOT_ALLOWED` | The configuration does not allow that write. |
 | `TRACK_NOT_FOUND`, `TRACK_AMBIGUOUS`, `NO_SELECTION` | The track cannot be resolved. |
-| `STALE_REF`, `INVALID_OBJECT` | The reference is from another session or the object no longer exists. |
+| `INVALID_OBJECT` | The object no longer exists (for example, it was removed in Cubase). |
 | `CANNOT_PERFORM` | Cubase says the command cannot be run right now. |
 | `PRECONDITION_FAILED` and others (`SLOT_OCCUPIED`, `NAME_CONFLICT`, `SELECTION_MISMATCH`…) | The current state does not allow the operation. |
 

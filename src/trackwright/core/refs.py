@@ -2,8 +2,9 @@
 
 Runtime object ids are only valid inside one script session and are **reused** for different
 objects after a reload (verified: id 550 went from Compressor to Input Filter). They are therefore
-never exposed alone: tools return an opaque ``ref`` that embeds the session and a fingerprint of
-the object, and validate both before every use.
+never exposed alone: tools return an opaque, informative ``ref`` that embeds the session and a
+fingerprint of the object. No tool accepts a ``ref`` as input (C-25): tracks are designated with
+``uid:`` selectors, and writes are protected by the session pinned for each tool (TW-1402).
 """
 
 from __future__ import annotations
@@ -11,9 +12,7 @@ from __future__ import annotations
 import base64
 import json
 from dataclasses import dataclass
-from typing import Any, Literal
-
-from trackwright.errors import ProtocolError, StaleReferenceError
+from typing import Literal
 
 REF_PREFIX = "tw1."
 SELECTED = "selected"
@@ -58,31 +57,3 @@ class ObjectRef:
         payload = {"s": self.session, "i": self.object_id, "t": self.type_name, "u": self.unique_name}
         raw = json.dumps(payload, separators=(",", ":"), ensure_ascii=True).encode()
         return REF_PREFIX + base64.urlsafe_b64encode(raw).decode().rstrip("=")
-
-    @classmethod
-    def decode(cls, text: str) -> ObjectRef:
-        if not text.startswith(REF_PREFIX):
-            raise ProtocolError("not a Trackwright object reference", details={"ref": text[:40]})
-        body = text[len(REF_PREFIX) :]
-        try:
-            data: Any = json.loads(base64.urlsafe_b64decode(body + "=" * (-len(body) % 4)))
-            return cls(str(data["s"]), int(data["i"]), str(data["t"]), str(data["u"]))
-        except (ValueError, KeyError, TypeError) as exc:
-            raise ProtocolError("malformed object reference", details={"ref": text[:40]}) from exc
-
-    def check_session(self, current: str | None) -> None:
-        if current is None or current != self.session:
-            raise StaleReferenceError(
-                "the reference belongs to a previous Cubase script session; list the objects again",
-                details={"ref_session": self.session, "current_session": current},
-            )
-
-    def check_fingerprint(self, described: dict[str, Any]) -> None:
-        if described.get("type") != self.type_name or described.get("uniqueName") != self.unique_name:
-            raise StaleReferenceError(
-                "the reference now points at a different object; list the objects again",
-                details={
-                    "expected": {"type": self.type_name, "uniqueName": self.unique_name},
-                    "found": {"type": described.get("type"), "uniqueName": described.get("uniqueName")},
-                },
-            )

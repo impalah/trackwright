@@ -122,7 +122,7 @@ How the model works with writes:
 |---|---|---|
 | You restart the bridge | Cubase reconnects on its own. The `ref` values remain valid. | Nothing. |
 | The bridge crashes | The next tool starts it again (if `autostart`). A write that was never sent is sent after the restart; one that was sent is never retried. | Nothing. If it doesn't start, check `bridge.log` in the socket directory. |
-| You restart Cubase or reload the script | New session: previous `ref` values give `STALE_REF`. | List again. `uid:` selectors still work. |
+| You restart Cubase or reload the script | New session: the `ref` values change (they are informative; no tool accepts them). A tool running at that moment stops with `STALE_SESSION` before writing. | List again. `uid:` selectors still work. |
 | You update Trackwright | It may bring a new script. | `uv run trackwright script install --apply` and restart Cubase. |
 | A write times out | Unknown result; it is not retried. | Check the error's `read_back`. |
 

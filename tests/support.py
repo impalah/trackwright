@@ -6,7 +6,7 @@ import threading
 import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, ClassVar
 
 from trackwright import protocol
 from trackwright.errors import HostError, RequestTimeoutError, StaleSessionError
@@ -41,6 +41,14 @@ class ScriptedTransport:
     """
 
     name = "scripted"
+    pending_timers: ClassVar[set[threading.Timer]] = set()
+    """Delayed answers not delivered yet; ``cancel_pending()`` stops them when a test ends."""
+
+    @classmethod
+    def cancel_pending(cls) -> None:
+        for timer in list(cls.pending_timers):
+            timer.cancel()
+        cls.pending_timers.clear()
 
     def __init__(self, handler: Handler, *, delay: float = 0.0, fragment_size: int | None = None) -> None:
         self.handler = handler
@@ -72,7 +80,10 @@ class ScriptedTransport:
         answer = self.handler(request)
         responses = [] if answer is None else answer if isinstance(answer, list) else [answer]
         if self.delay:
-            threading.Timer(self.delay, self._deliver, args=(responses,)).start()
+            timer = threading.Timer(self.delay, self._deliver_later, args=(responses,))
+            timer.args = (responses, timer)
+            ScriptedTransport.pending_timers.add(timer)
+            timer.start()
         else:
             self._deliver(responses)
 
@@ -83,6 +94,10 @@ class ScriptedTransport:
     def push_raw(self, data: list[int]) -> None:
         assert self.receiver is not None
         self.receiver(data)
+
+    def _deliver_later(self, responses: list[JsonObject], timer: threading.Timer) -> None:
+        ScriptedTransport.pending_timers.discard(timer)
+        self._deliver(responses)
 
     def _deliver(self, responses: list[JsonObject]) -> None:
         assert self.receiver is not None

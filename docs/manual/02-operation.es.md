@@ -122,7 +122,7 @@ Cómo trabaja el modelo con las escrituras:
 |---|---|---|
 | Reinicias el puente | Cubase vuelve a conectar solo. Las `ref` siguen siendo válidas. | Nada. |
 | El puente se cae | La siguiente herramienta lo vuelve a arrancar (si `autostart`). Una escritura que no llegó a enviarse se envía tras el arranque; una que se envió nunca se reintenta. | Nada. Si no arranca, mira `bridge.log` en el directorio del socket. |
-| Reinicias Cubase o recargas el script | Nueva sesión: las `ref` anteriores dan `STALE_REF`. | Volver a listar. Los selectores `uid:` siguen valiendo. |
+| Reinicias Cubase o recargas el script | Nueva sesión: los valores `ref` cambian (son informativos; ninguna herramienta los acepta). Una herramienta que esté en marcha en ese momento se detiene con `STALE_SESSION` antes de escribir. | Volver a listar. Los selectores `uid:` siguen valiendo. |
 | Actualizas Trackwright | Puede traer un script nuevo. | `uv run trackwright script install --apply` y reiniciar Cubase. |
 | Una escritura vence por tiempo | Resultado desconocido; no se reintenta. | Revisar el `read_back` del error. |
 

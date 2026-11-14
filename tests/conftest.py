@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import sys
 from collections.abc import Iterator
 
 import pytest
 from loguru import logger
 
+from tests.support import ScriptedTransport
 from trackwright.fake import FakeCubase
 
 
@@ -35,6 +37,22 @@ def _isolated_config(
     monkeypatch.setenv("HOME", str(home))
     monkeypatch.delenv("TRACKWRIGHT_CONFIG", raising=False)
     monkeypatch.setenv("TMPDIR", str(tmp_path_factory.mktemp("tmp")))
+
+
+@pytest.fixture(autouse=True)
+def _nothing_logs_into_a_closed_stream() -> Iterator[None]:
+    """After each test: cancel the scripted transport's delayed answers, and point loguru at whatever stderr is
+    current. ``configure_logging`` (called by ``main()``) binds the sink to the ``sys.stderr`` object of the moment,
+    which in a test is pytest's capture of that test and is closed when it ends: a later log line from a
+    background thread would print a loguru "logging error"."""
+    yield
+    ScriptedTransport.cancel_pending()
+    logger.remove()
+    logger.add(_to_current_stderr, level="INFO")
+
+
+def _to_current_stderr(message: object) -> None:
+    sys.stderr.write(str(message))  # looked up on every call: never a stream that a finished test closed
 
 
 @pytest.fixture

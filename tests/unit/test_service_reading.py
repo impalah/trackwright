@@ -6,7 +6,6 @@ import pytest
 
 from trackwright.commands import COMMANDS
 from trackwright.core.policy import WritePolicy
-from trackwright.core.refs import ObjectRef
 from trackwright.core.service import CubaseService
 from trackwright.cubase import SCRIPT_VERSION
 from trackwright.errors import NotFoundError, PreconditionFailedError, StaleSessionError, TrackwrightError
@@ -199,9 +198,12 @@ def test_poll_changes_with_drops(service: CubaseService, fake: FakeCubase) -> No
 
 
 def test_refs_belong_to_the_session(service: CubaseService, fake: FakeCubase) -> None:
-    ref = ObjectRef.decode(service.list_tracks().tracks[2].ref)
-    assert ref.session == fake.session
-    assert ref.type_name == "AudioChannel"
+    import base64
+    import json
+
+    body = service.list_tracks().tracks[2].ref.removeprefix("tw1.")
+    ref = json.loads(base64.urlsafe_b64decode(body + "=" * (-len(body) % 4)))
+    assert (ref["s"], ref["t"]) == (fake.session, "AudioChannel")
 
 
 def test_script_reload_during_a_tool_stops_before_writing(service: CubaseService, fake: FakeCubase) -> None:

@@ -91,12 +91,6 @@ class NotFoundError(TrackwrightError):
     default_code = "NOT_FOUND"
 
 
-class StaleReferenceError(TrackwrightError):
-    """An opaque object reference belongs to another session or now points at a different object."""
-
-    default_code = "STALE_REF"
-
-
 class PreconditionFailedError(TrackwrightError):
     """The current state does not allow the operation (slot occupied, selection mismatch...)."""
 

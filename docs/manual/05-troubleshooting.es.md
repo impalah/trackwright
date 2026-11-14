@@ -46,10 +46,10 @@ Son los 45 controles de automatización de `cubase_record_automation`, vinculado
 - **Causa:** Cubase no recarga los scripts modificados por sí mismo.
 - **Solución:** reinicia Cubase. `cubase_status` mostrará la versión cargada (`script_version`).
 
-## `STALE_REF` o `STALE_SESSION`
+## `STALE_SESSION`
 
-- **Causa:** Cubase se reinició o recargó el script, y los identificadores internos cambiaron. Además se **reutilizan** para otros objetos, así que una `ref` antigua podría señalar a otro objeto. Trackwright lo detecta y se niega a usarla.
-- **Solución:** vuelve a listar (`cubase_list_tracks`, `cubase_list_inserts`). Para designar pistas, usa los selectores `uid:`, que son estables.
+- **Causa:** Cubase se reinició o recargó el script mientras una herramienta estaba en marcha, y los identificadores internos cambiaron. Además se **reutilizan** para otros objetos, así que Trackwright se detiene antes de cualquier otra escritura.
+- **Solución:** vuelve a ejecutar la herramienta. Para referirte a pistas, usa los selectores `uid:`, que son estables. Los valores `ref` de las salidas son informativos y cambian con cada sesión.
 
 ## `TIMEOUT` en una escritura
 
