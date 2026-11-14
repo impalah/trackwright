@@ -216,11 +216,9 @@ class FakeCore:
     def reload_script(self) -> None:
         """Restart Cubase / reload the script: new session, and ids are reassigned so old ids are reused."""
         self.session = self._new_session()
-        remapped: dict[int, int] = {}
         live = sorted(self.objects)
         rotated = live[1:] + live[:1]  # every id now names a different object
-        for old, new in zip(live, rotated, strict=True):
-            remapped[old] = new
+        remapped = dict(zip(live, rotated, strict=True))
         objects = {}
         for old, obj in self.objects.items():
             obj.id = remapped[old]

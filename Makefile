@@ -18,14 +18,14 @@ sync: ## Create or update the environment (.venv) from uv.lock
 
 # ------------------------------------------------------------------ quality
 lint: ## Lint with ruff
-	$(UV) run ruff check src tests
+	$(UV) run ruff check src tests experiments
 
 format: ## Format the code with ruff (and apply safe lint fixes)
-	$(UV) run ruff check --fix src tests
-	$(UV) run ruff format src tests
+	$(UV) run ruff check --fix src tests experiments
+	$(UV) run ruff format src tests experiments
 
 format-check: ## Check the formatting without changing files
-	$(UV) run ruff format --check src tests
+	$(UV) run ruff format --check src tests experiments
 
 typecheck: ## Type-check with mypy (strict)
 	$(UV) run mypy

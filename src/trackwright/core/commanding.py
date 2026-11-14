@@ -229,7 +229,7 @@ class CommandingMixin(ProjectMixin):
     ) -> CommandOut:
         spec = self._spec("edit.split_loop")
         seconds, bars = parse_locators(left, right, unit)
-        left_pos, right_pos = bars if bars else (None, None)
+        left_pos, right_pos = bars or (None, None)
         if seconds:
             left_text, right_text = format_seconds(seconds[0]), format_seconds(seconds[1])
         else:

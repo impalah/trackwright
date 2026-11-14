@@ -22,9 +22,9 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "loguru>=0.8.0",
-    "mcp>=2.3.0",
-    "pydantic>=2.14.3",
+    "loguru>=0.8.0,<1",
+    "mcp>=2.3.0,<3",  # TW-1415: a major version may change the tool API
+    "pydantic>=2.14.3,<3",
     # TW-1302: on macOS the bridge uses CoreMIDI through ctypes (nothing to compile). The mido + python-rtmidi
     # transport (trackwright.transport.MidiTransport) is kept for other platforms or as a fallback: uncomment
     # these two lines and set [bridge] backend = "rtmidi". python-rtmidi is built from source on macOS
@@ -54,15 +54,18 @@ target-version = "py314"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RET", "PTH", "PL", "RUF", "S", "T20", "LOG"]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RET", "PTH", "PL", "RUF", "S", "T20", "LOG",
+          "PT", "PERF", "FURB", "ASYNC", "TRY"]  # TW-1415: PT, PERF, FURB, ASYNC, TRY added
 ignore = [
     "PLR0913",  # explicit keyword arguments on service methods are clearer than parameter objects
     "PLR2004",  # protocol constants are named where they matter
     "S101",     # assert is used in tests
+    "TRY003",   # exception messages are part of the API (they reach the MCP client): kept inline
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["S", "PLR", "PLC0415", "SLF001"]
+"experiments/**" = ["S", "PLR", "T20"]  # throwaway probes: linted, not type-checked (TW-1415)
 "src/trackwright/server.py" = ["PLR0917"]  # an MCP tool's parameters are its input schema
 
 [tool.mypy]
@@ -78,6 +81,9 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
+xfail_strict = true
+filterwarnings = ["error"]  # TW-1415: a new warning fails the suite instead of scrolling past
+timeout = 120  # pytest-timeout: a hung test (Node harness, sockets) fails instead of blocking CI
 markers = [
     "integration: needs a running bridge and Cubase (opt-in: TRACKWRIGHT_INTEGRATION=1)",
     "integration_write: modifies the open Cubase project (opt-in: TRACKWRIGHT_ALLOW_WRITES=1)",
@@ -106,6 +112,7 @@ dev = [
     "mypy>=2.4.1",
     "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
+    "pytest-timeout>=2.4.0",
     "ruff>=0.17.4",
 ]
 

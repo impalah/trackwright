@@ -217,8 +217,8 @@ def test_no_selected_channel_in_fake(fake: FakeCubase) -> None:
     assert fake.call("auto.list")["controls"] == []
     with pytest.raises(Exception, match="no selected channel"):
         fake.call("auto.control", {"key": "volume"})
+    fake.selected = fake.channels[-1]
     with pytest.raises(Exception, match="unknown"):
-        fake.selected = fake.channels[-1]
         fake.call("auto.control", {"key": "nope"})
     with pytest.raises(Exception, match=r"\[0,1\]"):
         fake.call("auto.control", {"key": "pan", "value": 3})

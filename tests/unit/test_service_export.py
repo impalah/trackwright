@@ -35,7 +35,8 @@ def test_plan_range_and_whole_project(exporter: CubaseService, fake: FakeCubase)
 def test_start_range_opens_the_dialog(exporter: CubaseService, fake: FakeCubase) -> None:
     out = exporter.export_mix("start", start="2", end="30", dry_run=False)
     assert out.status == "awaiting_user"
-    assert out.since is not None and out.instructions
+    assert out.since is not None
+    assert out.instructions
     assert (fake.transport["cycleLeft"], fake.transport["cycleRight"]) == ("2. 1. 1.  0", "16. 1. 1.  0")
     assert fake.pending_dialog == "file.export_audio_mixdown"
     assert fake.transport["locator"] == "1. 1. 1.  0"  # cursor back
@@ -55,7 +56,8 @@ def test_confirm(exporter: CubaseService, exports: FakeExports) -> None:
     assert (wrong.status, wrong.verified) == ("done", False)
     none = exporter.export_mix("confirm", since=5000.0, expected_seconds=28.0, folder="~/Elsewhere")
     assert none.status == "not_found"
-    assert none.folder is not None and "Elsewhere" in none.folder
+    assert none.folder is not None
+    assert "Elsewhere" in none.folder
     no_duration = exporter.export_mix("confirm", since=999.0)
     assert no_duration.verified is None
 
@@ -64,7 +66,8 @@ def test_confirm_without_known_folder(fake: FakeCubase, exports: FakeExports) ->
     service = CubaseService(fake, WritePolicy(enabled=True), exports=exports)  # type: ignore[arg-type]
     out = service.export_mix("confirm", since=1.0)
     assert out.status == "not_found"
-    assert out.instructions and "folder" in out.instructions
+    assert out.instructions
+    assert "folder" in out.instructions
     with pytest.raises(PreconditionFailedError):
         service.export_mix("confirm")
 

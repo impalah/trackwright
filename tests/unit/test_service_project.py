@@ -25,7 +25,8 @@ def test_parse_signature() -> None:
 
 def test_get_project_defaults(service: CubaseService) -> None:
     out = service.get_project()
-    assert out.signature is not None and (out.signature.numerator, out.signature.denominator) == (4, 4)
+    assert out.signature is not None
+    assert (out.signature.numerator, out.signature.denominator) == (4, 4)
     assert out.tempo_bpm == 120.0
     assert out.transport == "stopped"
     assert (out.cycle.active, out.metronome.active, out.precount) == (False, False, False)
@@ -45,7 +46,8 @@ def test_get_project_reflects_cubase(fake: FakeCubase) -> None:
     fake.studio_param("transport", "start").value = 1
     fake.studio_param("transport", "stop").value = 0
     out = service.get_project()
-    assert out.signature is not None and out.signature.text == "3/4"
+    assert out.signature is not None
+    assert out.signature.text == "3/4"
     assert (out.cycle.active, out.metronome.active, out.transport) == (True, True, "playing")
     assert out.project_folders == ["/Projects/Demo"]
     fake.studio_param("transport", "record").value = 1

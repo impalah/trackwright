@@ -46,7 +46,9 @@ def test_full_flow(importer: CubaseService, fake: FakeCubase, exports: FakeExpor
     fake.selected = fake.channel_by_title("POC-INSTR").id
     started = importer.import_audio("start", "POC-TEST", "150", file=str(tone), dry_run=False)
     assert started.status == "awaiting_user"
-    assert started.instructions and str(tone) in started.instructions and "Cmd+Shift+G" in started.instructions
+    assert started.instructions
+    assert str(tone) in started.instructions
+    assert "Cmd+Shift+G" in started.instructions
     assert fake.selected == fake.channel_by_title("POC-TEST").id
     # the selector is open: Cubase does not answer
     waiting = importer.import_audio("confirm", "POC-TEST", "150", file=str(tone), since=started.since)
@@ -57,7 +59,8 @@ def test_full_flow(importer: CubaseService, fake: FakeCubase, exports: FakeExpor
     assert (done.status, done.verified) == ("done", True)
     assert done.edges_found == ["0:02:30.000", "0:02:33.000"]
     assert done.copied_to_project == ["tono.wav"]
-    assert 150.0 in edges(fake) and 153.0 in edges(fake)
+    assert 150.0 in edges(fake)
+    assert 153.0 in edges(fake)
 
 
 def test_cancelled_import(importer: CubaseService, fake: FakeCubase, tone: Path) -> None:
@@ -69,7 +72,8 @@ def test_cancelled_import(importer: CubaseService, fake: FakeCubase, tone: Path)
 
 def test_without_file_only_the_start_is_checked(importer: CubaseService, fake: FakeCubase) -> None:
     started = importer.import_audio("start", "POC-TEST", "150", dry_run=False)
-    assert started.instructions and "choose the audio file" in started.instructions
+    assert started.instructions
+    assert "choose the audio file" in started.instructions
     fake.finish_import(5.0)
     out = importer.import_audio("confirm", "POC-TEST", "150", since=started.since)
     assert (out.status, out.edges_found) == ("done", ["0:02:30.000"])

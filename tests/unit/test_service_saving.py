@@ -43,7 +43,8 @@ def test_save_is_verified_by_the_file_date(fake: FakeCubase, exports: FakeExport
     fake._apply_command = write  # type: ignore[method-assign]
     out = saver(fake, exports).save_project(dry_run=False)
     assert (out.status, out.verified) == ("done", True)
-    assert out.saved is not None and (out.saved.name, out.saved.size_bytes) == ("Demo.cpr", 210)
+    assert out.saved is not None
+    assert (out.saved.name, out.saved.size_bytes) == ("Demo.cpr", 210)
 
 
 def test_new_version_needs_a_new_file(fake: FakeCubase, exports: FakeExports, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -59,7 +60,8 @@ def test_new_version_needs_a_new_file(fake: FakeCubase, exports: FakeExports, mo
     fake._apply_command = rewrite_old_only  # type: ignore[method-assign]
     out = saver(fake, exports).save_project("new_version", dry_run=False)
     assert (out.status, out.verified) == ("awaiting_user", False)
-    assert out.instructions and "dialog" in out.instructions
+    assert out.instructions
+    assert "dialog" in out.instructions
 
     def new_version(key: str) -> None:
         exports.add("/Projects/Demo/Demo-01.cpr", None, modified=time.time() + 0.5)
@@ -73,7 +75,8 @@ def test_unknown_folder(fake: FakeCubase, exports: FakeExports) -> None:
     out = saver(fake, exports, launcher=False).save_project(dry_run=False)
     assert (out.status, out.verified) == ("fired", None)  # TW-1403 (C-06): never "saved" without evidence
     assert any("cannot be verified" in n for n in out.notes)
-    assert out.instructions and "check in Cubase" in out.instructions
+    assert out.instructions
+    assert "check in Cubase" in out.instructions
 
 
 def test_several_open_projects_are_not_guessed(fake: FakeCubase, exports: FakeExports) -> None:

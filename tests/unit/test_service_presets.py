@@ -46,7 +46,8 @@ def test_needs_focus_then_works(with_plugin: CubaseService, fake: FakeCubase) ->
     fake.editor_focused = False
     first = with_plugin.plugin_preset("POC-TEST", 1, "next", dry_run=False)
     assert (first.status, first.verified) == ("awaiting_user", False)
-    assert first.instructions and "Click once" in first.instructions
+    assert first.instructions
+    assert "Click once" in first.instructions
     assert slot_edit(fake) == 1  # left open for the click
     fake.editor_focused = True  # the user clicks
     second = with_plugin.plugin_preset("POC-TEST", 1, "next", dry_run=False)

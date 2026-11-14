@@ -33,16 +33,14 @@ def test_every_command_key_is_documented() -> None:
 
 
 def test_every_configuration_key_is_documented() -> None:
-    missing = []
+    missing: list[str] = []
     for section_name, field in Settings.model_fields.items():
         if section_name == "source":
             continue
         assert f"## `[{section_name}]`" in CONFIG_DOC, section_name
         model = field.annotation
         assert model is not None
-        for key in model.model_fields:
-            if f"`{key}`" not in CONFIG_DOC:
-                missing.append(f"{section_name}.{key}")
+        missing.extend(f"{section_name}.{key}" for key in model.model_fields if f"`{key}`" not in CONFIG_DOC)
     assert missing == []
 
 
@@ -54,7 +52,11 @@ GITHUB = "https://github.com/impalah/trackwright"
 
 def doc_pages() -> list[Path]:
     """Every Markdown document of the project (English ``X.md`` and Spanish ``X.es.md``)."""
-    pages = [ROOT / "README.md", ROOT / "README.es.md", ROOT / "CHANGELOG.md", ROOT / "CHANGELOG.es.md"]
+    pages = [
+        ROOT / f"{name}{suffix}"
+        for name in ("README", "CHANGELOG", "CONTRIBUTING", "SECURITY")
+        for suffix in (".md", ".es.md")
+    ]
     pages += sorted(DOCS.rglob("*.md")) + sorted((ROOT / "experiments").rglob("*.md"))
     return pages
 

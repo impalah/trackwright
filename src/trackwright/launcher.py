@@ -23,17 +23,20 @@ from trackwright.bridge import prepare_socket_dir, socket_is_alive
 from trackwright.config import BridgeConfig, CubaseConfig
 from trackwright.errors import BridgeUnavailableError, PreconditionFailedError
 
-Spawn = Callable[[Sequence[str], Path], None]
+Spawn = Callable[[Sequence[str], Path], object]  # the result is ignored
 Run = Callable[[Sequence[str]], int]
 Output = Callable[[Sequence[str]], str]
 BUSY_PROBES = 3
 PROJECT_AUDIO = re.compile(r"^(/.+?)/Audio/[^/]+$")
 
 
-def _spawn_detached(argv: Sequence[str], log_path: Path) -> None:
-    """Start ``argv`` in its own session, with no stdin/stdout and stderr appended to ``log_path``."""
+def _spawn_detached(argv: Sequence[str], log_path: Path) -> subprocess.Popen[bytes]:
+    """Start ``argv`` in its own session, with no stdin/stdout and stderr appended to ``log_path``.
+
+    The daemon is not waited for; the process object is returned so a test can.
+    """
     with log_path.open("ab") as log:
-        subprocess.Popen(  # noqa: S603 - fixed argv built from sys.executable
+        return subprocess.Popen(  # noqa: S603 - fixed argv built from sys.executable
             list(argv),
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,

@@ -11,7 +11,8 @@
 - **Logs con loguru** (`from loguru import logger`).
   - El módulo `logging` solo se toca en `trackwright/logs.py`, para redirigir el de las dependencias.
   - Nunca se escribe en stdout, que pertenece al protocolo MCP con `serve`.
-- **Calidad obligatoria:** ruff (lint y formato), mypy `strict` (sobre `src` y `tests`) y cobertura ≥ 95 %.
+- **Calidad obligatoria:** ruff (lint y formato, también sobre `experiments/`), mypy `strict` (sobre `src` y `tests`) y cobertura ≥ 95 %. pytest convierte los avisos en errores (un archivo o proceso sin cerrar hace fallar la suite) y detiene un test a los 120 s (pytest-timeout). `uvx pre-commit install` ejecuta ruff y mypy antes de cada commit.
+- **Contribuir y seguridad:** [CONTRIBUTING.es.md](../CONTRIBUTING.es.md) y [SECURITY.es.md](../SECURITY.es.md). Dependabot abre cada semana pull requests de actualización para `uv.lock` y las acciones de CI; las dependencias de ejecución tienen un límite superior en la siguiente versión mayor.
 - **Convenciones de los tests:** comprobar el **código** del error, no solo la clase de la excepción; esperar a eventos (`tests.support.wait_for`), nunca un `sleep` fijo; los dobles compartidos están en `tests/support.py`, `tests/conftest.py` y `tests/script/node_harness.py`, para que los módulos de test no se importen entre sí. El entramado tiene tests basados en propiedades (Hypothesis) y el script de Cubase una comprobación de sintaxis ES5 (`tests/script/test_es5.py`).
 - **Issues:** cada cambio parte de una issue en [`docs/issues/`](issues/README.es.md), que se cierra con su commit.
 

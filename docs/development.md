@@ -11,7 +11,8 @@
 - **Logging with loguru** (`from loguru import logger`).
   - The `logging` module is only touched in `trackwright/logs.py`, to redirect the dependencies' logging.
   - Nothing is ever written to stdout, which belongs to the MCP protocol under `serve`.
-- **Mandatory quality:** ruff (lint and format), mypy `strict` (on `src` and `tests`) and coverage ≥ 95%.
+- **Mandatory quality:** ruff (lint and format, also on `experiments/`), mypy `strict` (on `src` and `tests`) and coverage ≥ 95%. pytest turns warnings into errors (an unclosed file or process fails the suite) and stops a test after 120 s (pytest-timeout). `uvx pre-commit install` runs ruff and mypy before every commit.
+- **Contributing and security:** [CONTRIBUTING.md](../CONTRIBUTING.md) and [SECURITY.md](../SECURITY.md). Dependabot opens weekly update pull requests for `uv.lock` and the CI actions; runtime dependencies have an upper bound on the next major version.
 - **Test conventions:** assert the error **code**, not only the exception class; wait for events (`tests.support.wait_for`), never a fixed `sleep`; shared doubles live in `tests/support.py`, `tests/conftest.py` and `tests/script/node_harness.py`, so test modules do not import each other. The framing has property-based tests (Hypothesis) and the Cubase script an ES5 syntax check (`tests/script/test_es5.py`).
 - **Issues:** every change starts from an issue in [`docs/issues/`](issues/README.md), which is closed by its commit.
 

@@ -197,4 +197,5 @@ def test_real_coremidi_loopback() -> None:
         transport.close()
         api.dispose_client(peer)
     sources, destinations = api.endpoint_names()
-    assert to_name not in sources and from_name not in destinations
+    assert to_name not in sources
+    assert from_name not in destinations

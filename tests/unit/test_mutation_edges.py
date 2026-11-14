@@ -97,7 +97,8 @@ def test_an_empty_payload_is_one_empty_fragment() -> None:
     frames = protocol.build_frames(b"", 3)
     assert len(frames) == 1
     parsed = protocol.parse_frame(frames[0])
-    assert parsed is not None and parsed.data == b""
+    assert parsed is not None
+    assert parsed.data == b""
 
 
 # ---------------------------------------------------------------- reassembly

@@ -135,6 +135,6 @@
 
 ### TW-1415 Repository hygiene
 
-- **Status:** pending
+- **Status:** done (2026-11-14): pre-commit with local hooks through uv; Dependabot for uv and GitHub Actions; CONTRIBUTING and SECURITY in both languages (checked by `test_docs.py`); issue and PR templates; ruff PT, PERF, FURB, ASYNC and TRY (TRY003 ignored: messages are API); `filterwarnings = error`, `xfail_strict` and pytest-timeout, which uncovered the Node harness leaking its pipes and an unwaited process in a launcher test (both fixed); upper bounds `mcp<3`, `pydantic<3`, `loguru<1`; `experiments/` is linted and formatted, not type-checked
 - **Findings:** R-02, R-04, R-05, R-06.
 - **Scope:** pre-commit (ruff, ruff-format, mypy); Dependabot for uv and GitHub Actions; CONTRIBUTING and SECURITY (English and Spanish) and issue/PR templates; more ruff rules and pytest options, gradually; upper bounds on the major versions of runtime dependencies; a decision on linting `experiments/`.

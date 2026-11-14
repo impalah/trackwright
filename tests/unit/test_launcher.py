@@ -94,12 +94,8 @@ def test_bridge_that_never_starts(short_dir: Path) -> None:
 
 def test_spawn_detached_writes_stderr_to_the_log(tmp_path: Path) -> None:
     log = tmp_path / "bridge.log"
-    _spawn_detached([sys.executable, "-c", "import sys; sys.stderr.write('hola')"], log)
-    deadline = threading.Event()
-    for _ in range(50):
-        if log.read_text() == "hola":
-            break
-        deadline.wait(0.1)
+    process = _spawn_detached([sys.executable, "-c", "import sys; sys.stderr.write('hola')"], log)
+    assert process.wait(timeout=10) == 0
     assert log.read_text() == "hola"
 
 
@@ -223,7 +219,8 @@ def test_running_without_script_never_opens_a_second_instance() -> None:
     launcher = FakeLauncher(fake, running=True)
     out = make(fake, launcher).launch_cubase(dry_run=False)
     assert out.status == "running_without_script"
-    assert out.instructions and "second instance" in out.instructions
+    assert out.instructions
+    assert "second instance" in out.instructions
     assert launcher.launched == []
 
 
@@ -249,7 +246,8 @@ def test_launch_awaiting_user() -> None:
     out = make(fake, launcher).launch_cubase(dry_run=False, timeout=0.0)
     assert out.status == "awaiting_user"
     assert out.process_running is True
-    assert out.instructions and "dialog" in out.instructions
+    assert out.instructions
+    assert "dialog" in out.instructions
 
 
 def test_launch_errors(tmp_path: Path) -> None:

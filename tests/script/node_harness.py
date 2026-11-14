@@ -80,4 +80,11 @@ class Harness:
     def close(self) -> None:
         if self.proc.stdin:
             self.proc.stdin.close()
-        self.proc.wait(timeout=5)
+        try:
+            self.proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            self.proc.kill()
+            self.proc.wait(timeout=5)
+        for stream in (self.proc.stdout, self.proc.stderr):  # TW-1415: no ResourceWarning for the pipes
+            if stream:
+                stream.close()

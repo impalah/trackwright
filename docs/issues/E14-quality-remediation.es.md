@@ -135,6 +135,6 @@
 
 ### TW-1415 Higiene del repositorio
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-14): pre-commit con hooks locales vía uv; Dependabot para uv y GitHub Actions; CONTRIBUTING y SECURITY en ambos idiomas (comprobados por `test_docs.py`); plantillas de issue y de PR; ruff PT, PERF, FURB, ASYNC y TRY (TRY003 ignorada: los mensajes son API); `filterwarnings = error`, `xfail_strict` y pytest-timeout, que destaparon que el arnés de Node dejaba abiertas sus tuberías y un proceso sin esperar en un test del lanzador (ambos corregidos); límites superiores `mcp<3`, `pydantic<3`, `loguru<1`; `experiments/` pasa lint y formato, no la comprobación de tipos
 - **Hallazgos:** R-02, R-04, R-05, R-06.
 - **Alcance:** pre-commit (ruff, ruff-format, mypy); Dependabot para uv y GitHub Actions; CONTRIBUTING y SECURITY (en inglés y en español) y plantillas de issue/PR; más reglas de ruff y opciones de pytest, poco a poco; límites superiores en las versiones mayores de las dependencias de ejecución; una decisión sobre pasar el linter a `experiments/`.

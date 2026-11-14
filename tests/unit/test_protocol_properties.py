@@ -32,7 +32,8 @@ def test_round_trip_in_any_order_with_duplicates(payload: bytes, seq: int, seed:
     results = []
     for raw in delivered:
         frame = protocol.parse_frame(raw)
-        assert frame is not None and frame.seq == seq
+        assert frame is not None
+        assert frame.seq == seq
         done = reassembler.feed(frame)
         if done is not None:
             results.append(done)

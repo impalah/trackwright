@@ -31,9 +31,9 @@ pytestmark = [
 
 
 @pytest.fixture(scope="module")
-def live() -> Iterator[CubaseService]:
+def live() -> CubaseService:
     service: CubaseService = make_service(load_settings(), simulate=False)
-    yield service
+    return service
 
 
 @pytest.fixture(scope="module")
@@ -122,7 +122,8 @@ def test_parameters_of_a_channel(live: CubaseService, track: str) -> None:
 
 def test_project_properties(live: CubaseService) -> None:
     project = live.get_project()
-    assert project.tempo_bpm is not None and 20 <= project.tempo_bpm <= 300
+    assert project.tempo_bpm is not None
+    assert 20 <= project.tempo_bpm <= 300
     assert project.signature is not None
 
 

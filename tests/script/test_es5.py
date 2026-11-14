@@ -68,5 +68,5 @@ def test_script_has_no_es2015_syntax(name: str, pattern: str) -> None:
 def test_the_checker_catches_modern_syntax() -> None:
     modern = "var a = `x`\nlet b = 1\nvar f = (x) => x\n// let c = 2\nvar s = 'const d = 3'\n"
     code = code_only(modern)
-    found = {name for name, pattern in FORBIDDEN.items() if re.search(pattern, code, re.M)}
+    found = {name for name, pattern in FORBIDDEN.items() if re.search(pattern, code, re.MULTILINE)}
     assert found == {"template literal", "let declaration", "arrow function"}

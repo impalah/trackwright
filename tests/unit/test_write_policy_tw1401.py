@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import pytest
 
 from trackwright.commands import COMMANDS
@@ -47,7 +49,7 @@ def test_run_command_is_refused_while_allowed_tracks_is_set(fake: FakeCubase) ->
         service.run_command("marker.insert", dry_run=False)
     assert code_of(exc) == "NOT_ALLOWED"
     assert fake.fired == []
-    navigation = sorted(NAVIGATION_COMMANDS)[0]
+    navigation = min(NAVIGATION_COMMANDS)
     assert service.run_command(navigation, dry_run=False, force=True).status == "fired"
 
 
@@ -81,11 +83,12 @@ def test_single_track_range_edit_on_an_allowed_track(fake: FakeCubase) -> None:
 @pytest.mark.parametrize("call", ["edit_range", "split_at_locators"])
 def test_edits_on_every_track_are_refused_with_allowed_tracks(fake: FakeCubase, call: str) -> None:
     service = make(fake, enabled=True, allowed_tracks=("POC-TEST",))
+    edits: dict[str, Callable[[], object]] = {
+        "edit_range": lambda: service.edit_range("2", "30", "delete_time", dry_run=False),
+        "split_at_locators": lambda: service.split_at_locators("2.1.1.0", "4.1.1.0", dry_run=False),
+    }
     with pytest.raises(PolicyError) as exc:
-        if call == "edit_range":
-            service.edit_range("2", "30", "delete_time", dry_run=False)
-        else:
-            service.split_at_locators("2.1.1.0", "4.1.1.0", dry_run=False)
+        edits[call]()
     assert code_of(exc) == "NOT_ALLOWED"
     assert fake.fired == []
 

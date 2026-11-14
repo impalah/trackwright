@@ -213,7 +213,8 @@ def test_split_at_locators_in_seconds(service: CubaseService, fake: FakeCubase) 
     done = service.split_at_locators("2", "6", unit="seconds", dry_run=False)
     assert done.status == "done"
     assert fake.fired[-1] == "edit.split_loop"
-    assert done.details["left_bars"] and done.details["right_bars"]
+    assert done.details["left_bars"]
+    assert done.details["right_bars"]
     for bad in (("6", "2"), ("x", "2")):
         with pytest.raises(PreconditionFailedError) as exc:
             service.split_at_locators(*bad, unit="seconds")
