@@ -20,7 +20,7 @@
 
 ### TW-1501 Exportar una sola pista, comprobado en Cubase
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-14), ver `experiments/tw1501/` y el registro de verificación: solo se puede exportar Stereo Out, así que la pista va en solo; alineación exacta a la muestra (`proyecto = localizador izquierdo + tiempo del archivo`); niveles desplazados por la ley de panorama (−3 dB), así que los umbrales deben ser relativos al ruido de fondo; el silencio digital debe quedar fuera de la estimación del ruido de fondo. `cubase_export_mix` no necesita cambios; el solo es un paso de la skill
 - **Por qué primero:** el plan del análisis depende de ello, y hoy no se sabe.
 - **Alcance (experimento en `experiments/tw1501/`, con su README):**
   1. Si el diálogo «Exportar mezcla de audio» de Cubase Elements 15 puede exportar el canal de una pista en lugar de Stereo Out. Si no: Stereo Out con la pista en solo (y el solo deshecho después), o que elija el usuario.

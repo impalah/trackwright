@@ -458,3 +458,8 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 
 - `split_at_locators("19", "20", unit="seconds")` on the test project: the locators went to `10. 3. 1. 0` and `11. 1. 1. 0` (19 s and 20 s at 120 BPM in 4/4), Split Loop ran, and POC-TEST got new event edges at 19 s and 20 s. `Edit > Undo` brought its edges back exactly; the locators stay at the split points, as documented.
 - `set_position("cursor", "1.5", unit="seconds")` answers with the cursor's bar position and the format Cubase reports (`Compases+Tiempos` in this Spanish Cubase), no longer a text written in the code.
+
+## 2026-11-14 — TW-1501: exporting one track to analyze it
+
+- In Cubase Elements 15 the "Export Audio Mixdown" dialog exports only Stereo Out; a track is isolated with solo. WAV up to 64-bit float, 8 to 192 kHz.
+- A known test signal imported at 4.000 s and exported between locators at 2 and 36 s (WAV, 48 kHz, 32-bit float), with its track in solo: the alignment click lands at 3.000 s in the file, **0 samples** off; 34.000 s long. The mono track arrives on both channels 3 dB lower (centered pan law). Before and after the event the file holds exact zeros. Details in `experiments/tw1501/`.

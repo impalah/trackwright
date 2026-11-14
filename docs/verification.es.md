@@ -458,3 +458,8 @@ Cubase Elements 15.0.30, script 1.6.1, proyecto de pruebas, `TRACKWRIGHT_TEST_TR
 
 - `split_at_locators("19", "20", unit="seconds")` en el proyecto de pruebas: los localizadores fueron a `10. 3. 1. 0` y `11. 1. 1. 0` (19 s y 20 s a 120 BPM en 4/4), se ejecutó Split Loop y POC-TEST tuvo bordes de evento nuevos en 19 s y 20 s. `Edit > Undo` devolvió exactamente sus bordes; los localizadores se quedan en los puntos de corte, como está documentado.
 - `set_position("cursor", "1.5", unit="seconds")` responde con la posición del cursor en compases y el formato que indica Cubase (`Compases+Tiempos` en este Cubase en castellano), ya no un texto escrito en el código.
+
+## 2026-11-14 — TW-1501: exportar una pista para analizarla
+
+- En Cubase Elements 15 el diálogo «Exportar mezcla de audio» solo exporta Stereo Out; una pista se aísla con solo. WAV hasta 64 bits float, de 8 a 192 kHz.
+- Una señal de prueba conocida importada en 4,000 s y exportada entre localizadores en 2 y 36 s (WAV, 48 kHz, 32 bits float), con su pista en solo: el clic de alineación cae a 3,000 s del archivo, con **0 muestras** de error; 34,000 s de duración. La pista mono llega por los dos canales 3 dB más baja (ley de panorama centrada). Antes y después del evento el archivo contiene ceros exactos. Detalles en `experiments/tw1501/`.

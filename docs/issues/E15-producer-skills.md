@@ -20,7 +20,7 @@
 
 ### TW-1501 Exporting one track, checked in Cubase
 
-- **Status:** pending
+- **Status:** done (2026-11-14), see `experiments/tw1501/` and the verification log: only Stereo Out can be exported, so the track goes in solo; alignment exact to the sample (`project = left locator + file time`); levels shifted by the pan law (−3 dB), so thresholds must be relative to the noise floor; digital silence must be left out of the noise floor estimate. `cubase_export_mix` needs no change; the solo is the skill's step
 - **Why first:** the analysis plan depends on it, and it is unknown today.
 - **Scope (experiment in `experiments/tw1501/`, with its README):**
   1. Whether the "Export Audio Mixdown" dialog of Cubase Elements 15 can export one track's channel instead of Stereo Out. If not: Stereo Out with the track in solo (and the solo undone afterwards), or the user chooses.
