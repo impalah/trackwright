@@ -74,6 +74,7 @@ Agrupar operaciones dentro del script es la principal vía de mejora.
 
 - No se abre ningún puerto de red. El socket está en un directorio privado (0700) bajo `$TMPDIR`, con permisos 0600.
 - El puente solo acepta las operaciones de una lista blanca, líneas de 64 KiB como máximo y timeouts acotados.
+- Desde TW-1405: se rechaza un directorio del socket que sea un enlace simbólico; un cliente tiene 35 s para enviar su línea de petición; la cola de conexiones admite 128; un segundo puente rechazado nunca borra el socket del que está activo ni crea puertos MIDI; el SysEx entrante se limita a 4 KiB sin `F7`; el script se instala con un renombrado atómico.
 - Por defecto el servidor es de solo lectura. Las escrituras requieren configuración explícita y siempre se pueden ensayar antes.
 - El script solo guarda el proyecto a petición explícita y con su propio permiso (`[writes] save`). Solo inicia la reproducción para grabar automatización, y nunca graba audio.
 

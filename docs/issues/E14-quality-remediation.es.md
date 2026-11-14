@@ -69,7 +69,7 @@
 
 ### TW-1405 Robustez del puente y del IPC
 
-- **Estado:** pendiente
+- **Estado:** hecha en el código (2026-11-14), con tests en `tests/unit/test_robustness_tw1405.py` y `test_protocol.py`. I-13 (carpeta de exportación resuelta) se hizo en TW-1403, y `afinfo` recibe ahora una ruta resuelta. La longitud de la ruta del socket la comprueba el puente, no la configuración (los comandos que no usan el socket deben seguir funcionando)
 - **Hallazgos:** I-01, I-04, I-05, I-06, I-07, I-08, I-09, I-10, I-11, I-12, I-13, I-15, I-18, I-19.
 - **Alcance:** desvincular solo un socket que haya creado esta instancia, y abrir MIDI después de la comprobación de vida; cola de escucha de 128 y tratamiento de «ocupado» en el arranque automático; timeout de lectura en el servidor; límites en `SysExAssembler`; un reensamblador que descarta solo la trama suelta y expulsa el ensamblado más antiguo; todo `OSError` convertido en `BridgeUnavailableError` (con `sent` desconocido) y validación de la longitud de la ruta del socket; timeouts en los subprocesos; contador de respuestas duplicadas; sin enlaces simbólicos en el directorio del socket; instalación atómica del script; carpeta de exportación resuelta; registros de error más cortos; `except OSError:`; `choices` para `--log-level`.
 - **Tests:** las sondas P2–P5 y F2–F3 de la revisión como tests unitarios.

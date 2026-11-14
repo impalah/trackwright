@@ -69,7 +69,7 @@
 
 ### TW-1405 Bridge and IPC robustness
 
-- **Status:** pending
+- **Status:** done in code (2026-11-14), tests in `tests/unit/test_robustness_tw1405.py` and `test_protocol.py`. I-13 (resolved export folder) was done in TW-1403, and `afinfo` now gets a resolved path. The socket path length is checked by the bridge, not the configuration (commands that do not use the socket must keep working)
 - **Findings:** I-01, I-04, I-05, I-06, I-07, I-08, I-09, I-10, I-11, I-12, I-13, I-15, I-18, I-19.
 - **Scope:** unlink only a socket this instance bound, and open MIDI after the liveness check; listen backlog 128 and "busy" handling in autostart; server read timeout; caps in `SysExAssembler`; reassembler that drops only the stray frame and evicts the oldest assembly; every `OSError` mapped to `BridgeUnavailableError` (with `sent` unknown) and socket path length validated; subprocess timeouts; duplicate-response counter; no symlinks for the socket directory; atomic script install; resolved export folder; shorter error logs; `except OSError:`; `--log-level` choices.
 - **Tests:** the probes P2–P5 and F2–F3 of the review as unit tests.

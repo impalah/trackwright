@@ -74,6 +74,7 @@ Batching operations inside the script is the main avenue for improvement.
 
 - No network port is opened. The socket lives in a private directory (0700) under `$TMPDIR`, with permissions 0600.
 - The bridge only accepts operations from an allowlist, lines of at most 64 KiB, and bounded timeouts.
+- Since TW-1405: a symlinked socket directory is refused; a client has 35 s to send its request line; the listen backlog is 128; a refused second bridge never deletes the live socket and creates no MIDI ports; incoming SysEx is capped at 4 KiB without an `F7`; the script is installed with an atomic rename.
 - By default the server is read-only. Writes require explicit configuration and can always be rehearsed first.
 - The script only saves the project on explicit request and with its own permission (`[writes] save`). It only starts playback to record automation, and never records audio.
 
