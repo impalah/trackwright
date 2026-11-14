@@ -61,7 +61,7 @@
 
 ### TW-1404 Continuous integration
 
-- **Status:** pending
+- **Status:** done in the repository (2026-11-14): `.github/workflows/ci.yml` and `fail_under = 95`; the first run on GitHub is still pending (needs a push).
 - **Findings:** R-01, R-03.
 - **Scope:** GitHub Actions on `macos-latest` with `astral-sh/setup-uv`: `make check`, `make test-node`, `make build` and `make dist-check`; `fail_under = 95`. Optional, a user decision: trusted publishing to PyPI from tags.
 

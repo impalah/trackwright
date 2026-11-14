@@ -61,7 +61,7 @@
 
 ### TW-1404 Integración continua
 
-- **Estado:** pendiente
+- **Estado:** hecha en el repositorio (2026-11-14): `.github/workflows/ci.yml` y `fail_under = 95`; falta la primera ejecución en GitHub (necesita un push).
 - **Hallazgos:** R-01, R-03.
 - **Alcance:** GitHub Actions en `macos-latest` con `astral-sh/setup-uv`: `make check`, `make test-node`, `make build` y `make dist-check`; `fail_under = 95`. Opcional, a decisión del usuario: publicación de confianza (trusted publishing) en PyPI desde las etiquetas.
 
