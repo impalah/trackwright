@@ -113,13 +113,13 @@ def test_read_timeout() -> None:
 
 def test_write_timeout_reports_unknown_outcome_and_is_not_retried() -> None:
     script = FakeScript()
-    client, transport, _ = make(script, delay=0.3)
+    client, transport, _ = make(script, delay=0.6)
     client.session_id = "s1"
     with pytest.raises(RequestTimeoutError) as exc:
-        client.call("da.param.set", {"value": 0.9}, timeout=0.05)
+        client.call("da.param.set", {"value": 0.9}, timeout=0.3)
     assert exc.value.outcome_unknown is True
     assert [r["op"] for r in transport.requests] == ["da.param.set"]
-    time.sleep(0.4)
+    time.sleep(0.5)
     assert script.value == 0.9  # it did run: the outcome really was unknown
     assert len(client.late_responses) == 1
 

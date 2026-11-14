@@ -43,7 +43,7 @@ The evidence is in `cubase-mcp-poc/docs/findings.md` and `progress.md`.
 | Decision | Reason |
 |---|---|
 | Bridge separate from the MCP server | The virtual ports have fixed names and there can be only one owner; several MCP sessions share them through the bridge. Cubase reconnects on its own if the bridge restarts (verified). |
-| Session pinned for the duration of each tool | The bridge renegotiates the session transparently on reads; without pinning, a write after a reload could carry an old identifier that now names a different object (finding TW-1001). |
+| Session pinned for the duration of each tool | The bridge renegotiates the session transparently on reads; without pinning, a write after a reload could carry an old identifier that now names a different object (finding TW-1001). Since TW-1402 every write carries the pinned session through the bridge to the script, which refuses it with `STALE_SESSION` if it reloaded, even when another client renegotiated the bridge's session in between. |
 | Opaque references with session and fingerprint | Internal identifiers are reused for other objects after the script reloads (verified: ID 550 went from Compressor to Input Filter). |
 | `uid:` selectors for tracks | The channel's `getObjectUniqueIDString` stayed the same across restarts (verified). |
 | DirectAccess over `mMixConsole` | Gives access to all tracks without selecting them. The identifiers are valid in both instances (verified). |

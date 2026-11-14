@@ -128,13 +128,19 @@ async def test_write_flow_dry_run_then_apply(client: Client, fake: FakeCubase) -
     assert fake.channel_by_title("POC-INSTR").params[1027].value == 0
     applied = await call(client, "cubase_set_track_mix", {"track": "POC-INSTR", "mute": True, "dry_run": False})
     assert applied["verified"] is True
-    inserted = await call(client, "cubase_insert_plugin", {"slot": 1, "plugin_uid": STUDIO_EQ, "dry_run": False})
+    planned = await call(client, "cubase_insert_plugin", {"track": "selected", "slot": 1, "plugin_uid": STUDIO_EQ})
+    uid = planned["track_uid"]
+    assert uid.startswith("uid:")
+    inserted = await call(
+        client, "cubase_insert_plugin", {"track": uid, "slot": 1, "plugin_uid": STUDIO_EQ, "dry_run": False}
+    )
     assert inserted["verified"] is True
     eq = await call(
         client,
         "cubase_set_parameter",
-        {"target": "insert:1", "tag": 4207, "value": 3, "unit": "plain", "dry_run": False},
+        {"track": uid, "target": "insert:1", "tag": 4207, "value": 3, "unit": "plain", "dry_run": False},
     )
+    assert eq["track_uid"] == uid
     assert eq["verified"] is True
     renamed = await call(client, "cubase_rename_track", {"track": "POC-INSTR", "new_name": "Keys", "dry_run": False})
     assert renamed["verified"] is True

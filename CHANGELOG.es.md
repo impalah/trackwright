@@ -4,6 +4,9 @@
 
 ## Sin publicar
 
+- **Política de escrituras** (TW-1401): `cubase_run_command` rechaza guardar y borrar pistas (usa las herramientas específicas) y se rechaza, como las ediciones de rango y los cortes en todas las pistas, mientras `[writes] allowed_tracks` tenga pistas; las ediciones de rango en una pista respetan `allowed_tracks`; `cubase_set_parameter` rechaza el enrutado, el nombre y la selección del canal; mover los localizadores del ciclo necesita las escrituras activadas.
+- **Sesión fijada a través del puente** (TW-1402): las escrituras llevan la sesión que fijó la herramienta, así que el script las rechaza tras una recarga; una escritura con muy poco tiempo para esperar su respuesta no se envía (`BUSY`). **Reinicia el puente tras actualizar** (`pkill -f "trackwright bridge"`): un puente anterior ignora la sesión.
+- **Cambio incompatible:** `track` es obligatorio en `cubase_set_parameter` y `cubase_insert_plugin`; sus salidas incluyen `track_uid` para reutilizarlo al aplicar un ensayo.
 - **Revisión de calidad del código** (`docs/quality-review.es.md`) y su plan de remediación, la épica E14: agujeros de la política de escrituras, fijación de sesión en el puente, resultados veraces, robustez, conformidad entre simulador y script, mutation testing e integración continua.
 
 ## 0.3.0 — 2026-11-13

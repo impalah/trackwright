@@ -57,6 +57,7 @@ Trackwright controls a running Cubase through its MIDI Remote API.
 Rules for using these tools:
 - Designate tracks with the `track` selector: "selected", "uid:<UID>" (stable, preferred) or an exact name.
   Take uids from cubase_list_tracks. Object `ref`s are only valid until Cubase reloads the script.
+  When applying a dry run, pass the `track_uid` it returned: "selected" may point elsewhere by then.
 - Every tool that modifies the project has `dry_run` (default true). First call it with dry_run=true,
   show the plan to the user, and only after the user agrees call it again with dry_run=false.
 - Writes are never retried automatically. After a TIMEOUT the outcome is unknown: read the value back.
@@ -182,10 +183,10 @@ def build_server(service: CubaseService) -> MCPServer:
         "(input/output), name and selection are refused: READ_ONLY_PARAM.",
     )
     async def cubase_set_parameter(
+        track: TrackArg,
         target: TargetArg,
         tag: int,
         value: float,
-        track: TrackArg = "selected",
         unit: Literal["process", "plain"] = "process",
         expect_title: Annotated[str | None, Field(description="refuse if the parameter title differs")] = None,
         dry_run: DryRunArg = True,
@@ -198,9 +199,9 @@ def build_server(service: CubaseService) -> MCPServer:
 
     @server.tool(annotations=WRITE, description="Load a plugin (by uid) into an empty insert slot and verify it.")
     async def cubase_insert_plugin(
+        track: TrackArg,
         slot: Annotated[int, Field(ge=1, le=16)],
         plugin_uid: Annotated[str, Field(description="uid from cubase_list_available_plugins")],
-        track: TrackArg = "selected",
         dry_run: DryRunArg = True,
     ) -> InsertPluginOut:
         return await run(lambda: service.insert_plugin(track, slot, plugin_uid, dry_run=dry_run))

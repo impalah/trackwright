@@ -37,7 +37,9 @@ class FakeHost:
     def __init__(self) -> None:
         self.calls: list[tuple[str, JsonObject | None, float | None]] = []
 
-    def call(self, op: str, params: JsonObject | None = None, *, timeout: float | None = None) -> Reply:
+    def call(
+        self, op: str, params: JsonObject | None = None, *, timeout: float | None = None, session: str | None = None
+    ) -> Reply:
         self.calls.append((op, params, timeout))
         if op == "da.object" and (params or {}).get("id") == -1:
             raise HostError("object -1 is not valid", code="INVALID_OBJECT")
@@ -89,8 +91,8 @@ def test_validate_rejects(request_obj: object) -> None:
 
 
 def test_validate_accepts_defaults() -> None:
-    assert validate_request({"op": "ping"}) == ("ping", {}, 3.0)
-    assert validate_request({"op": "bridge.status", "timeout": 1}) == ("bridge.status", {}, 1.0)
+    assert validate_request({"op": "ping"}) == ("ping", {}, 3.0, None)
+    assert validate_request({"op": "bridge.status", "timeout": 1}) == ("bridge.status", {}, 1.0, None)
 
 
 # ---------------------------------------------------------------- dispatcher
@@ -277,7 +279,9 @@ def test_prepare_socket_dir_cannot_fix(short_tmp: Path, monkeypatch: pytest.Monk
 
 def test_unexpected_exception_is_reported_with_unknown_outcome() -> None:
     class Exploding(FakeHost):
-        def call(self, op: str, params: JsonObject | None = None, *, timeout: float | None = None) -> Reply:
+        def call(
+            self, op: str, params: JsonObject | None = None, *, timeout: float | None = None, session: str | None = None
+        ) -> Reply:
             raise OSError("rtmidi send failed")
 
     bridge = Bridge(Exploding())

@@ -35,7 +35,7 @@
 
 ### TW-1402 Las escrituras llegan siempre al objeto y a la sesión que vio quien llama
 
-- **Estado:** pendiente
+- **Estado:** hecha en el código (2026-11-14), con tests en `tests/unit/test_session_pinning_tw1402.py`; falta la verificación en Cubase (Cubase estaba cerrado). La petición IPC tiene un campo opcional `session`, que solo se conserva en las escrituras; un puente anterior lo ignora, así que hay que reiniciar el puente tras actualizar. Margen mínimo: 0,25 s (`MIN_WRITE_BUDGET`).
 - **Hallazgos:** I-02, C-04, I-03.
 - **Alcance:**
   1. La petición IPC de una escritura lleva el id de sesión fijado; el puente lo reenvía tal cual (sin `hello` implícito ni sustitución), así que la comprobación `STALE_SESSION` del script rechaza una escritura tras una recarga.

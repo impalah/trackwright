@@ -327,9 +327,11 @@ class FakeCubase:
     def session_id(self) -> str | None:
         return self.session
 
-    def call(self, op: str, params: JsonObject | None = None) -> JsonObject:
+    def call(self, op: str, params: JsonObject | None = None, *, session: str | None = None) -> JsonObject:
         p = dict(params or {})
         self.calls.append((op, p))
+        if session is not None and op not in SESSIONLESS_OPS and session != self.session:
+            raise StaleSessionError(f"expected session {self.session}")
         if not self.online or self.pending_dialog == "file.import_audio":
             # Cubase closed, or blocked by the macOS file selector (verified, TW-1203): the bridge times out.
             raise RequestTimeoutError(f"no answer from Cubase for {op}", outcome_unknown=op not in SESSIONLESS_OPS)

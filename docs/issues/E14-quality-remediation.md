@@ -35,7 +35,7 @@
 
 ### TW-1402 Writes always reach the object and session the caller saw
 
-- **Status:** pending
+- **Status:** done in code (2026-11-14), tests in `tests/unit/test_session_pinning_tw1402.py`; verification in Cubase pending (Cubase was closed). The IPC request has an optional `session` field, kept for writes only; an older bridge ignores it, so the bridge must be restarted after upgrading. Minimum budget: 0.25 s (`MIN_WRITE_BUDGET`).
 - **Findings:** I-02, C-04, I-03.
 - **Scope:**
   1. The IPC request of a write carries the pinned session id; the bridge forwards it as is (no implicit `hello`, no substitution), so the script's `STALE_SESSION` check refuses a write after a reload.

@@ -172,6 +172,9 @@ class ChangesOut(_Out):
 class WriteOut(_Out):
     dry_run: bool
     target: str
+    track_uid: str | None = Field(
+        default=None, description='"uid:<UID>" of the track: pass it as `track` when applying a dry run'
+    )
     changes: list[Change]
     verified: bool | None = Field(description="all changes read back as requested (null in dry runs)")
     note: str | None = None
@@ -180,6 +183,9 @@ class WriteOut(_Out):
 class InsertPluginOut(_Out):
     dry_run: bool
     track: str
+    track_uid: str | None = Field(
+        default=None, description='"uid:<UID>" of the track: pass it as `track` when applying a dry run'
+    )
     slot: int
     plugin_uid: str
     plugin_name: str

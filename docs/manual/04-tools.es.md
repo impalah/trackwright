@@ -153,14 +153,16 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 
 ### `cubase_set_parameter` (escritura)
 
-- **Entrada:** `target`, `tag`, `value`, `track`, `unit` (`process` de 0 a 1, o `plain` en unidades reales vía Cubase), `expect_title`, `dry_run`.
+- **Entrada:** `track` (obligatorio), `target`, `tag`, `value`, `unit` (`process` de 0 a 1, o `plain` en unidades reales vía Cubase), `expect_title`, `dry_run`.
+- **Salida:** incluye `track_uid` (`uid:<UID>`); pásalo como `track` al aplicar un ensayo, porque `"selected"` puede apuntar ya a otra pista.
 - **Verificación:** relectura, con una tolerancia de 1e-3.
 - **Parámetros protegidos del canal:** con el objetivo `channel`, el enrutado de entrada y de salida (tags 4101 y 4102), el nombre (1024) y la selección (4000) se rechazan con `READ_ONLY_PARAM`, también en el ensayo. Escribir el enrutado desconecta la pista; el nombre y la selección tienen sus propias herramientas verificadas (`cubase_rename_track`, `cubase_select_track`).
 - **Errores:** `OUT_OF_RANGE`, `PARAM_LOCKED`, `PARAM_NOT_FOUND` y `READ_ONLY_PARAM`.
 
 ### `cubase_insert_plugin` (escritura)
 
-- **Entrada:** `slot`, `plugin_uid`, `track`, `dry_run`.
+- **Entrada:** `track` (obligatorio), `slot`, `plugin_uid`, `dry_run`.
+- **Salida:** incluye `track_uid`, para reutilizarlo al aplicar el ensayo.
 - Solo en slots vacíos (`SLOT_OCCUPIED`).
 - **Verificación:** el slot contiene un plugin con ese `uid`.
 

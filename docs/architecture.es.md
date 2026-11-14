@@ -43,7 +43,7 @@ La evidencia está en `cubase-mcp-poc/docs/findings.md` y `progress.md`.
 | Decisión | Motivo |
 |---|---|
 | Puente separado del servidor MCP | Los puertos virtuales tienen nombre fijo y solo puede haber un dueño; varias sesiones MCP los comparten a través del puente. Cubase vuelve a conectar solo si el puente se reinicia (verificado). |
-| Sesión fijada durante cada herramienta | El puente renegocia la sesión de forma transparente en las lecturas; sin el fijado, una escritura posterior a una recarga podría llevar un identificador viejo que ahora nombra a otro objeto (hallazgo TW-1001). |
+| Sesión fijada durante cada herramienta | El puente renegocia la sesión de forma transparente en las lecturas; sin el fijado, una escritura posterior a una recarga podría llevar un identificador viejo que ahora nombra a otro objeto (hallazgo TW-1001). Desde TW-1402, cada escritura lleva la sesión fijada a través del puente hasta el script, que la rechaza con `STALE_SESSION` si se recargó, aunque otro cliente haya renegociado entretanto la sesión del puente. |
 | Referencias opacas con sesión y huella | Los identificadores internos se reutilizan para otros objetos tras recargar el script (verificado: el ID 550 pasó de Compressor a Input Filter). |
 | Selectores `uid:` para las pistas | `getObjectUniqueIDString` del canal se mantuvo entre reinicios (verificado). |
 | DirectAccess sobre `mMixConsole` | Da acceso a todas las pistas sin seleccionarlas. Los identificadores valen en ambas instancias (verificado). |

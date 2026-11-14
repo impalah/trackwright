@@ -124,7 +124,10 @@ class ServiceBase:
         pinned = getattr(self._local, "session", _INACTIVE)
         if op in WRITE_OPS and pinned not in (_INACTIVE, None) and self.host.session_id != pinned:
             raise self._session_changed(op)
-        result = self.host.call(op, params)
+        if op in WRITE_OPS and isinstance(pinned, str):
+            result = self.host.call(op, params, session=pinned)  # the script refuses it if it reloaded
+        else:
+            result = self.host.call(op, params)
         if pinned is not _INACTIVE:
             current = self.host.session_id
             if pinned is None:

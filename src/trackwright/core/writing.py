@@ -143,6 +143,7 @@ class WritingMixin(ProjectMixin):
         name = self.track_info(item).name
         if dry_run:
             return WriteOut(
+                track_uid=f"uid:{item['uid']}",
                 dry_run=True,
                 target=f"{name} / {target}",
                 changes=[self._change(before, process, None, None)],
@@ -156,6 +157,7 @@ class WritingMixin(ProjectMixin):
         after = result.get("after") or self.read_parameter(int(obj["id"]), tag)
         ok = after.get("process") is not None and abs(float(after["process"]) - process) <= tolerance
         return WriteOut(
+            track_uid=f"uid:{item['uid']}",
             dry_run=False,
             target=f"{name} / {target}",
             changes=[self._change(before, process, after, ok)],
@@ -192,7 +194,11 @@ class WritingMixin(ProjectMixin):
         befores = [(self.read_parameter(oid, tag), value) for tag, value in wanted]
         if dry_run:
             return WriteOut(
-                dry_run=True, target=name, verified=None, changes=[self._change(b, v, None, None) for b, v in befores]
+                track_uid=f"uid:{item['uid']}",
+                dry_run=True,
+                target=name,
+                verified=None,
+                changes=[self._change(b, v, None, None) for b, v in befores],
             )
         self.policy.check_track(name)
         changes: list[Change] = []
@@ -207,7 +213,13 @@ class WritingMixin(ProjectMixin):
             after = result.get("after") or self.read_parameter(oid, tag)
             ok = after.get("process") is not None and abs(float(after["process"]) - value) <= 1e-3
             changes.append(self._change(before, value, after, ok))
-        return WriteOut(dry_run=False, target=name, changes=changes, verified=all(c.verified for c in changes))
+        return WriteOut(
+            track_uid=f"uid:{item['uid']}",
+            dry_run=False,
+            target=name,
+            changes=changes,
+            verified=all(c.verified for c in changes),
+        )
 
     @operation
     def rename_track(self, track: str, new_name: str, *, dry_run: bool = True) -> WriteOut:
@@ -223,7 +235,11 @@ class WritingMixin(ProjectMixin):
         before = self.read_parameter(oid, TAG_NAME)
         if dry_run:
             return WriteOut(
-                dry_run=True, target=current, verified=None, changes=[self._change(before, new_name, None, None)]
+                track_uid=f"uid:{item['uid']}",
+                dry_run=True,
+                target=current,
+                verified=None,
+                changes=[self._change(before, new_name, None, None)],
             )
         self.policy.check_track(current)
         result = self._write(
@@ -233,6 +249,7 @@ class WritingMixin(ProjectMixin):
         title = self.call("da.object", {"id": oid, **MIXER}).get("title")
         ok = after.get("display") == new_name and title == new_name
         return WriteOut(
+            track_uid=f"uid:{item['uid']}",
             dry_run=False,
             target=current,
             changes=[self._change(before, new_name, after, ok)],
@@ -252,6 +269,7 @@ class WritingMixin(ProjectMixin):
         plugin_name = str(entry["name"])
         if dry_run:
             return InsertPluginOut(
+                track_uid=f"uid:{item['uid']}",
                 dry_run=True,
                 track=name,
                 slot=slot,
@@ -274,6 +292,7 @@ class WritingMixin(ProjectMixin):
         plugin = children[0] if children else None
         ok = plugin is not None and self.plugin_uid(str(plugin.get("uniqueName"))) == plugin_uid
         return InsertPluginOut(
+            track_uid=f"uid:{item['uid']}",
             dry_run=False,
             inserted=bool(result.get("result")),
             verified=ok,

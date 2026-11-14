@@ -153,14 +153,16 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 
 ### `cubase_set_parameter` (write)
 
-- **Input:** `target`, `tag`, `value`, `track`, `unit` (`process` from 0 to 1, or `plain` in real units via Cubase), `expect_title`, `dry_run`.
+- **Input:** `track` (required), `target`, `tag`, `value`, `unit` (`process` from 0 to 1, or `plain` in real units via Cubase), `expect_title`, `dry_run`.
+- **Output:** includes `track_uid` (`uid:<UID>`); pass it as `track` when applying a dry run, because `"selected"` may point to another track by then.
 - **Verification:** read-back, with a tolerance of 1e-3.
 - **Protected channel parameters:** on target `channel`, the input and output routing (tags 4101 and 4102), the name (1024) and the selection (4000) are refused with `READ_ONLY_PARAM`, also in a dry run. Writing the routing disconnects the track; name and selection have their own verified tools (`cubase_rename_track`, `cubase_select_track`).
 - **Errors:** `OUT_OF_RANGE`, `PARAM_LOCKED`, `PARAM_NOT_FOUND` and `READ_ONLY_PARAM`.
 
 ### `cubase_insert_plugin` (write)
 
-- **Input:** `slot`, `plugin_uid`, `track`, `dry_run`.
+- **Input:** `track` (required), `slot`, `plugin_uid`, `dry_run`.
+- **Output:** includes `track_uid`, to reuse when applying the dry run.
 - Empty slots only (`SLOT_OCCUPIED`).
 - **Verification:** the slot contains a plugin with that `uid`.
 

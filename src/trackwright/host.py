@@ -27,6 +27,8 @@ from trackwright.ops import WRITE_OPS
 from trackwright.transport import Transport
 
 JsonObject = dict[str, Any]
+MIN_WRITE_BUDGET = 0.25
+"""Seconds a write needs left to be worth sending (one idle tick is ~110 ms)."""
 _HISTORY = 50
 
 
@@ -114,30 +116,40 @@ class HostClient:
         *,
         timeout: float | None = None,
         rid: str | None = None,
+        session: str | None = None,
     ) -> Reply:
         """Send one request and wait for its response. Writes are serialized and never retried.
 
         The whole call, including waiting for another write to finish, fits in ``timeout``: if the
-        write lock is not free in time the request fails with ``BUSY`` without being sent.
+        write lock is not free in time, or too little time is left to wait for the answer, the write
+        fails with ``BUSY`` without being sent (TW-1402). ``session`` overrides the negotiated session.
         """
         wait = self.default_timeout if timeout is None else timeout
         if op not in WRITE_OPS:
-            return self._request(op, params, wait, rid)
+            return self._request(op, params, wait, rid, session)
         started = time.monotonic()
-        if not self._write_lock.acquire(timeout=max(wait, 0.0)):
-            raise TrackwrightError(
-                f"another write is still running; {op} was not sent",
-                code="BUSY",
-                details={"op": op, "outcome": "not_executed"},
-            )
+        if not self._write_lock.acquire(timeout=max(wait - MIN_WRITE_BUDGET, 0.0)):
+            raise self._busy(op, "another write is still running")
         try:
-            return self._request(op, params, wait - (time.monotonic() - started), rid)
+            left = wait - (time.monotonic() - started)
+            if left < MIN_WRITE_BUDGET:
+                raise self._busy(op, f"only {left:.2f}s left to wait for the answer")
+            return self._request(op, params, left, rid, session)
         finally:
             self._write_lock.release()
 
-    def _request(self, op: str, params: JsonObject | None, wait: float, rid: str | None) -> Reply:
+    @staticmethod
+    def _busy(op: str, reason: str) -> TrackwrightError:
+        return TrackwrightError(
+            f"{reason}; {op} was not sent", code="BUSY", details={"op": op, "outcome": "not_executed"}
+        )
+
+    def _request(
+        self, op: str, params: JsonObject | None, wait: float, rid: str | None, session: str | None = None
+    ) -> Reply:
         rid = rid or self.new_rid()
-        payload = protocol.encode_payload(protocol.make_request(op, rid, self.session_id, params))
+        sid = session or self.session_id
+        payload = protocol.encode_payload(protocol.make_request(op, rid, sid, params))
         pending = _Pending(op=op, sent_at=time.monotonic())
         with self._lock:
             if rid in self._pending:
@@ -196,12 +208,15 @@ class HostClient:
         self.script_version = version if isinstance(version, str) else None
         return reply
 
-    def call(self, op: str, params: JsonObject | None = None, *, timeout: float | None = None) -> Reply:
+    def call(
+        self, op: str, params: JsonObject | None = None, *, timeout: float | None = None, session: str | None = None
+    ) -> Reply:
         """Request with session negotiation; a stale session is renegotiated and retried for reads only.
 
         Every step (``hello``, request, retry) shares one deadline, so the caller's timeout holds.
         Callers that gathered object ids before a renegotiation must not reuse them: the MCP layer
-        pins the session per tool call (see ``trackwright.core.base``).
+        pins the session per tool call (see ``trackwright.core.base``) and sends writes with that
+        ``session``, which is used as is: no ``hello`` first, so the script refuses a stale write.
         """
         deadline = time.monotonic() + (self.default_timeout if timeout is None else timeout)
 
@@ -215,6 +230,8 @@ class HostClient:
 
         if op == "hello":
             return self.hello(remaining())
+        if session is not None and op in WRITE_OPS:
+            return self.request(op, params, timeout=remaining(), session=session)
         if not self.session_id:
             self.hello(remaining())
         try:

@@ -196,7 +196,9 @@ class _Client(BridgeClient):
         self.responses = responses
         self.timeouts: list[float] = []
 
-    def request(self, op: str, params: JsonObject | None = None, *, timeout: float = 3.0) -> JsonObject:
+    def request(
+        self, op: str, params: JsonObject | None = None, *, timeout: float = 3.0, session: str | None = None
+    ) -> JsonObject:
         self.timeouts.append(timeout)
         return self.responses.pop(0)
 

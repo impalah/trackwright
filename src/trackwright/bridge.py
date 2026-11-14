@@ -42,6 +42,7 @@ from trackwright.transport import Transport
 MAX_LINE = 64 * 1024
 MIN_TIMEOUT = 0.05
 MAX_TIMEOUT = 30.0
+MAX_SESSION_LEN = 64
 LOCAL_OPS = frozenset({"bridge.status"})
 JsonObject = dict[str, Any]
 
@@ -51,14 +52,19 @@ class HostBackend(Protocol):
 
     session_id: str | None
 
-    def call(self, op: str, params: JsonObject | None = None, *, timeout: float | None = None) -> Reply: ...
+    def call(
+        self, op: str, params: JsonObject | None = None, *, timeout: float | None = None, session: str | None = None
+    ) -> Reply: ...
 
     def stats(self) -> JsonObject: ...
 
 
 # ---------------------------------------------------------------------------- validation
-def validate_request(obj: object) -> tuple[str, JsonObject, float]:
-    """Validate one IPC request; return ``(op, params, timeout)``."""
+def validate_request(obj: object) -> tuple[str, JsonObject, float, str | None]:
+    """Validate one IPC request; return ``(op, params, timeout, session)``.
+
+    ``session`` is optional and only used for writes: the script session the caller pinned (TW-1402).
+    """
     if not isinstance(obj, dict):
         raise ProtocolError("IPC request must be a JSON object")
     op = obj.get("op")
@@ -70,7 +76,10 @@ def validate_request(obj: object) -> tuple[str, JsonObject, float]:
     timeout = obj.get("timeout", 3.0)
     if isinstance(timeout, bool) or not isinstance(timeout, int | float) or not MIN_TIMEOUT <= timeout <= MAX_TIMEOUT:
         raise ProtocolError(f"timeout must be a number within [{MIN_TIMEOUT}, {MAX_TIMEOUT}] seconds")
-    return op, params, float(timeout)
+    session = obj.get("session")
+    if session is not None and (not isinstance(session, str) or not session or len(session) > MAX_SESSION_LEN):
+        raise ProtocolError("'session' must be a non-empty string")
+    return op, params, float(timeout), session if op in WRITE_OPS else None
 
 
 # ---------------------------------------------------------------------------- socket directory
@@ -120,10 +129,10 @@ class Bridge:
         self.requests += 1
         started = time.monotonic()
         try:
-            op, params, timeout = validate_request(obj)
+            op, params, timeout, session = validate_request(obj)
             if op == "bridge.status":
                 return {"ok": True, "result": self.status()}
-            reply = self.host.call(op, params, timeout=timeout)
+            reply = self.host.call(op, params, timeout=timeout, session=session)
         except TrackwrightError as exc:
             self.errors += 1
             logger.debug("request failed: {}", exc)
@@ -234,9 +243,14 @@ class BridgeClient:
         self.socket_path = socket_path
         self._connect = connect or (lambda: socket.socket(socket.AF_UNIX, socket.SOCK_STREAM))
 
-    def request(self, op: str, params: JsonObject | None = None, *, timeout: float = 3.0) -> JsonObject:
+    def request(
+        self, op: str, params: JsonObject | None = None, *, timeout: float = 3.0, session: str | None = None
+    ) -> JsonObject:
         """Send one request; return the full response (``ok``, ``result`` or ``error``, ``meta``)."""
-        line = json.dumps({"op": op, "p": params or {}, "timeout": timeout}) + "\n"
+        request: JsonObject = {"op": op, "p": params or {}, "timeout": timeout}
+        if session is not None:
+            request["session"] = session
+        line = json.dumps(request) + "\n"
         buffer = b""
         try:
             with self._connect() as sock:

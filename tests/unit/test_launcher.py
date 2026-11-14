@@ -104,7 +104,7 @@ class Backend:
     def __init__(self) -> None:
         self.calls: list[str] = []
 
-    def call(self, op: str, params: Any = None, *, timeout: float | None = None) -> Any:
+    def call(self, op: str, params: Any = None, *, timeout: float | None = None, session: str | None = None) -> Any:
         from trackwright.host import Reply
 
         self.calls.append(op)
