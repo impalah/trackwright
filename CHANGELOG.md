@@ -2,6 +2,10 @@
 
 **English** · [Español](CHANGELOG.es.md)
 
+## Unreleased
+
+- **Code quality review** (`docs/quality-review.md`) and its remediation plan, epic E14: policy holes, session pinning in the bridge, truthful results, robustness, simulator/script conformance, mutation testing and CI.
+
 ## 0.3.0 — 2026-11-13
 
 First release on PyPI: `uv tool install trackwright`.

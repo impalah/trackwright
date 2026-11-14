@@ -25,6 +25,7 @@ Las issues documentan cada unidad de trabajo **antes** de implementarla. Al cerr
 | E11 | Panel de estado en la superficie MIDI Remote | [E11-status-panel.es.md](E11-status-panel.es.md) |
 | E12 | Funcionalidades ampliadas (arranque, guardar, importar y exportar, presets, automatización, propiedades del proyecto, edición por rangos). **Cerrada** (TW-1201 a TW-1212) | [E12-extended-features.es.md](E12-extended-features.es.md) |
 | E13 | Distribución: instalación guiada, transporte CoreMIDI sin compilación y canal de distribución | [E13-distribution.es.md](E13-distribution.es.md) |
+| E14 | Remediación de calidad (a partir de la revisión de calidad del código del 2026-11-14) | [E14-quality-remediation.es.md](E14-quality-remediation.es.md) |
 
 ## Criterios comunes a todas las issues
 

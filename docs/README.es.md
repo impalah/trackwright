@@ -23,4 +23,5 @@
   - [Épicas e issues](issues/README.es.md)
   - [Investigación de funcionalidades ampliadas](research.es.md)
   - [Registro de verificación](verification.es.md)
+  - [Revisión de calidad del código (2026-11-14)](quality-review.es.md)
   - [Cambios](../CHANGELOG.es.md)

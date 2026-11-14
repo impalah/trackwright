@@ -23,4 +23,5 @@
   - [Epics and issues](issues/README.md)
   - [Research on extended features](research.md)
   - [Verification log](verification.md)
+  - [Code quality review (2026-11-14)](quality-review.md)
   - [Changelog](../CHANGELOG.md)

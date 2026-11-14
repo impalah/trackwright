@@ -2,6 +2,10 @@
 
 [English](CHANGELOG.md) · **Español**
 
+## Sin publicar
+
+- **Revisión de calidad del código** (`docs/quality-review.es.md`) y su plan de remediación, la épica E14: agujeros de la política de escrituras, fijación de sesión en el puente, resultados veraces, robustez, conformidad entre simulador y script, mutation testing e integración continua.
+
 ## 0.3.0 — 2026-11-13
 
 Primera versión publicada en PyPI: `uv tool install trackwright`.
