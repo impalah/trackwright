@@ -415,3 +415,9 @@ Cubase Elements 15.0.30, script 1.5.5, the test project. The bridge was restarte
 - Installed by the user (`trackwright script install --apply`, replacing 1.6.0) and loaded by restarting Cubase.
 - **Seen by the user:** the three fixed lines under the track name ("Faders on the right:", "automation (Trackwright)", "do not move or map them") are visible on the surface.
 - `doctor`: every check ok, "script loaded in Cubase" 1.6.1 = packaged; `capabilities.panel`: enabled, no errors; integration tests (reads and reversible writes on POC-TEST): 5 passed.
+
+## 2026-11-14 — 0.4.0 published
+
+- **CI:** the first GitHub Actions run (push of `a342347`) passed every step on macOS: environment, lint/format/types/tests with coverage, Node tests of the script, build and `twine check`.
+- **PyPI:** the user published 0.4.0 with `make publish`. The wheel and the sdist on PyPI have the same SHA-256 as the local build of commit `fc506e1` (tag `v0.4.0`); the metadata has the `Repository`, `Issues` and `Author` links.
+- `uvx --refresh trackwright@0.4.0 version` from an unrelated folder answers `0.4.0`. Without `--refresh`, uv first said no 0.4.0 existed: its cached index was older than the upload.

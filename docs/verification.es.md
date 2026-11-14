@@ -415,3 +415,9 @@ Cubase Elements 15.0.30, script 1.5.5, el proyecto de pruebas. Se reinició el p
 - Instalado por el usuario (`trackwright script install --apply`, sustituyendo a 1.6.0) y cargado al reiniciar Cubase.
 - **Visto por el usuario:** las tres líneas fijas bajo el nombre de la pista («Faders on the right:», «automation (Trackwright)», «do not move or map them») se ven en la superficie.
 - `doctor`: todas las comprobaciones bien, «script loaded in Cubase» 1.6.1 = el del paquete; `capabilities.panel`: activado, sin errores; tests de integración (lecturas y escrituras reversibles en POC-TEST): 5 pasados.
+
+## 2026-11-14 — 0.4.0 publicada
+
+- **CI:** la primera ejecución de GitHub Actions (push de `a342347`) pasó todos los pasos en macOS: entorno, lint/formato/tipos/tests con cobertura, tests con Node del script, construcción y `twine check`.
+- **PyPI:** el usuario publicó la 0.4.0 con `make publish`. El wheel y el sdist de PyPI tienen el mismo SHA-256 que la construcción local del commit `fc506e1` (etiqueta `v0.4.0`); los metadatos llevan los enlaces `Repository`, `Issues` y `Author`.
+- `uvx --refresh trackwright@0.4.0 version` desde otra carpeta responde `0.4.0`. Sin `--refresh`, uv dijo primero que no existía la 0.4.0: su índice en caché era anterior a la subida.

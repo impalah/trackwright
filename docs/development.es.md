@@ -127,7 +127,7 @@ Las escrituras se restauran al terminar. Estos tests usan tu configuración real
    UV_PUBLISH_TOKEN="$(security find-generic-password -a "$USER" -s pypi-token -w)" make publish
    ```
    `make publish-test` hace lo mismo contra TestPyPI (entrada del Llavero `testpypi-token`).
-4. Etiqueta el commit publicado: `git tag -a vX.Y.Z -m "Trackwright X.Y.Z"`.
+4. Etiqueta el commit publicado (del que se construyó `dist/`): `git tag -a vX.Y.Z -m "Trackwright X.Y.Z"`.
 
 Una versión nunca se puede volver a subir, aunque se borre de PyPI.
 

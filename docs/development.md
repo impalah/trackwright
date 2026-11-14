@@ -127,7 +127,7 @@ Writes are restored at the end. These tests use your real configuration: they do
    UV_PUBLISH_TOKEN="$(security find-generic-password -a "$USER" -s pypi-token -w)" make publish
    ```
    `make publish-test` does the same against TestPyPI (Keychain entry `testpypi-token`).
-4. Tag the published commit: `git tag -a vX.Y.Z -m "Trackwright X.Y.Z"`.
+4. Tag the published commit (the one `dist/` was built from): `git tag -a vX.Y.Z -m "Trackwright X.Y.Z"`.
 
 A version can never be uploaded twice, even if it is deleted from PyPI.
 
