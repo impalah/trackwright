@@ -4,6 +4,7 @@
 
 ## Sin publicar
 
+- **Corrección:** `cubase_analyze_audio` podía indicar un silencio de duración cero (inicio igual al fin) cuando el margen dejaba unos microsegundos que el redondeo eliminaba. Encontrado por un test de propiedades.
 - **Exportar algunas pistas solas** (TW-1605): `cubase_export_mix` acepta `solo` (pistas que exportar solas; los demás solos se quitan mientras tanto) y deja cada solo como estaba en `confirm`, en la nueva fase `cancel`, o en el momento si el diálogo no puede abrirse, e indica `solo_restored`. Las skills `podcast-silence-trim` y `noise-gate` lo usan en lugar de poner el solo a mano.
 - **Actividad vocal** (TW-1604): herramienta nueva `cubase_detect_speech`: regiones de voz de la exportación de una pista de voz en segundos del proyecto (banda vocal con histéresis, hangover, huecos unidos, clics y fragmentos muy por debajo del nivel típico de la voz descartados), validada con un episodio real de 46 minutos. El servidor tiene ahora 36 herramientas.
 - **Sonoridad y true peak** (TW-1603): herramienta nueva `cubase_measure_loudness` (ITU-R BS.1770 / EBU R128: sonoridad integrada, momentánea y a corto plazo, rango de sonoridad, pico de muestra y true peak), comprobada con los casos de prueba de EBU Tech 3341 y 3342 y con pyloudnorm; archivos AAC decodificados con `afconvert` de macOS (también para `cubase_analyze_audio`). Dependencia nueva scipy. El servidor tiene ahora 35 herramientas.

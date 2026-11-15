@@ -280,3 +280,10 @@ def test_syllables_are_not_blips(tmp_path: Path) -> None:
     data = np.concatenate([noise(3, rate, -55.0, 1), phrase + noise(4, rate, -55.0, 2), noise(3, rate, -55.0, 3)])
     levels = measure(write(tmp_path / "speech.wav", data, rate))
     assert spans(find_silences(levels, SilenceCriteria(min_seconds=1.0))) == [(0.0, 2.75), (7.25, 10.0)]
+
+
+def test_padding_that_leaves_nothing_after_rounding() -> None:
+    """Found by Hypothesis: a silence a hair longer than twice the padding became a 0.18-0.18 span."""
+    levels = make_levels([0.0] * 9 + [-90.0] * 10 + [0.0] * 9, [False] * 28)
+    criteria = SilenceCriteria(min_seconds=0.02, padding_seconds=0.09999999, merge_gap_seconds=0.0, threshold_db=-50)
+    assert all(s.end > s.start for s in find_silences(levels, criteria))

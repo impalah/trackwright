@@ -133,15 +133,12 @@ def find_silences(levels: Levels, criteria: SilenceCriteria | None = None) -> li
             continue
         cut_begin = begin if start == 0 else begin + criteria.padding_seconds
         cut_end = finish if end == count else finish - criteria.padding_seconds
-        if cut_end - cut_begin <= 0:
+        begin_s, end_s = round(cut_begin, 4), round(min(cut_end, total), 4)
+        if end_s <= begin_s:  # nothing left after padding (and rounding: Hypothesis found 0.18-0.18)
             continue
         span = levels.rms_db[start:end]
         digital = bool(levels.digital_silence[start:end].all())
         power = float(np.mean(np.power(10.0, span / 10.0)))
         level = SILENT_DB if digital or power <= 0 else float(10.0 * np.log10(power))
-        silences.append(
-            Silence(
-                start=round(cut_begin, 4), end=round(min(cut_end, total), 4), level_db=round(level, 2), digital=digital
-            )
-        )
+        silences.append(Silence(start=begin_s, end=end_s, level_db=round(level, 2), digital=digital))
     return silences
