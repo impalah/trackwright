@@ -70,7 +70,7 @@ Show the plan as a short table: plugin, slot, threshold (with the numbers it com
 
 ## 7. Check the result
 
-Offer to check it on a new export, with the gate active: solo, export the same range (`gate-after`), confirm, undo the solo, analyze with the same `start`.
+Offer to check it on a new export, with the gate active: solo, export the same range (`gate-after`), confirm, undo the solo, and analyze with the same `start` **and `threshold_db` set to the `threshold_db` of the first analysis**. With the default relative threshold the comparison is wrong: once the pauses are quieter, the threshold drops with them and the noise left between syllables (the gate stays open there, by Hold and Release) starts counting as sound.
 
 - The pauses must be quieter: `noise_floor_db` lower by about the Range (with -oo the pauses become exact silence and count as `digital`).
 - The soft speech must stay: `quiet_sound_db` within about 1 dB of before, and `sound_db` unchanged. If `quiet_sound_db` dropped, the threshold is too high: propose lowering it 3 dB and check again.

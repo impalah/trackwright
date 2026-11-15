@@ -481,3 +481,11 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 - Dry run of the latest cut, then `delete_time` from the end to the start: 29.25–36.00, 21.25–25.75, 10.25–13.75 and 2.00–5.75 s, each `verified: true` against the edges of `TW1501` (final edges 2.000, 6.500, 14.000 and 17.500 s) and one undo step each.
 
 - **Through the plugin** (reported by the user, 2026-11-15; not observed from this session): in a fresh Claude Code session with `TRACKWRIGHT_FROM=$PWD claude --plugin-dir plugins/claude-code`, the request worked correctly. Afterwards the project was checked from here: `TW1501` back to one event at 4.000–34.000 s, no track left in solo.
+
+## 2026-11-15 — TW-1507: the `noise-gate` flow on the test project
+
+- `experiments/tw1507/make_fixture.py` (noise −55 dBFS, syllable phrases at −16 and −36 dBFS, pauses) imported by the user on a new mono track `TW1507` at 0 s.
+- Discovery: filters `gate`, `expander`, `noise` found `Gate` and `MidiGate` (Steinberg); `MidiGate` left out (MIDI-triggered); the catalog also lists a third-party VST (Voxengo CurveEQ), so other vendors' gates would appear the same way. Once loaded, `Gate` has Threshold (tag 4201, dB, −60…0 linear), Range (4243), Attack (4202), Hold (4204), Release (4203), and a band-pass side-chain filter on by default.
+- Export with the track in solo (`gate-check.wav`): noise floor −58.2 dB, quietest speech −39.0 dB, typical −19.1 dB (the source levels minus the 3 dB pan law). Threshold on the export −48.5 dB, translated to the gate's input (+3 dB for a centered mono track, faders at 0 dB): −45.5 dB. The user approved: Threshold −45.5 dB, Range −30 dB, Hold 50 ms, Release 200 ms; each set with `expect_title` and read back.
+- Second export with the gate (`gate-after.wav`), analyzed with the first threshold (−48.2 dB): noise floor −88.05 dB (−30 dB, the Range); quietest speech −39.0 dB and typical −19.06 dB, unchanged; pauses at −83 to −85 dB (the first 200 ms are the release), both phrases at the same level as before.
+- Found on the way: (1) the default `merge_gap_seconds` of 0.3 s took the 250 ms syllables for blips and reported the whole file as one silence; lowered to 0.05 s. (2) Re-analyzing after the gate with the relative threshold compares different things (the threshold drops with the noise); the skill now passes the first threshold.

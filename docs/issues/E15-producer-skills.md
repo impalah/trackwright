@@ -90,7 +90,7 @@
 
 ### TW-1507 Skill `noise-gate`
 
-- **Status:** pending (needs TW-1503 to TW-1505)
+- **Status:** done (2026-11-15): `plugins/claude-code/skills/noise-gate/SKILL.md`. Discovery by name (gate, expander, noise) and the Dynamics category, then by a Threshold parameter in dB once loaded, so third-party gates work too; MIDI-triggered gates and spectral denoisers left out. Cubase Elements ships `Gate` (and `VSTDynamics`, a multi-module processor). Threshold: midpoint between the noise floor and the new `quiet_sound_db`, translated to the gate's input (faders and +3 dB for a centered mono track); at least 12 dB between noise and soft speech, otherwise a warning. Verified on `TW1507` with `experiments/tw1507/` (see the verification log): noise −30 dB, both phrases unchanged. The test also fixed `merge_gap_seconds` (0.3 → 0.05 s) and the skill's after-check (reuse the first threshold)
 - **Flow:**
   1. Find a gate among the available plugins (`cubase_list_available_plugins`); which one Cubase Elements ships is **unknown** and is checked here, not assumed.
   2. Measure the noise floor of the track (export and `cubase_analyze_audio`) and propose the threshold a few dB above it.

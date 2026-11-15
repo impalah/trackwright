@@ -90,7 +90,7 @@
 
 ### TW-1507 Skill `noise-gate`
 
-- **Estado:** pendiente (necesita de TW-1503 a TW-1505)
+- **Estado:** hecha (2026-11-15): `plugins/claude-code/skills/noise-gate/SKILL.md`. Descubrimiento por nombre (gate, expander, noise) y por la categoría Dynamics, y después por un parámetro Threshold en dB una vez cargado, así que también sirven las puertas de terceros; quedan fuera las que se abren con MIDI y los reductores de ruido espectrales. Cubase Elements trae `Gate` (y `VSTDynamics`, un procesador de varios módulos). Umbral: punto medio entre el ruido de fondo y el nuevo `quiet_sound_db`, traducido a la entrada de la puerta (faders y +3 dB por pista mono centrada); al menos 12 dB entre el ruido y la voz baja, si no, un aviso. Verificada en `TW1507` con `experiments/tw1507/` (ver el registro de verificación): ruido −30 dB, las dos frases sin cambios. La prueba corrigió además `merge_gap_seconds` (0,3 → 0,05 s) y la comprobación posterior de la skill (reutilizar el primer umbral)
 - **Flujo:**
   1. Buscar una puerta entre los plugins disponibles (`cubase_list_available_plugins`); cuál trae Cubase Elements **no se sabe** y se comprueba aquí, sin suponerlo.
   2. Medir el ruido de fondo de la pista (exportación y `cubase_analyze_audio`) y proponer el umbral unos dB por encima.
