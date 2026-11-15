@@ -231,6 +231,8 @@ def test_record_and_forget(fake: FakeCubase, tmp_path: Path) -> None:
     assert not (tmp_path / FOLDER / "state.json").exists()
     done = tool.workspace("record", **args, details={"plugin": "Gate"}, dry_run=False)
     assert done.status == "recorded"
+    assert done.owned == {"noise-gate:plugin": 1}  # the state after the change
+    assert done.items[0]["key"] == "UID1/slot:1"
     status = tool.workspace()
     assert status.owned == {"noise-gate:plugin": 1}
     assert status.items[0]["details"] == {"plugin": "Gate"}

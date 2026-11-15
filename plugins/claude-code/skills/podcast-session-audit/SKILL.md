@@ -53,6 +53,7 @@ Build the inventory, without measuring audio:
   - a track whose output is no bus (`Sin bus`, "No Bus" in English): it is heard nowhere;
   - a fader at `-oo` (silent) or far from the others;
   - an audio track **with no edges**: empty, or one event covering it all (see the notes of `cubase_track_edges`);
+  - an audio track with an **odd number of edges**: probably an event that starts exactly at 0 s, whose start the probe cannot see (its first edge is then that event's end); overlapping or adjacent events can also cause it, so say "probably";
   - a track that `state.json` says a skill created, and the track it replaces;
   - a track whose name in the show profile has a role but which is missing from the project, or the reverse.
 
@@ -71,7 +72,7 @@ Add the **capability report**: what this audit cannot see, so the user does not 
 - event gain (clip gain), fades and crossfades inside events, and silence inside an event;
 - the markers themselves (names and positions) and the events' names and source files;
 - an event that starts exactly at 0 s (only its end is seen);
-- plugin presets by name, and plugins' settings unless asked for (`cubase_list_parameters`);
+- whether a plugin is bypassed or switched off (`cubase_list_inserts` lists what is loaded, not its state), plugin presets by name, and plugins' settings unless asked for (`cubase_list_parameters`);
 - routing beyond each track's output (sends' destinations, side-chains).
 
 ### 4. Preview

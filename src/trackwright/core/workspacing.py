@@ -140,4 +140,7 @@ class WorkspaceMixin(ServiceBase):
         space.save_state(state)  # NO_WORKSPACE when the folder does not exist
         out.status = "recorded" if action == "record" else "forgotten"
         out.has_state = True
+        out.has_profile = (space.path / PROFILE_FILE).is_file()
+        out.owned = dict(Counter(f"{i.skill}:{i.kind}" for i in state.items))
+        out.items = [i.model_dump(mode="json") for i in state.items[:MAX_ITEMS]]
         return out

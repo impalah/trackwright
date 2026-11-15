@@ -136,7 +136,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1610 Skill `podcast-session-audit`
 
-- **Status:** code done (2026-11-15), to try live: the skill (contract of TW-1609) and the tool `cubase_track_edges` (a track's event edges and extent, cursor and selection put back); `cubase_profile resolve` now also returns `episode`, the episode layer as stored, so a skill writes the episode profile without copying the show's values into it. Tests in `tests/unit/test_track_edges_tw1610.py`
+- **Status:** done (2026-11-15), tried live on the test project (see the verification log; a run on a real episode with the user's roles is still to come): the skill (contract of TW-1609) and the tool `cubase_track_edges` (a track's event edges and extent, cursor and selection put back); `cubase_profile resolve` now also returns `episode`, the episode layer as stored, so a skill writes the episode profile without copying the show's values into it. Tests in `tests/unit/test_track_edges_tw1610.py`
 - **Scope:** inventory of tracks (type, mute, solo, output, inserts, event edges and the episode's extent), roles confirmed by the user and stored in the episode profile (never inferred from a name or from being stereo), protected ranges, and a capability report (what the API cannot see: automation, event gain, the user's markers). Read-only except the profile, after approval.
 
 ### TW-1611 Skill `podcast-final-qc`

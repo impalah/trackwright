@@ -136,7 +136,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1610 Skill `podcast-session-audit`
 
-- **Estado:** código hecho (2026-11-15), falta probarlo en directo: la skill (contrato de TW-1609) y la herramienta `cubase_track_edges` (bordes de eventos y extensión de una pista, cursor y selección devueltos a su sitio); `cubase_profile resolve` devuelve además `episode`, la capa del episodio tal como está guardada, para que una skill escriba el perfil del episodio sin copiar en él los valores del programa. Tests en `tests/unit/test_track_edges_tw1610.py`
+- **Estado:** hecho (2026-11-15), probado en directo en el proyecto de pruebas (ver el registro de verificación; falta una ejecución en un episodio real con los roles del usuario): la skill (contrato de TW-1609) y la herramienta `cubase_track_edges` (bordes de eventos y extensión de una pista, cursor y selección devueltos a su sitio); `cubase_profile resolve` devuelve además `episode`, la capa del episodio tal como está guardada, para que una skill escriba el perfil del episodio sin copiar en él los valores del programa. Tests en `tests/unit/test_track_edges_tw1610.py`
 - **Alcance:** inventario de pistas (tipo, mute, solo, salida, inserciones, bordes de eventos y la extensión del episodio), roles confirmados por el usuario y guardados en el perfil del episodio (nunca deducidos de un nombre ni de que sea estéreo), rangos protegidos y un informe de capacidades (lo que la API no puede ver: automatización, ganancia de los eventos, marcadores del usuario). Solo lectura salvo el perfil, tras aprobación.
 
 ### TW-1611 Skill `podcast-final-qc`
