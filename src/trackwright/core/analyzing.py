@@ -215,6 +215,8 @@ class AnalyzingMixin(ServiceBase):
             if exc.code != "BAD_AUDIO":  # AAC: probed after decoding, in compute
                 raise
         folder, _why = self.project_folder()
+        if folder is not None and folder.resolve() not in path.resolve().parents:
+            folder = None  # another project's file: neither its cache nor its .cpr belong to the open project
         space = Workspace(folder) if folder is not None else None
         analysis = space.path / "analysis" if space is not None and space.exists else None
         cache = AnalysisCache(analysis, writable=self.policy.workspace)

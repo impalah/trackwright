@@ -185,3 +185,16 @@ def test_a_project_saved_after_the_export(fake: FakeCubase, project: Path, expor
     assert hit.cache == "hit"
     assert hit.source is not None
     assert hit.source.project_saved_after is True  # checked again on every call, never cached
+
+
+def test_a_file_of_another_project_is_not_cached_here(fake: FakeCubase, project: Path, tmp_path: Path) -> None:
+    elsewhere = tmp_path / "E0002" / "Mixdown"
+    elsewhere.mkdir(parents=True)
+    other = elsewhere / "voice.wav"
+    write_speechlike(other)
+    (project / "E0001.cpr").write_bytes(b"")
+    out = make(fake, project).analyze_audio(str(other))
+    assert out.cache == "off"
+    assert out.source is not None
+    assert out.source.project_saved_after is None
+    assert list((project / "Trackwright" / "analysis").iterdir()) == []
