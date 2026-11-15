@@ -103,6 +103,7 @@ def test_toml_round_trip() -> None:
     show = ShowProfile.model_validate(SHOW)
     text = profile_toml(show)
     assert "[music]" not in text  # empty tables left out
+    assert "notes" not in profile_toml(ShowProfile(title="x"))  # and empty texts
     assert ShowProfile.model_validate(tomllib.loads(text)) == show
     assert tomllib.loads(profile_toml(EpisodeProfile()))["version"] == 1
 

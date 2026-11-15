@@ -212,14 +212,14 @@ def resolve(
 def _prune(value: Any) -> Any:
     if isinstance(value, dict):
         pruned = {k: _prune(v) for k, v in value.items()}
-        return {k: v for k, v in pruned.items() if v not in ({}, None)}
+        return {k: v for k, v in pruned.items() if v not in ({}, None, "")}
     if isinstance(value, list):
         return [_prune(v) for v in value]
     return value
 
 
 def profile_toml(profile: BaseModel) -> str:
-    """A show or episode profile as TOML: unset values and empty tables left out, the version always kept."""
+    """A show or episode profile as TOML: unset values, empty texts and empty tables left out, the version always kept."""
     data = _prune(profile.model_dump(mode="python", exclude_none=True))
     data.setdefault("version", FORMAT_VERSION)
     return tomli_w.dumps(data)
