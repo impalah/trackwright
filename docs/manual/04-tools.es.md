@@ -2,7 +2,7 @@
 
 [English](04-tools.md) · **Español**
 
-El servidor `trackwright` publica 36 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 37 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 Trackwright aspira a admitir varios DAW, pero hoy solo implementa **Cubase**. Por eso todas las herramientas se llaman `cubase_*` y esta página describe el comportamiento de Cubase: se verificó contra Cubase Elements 15.0.30, con scripts de experimento y desde Claude Code (ver el [registro de verificación](../verification.es.md)). Cualquier cliente MCP recibe las mismas herramientas. Otro DAW tendría su propio conjunto de herramientas; ver [Extensión a otros DAW](../architecture.es.md#extensión-a-otros-daw-posible-no-implementada).
 
@@ -347,6 +347,7 @@ Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
   - `copied_to_project` lista las copias nuevas en `<proyecto>/Audio`, solo con el nombre.
 - **Verificado en Cubase Elements:** un tono de 3 s quedó en POC-TEST de 150 a 153 s.
 - **Deshacer** quita el evento, **no** la copia en disco.
+- **Renders** (`file` en `Trackwright/renders/` con su procedencia, TW-1606): `start` rechaza una posición distinta de la del render (`MISALIGNED`), la pista a la que sustituye el render (`BAD_REQUEST`) y un render que cambió después de hacerse (`BAD_RENDER`); las instrucciones piden desmarcar «Copiar archivo a carpeta del proyecto». `confirm` devuelve `render` y, con `[workspace] enabled`, registra el render y la pista nueva en `state.json` como de la skill que lo renderizó (`owned: true`), y recuerda silenciar la pista original; si una pista de render anterior de la misma skill sustituía a la misma pista, lo dice, para quitarla cuando el usuario lo confirme.
 
 ## Exportar la mezcla
 
@@ -418,6 +419,16 @@ La carpeta `Trackwright/` dentro de la carpeta del proyecto abierto, donde las s
   | `profile.toml` | el perfil del episodio: roles de las pistas, rangos protegidos, notas |
 - **Seguridad:** cada ruta se comprueba para que quede dentro de `Trackwright/` (sin `..`, rutas absolutas ni enlaces simbólicos que salgan); se rechaza un `Trackwright` que sea un enlace simbólico o un archivo; los archivos se escriben de forma atómica.
 - **Errores:** `WORKSPACE_DISABLED`, `NO_PROJECT_FOLDER` (desconocida o ambigua), `BAD_WORKSPACE`, `NO_WORKSPACE`.
+
+### `cubase_render` (`render` escribe archivos, con dry run; `list` lee)
+
+Audio procesado para el proyecto, escrito en `Trackwright/renders/` (TW-1606). La API de Cubase no puede procesar el audio de una pista, así que una skill exporta la pista sola, procesa la exportación en Python e importa el resultado en una pista nueva, silenciando la original.
+
+- **Entrada:** `action` (`render` por defecto, o `list`); para `render`: `file` (ruta absoluta de la exportación), `start` (tiempo de proyecto de la primera muestra de la exportación: el inicio de su rango), `process` (`gain`), `gain_db` (±40), `name` (por defecto `<pista u origen>-<proceso>`), `track` (la pista a la que sustituye el render), `skill` y `run_id` (quién renderiza, se guarda en la procedencia), `dry_run`.
+- **`render`:** escribe `<nombre>.wav` (WAV de 32 bits float, con la frecuencia y los canales del origen) y `<nombre>.json`, la **procedencia**: ruta, tamaño y SHA-256 del origen, el proceso y sus parámetros, la posición en el proyecto, la pista a la que sustituye (nombre y uid), el SHA-256 y el pico del propio render, y la versión de Trackwright. Un render existente nunca se sobrescribe (Cubase puede seguir usándolo): el siguiente es `<nombre>-2.wav`. Necesita `[analysis] enabled` (lee audio, con su `max_seconds`) y `[workspace] enabled`, y el espacio de trabajo creado con `cubase_workspace`.
+- **Después:** crear una pista de audio (`cubase_add_track_interactive`), importar el render en ella con `cubase_import_audio` en la posición devuelta y silenciar la pista original (`cubase_set_track_mix`). En las opciones de importación de Cubase, desmarcar «Copiar archivo a carpeta del proyecto» (el render ya está en la carpeta del proyecto) y dejar desactivada la conversión a 24 bits.
+- **`list`:** cada render con su procedencia, la pista en la que se importó (de `state.json`), si esa pista sigue en el proyecto, y `problems`: el render cambió después de hacerse, su origen cambió o ya no está.
+- **Errores:** `WORKSPACE_DISABLED`, `ANALYSIS_DISABLED`, `TOO_LONG`, `NO_PROJECT_FOLDER`, `NO_WORKSPACE`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST`, `BAD_RENDER`.
 
 ## Analizar audio
 

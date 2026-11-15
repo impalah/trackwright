@@ -7,6 +7,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from trackwright.commands import CommandClass
+from trackwright.jsontypes import JsonObject
 
 
 class _Out(BaseModel):
@@ -414,6 +415,37 @@ class WorkspaceOut(_Out):
     notes: list[str] = Field(default_factory=list)
 
 
+class RenderItemOut(_Out):
+    file: str = Field(description="absolute path of the render")
+    provenance: str = Field(description="its provenance file (.json)")
+    skill: str
+    run: str
+    process: str
+    parameters: JsonObject
+    position: str = Field(description="project time of its first sample: import it there")
+    position_seconds: float
+    seconds: float
+    sample_rate: int
+    channels: int
+    peak_dbfs: float | None
+    replaces: str | None = Field(description="the track it replaces (to mute after the import)")
+    source: str
+    imported_on: str | None = Field(default=None, description="uid of the track it was imported on (state.json)")
+    track_present: bool | None = Field(default=None, description="that track is still in the project")
+    problems: list[str] = Field(default_factory=list, description="render or source changed, source gone")
+
+
+class RenderOut(_Out):
+    action: Literal["render", "list"]
+    dry_run: bool
+    status: Literal["planned", "done", "listed"]
+    workspace: str | None = Field(default=None, description="<project folder>/Trackwright")
+    render: RenderItemOut | None = Field(default=None, description="render: what was (or would be) written")
+    renders: list[RenderItemOut] = Field(default_factory=list, description="list: the workspace's renders")
+    instructions: str | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
 class SpeechRegionOut(_Out):
     start: str = Field(description="project time, h:mm:ss.mmm")
     end: str
@@ -567,6 +599,10 @@ class ImportOut(_Out):
     since: float | None = Field(description="pass it back to the confirm phase")
     edges_found: list[str] = Field(default_factory=list, description="event edges at the start and end")
     copied_to_project: list[str] = Field(default_factory=list, description="new files in <project>/Audio")
+    render: str | None = Field(default=None, description="the file is a Trackwright render: its provenance file")
+    owned: bool | None = Field(
+        default=None, description="confirm of a render: the track was recorded in state.json as the skill's"
+    )
     verified: bool | None = None
     instructions: str | None = None
     notes: list[str] = Field(default_factory=list)

@@ -1,0 +1,219 @@
+"""Render processed audio into the project workspace (TW-1606).
+
+A render is made from an export of a track (``cubase_export_mix`` with ``solo``): Python processes it and
+writes ``Trackwright/renders/<name>.wav`` with its provenance; the skill then imports it on a new track at
+the export's range start (``cubase_import_audio``, which checks the position against the provenance and
+records the track as the skill's) and mutes the original track. Reading the source needs ``[analysis]
+enabled``; writing the render needs ``[workspace] enabled`` and an existing workspace. Nothing is sent to
+Cubase except, with ``track``, reading that track's name and uid.
+
+Processes: ``gain`` (``gain_db``). The skills that need others (ducking, leveling) add them here.
+"""
+
+from __future__ import annotations
+
+import math
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Literal
+
+from trackwright import __version__
+from trackwright.analysis import decoded, probe
+from trackwright.core.analyzing import AnalyzingMixin
+from trackwright.core.models import RenderItemOut, RenderOut
+from trackwright.core.refs import TrackSelector
+from trackwright.core.timefmt import format_seconds, parse_seconds
+from trackwright.errors import NotFoundError, PreconditionFailedError
+from trackwright.jsontypes import JsonObject
+from trackwright.renders import (
+    RENDERS,
+    Provenance,
+    SourceInfo,
+    gain,
+    load_provenance,
+    next_name,
+    problems,
+    provenance_path,
+    render_file,
+    renders_of,
+    sha256,
+    slug,
+    write_provenance,
+)
+from trackwright.workspace import Workspace
+
+PROCESSES = ("gain",)
+MAX_GAIN_DB = 40.0
+
+
+def _peak_db(linear: float) -> float | None:
+    return round(20 * math.log10(linear), 2) if linear > 0 else None
+
+
+def item_out(render: Path, provenance: Provenance, *, check: bool = True) -> RenderItemOut:
+    return RenderItemOut(
+        file=str(render),
+        provenance=str(provenance_path(render)),
+        skill=provenance.skill,
+        run=provenance.run,
+        process=provenance.process,
+        parameters=provenance.parameters,
+        position=format_seconds(provenance.position),
+        position_seconds=provenance.position,
+        seconds=provenance.seconds,
+        sample_rate=provenance.rate,
+        channels=provenance.channels,
+        peak_dbfs=provenance.peak_dbfs,
+        replaces=provenance.track,
+        source=provenance.source.path,
+        problems=problems(render, provenance) if check else [],
+    )
+
+
+class RenderingMixin(AnalyzingMixin):
+    def render(
+        self,
+        action: Literal["render", "list"] = "render",
+        *,
+        file: str | None = None,
+        start: str = "0",
+        process: str = "gain",
+        gain_db: float = 0.0,
+        name: str | None = None,
+        track: str | None = None,
+        skill: str = "manual",
+        run: str | None = None,
+        dry_run: bool = True,
+    ) -> RenderOut:
+        if action == "list":
+            return self._list_renders()
+        if action != "render":
+            raise PreconditionFailedError("action must be 'render' or 'list'", code="BAD_REQUEST")
+        self.policy.check_workspace()  # the permissions first: they are what the user must change
+        self.policy.check_analysis()
+        if file is None:
+            raise PreconditionFailedError("give the file to render from (an export)", code="BAD_REQUEST")
+        if process not in PROCESSES:
+            raise PreconditionFailedError(
+                f"unknown process {process!r}", code="BAD_REQUEST", details={"processes": list(PROCESSES)}
+            )
+        if abs(gain_db) > MAX_GAIN_DB:
+            raise PreconditionFailedError(f"gain_db must be within ±{MAX_GAIN_DB:.0f} dB", code="BAD_REQUEST")
+        if not skill.strip():
+            raise PreconditionFailedError("skill cannot be empty", code="BAD_REQUEST")
+        source = self._audio_path(file)
+        if not source.is_file():
+            raise NotFoundError(f"not a file: {source}", code="NOT_FOUND")
+        position = parse_seconds(start)
+        if position is None:
+            raise PreconditionFailedError("start looks like '2.5', '1:30' or '0:01:30.000'", code="BAD_TIME")
+        replaced: JsonObject | None = None
+        if track is not None:
+            info = self.track_info(self.resolve_track(TrackSelector.parse(track)))
+            replaced = {"name": info.name, "uid": info.uid}
+        space = self._render_workspace()
+        folder = space.path / RENDERS
+        base = (name.removesuffix(".wav") if name else None) or "-".join(
+            p for p in (str(replaced["name"]) if replaced else source.stem, process) if p
+        )
+        target = folder / next_name(folder, slug(base)) if folder.is_dir() else folder / f"{slug(base)}.wav"
+        with decoded(source) as readable:
+            info_in = probe(readable)
+        self.policy.check_analysis(info_in.seconds)
+        run_id = run or datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+        out = RenderOut(action="render", dry_run=dry_run, status="planned", workspace=str(space.path))
+        notes = out.notes
+        if dry_run:
+            out.render = RenderItemOut(
+                file=str(target), provenance=str(provenance_path(target)), skill=skill, run=run_id,
+                process=process, parameters={"gain_db": gain_db}, position=format_seconds(position),
+                position_seconds=position, seconds=round(info_in.seconds, 4), sample_rate=info_in.rate,
+                channels=info_in.channels, peak_dbfs=None, replaces=replaced["name"] if replaced else None,
+                source=str(source),
+            )  # fmt: skip
+            notes.append("dry run: nothing written; the render is 32-bit float WAV at the source's rate")
+            return out
+        if not folder.is_dir():
+            raise PreconditionFailedError(
+                "the workspace has no renders/ folder: create it with cubase_workspace (action 'init')",
+                code="NO_WORKSPACE",
+                details={"path": str(folder)},
+            )
+        with decoded(source) as readable:
+            source_info = SourceInfo(
+                path=str(source), sha256=sha256(source), size=source.stat().st_size,
+                seconds=round(info_in.seconds, 6), rate=info_in.rate, channels=info_in.channels,
+            )  # fmt: skip
+            _, peak = render_file(readable, target, gain(gain_db))
+        written = probe(target)
+        provenance = Provenance(
+            file=target.name,
+            created=datetime.now(UTC),
+            trackwright=__version__,
+            skill=skill,
+            run=run_id,
+            process=process,
+            parameters={"gain_db": gain_db},
+            position=position,
+            track=replaced["name"] if replaced else None,
+            track_uid=replaced["uid"] if replaced else None,
+            seconds=round(written.seconds, 6),
+            rate=written.rate,
+            channels=written.channels,
+            sha256=sha256(target),
+            peak_dbfs=_peak_db(peak),
+            source=source_info,
+        )
+        write_provenance(target, provenance)
+        out.status = "done"
+        out.render = item_out(target, provenance, check=False)
+        if peak > 1.0:
+            notes.append(
+                f"the render peaks at {_peak_db(peak)} dBFS: fine in 32-bit float, but lower a fader before export"
+            )
+        replaces = f" and mute {replaced['name']!r} (cubase_set_track_mix)" if replaced else ""
+        out.instructions = (
+            f"Create an audio track for it (cubase_add_track_interactive), then import {target} on that new "
+            f"track at {format_seconds(position)} with cubase_import_audio (start, then confirm){replaces}. "
+            "In Cubase's import options untick 'Copy file to project folder' (it already is in the project "
+            "folder) and do not convert to 24 bit."
+        )
+        return out
+
+    def _render_workspace(self) -> Workspace:
+        folder, why = self.project_folder()
+        if folder is None:
+            raise PreconditionFailedError(
+                f"cannot find the workspace: {why}", code="NO_PROJECT_FOLDER", details={"reason": why}
+            )
+        space = Workspace(folder)
+        if not space.exists:
+            raise PreconditionFailedError(
+                "the project has no Trackwright/ folder yet: create it with cubase_workspace (action 'init')",
+                code="NO_WORKSPACE",
+                details={"path": str(space.path)},
+            )
+        return space
+
+    def _list_renders(self) -> RenderOut:
+        space = self._render_workspace()
+        state = space.load_state()
+        out = RenderOut(action="list", dry_run=True, status="listed", workspace=str(space.path))
+        for render in renders_of(space):
+            item = item_out(render, load_provenance(render))
+            owned = state.find("render", f"{RENDERS}/{render.name}")
+            uid = owned.details.get("track_uid") if owned is not None else None
+            if isinstance(uid, str):
+                item.imported_on = uid
+                item.track_present = self._uid_present(uid)
+            out.renders.append(item)
+        if not out.renders:
+            out.notes.append("no renders in the workspace")
+        return out
+
+    def _uid_present(self, uid: str) -> bool:
+        try:
+            self.resolve_track(TrackSelector.parse(f"uid:{uid}"))
+        except NotFoundError:
+            return False
+        return True

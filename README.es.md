@@ -120,7 +120,7 @@ El plugin arranca su propio servidor, así que instala el script de Cubase con `
 
 ## Qué puede hacer (Cubase)
 
-36 herramientas, todas con salida estructurada:
+37 herramientas, todas con salida estructurada:
 
 - **Lectura:** estado, pistas del mezclador, canal seleccionado, inserts, catálogo de plugins, parámetros, transporte y cambios recientes.
 - **Escritura**, siempre con ensayo previo (`dry_run`) y verificación por relectura: parámetros (en valor normalizado o en unidades reales), inserción de plugins, volumen, mute, solo, armado, nombre de pista y tempo.
@@ -132,6 +132,7 @@ El plugin arranca su propio servidor, así que instala el script de Cubase con `
 - **Guardar el proyecto:** solo a petición, con permiso propio (`[writes] save`), ensayo y verificación por la fecha del archivo.
 - **Importar audio:** en la pista y la posición indicadas, con el selector de Cubase, y verificación por los bordes del evento nuevo.
 - **Exportar la mezcla:** de un rango o del proyecto completo, con el diálogo de Cubase, y confirmación del archivo creado.
+- **Renders:** audio procesado escrito en la carpeta `Trackwright/` del proyecto con su procedencia (origen, hashes, proceso, posición), importado de vuelta en una pista nueva en su sitio y registrado como de la skill.
 - **Analizar audio:** ruido de fondo, niveles y silencios de un archivo exportado, en segundos del proyecto; sonoridad (LUFS, rango de sonoridad) y true peak como los piden las especificaciones de entrega; dónde hay voz en una pista de voz. Leer audio tiene su propio permiso (`[analysis] enabled`).
 - **Skills de productor para Claude Code:** quitar los silencios de un podcast y ajustar una puerta de ruido, con el plugin (ver arriba).
 - **Comandos de Cubase:** marcadores, borrado de pistas, división en los localizadores, creación de pistas con ayuda del usuario y una lista de comandos permitidos. Cada comando indica cómo se comporta: si actúa directamente, si abre un diálogo o si pide confirmación.

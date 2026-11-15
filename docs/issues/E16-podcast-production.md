@@ -111,7 +111,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1606 Render and re-import
 
-- **Status:** pending (needs TW-1601 item 7, TW-1602)
+- **Status:** code done (2026-11-15), to verify in Cubase: `trackwright/renders.py` (32-bit float WAV written block by block through a temporary file, provenance `<name>.json` with the source's and the render's SHA-256, names never reused), tool `cubase_render` (`render` with the process `gain`, `list` with the problems found and the track each render went to), and `cubase_import_audio` aware of renders (position checked against the provenance, the replaced track and a changed render refused, ownership of the render and its track recorded in `state.json`, an earlier render track of the same skill pointed out). Tests in `tests/unit/test_render_tw1606.py`
 - **Scope:** write processed audio to `Trackwright/renders/` with its provenance file; import it on a new track at the range start with the user (`cubase_import_audio`); mute the original; check alignment with the event edges; record ownership. A re-run replaces only its own render track (removing it needs the user's confirmation, as with `cubase_remove_selected_track`).
 - **Tests:** provenance, alignment checks; verified in Cubase with a known signal.
 

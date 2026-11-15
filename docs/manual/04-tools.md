@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 36 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 37 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -347,6 +347,7 @@ Designed for podcast editing: it works in **seconds** and the time signature doe
   - `copied_to_project` lists the new copies in `<project>/Audio`, by name only.
 - **Verified in Cubase Elements:** a 3 s tone ended up on POC-TEST from 150 to 153 s.
 - **Undo** removes the event, **not** the copy on disk.
+- **Renders** (`file` in `Trackwright/renders/` with its provenance, TW-1606): `start` refuses a position other than the render's (`MISALIGNED`), the track the render replaces (`BAD_REQUEST`), and a render that changed after it was made (`BAD_RENDER`); the instructions ask to untick "Copy file to project folder". `confirm` returns `render` and, with `[workspace] enabled`, records the render and the new track in `state.json` as the rendering skill's (`owned: true`), and reminds to mute the original track; if an earlier render track of the same skill replaced the same track, it says so, to be removed once the user confirms.
 
 ## Exporting the mix
 
@@ -418,6 +419,16 @@ The `Trackwright/` folder inside the open project's folder, where skills keep th
   | `profile.toml` | the episode profile: track roles, protected ranges, notes |
 - **Safety:** every path is checked to stay inside `Trackwright/` (no `..`, absolute paths or symbolic links leading out); a `Trackwright` that is a symbolic link or a file is refused; files are written atomically.
 - **Errors:** `WORKSPACE_DISABLED`, `NO_PROJECT_FOLDER` (unknown or ambiguous), `BAD_WORKSPACE`, `NO_WORKSPACE`.
+
+### `cubase_render` (`render` writes files, with dry run; `list` reads)
+
+Processed audio for the project, written to `Trackwright/renders/` (TW-1606). Cubase's API cannot process a track's audio, so a skill exports the track alone, processes the export in Python, and imports the result on a new track, muting the original.
+
+- **Input:** `action` (`render` by default, or `list`); for `render`: `file` (absolute path of the export), `start` (project time of the export's first sample: its range start), `process` (`gain`), `gain_db` (±40), `name` (default `<track or source>-<process>`), `track` (the track the render replaces), `skill` and `run_id` (who renders, recorded in the provenance), `dry_run`.
+- **`render`:** writes `<name>.wav` (32-bit float WAV, the source's rate and channels) and `<name>.json`, the **provenance**: the source's path, size and SHA-256, the process and its parameters, the project position, the track it replaces (name and uid), the render's own SHA-256 and peak, and the Trackwright version. An existing render is never overwritten (Cubase may still reference it): the next one is `<name>-2.wav`. Needs `[analysis] enabled` (it reads audio, with its `max_seconds`) and `[workspace] enabled`, and the workspace created with `cubase_workspace`.
+- **Then:** create an audio track (`cubase_add_track_interactive`), import the render on it with `cubase_import_audio` at the position returned, and mute the original track (`cubase_set_track_mix`). In Cubase's import options, untick "Copy file to project folder" (the render already is in the project folder) and leave the 24-bit conversion off.
+- **`list`:** every render with its provenance, the track it was imported on (from `state.json`), whether that track is still in the project, and `problems`: the render changed after it was made, its source changed or is gone.
+- **Errors:** `WORKSPACE_DISABLED`, `ANALYSIS_DISABLED`, `TOO_LONG`, `NO_PROJECT_FOLDER`, `NO_WORKSPACE`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST`, `BAD_RENDER`.
 
 ## Analyzing audio
 

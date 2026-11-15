@@ -20,6 +20,9 @@ from trackwright.core.tags import Transport
 from trackwright.core.timefmt import SECONDS_TOLERANCE, format_seconds
 from trackwright.errors import NotFoundError, PreconditionFailedError, RequestTimeoutError, TrackwrightError
 from trackwright.exports import AUDIO_SUFFIXES
+from trackwright.jsontypes import JsonObject
+from trackwright.renders import Provenance, is_render, load_provenance, problems, provenance_path, record_import
+from trackwright.workspace import Workspace
 
 EDGE_TOLERANCE = 0.01
 
@@ -67,7 +70,13 @@ class ImportMixin(ExportMixin):
         out = ImportOut(phase="start", status="planned", dry_run=dry_run, track=self.track_info(item).name,
                         position=format_seconds(at), file=str(path) if path else None, expected_seconds=expected,
                         since=None)  # fmt: skip
-        out.notes.append("the audio goes to this track at this position; Cubase copies the file into the project")
+        provenance = self._render_provenance(path)
+        if provenance is not None and path is not None:
+            self._check_render(path, provenance, at, str(item["uid"]), out.notes)
+            out.render = str(provenance_path(path))
+            out.notes.append("a Trackwright render: it already is in the project folder, so it need not be copied")
+        else:
+            out.notes.append("the audio goes to this track at this position; Cubase copies the file into the project")
         if dry_run:
             return out
         self.policy.check_track(out.track)
@@ -85,10 +94,14 @@ class ImportMixin(ExportMixin):
         self._range_cmd("file.import_audio")  # from here Cubase is blocked until the user closes the selector
         out.status = "awaiting_user"
         pick = f"press Cmd+Shift+G, paste {path} and open it" if path else "choose the audio file and open it"
+        options = (
+            "In the import options untick 'Copy file to project folder' and leave the 24-bit conversion off"
+            if provenance is not None
+            else "Accept the import options (Cubase copies the file into the project)"
+        )
         out.instructions = (
-            f"Cubase shows the file selector: {pick}. Accept the import options (Cubase copies the file into "
-            "the project). Cubase does not answer until the selector is closed. Then call this tool with phase "
-            "'confirm', the same track, position and file, and 'since'."
+            f"Cubase shows the file selector: {pick}. {options}. Cubase does not answer until the selector is "
+            "closed. Then call this tool with phase 'confirm', the same track, position and file, and 'since'."
         )
         return out
 
@@ -144,10 +157,68 @@ class ImportMixin(ExportMixin):
                 "the file has another duration"
             )
             out.verified = False
+        provenance = self._render_provenance(path)
+        if provenance is not None and path is not None:
+            out.render = str(provenance_path(path))
+            if out.status == "done":
+                self._own_render(path, provenance, item, out)
         if expected is None:
             out.notes.append("only the start was checked: give 'file' to check the end too")
         out.notes.append("Undo in Cubase removes the event, not the copy in the project's Audio folder")
         return out
+
+    def _render_provenance(self, path: Path | None) -> Provenance | None:
+        return load_provenance(path) if path is not None and is_render(path) else None
+
+    def _check_render(self, path: Path, provenance: Provenance, at: float, uid: str, notes: list[str]) -> None:
+        """A render goes where its source was exported from, on a track other than the one it replaces."""
+        if abs(at - provenance.position) > EDGE_TOLERANCE:
+            raise PreconditionFailedError(
+                f"{path.name} belongs at {format_seconds(provenance.position)} (its source's range start), "
+                f"not at {format_seconds(at)}",
+                code="MISALIGNED",
+                details={"position": provenance.position, "requested": at},
+            )
+        if provenance.track_uid is not None and uid == provenance.track_uid:
+            raise PreconditionFailedError(
+                f"{path.name} replaces {provenance.track!r}: import it on a new track, not on that one",
+                code="BAD_REQUEST",
+                details={"track": provenance.track},
+            )
+        found = problems(path, provenance)
+        changed = [p for p in found if "after it was rendered" in p or "names" in p]
+        if changed:
+            raise PreconditionFailedError(
+                f"{path.name} does not match its provenance: render it again",
+                code="BAD_RENDER",
+                details={"problems": changed},
+            )
+        notes.extend(found)
+
+    def _own_render(self, path: Path, provenance: Provenance, item: JsonObject, out: ImportOut) -> None:
+        """Record the render's track as the skill's in state.json (needs [workspace] enabled)."""
+        folder, _ = self.project_folder()
+        space = Workspace(folder) if folder is not None else None
+        if not self.policy.workspace or space is None or path.resolve().parent.parent != space.path:
+            out.owned = False
+            out.notes.append("not recorded in state.json (workspace disabled, or the render is not this project's)")
+        else:
+            uid = str(item["uid"])
+            earlier = [
+                i for i in space.load_state().owned_by(provenance.skill, "track")
+                if i.key != uid and provenance.track_uid is not None
+                and i.details.get("replaces_uid") == provenance.track_uid
+            ]  # fmt: skip
+            record_import(space, path, provenance, uid, self.track_info(item).name)
+            out.owned = True
+            for old in earlier:
+                out.notes.append(
+                    f"an earlier render track of {provenance.skill}, {old.details.get('name')!r} (uid:{old.key}), "
+                    "replaced the same track: if it is still there, remove it once the user confirms "
+                    "(cubase_select_track, then cubase_remove_selected_track)"
+                )
+        if provenance.track is not None:
+            out.notes.append(f"now mute {provenance.track!r} (cubase_set_track_mix) so it does not play twice")
 
     def _remember_import(self, since: float, channel_id: int, edges: list[float]) -> None:
         self._import_baselines[since] = (channel_id, edges)

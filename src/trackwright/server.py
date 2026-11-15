@@ -41,6 +41,7 @@ from trackwright.core.models import (
     ProjectOut,
     ProjectSettingsOut,
     RangeEditOut,
+    RenderOut,
     SaveOut,
     SelectedChannelOut,
     SelectOut,
@@ -508,6 +509,40 @@ def build_server(service: CubaseService) -> MCPServer:
         dry_run: DryRunArg = True,
     ) -> WorkspaceOut:
         return await run(lambda: service.workspace(action, dry_run=dry_run))
+
+    # ------------------------------------------------------------------ renders (TW-1606)
+    @server.tool(
+        annotations=WRITE,
+        description="Processed audio for the project, written to Trackwright/renders/ with a provenance file "
+        "(.json: source and its hash, process, project position, the track it replaces). 'render' reads an "
+        "export (cubase_export_mix with solo) and writes a 32-bit float WAV, never overwriting an earlier "
+        "render; dry run by default; needs [analysis] and [workspace] enabled. Then import it on a new track at "
+        "the given position with cubase_import_audio, which checks the position and records the track in "
+        "state.json, and mute the original. 'list' shows the renders, where they were imported and whether "
+        "the render or its source changed. Processes: gain (gain_db).",
+    )
+    async def cubase_render(
+        action: Annotated[Literal["render", "list"], Field(description="render (write) or list (read)")] = "render",
+        file: Annotated[str | None, Field(description="render: absolute path of the export to process")] = None,
+        start: Annotated[str, Field(description="project time of the export's first sample (seconds)")] = "0",
+        process: Annotated[Literal["gain"], Field(description="what to do to the audio")] = "gain",
+        gain_db: Annotated[float, Field(ge=-40, le=40, description="gain: dB to apply")] = 0.0,
+        name: Annotated[
+            str | None, Field(max_length=64, description="file name (default: <track or source>-<process>)")
+        ] = None,
+        track: Annotated[
+            str | None, Field(description="the track the render replaces (selector), to mute after the import")
+        ] = None,
+        skill: Annotated[str, Field(min_length=1, max_length=64, description="the skill that renders")] = "manual",
+        run_id: Annotated[str | None, Field(max_length=64, description="identifier of the skill run")] = None,
+        dry_run: DryRunArg = True,
+    ) -> RenderOut:
+        return await run(
+            lambda: service.render(
+                action, file=file, start=start, process=process, gain_db=gain_db, name=name, track=track,
+                skill=skill, run=run_id, dry_run=dry_run,
+            )
+        )  # fmt: skip
 
     # ------------------------------------------------------------------ audio analysis (TW-1504)
     @server.tool(
