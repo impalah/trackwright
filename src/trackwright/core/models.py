@@ -446,6 +446,55 @@ class RenderOut(_Out):
     notes: list[str] = Field(default_factory=list)
 
 
+class DeliverySourceOut(_Out):
+    url: str
+    retrieved: str
+    covers: list[str]
+    quote: str
+
+
+class DeliveryProfileOut(_Out):
+    name: str
+    origin: Literal["built-in", "show/episode"]
+    title: str
+    loudness_lufs: float | None
+    loudness_tolerance_lu: float | None
+    true_peak_dbtp: float | None
+    normalizes: bool | None
+    normalization_lufs: float | None
+    codecs: list[str]
+    channels: list[str]
+    sample_rates: list[int]
+    bitrate_kbps: int | None
+    min_bitrate_kbps: int | None
+    max_bitrate_kbps: int | None
+    max_file_mb: float | None
+    requirement: str
+    notes: str
+    sources: list[DeliverySourceOut] = Field(description="where every value comes from")
+
+
+class ProfileOut(_Out):
+    action: Literal["resolve", "shows", "delivery", "write_show", "write_episode"]
+    dry_run: bool
+    status: Literal["read", "planned", "written"]
+    shows_dir: str = Field(description="where show profiles live")
+    show: str | None = None
+    show_path: str | None = None
+    episode_path: str | None = Field(default=None, description="<project>/Trackwright/profile.toml")
+    settings: JsonObject | None = Field(default=None, description="resolve: built-in < show < episode")
+    origins: dict[str, str] = Field(default_factory=dict, description="resolve: dotted setting -> layer")
+    protected: list[JsonObject] = Field(default_factory=list, description="resolve: the episode's protected ranges")
+    delivery: list[DeliveryProfileOut] = Field(
+        default_factory=list, description="resolve: the targets; delivery: every profile available"
+    )
+    shows: list[str] = Field(default_factory=list, description="shows: the show profiles found")
+    before: str | None = Field(default=None, description="write: the file now (null if new)")
+    after: str | None = Field(default=None, description="write: the file as it would be written")
+    changed: bool | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
 class SpeechRegionOut(_Out):
     start: str = Field(description="project time, h:mm:ss.mmm")
     end: str

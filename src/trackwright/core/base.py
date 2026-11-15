@@ -107,8 +107,10 @@ class ServiceBase:
         settle_timeout: float = 1.0,
         launcher: AppLauncher | None = None,
         exports: ExportFinder | None = None,
+        shows_dir: Path | None = None,
     ) -> None:
         self.host = host
+        self._shows_dir = shows_dir  # TW-1607: None = shows/ next to the configuration file
         self.launcher = launcher
         self.exports: ExportFinder = exports if exports is not None else ExportInspector()
         self.policy = policy

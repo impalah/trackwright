@@ -120,7 +120,7 @@ The plugin starts its own server, so install the Cubase script with `trackwright
 
 ## What it can do (Cubase)
 
-37 tools, all with structured output:
+38 tools, all with structured output:
 
 - **Reading:** status, mixer tracks, selected channel, inserts, plugin catalog, parameters, transport and recent changes.
 - **Writing**, always with a dry run (`dry_run`) and verification by reading back: parameters (as normalized values or in real units), plugin insertion, volume, mute, solo, record arm, track name and tempo.
@@ -133,6 +133,7 @@ The plugin starts its own server, so install the Cubase script with `trackwright
 - **Import audio:** on the given track and position, with the Cubase file picker, and verification by the edges of the new event.
 - **Export the mix:** of a range or of the whole project, with the Cubase dialog, and confirmation of the created file.
 - **Renders:** processed audio written into the project's `Trackwright/` folder with its provenance (source, hashes, process, position), imported back on a new track at the right place and recorded as the skill's.
+- **Profiles:** show and episode settings (track roles, ducking, editing, delivery targets) layered over Trackwright's defaults, and delivery profiles for Apple Podcasts, Spotify, YouTube and iVoox with every value cited to the platform's own page.
 - **Analyze audio:** noise floor, levels and silences of an exported file, in project seconds; loudness (LUFS, loudness range) and true peak as delivery specifications state them; where a voice track has speech. Reading audio has its own permission (`[analysis] enabled`).
 - **Producer skills for Claude Code:** trim the silences of a podcast and set a noise gate, through the plugin (see above).
 - **Cubase commands:** markers, track deletion, splitting at the locators, track creation with the user's help, and a list of allowed commands. Each command states how it behaves: whether it acts directly, opens a dialog or asks for confirmation.

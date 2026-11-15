@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Callable
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
 import anyio.to_thread
 from loguru import logger
@@ -38,6 +38,7 @@ from trackwright.core.models import (
     PluginCatalogOut,
     PositionOut,
     PresetStepOut,
+    ProfileOut,
     ProjectOut,
     ProjectSettingsOut,
     RangeEditOut,
@@ -509,6 +510,31 @@ def build_server(service: CubaseService) -> MCPServer:
         dry_run: DryRunArg = True,
     ) -> WorkspaceOut:
         return await run(lambda: service.workspace(action, dry_run=dry_run))
+
+    # ------------------------------------------------------------------ profiles (TW-1607)
+    @server.tool(
+        annotations=WRITE,
+        description="Show, episode and delivery profiles. 'resolve' (default) merges built-in < show "
+        "(~/.config/trackwright/shows/<show>.toml) < episode (Trackwright/profile.toml): settings, where each "
+        "came from, protected ranges and the delivery targets. 'shows' lists the show profiles; 'delivery' "
+        "lists every delivery profile (Apple, Spotify, YouTube, iVoox… each value with its published source). "
+        "'write_show' and 'write_episode' replace a whole profile with 'data' (dry run by default: show the "
+        "user 'after' first; needs [workspace] enabled). Track roles go by track name.",
+    )
+    async def cubase_profile(
+        action: Annotated[
+            Literal["resolve", "shows", "delivery", "write_show", "write_episode"],
+            Field(description="what to do"),
+        ] = "resolve",
+        show: Annotated[
+            str | None, Field(max_length=64, description="show name (default: the one the episode names)")
+        ] = None,
+        data: Annotated[
+            dict[str, Any] | None, Field(description="write_*: the whole profile, as the TOML file's tables")
+        ] = None,
+        dry_run: DryRunArg = True,
+    ) -> ProfileOut:
+        return await run(lambda: service.profile(action, show=show, data=data, dry_run=dry_run))
 
     # ------------------------------------------------------------------ renders (TW-1606)
     @server.tool(

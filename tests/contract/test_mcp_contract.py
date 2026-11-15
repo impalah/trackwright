@@ -50,6 +50,7 @@ WRITE_TOOLS = {
     "cubase_plugin_preset",
     "cubase_workspace",
     "cubase_render",
+    "cubase_profile",
 }
 NAVIGATION_TOOLS = {
     "cubase_select_track",

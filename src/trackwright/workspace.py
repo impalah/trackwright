@@ -26,11 +26,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
-import tomli_w
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 from trackwright.errors import PreconditionFailedError
 from trackwright.jsontypes import JsonObject
+from trackwright.profiles import Settings, profile_toml
 
 FOLDER = "Trackwright"
 SUBFOLDERS = ("renders", "previews", "analysis", "reports")
@@ -39,7 +39,6 @@ PROFILE_FILE = "profile.toml"
 FORMAT_VERSION = 1
 
 ItemKind = Literal["track", "plugin", "render", "preview", "marker", "automation", "report"]
-TrackRole = Literal["voice", "music", "effects", "reference", "other"]
 
 
 class _Model(BaseModel):
@@ -94,12 +93,12 @@ class ProtectedRange(_Model):
         return self
 
 
-class EpisodeProfile(_Model):
-    """Per-episode settings, confirmed by the user. Track roles are keyed by track name or ``uid:…``."""
+class EpisodeProfile(Settings):
+    """Per-episode settings, confirmed by the user: the show's settings overridden for this episode (TW-1607),
+    plus the show it belongs to and the ranges no skill may change. Track roles are keyed by track name."""
 
     version: int = FORMAT_VERSION
     show: str | None = Field(default=None, description="show profile name (~/.config/trackwright/shows/<show>.toml)")
-    track_roles: dict[str, TrackRole] = Field(default_factory=dict)
     protected: list[ProtectedRange] = Field(default_factory=list)
     notes: str = ""
 
@@ -108,7 +107,7 @@ def now() -> datetime:
     return datetime.now(UTC)
 
 
-def _atomic_write(path: Path, data: bytes) -> None:
+def atomic_write(path: Path, data: bytes) -> None:
     """Write through a temporary file in the same folder and rename it, so a reader never sees half a file."""
     fd, tmp = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     try:
@@ -195,7 +194,7 @@ class Workspace:
     def save_state(self, state: State) -> Path:
         self._require()
         path = self.path / STATE_FILE
-        _atomic_write(path, (state.model_dump_json(indent=2) + "\n").encode("utf-8"))
+        atomic_write(path, (state.model_dump_json(indent=2) + "\n").encode("utf-8"))
         return path
 
     # ------------------------------------------------------------------ profile.toml
@@ -215,6 +214,5 @@ class Workspace:
     def save_profile(self, profile: EpisodeProfile) -> Path:
         self._require()
         path = self.path / PROFILE_FILE
-        data = profile.model_dump(mode="json", exclude_none=True)
-        _atomic_write(path, tomli_w.dumps(data).encode("utf-8"))
+        atomic_write(path, profile_toml(profile).encode("utf-8"))
         return path

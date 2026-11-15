@@ -2,7 +2,7 @@
 
 [English](04-tools.md) · **Español**
 
-El servidor `trackwright` publica 37 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 38 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 Trackwright aspira a admitir varios DAW, pero hoy solo implementa **Cubase**. Por eso todas las herramientas se llaman `cubase_*` y esta página describe el comportamiento de Cubase: se verificó contra Cubase Elements 15.0.30, con scripts de experimento y desde Claude Code (ver el [registro de verificación](../verification.es.md)). Cualquier cliente MCP recibe las mismas herramientas. Otro DAW tendría su propio conjunto de herramientas; ver [Extensión a otros DAW](../architecture.es.md#extensión-a-otros-daw-posible-no-implementada).
 
@@ -420,6 +420,27 @@ La carpeta `Trackwright/` dentro de la carpeta del proyecto abierto, donde las s
   | `profile.toml` | el perfil del episodio: roles de las pistas, rangos protegidos, notas |
 - **Seguridad:** cada ruta se comprueba para que quede dentro de `Trackwright/` (sin `..`, rutas absolutas ni enlaces simbólicos que salgan); se rechaza un `Trackwright` que sea un enlace simbólico o un archivo; los archivos se escriben de forma atómica.
 - **Errores:** `WORKSPACE_DISABLED`, `NO_PROJECT_FOLDER` (desconocida o ambigua), `BAD_WORKSPACE`, `NO_WORKSPACE`.
+
+### `cubase_profile` (lee; `write_show` y `write_episode` escriben archivos, con dry run)
+
+Perfiles de programa, de episodio y de entrega (TW-1607). Tres capas, cada una por encima de la anterior: **integrado** (los valores por defecto de Trackwright: los criterios de silencio de `cubase_analyze_audio`) < **programa** (`~/.config/trackwright/shows/<programa>.toml`, compartido por todos los episodios) < **episodio** (`Trackwright/profile.toml`, que además nombra su programa). Las tablas se combinan clave a clave; las listas se sustituyen enteras.
+
+- **Entrada:** `action`, `show` (por defecto, el que nombra el episodio), `data` (para escribir: el perfil completo, como las tablas del archivo TOML), `dry_run`.
+- **`resolve`** (por defecto): los `settings` combinados, `origins` (de qué capa viene cada valor, como `editing.padding_seconds: show`), los rangos `protected` del episodio y los perfiles de entrega de `delivery.targets`.
+- **`shows`:** los perfiles de programa encontrados. **`delivery`:** todos los perfiles de entrega disponibles, integrados y propios del programa o del episodio.
+- **`write_show`, `write_episode`:** validan `data` y sustituyen el archivo entero; el dry run devuelve `before` y `after` (TOML) para enseñárselos al usuario. Necesitan `[workspace] enabled`; el del episodio necesita el espacio de trabajo creado.
+- **Ajustes:** `track_roles` y `voices` (`pan`) por **nombre** de pista (los uid se repiten entre proyectos hechos con la misma plantilla); `music.approved`; `ducking` (`depth_db`, `pre_roll_seconds`, `hold_seconds`, `release_seconds`); `editing` (`min_silence_seconds`, `padding_seconds`); `delivery` (`targets`, y `profiles` de los servicios propios del programa). El episodio añade `show`, `protected` (`start`, `end`, `note` en segundos) y `notes`.
+- **Perfiles de entrega:** objetivo de sonoridad y tolerancia, techo de pico real, si la plataforma normaliza al reproducir, códecs, canales, frecuencias de muestreo, tasas de bits, tamaño de archivo, qué es obligatorio y qué solo recomendado, y `sources`. **Cada valor debe estar respaldado por una fuente** (una URL, la fecha en que se leyó, los campos que respalda, una cita breve), o el perfil se rechaza. Integrados, leídos el 2026-11-15:
+
+  | Nombre | Sonoridad | Pico real | Formato | Fuente |
+  |---|---|---|---|---|
+  | `apple` | −16 LUFS ±1 | −1 dBTP | AAC o MP3; 44,1/48 kHz; 64–256 kbps | Apple Podcasts for Creators, requisitos de audio |
+  | `spotify` | no publicada para podcasts | no publicado | MP3, M4A o WAV; mono o estéreo; 128 kbps o más | Spotify for Creators; Podcast Delivery Specification v1.10 |
+  | `youtube` | no publicada | no publicado | AAC u Opus; estéreo; 48 kHz; 384 kbps; hasta 256 GB o 12 h | Ayuda de YouTube |
+  | `ivoox` | no publicada | no publicado | MP3, M4A o WAV; 300 MB (consejo, blog de 2022) | blog de iVoox (no se pudo leer el centro de ayuda) |
+
+  Los −14 LUFS de Spotify están en su página de música, no de podcasts, así que no se usan. Un programa puede añadir un servicio con `delivery.profiles.<nombre>` y la fuente del usuario.
+- **Errores:** `WORKSPACE_DISABLED`, `NO_PROJECT_FOLDER`, `NO_WORKSPACE`, `NOT_FOUND` (un programa), `BAD_PROFILE`, `BAD_REQUEST`.
 
 ### `cubase_render` (`render` escribe archivos, con dry run; `list` lee)
 

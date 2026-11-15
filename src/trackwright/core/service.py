@@ -8,6 +8,7 @@ from trackwright.core.commanding import CommandingMixin
 from trackwright.core.importing import ImportMixin
 from trackwright.core.lifecycle import LifecycleMixin
 from trackwright.core.presets import PresetMixin
+from trackwright.core.profiling import ProfilesMixin
 from trackwright.core.reading import ReadingMixin
 from trackwright.core.rendering import RenderingMixin
 from trackwright.core.saving import SavingMixin
@@ -17,6 +18,7 @@ from trackwright.core.writing import WritingMixin
 
 
 class CubaseService(
+    ProfilesMixin,
     RenderingMixin,
     WorkspaceMixin,
     AnalyzingMixin,
@@ -31,4 +33,4 @@ class CubaseService(
     ReadingMixin,
 ):
     """Every tool: read, write, commands, automation, launch, project, ranges, export, import, save,
-    audio analysis, workspace and renders (E05-E12, E15, E16)."""
+    audio analysis, workspace, renders and profiles (E05-E12, E15, E16)."""

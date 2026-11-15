@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 37 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 38 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -420,6 +420,27 @@ The `Trackwright/` folder inside the open project's folder, where skills keep th
   | `profile.toml` | the episode profile: track roles, protected ranges, notes |
 - **Safety:** every path is checked to stay inside `Trackwright/` (no `..`, absolute paths or symbolic links leading out); a `Trackwright` that is a symbolic link or a file is refused; files are written atomically.
 - **Errors:** `WORKSPACE_DISABLED`, `NO_PROJECT_FOLDER` (unknown or ambiguous), `BAD_WORKSPACE`, `NO_WORKSPACE`.
+
+### `cubase_profile` (reads; `write_show` and `write_episode` write files, with dry run)
+
+Show, episode and delivery profiles (TW-1607). Three layers, each overriding the one before: **built-in** (Trackwright's defaults: the silence criteria of `cubase_analyze_audio`) < **show** (`~/.config/trackwright/shows/<show>.toml`, shared by every episode) < **episode** (`Trackwright/profile.toml`, which also names its show). Tables merge key by key; lists are replaced whole.
+
+- **Input:** `action`, `show` (default: the one the episode names), `data` (for writes: the whole profile, as the TOML file's tables), `dry_run`.
+- **`resolve`** (default): the merged `settings`, `origins` (which layer each value came from, as `editing.padding_seconds: show`), the episode's `protected` ranges and the delivery profiles of `delivery.targets`.
+- **`shows`:** the show profiles found. **`delivery`:** every delivery profile available, built-in and the show's or episode's own.
+- **`write_show`, `write_episode`:** validate `data` and replace the whole file; the dry run returns `before` and `after` (TOML) to show the user. Need `[workspace] enabled`; the episode needs the workspace created.
+- **Settings:** `track_roles` and `voices` (`pan`) by track **name** (uids repeat across projects made from one template); `music.approved`; `ducking` (`depth_db`, `pre_roll_seconds`, `hold_seconds`, `release_seconds`); `editing` (`min_silence_seconds`, `padding_seconds`); `delivery` (`targets`, and `profiles` of the show's own hosts). The episode adds `show`, `protected` (`start`, `end`, `note` in seconds) and `notes`.
+- **Delivery profiles:** loudness target and tolerance, true peak ceiling, whether the platform normalizes playback, codecs, channels, sample rates, bit rates, file size, what is required and what only recommended, and `sources`. **Every value must be covered by a source** (a URL, the date it was read, the fields it supports, a short quote), or the profile is refused. Built-in, read on 2026-11-15:
+
+  | Name | Loudness | True peak | Format | Source |
+  |---|---|---|---|---|
+  | `apple` | −16 LUFS ±1 | −1 dBTP | AAC or MP3; 44.1/48 kHz; 64–256 kbps | Apple Podcasts for Creators, audio requirements |
+  | `spotify` | not published for podcasts | not published | MP3, M4A or WAV; mono or stereo; 128 kbps or more | Spotify for Creators; Podcast Delivery Specification v1.10 |
+  | `youtube` | not published | not published | AAC or Opus; stereo; 48 kHz; 384 kbps; up to 256 GB or 12 h | YouTube Help |
+  | `ivoox` | not published | not published | MP3, M4A or WAV; 300 MB (advice, 2022 blog) | iVoox blog (the help centre could not be read) |
+
+  Spotify's −14 LUFS is on its music page, not for podcasts, so it is not used. A show can add a host with `delivery.profiles.<name>` and the user's source.
+- **Errors:** `WORKSPACE_DISABLED`, `NO_PROJECT_FOLDER`, `NO_WORKSPACE`, `NOT_FOUND` (a show), `BAD_PROFILE`, `BAD_REQUEST`.
 
 ### `cubase_render` (`render` writes files, with dry run; `list` reads)
 

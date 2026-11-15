@@ -110,6 +110,8 @@ El espacio de trabajo del proyecto (TW-1602): una carpeta `Trackwright/` dentro 
 |---|---|---|
 | `enabled` | `false` | Permite crear y escribir `Trackwright/` dentro de la carpeta del proyecto. Sin ella: `WORKSPACE_DISABLED` (consultar su estado sigue funcionando). |
 
+También cubre los **perfiles de programa** (TW-1607) en `shows/` junto al archivo de configuración (`~/.config/trackwright/shows/<programa>.toml`): `cubase_profile` solo los escribe con esta clave activada, tras un dry run.
+
 ## `[logging]`
 
 | Clave | Por defecto | Descripción |

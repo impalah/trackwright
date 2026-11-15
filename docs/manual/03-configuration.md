@@ -110,6 +110,8 @@ The project workspace (TW-1602): a `Trackwright/` folder inside the open project
 |---|---|---|
 | `enabled` | `false` | Allows creating and writing `Trackwright/` inside the project folder. Without it: `WORKSPACE_DISABLED` (reporting its state still works). |
 
+It also covers the **show profiles** (TW-1607) in `shows/` next to the configuration file (`~/.config/trackwright/shows/<show>.toml`): `cubase_profile` writes them only with this key on, after a dry run.
+
 ## `[logging]`
 
 | Key | Default | Description |

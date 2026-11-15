@@ -1,0 +1,78 @@
+# Delivery profiles shipped with Trackwright (TW-1607). Every value is covered by a source: the platform's
+# own published page and the date it was read. A platform that publishes no number gets none here.
+
+[profiles.apple]
+title = "Apple Podcasts (RSS feed)"
+loudness_lufs = -16.0
+loudness_tolerance_lu = 1.0
+true_peak_dbtp = -1.0
+normalizes = true
+normalization_lufs = -16.0
+codecs = ["aac", "mp3"]
+channels = ["mono", "stereo"]
+sample_rates = [44100, 48000]
+min_bitrate_kbps = 64
+max_bitrate_kbps = 256
+requirement = "MP3 or AAC is required for RSS feeds; the loudness, true peak, AAC in MP4 and the bit rates are Apple's recommendations"
+notes = "Bit rates at 44.1/48 kHz: mono 64-128 kbps, stereo 128-256 kbps (22.05/24 kHz rows left out). Subscriber audio sent through Apple Podcasts Connect has other rules (WAV, FLAC or MP3; WAV and FLAC in two channels)."
+
+[[profiles.apple.sources]]
+url = "https://podcasters.apple.com/support/893-audio-requirements"
+retrieved = 2026-11-15
+covers = ["loudness_lufs", "loudness_tolerance_lu", "true_peak_dbtp", "normalizes", "normalization_lufs", "codecs", "channels", "sample_rates", "min_bitrate_kbps", "max_bitrate_kbps"]
+quote = "the overall loudness remains around -16 dB LKFS, with a +/- 1 dB tolerance, and the true-peak value doesn't exceed -1 dB FS"
+
+[profiles.spotify]
+title = "Spotify (Spotify for Creators)"
+codecs = ["mp3", "aac", "wav"]
+channels = ["mono", "stereo"]
+bitrate_kbps = 128
+requirement = "MP3, M4A or WAV, mono or stereo, are required; 128 kbps or more is a recommendation of the delivery specification"
+notes = "Spotify publishes no loudness target or true peak for podcasts: its -14 LUFS page is for music (Spotify for Artists). No file size limit; a maximum duration of 12 hours is recommended."
+
+[[profiles.spotify.sources]]
+url = "https://support.spotify.com/us/creators/article/publishing-audio-episodes/"
+retrieved = 2026-11-15
+covers = ["codecs", "channels"]
+quote = "We support MP3, M4A, and WAV file types. Files will need to be either in mono or stereo."
+
+[[profiles.spotify.sources]]
+url = "https://support.spotify.com/us/creators/article/podcast-specification-doc/"
+retrieved = 2026-11-15
+covers = ["bitrate_kbps"]
+quote = "We recommend either high bitrate (128kbps+) MP3 (only MP3 is supported for passthrough) or MP4 with AAC-LC. (Podcast Delivery Specification v1.10, section 4.1)"
+
+[profiles.youtube]
+title = "YouTube"
+codecs = ["aac", "opus"]
+channels = ["stereo"]
+sample_rates = [48000]
+bitrate_kbps = 384
+max_file_mb = 262144
+requirement = "The encoding settings are recommendations; the 256 GB or 12 hours (whichever is less) upload limit is a limit"
+notes = "MP4 container. Recommended bit rates: mono 128 kbps, stereo 384 kbps. No loudness target or true peak is published. Uploads over 15 minutes need a verified account."
+
+[[profiles.youtube.sources]]
+url = "https://support.google.com/youtube/answer/1722171"
+retrieved = 2026-11-15
+covers = ["codecs", "channels", "sample_rates", "bitrate_kbps"]
+quote = "Audio codec: AAC-LC or Opus or Eclipsa Audio; Channels: Stereo or Stereo + 5.1; Sample rate: 48kHz; Stereo: 384 kbps"
+
+[[profiles.youtube.sources]]
+url = "https://support.google.com/youtube/answer/71673"
+retrieved = 2026-11-15
+covers = ["max_file_mb"]
+quote = "The maximum file size you can upload is 256 GB or 12 hours, whichever is less."
+
+[profiles.ivoox]
+title = "iVoox"
+codecs = ["mp3", "aac", "wav"]
+max_file_mb = 300
+requirement = "From iVoox's own blog (January 2022), stated as advice ('no debería pesar más de 300MB'); the help centre page could not be read (HTTP 403) and is said to give 500 MB: confirm it before relying on the size"
+notes = "M4A is listed as AAC. No loudness, true peak, channels or bit rate verified."
+
+[[profiles.ivoox.sources]]
+url = "https://www.ivoox.com/blog/como-publicar-tu-podcast-en-ivoox/"
+retrieved = 2026-11-15
+covers = ["codecs", "max_file_mb"]
+quote = "Puede estar en mp3, m4a o wav, y no debería pesar más de 300MB"
