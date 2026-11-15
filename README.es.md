@@ -120,7 +120,7 @@ El plugin arranca su propio servidor, así que instala el script de Cubase con `
 
 ## Qué puede hacer (Cubase)
 
-38 herramientas, todas con salida estructurada:
+39 herramientas, todas con salida estructurada:
 
 - **Lectura:** estado, pistas del mezclador, canal seleccionado, inserts, catálogo de plugins, parámetros, transporte y cambios recientes.
 - **Escritura**, siempre con ensayo previo (`dry_run`) y verificación por relectura: parámetros (en valor normalizado o en unidades reales), inserción de plugins, volumen, mute, solo, armado, nombre de pista y tempo.

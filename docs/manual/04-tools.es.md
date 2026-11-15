@@ -2,7 +2,7 @@
 
 [English](04-tools.md) · **Español**
 
-El servidor `trackwright` publica 38 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 39 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 Trackwright aspira a admitir varios DAW, pero hoy solo implementa **Cubase**. Por eso todas las herramientas se llaman `cubase_*` y esta página describe el comportamiento de Cubase: se verificó contra Cubase Elements 15.0.30, con scripts de experimento y desde Claude Code (ver el [registro de verificación](../verification.es.md)). Cualquier cliente MCP recibe las mismas herramientas. Otro DAW tendría su propio conjunto de herramientas; ver [Extensión a otros DAW](../architecture.es.md#extensión-a-otros-daw-posible-no-implementada).
 
@@ -186,6 +186,14 @@ Solo se comprueban los primeros 20 objetos distintos. Los demás eventos llevan 
 - **Entrada:** `track`, o bien `step` (`next` o `previous`).
 - La selección es única: deselecciona las demás pistas.
 - Con `step`, `verified` solo es `true` si la selección se movió (en la primera o la última pista no se mueve).
+
+### `cubase_track_edges` (navegación)
+
+Dónde empiezan y acaban los eventos de una pista (TW-1610). La API no puede leer eventos, así que la herramienta selecciona la pista y recorre sus bordes con Localizar evento siguiente desde `start` (segundos) hasta `end`, y después devuelve el cursor y la selección a su sitio.
+
+- **Entrada:** `track`, `start` (por defecto 0), `end` (por defecto, hasta el último borde), `limit` (máximo de bordes a recorrer, por defecto 100, hasta 400; cada uno tarda un momento).
+- **Salida:** `edges` (inicios y finales juntos, en orden), `first` y `last` (la extensión de la pista), `complete` (false cuando `limit` paró el recorrido: sondear otra vez desde el último borde).
+- **Límites:** un evento que empieza exactamente en 0 s no se ve (el sondeo encuentra bordes después del cursor; TW-1606), así que `first` puede ser su final; los bordes de eventos contiguos coinciden; el silencio dentro de un evento no se ve (analiza una exportación para eso). El transporte debe estar parado (`TRANSPORT_RUNNING`).
 
 ### `cubase_set_position` (navegación)
 
@@ -427,7 +435,7 @@ La carpeta `Trackwright/` dentro de la carpeta del proyecto abierto, donde las s
 Perfiles de programa, de episodio y de entrega (TW-1607). Tres capas, cada una por encima de la anterior: **integrado** (los valores por defecto de Trackwright: los criterios de silencio de `cubase_analyze_audio`) < **programa** (`~/.config/trackwright/shows/<programa>.toml`, compartido por todos los episodios) < **episodio** (`Trackwright/profile.toml`, que además nombra su programa). Las tablas se combinan clave a clave; las listas se sustituyen enteras.
 
 - **Entrada:** `action`, `show` (por defecto, el que nombra el episodio), `data` (para escribir: el perfil completo, como las tablas del archivo TOML), `dry_run`.
-- **`resolve`** (por defecto): los `settings` combinados, `origins` (de qué capa viene cada valor, como `editing.padding_seconds: show`), los rangos `protected` del episodio y los perfiles de entrega de `delivery.targets`.
+- **`resolve`** (por defecto): los `settings` combinados, `origins` (de qué capa viene cada valor, como `editing.padding_seconds: show`), los rangos `protected` del episodio, los perfiles de entrega de `delivery.targets`, y `episode`: el perfil del episodio tal como está guardado (parte de él para `write_episode`, nunca de `settings`, o los valores del programa se copiarían en el episodio).
 - **`shows`:** los perfiles de programa encontrados. **`delivery`:** todos los perfiles de entrega disponibles, integrados y propios del programa o del episodio.
 - **`write_show`, `write_episode`:** validan `data` y sustituyen el archivo entero; el dry run devuelve `before` y `after` (TOML) para enseñárselos al usuario. Necesitan `[workspace] enabled`; el del episodio necesita el espacio de trabajo creado.
 - **Ajustes:** `track_roles` y `voices` (`pan`) por **nombre** de pista (los uid se repiten entre proyectos hechos con la misma plantilla); `music.approved`; `ducking` (`depth_db`, `pre_roll_seconds`, `hold_seconds`, `release_seconds`); `editing` (`min_silence_seconds`, `padding_seconds`); `delivery` (`targets`, y `profiles` de los servicios propios del programa). El episodio añade `show`, `protected` (`start`, `end`, `note` en segundos) y `notes`.

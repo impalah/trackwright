@@ -19,7 +19,7 @@ import math
 from typing import Literal
 
 from trackwright.core.base import MIXER, operation
-from trackwright.core.models import RangeEditOut
+from trackwright.core.models import RangeEditOut, TrackEdgesOut
 from trackwright.core.project import ProjectMixin
 from trackwright.core.refs import TrackSelector
 from trackwright.core.tags import Transport
@@ -42,6 +42,7 @@ EFFECTS: dict[str, str] = {
     "crop": "keeps only the range and removes everything outside it",
 }
 MAX_EDGES = 48
+MAX_PROBE = 400
 MAX_ROUNDS = 6  # single-track deletion: events hidden under others only show up after those are deleted
 PROBE_MARGIN = 1.0  # seconds before the range where the probe starts
 
@@ -82,13 +83,15 @@ class RangeMixin(ProjectMixin):
     def _performable(self, key: str) -> bool:
         return self.call("cmd.canPerform", {"key": key}).get("canPerform", {}).get(key) is True
 
-    def probe_edges(self, transport: int, start: float, until: float = math.inf) -> tuple[list[float], bool]:
+    def probe_edges(
+        self, transport: int, start: float, until: float = math.inf, *, limit: int | None = None
+    ) -> tuple[list[float], bool]:
         """Event edges after ``start`` on the selected tracks (up to the first one past ``until``), and
         whether the walk reached the last edge."""
         self._move_cursor_seconds(transport, start)
         edges: list[float] = []
         previous = self._cursor_seconds(transport)
-        for _ in range(MAX_EDGES):
+        for _ in range(MAX_EDGES if limit is None else limit):
             self._range_cmd("transport.locate_next_event")
             last = previous
 
@@ -104,7 +107,51 @@ class RangeMixin(ProjectMixin):
                 return edges, False
         return edges, False
 
-    # ------------------------------------------------------------------ tool
+    # ------------------------------------------------------------------ tools
+    @operation
+    def track_edges(self, track: str, *, start: str = "0", end: str | None = None, limit: int = 100) -> TrackEdgesOut:
+        """Event edges of one track (TW-1610): where its audio starts and stops. Moves the cursor and the
+        selection to probe, and puts both back."""
+        if not 1 <= limit <= MAX_PROBE:
+            raise PreconditionFailedError(f"limit must be 1..{MAX_PROBE}", code="BAD_REQUEST")
+        item = self.resolve_track(TrackSelector.parse(track))
+        info = self.track_info(item)
+        transport = self._transport_id()
+        if self._transport_flag(transport, Transport.START) or self._transport_flag(transport, Transport.RECORD):
+            raise PreconditionFailedError("stop the transport before probing", code="TRANSPORT_RUNNING")
+        origin = self._seconds_of(transport, start, "seconds")
+        until = self._seconds_of(transport, end, "seconds") if end is not None else math.inf
+        cursor = self._cursor_seconds(transport)
+        selected = self.call("da.base").get("base")
+        try:
+            self.select_channel(int(item["id"]))
+            edges, complete = self.probe_edges(transport, origin, until=until, limit=limit)
+        finally:
+            self._restore(transport, {}, cursor, selected)
+        inside = [e for e in edges if e <= until + SECONDS_TOLERANCE]
+        out = TrackEdgesOut(
+            track=info.name,
+            track_uid=info.track,
+            start=format_seconds(origin),
+            end=format_seconds(until) if until != math.inf else None,
+            edges=[format_seconds(e) for e in inside],
+            edges_seconds=[round(e, 4) for e in inside],
+            first=format_seconds(inside[0]) if inside else None,
+            last=format_seconds(inside[-1]) if inside else None,
+            complete=complete or len(inside) < len(edges),
+        )
+        if not inside:
+            out.notes.append("no event edge found after the start: the track has no audio there, or one event "
+                             "covers it all")  # fmt: skip
+        if origin <= SECONDS_TOLERANCE:
+            out.notes.append("an event starting exactly at 0 s cannot be seen (the probe only finds edges after "
+                             "the cursor): the first edge may be its end")  # fmt: skip
+        if not out.complete:
+            out.notes.append(f"stopped after {limit} edges: probe again from the last one, or raise limit")
+        out.notes.append("edges of events, not of sound: silence inside an event is not seen here (analyze an "
+                         "export for that)")  # fmt: skip
+        return out
+
     @operation
     def edit_range(
         self,

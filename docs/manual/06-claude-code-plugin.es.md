@@ -44,6 +44,17 @@ Todas las skills tienen las mismas secciones y fases, y registran lo que crean p
 
 Cuando te pida exportar, elige: Stereo Out, Archivo Wave, **32 bit float**, la frecuencia de muestreo del proyecto, el nombre que te sugiera y la exportación en tiempo real desactivada.
 
+## `podcast-session-audit`
+
+Hace inventario de la sesión antes de trabajar en ella, y guarda en el perfil del episodio lo que confirmas.
+
+- **Pídela así:** "revisa este episodio", "comprueba el proyecto antes de mezclar", "prepara el perfil del episodio".
+- **Qué mira:** cada pista (tipo, salida, fader, mute, solo, plugins) y dónde empiezan y acaban los eventos de cada pista de audio, la extensión del episodio, y lo que Trackwright ya sabe (los perfiles de programa y de episodio, las pistas que crearon otras skills). No mide audio ni necesita exportar.
+- **Qué señala:** un solo olvidado, una pista silenciada que tiene audio, una pista sin salida, un fader en silencio, una pista vacía, un render y la pista a la que sustituye; como preguntas, porque tú decides qué es intencionado.
+- **Qué pregunta:** a qué programa pertenece el episodio, el rol de cada pista (voz, música, efectos, referencia, otro; nunca lo adivina por el nombre), y los rangos que ninguna skill debe tocar (tú das los tiempos; los marcadores no se pueden leer).
+- **Qué no puede ver** (lo dice siempre): la automatización, la ganancia de los clips y los fundidos, los marcadores, un evento que empieza exactamente en 0 s, los presets de los plugins, los envíos y los side-chains.
+- **Qué escribe:** solo `Trackwright/profile.toml`, después de enseñártelo; nada cambia en el proyecto de Cubase.
+
 ## `podcast-silence-trim`
 
 Encuentra los silencios más largos que una duración y los quita, cerrando los huecos para que el episodio sea más corto.

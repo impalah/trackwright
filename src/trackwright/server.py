@@ -49,6 +49,7 @@ from trackwright.core.models import (
     SpeechOut,
     StatusOut,
     TempoOut,
+    TrackEdgesOut,
     TrackListOut,
     TransportOut,
     WorkspaceOut,
@@ -241,6 +242,21 @@ def build_server(service: CubaseService) -> MCPServer:
         track: TrackArg, new_name: Annotated[str, Field(min_length=1, max_length=64)], dry_run: DryRunArg = True
     ) -> WriteOut:
         return await run(lambda: service.rename_track(track, new_name, dry_run=dry_run))
+
+    @server.tool(
+        annotations=NAVIGATE,
+        description="Where one track's events start and end (TW-1610): walks its event edges with Locate Next "
+        "Event from start (seconds) up to end, then puts the cursor and the selection back. First and last "
+        "edge give the track's extent. An event starting exactly at 0 s is not seen; silence inside an event "
+        "is not seen either (analyze an export for that). Transport stopped.",
+    )
+    async def cubase_track_edges(
+        track: TrackArg,
+        start: Annotated[str, Field(description="project time to start from (seconds)")] = "0",
+        end: Annotated[str | None, Field(description="stop after this time; null = to the last edge")] = None,
+        limit: Annotated[int, Field(ge=1, le=400, description="most edges to walk (each takes a moment)")] = 100,
+    ) -> TrackEdgesOut:
+        return await run(lambda: service.track_edges(track, start=start, end=end, limit=limit))
 
     @server.tool(annotations=NAVIGATE, description="Select a track, or the next/previous one. Single selection.")
     async def cubase_select_track(

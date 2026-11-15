@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 38 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 39 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -186,6 +186,14 @@ Only the first 20 distinct objects are checked. The remaining events carry `stil
 - **Input:** `track`, or `step` (`next` or `previous`).
 - Selection is exclusive: it deselects all other tracks.
 - With `step`, `verified` is `true` only if the selection moved (at the first or last track it does not).
+
+### `cubase_track_edges` (navigation)
+
+Where one track's events start and end (TW-1610). The API cannot read events, so the tool selects the track and walks its edges with Locate Next Event from `start` (seconds) up to `end`, then puts the cursor and the selection back.
+
+- **Input:** `track`, `start` (default 0), `end` (default: to the last edge), `limit` (most edges to walk, default 100, up to 400; each takes a moment).
+- **Output:** `edges` (starts and ends together, in order), `first` and `last` (the track's extent), `complete` (false when `limit` stopped the walk: probe again from the last edge).
+- **Limits:** an event starting exactly at 0 s is not seen (the probe finds edges after the cursor; TW-1606), so `first` may be its end; edges of adjacent events coincide; silence inside an event is not seen (analyze an export for that). The transport must be stopped (`TRANSPORT_RUNNING`).
 
 ### `cubase_set_position` (navigation)
 
@@ -427,7 +435,7 @@ The `Trackwright/` folder inside the open project's folder, where skills keep th
 Show, episode and delivery profiles (TW-1607). Three layers, each overriding the one before: **built-in** (Trackwright's defaults: the silence criteria of `cubase_analyze_audio`) < **show** (`~/.config/trackwright/shows/<show>.toml`, shared by every episode) < **episode** (`Trackwright/profile.toml`, which also names its show). Tables merge key by key; lists are replaced whole.
 
 - **Input:** `action`, `show` (default: the one the episode names), `data` (for writes: the whole profile, as the TOML file's tables), `dry_run`.
-- **`resolve`** (default): the merged `settings`, `origins` (which layer each value came from, as `editing.padding_seconds: show`), the episode's `protected` ranges and the delivery profiles of `delivery.targets`.
+- **`resolve`** (default): the merged `settings`, `origins` (which layer each value came from, as `editing.padding_seconds: show`), the episode's `protected` ranges, the delivery profiles of `delivery.targets`, and `episode`: the episode profile as stored (start from it to `write_episode`, never from `settings`, or the show's values would be copied into the episode).
 - **`shows`:** the show profiles found. **`delivery`:** every delivery profile available, built-in and the show's or episode's own.
 - **`write_show`, `write_episode`:** validate `data` and replace the whole file; the dry run returns `before` and `after` (TOML) to show the user. Need `[workspace] enabled`; the episode needs the workspace created.
 - **Settings:** `track_roles` and `voices` (`pan`) by track **name** (uids repeat across projects made from one template); `music.approved`; `ducking` (`depth_db`, `pre_roll_seconds`, `hold_seconds`, `release_seconds`); `editing` (`min_silence_seconds`, `padding_seconds`); `delivery` (`targets`, and `profiles` of the show's own hosts). The episode adds `show`, `protected` (`start`, `end`, `note` in seconds) and `notes`.

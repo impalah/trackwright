@@ -54,6 +54,7 @@ WRITE_TOOLS = {
 }
 NAVIGATION_TOOLS = {
     "cubase_select_track",
+    "cubase_track_edges",
     "cubase_set_position",
     "cubase_list_automation_targets",
     "cubase_convert_value",

@@ -139,6 +139,8 @@ def test_write_and_resolve(fake: FakeCubase, tmp_path: Path, project: Path) -> N
     assert out.settings["track_roles"] == {"Pod Mic": "voice", "Music": "music", "Guest": "voice"}
     assert out.origins["track_roles.Guest"] == "episode"
     assert out.protected == [{"start": 10.0, "end": 20.0, "note": ""}]
+    assert out.episode is not None
+    assert out.episode["track_roles"] == {"Guest": "voice"}  # the episode layer alone, without the show's roles
     assert [(d.name, d.origin, d.loudness_lufs) for d in out.delivery] == [("myhost", "show/episode", -16.0)]
     listed = svc.profile("delivery")
     assert ("myhost", "show/episode") in [(d.name, d.origin) for d in listed.delivery]

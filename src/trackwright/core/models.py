@@ -486,6 +486,11 @@ class ProfileOut(_Out):
     show_path: str | None = None
     episode_path: str | None = Field(default=None, description="<project>/Trackwright/profile.toml")
     settings: JsonObject | None = Field(default=None, description="resolve: built-in < show < episode")
+    episode: JsonObject | None = Field(
+        default=None,
+        description="resolve: the episode profile as stored (start from it to write_episode, so the show's "
+        "values are not copied into the episode)",
+    )
     origins: dict[str, str] = Field(default_factory=dict, description="resolve: dotted setting -> layer")
     protected: list[JsonObject] = Field(default_factory=list, description="resolve: the episode's protected ranges")
     delivery: list[DeliveryProfileOut] = Field(
@@ -516,6 +521,19 @@ class AudioSourceOut(_Out):
 
 
 AnalysisCacheState = Literal["hit", "stored", "off"]
+
+
+class TrackEdgesOut(_Out):
+    track: str
+    track_uid: str
+    start: str = Field(description="where the probe started (project time)")
+    end: str | None = Field(description="where it stopped looking; null = to the last edge")
+    edges: list[str] = Field(description="event edges (starts and ends together), in order, h:mm:ss.mmm")
+    edges_seconds: list[float]
+    first: str | None = Field(description="the first edge: where the track's audio starts (but see notes)")
+    last: str | None = Field(description="the last edge: where it ends")
+    complete: bool = Field(description="every edge up to end (or the last one) was found")
+    notes: list[str] = Field(default_factory=list)
 
 
 class SpeechRegionOut(_Out):

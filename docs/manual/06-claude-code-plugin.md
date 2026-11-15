@@ -44,6 +44,17 @@ Every skill has the same sections and phases, and records what it creates so a r
 
 When it asks you to export, choose: Stereo Out, Wave, **32 bit float**, the project's sample rate, the name it suggests, and real-time export off.
 
+## `podcast-session-audit`
+
+Takes stock of the session before working on it, and records what you confirm in the episode profile.
+
+- **Ask for it like this:** "audit this episode", "check the project before I mix it", "set up the episode profile".
+- **What it looks at:** every track (type, output, fader, mute, solo, plugins) and where each audio track's events start and end, the episode's extent, and what Trackwright already knows (the show and episode profiles, the tracks other skills created). It measures no audio and needs no export.
+- **What it points out:** a forgotten solo, a muted track that has audio, a track routed nowhere, a silent fader, an empty track, a render and the track it replaces; as questions, since you decide what is intended.
+- **What it asks:** the show the episode belongs to, the role of each track (voice, music, effects, reference, other; it never guesses one from a name), and the ranges no skill may touch (you give the times; markers cannot be read).
+- **What it cannot see** (it says so every time): automation, clip gain and fades, markers, an event starting exactly at 0 s, plugin presets, sends and side-chains.
+- **What it writes:** only `Trackwright/profile.toml`, after showing it to you; nothing in the Cubase project changes.
+
 ## `podcast-silence-trim`
 
 Finds the silences longer than a duration and removes them, closing the gaps so the episode gets shorter.

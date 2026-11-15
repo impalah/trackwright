@@ -129,6 +129,7 @@ class ProfilesMixin(ServiceBase):
                 out.notes.append(f"unknown delivery target {target!r} (known: {sorted(builtin | set(own))})")
         if episode is not None:
             out.protected = [r.model_dump(mode="json") for r in episode.protected]
+            out.episode = episode.model_dump(mode="json", exclude_none=True)
         return out
 
     def _list_shows(self) -> ProfileOut:
