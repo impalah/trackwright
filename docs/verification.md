@@ -514,3 +514,8 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 - A 0.37 s fragment at −52 dB at 17:15.36 was a noise inside a pause (the user checked: a pause there); with `faint_db` the detector drops 108 such fragments before joining, and the pause at 17:15 is whole again.
 - The user listened to the first 10 minutes with a tone on the right channel during detected speech: it starts and stops in the right places.
 - Seen on the way: the episode's `Pod Mic` and the test project's `POC-TEST` have the same track uid (projects from the same template).
+
+## 2026-11-15 — TW-1605: an export of one track with every solo restored
+
+- On the test project, with `POC-TEST` soloed beforehand: `start` with `solo=[TW1507]` cleared `POC-TEST`'s solo and soloed `TW1507`; the user exported `tw1605-a.wav` (identical to the earlier `gate-after` export, difference 1e-10); `confirm` found it, reported `solo_restored: true`, and `cubase_list_tracks` showed `POC-TEST` soloed and `TW1507` not.
+- A second `start` with the same solo; the user closed the dialog without exporting; `cancel` reported both tracks restored (`solo_restored: true`), and `cubase_list_tracks` showed the state from before again. `POC-TEST`'s solo was then cleared to leave the project as found.

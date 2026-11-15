@@ -514,3 +514,8 @@ Cubase Elements 15.0.30, script 1.6.1, proyecto de pruebas, `TRACKWRIGHT_TEST_TR
 - Un fragmento de 0,37 s a −52 dB en 17:15,36 era un ruido dentro de una pausa (el usuario lo comprobó: ahí hay una pausa); con `faint_db` el detector descarta 108 fragmentos así antes de unir, y la pausa de 17:15 vuelve a estar entera.
 - El usuario escuchó los 10 primeros minutos con un tono en el canal derecho durante la voz detectada: entra y sale en los sitios correctos.
 - Visto por el camino: `Pod Mic` del episodio y `POC-TEST` del proyecto de pruebas tienen el mismo uid de pista (proyectos de la misma plantilla).
+
+## 2026-11-15 — TW-1605: exportar una pista con todos los solos restaurados
+
+- En el proyecto de pruebas, con `POC-TEST` en solo de antemano: `start` con `solo=[TW1507]` quitó el solo de `POC-TEST` y puso en solo `TW1507`; el usuario exportó `tw1605-a.wav` (idéntico a la exportación anterior `gate-after`, diferencia 1e-10); `confirm` lo encontró, informó `solo_restored: true`, y `cubase_list_tracks` mostró `POC-TEST` en solo y `TW1507` no.
+- Un segundo `start` con el mismo solo; el usuario cerró el diálogo sin exportar; `cancel` informó de las dos pistas restauradas (`solo_restored: true`), y `cubase_list_tracks` volvió a mostrar el estado anterior. Después se quitó el solo de `POC-TEST` para dejar el proyecto como estaba.

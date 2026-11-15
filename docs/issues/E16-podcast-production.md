@@ -105,7 +105,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1605 Stem export with the solo restored
 
-- **Status:** pending
+- **Status:** done (2026-11-15): `cubase_export_mix` gained `solo` (track selectors, `allowed_tracks` respected) and a `cancel` phase; `start` remembers every solo, clears the others and solos the given tracks; `confirm` and `cancel` put every solo back, and any failure before the dialog opens restores them at once. Both skills use it. Tests in `tests/unit/test_export_solo_tw1605.py`. Live on the test project: an export with `confirm` and a closed dialog with `cancel`, both with the solos back as before
 - **Scope:** one step to export a stem: solo the given tracks (remembering the previous solo state), set the range, open the dialog; on confirm, restore the solo state exactly, even if the export failed. Today each skill does this by hand and could leave a track soloed. Either new parameters of `cubase_export_mix` or a new tool.
 - **Tests:** solo state restored in every path; verified in Cubase.
 

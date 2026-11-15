@@ -105,7 +105,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1605 Exportar una pista con el solo restaurado
 
-- **Estado:** pendiente
+- **Estado:** hecho (2026-11-15): `cubase_export_mix` ganó `solo` (selectores de pista, respetando `allowed_tracks`) y una fase `cancel`; `start` recuerda todos los solos, quita los demás y pone en solo las pistas indicadas; `confirm` y `cancel` restauran todos los solos, y cualquier fallo antes de abrir el diálogo los restaura en el acto. Las dos skills lo usan. Tests en `tests/unit/test_export_solo_tw1605.py`. En directo en el proyecto de pruebas: una exportación con `confirm` y un diálogo cerrado con `cancel`, ambos con los solos como antes
 - **Alcance:** un solo paso para exportar una pista: poner en solo las pistas indicadas (recordando el estado de solo anterior), fijar el rango, abrir el diálogo; al confirmar, restaurar exactamente el estado de solo, aunque la exportación haya fallado. Hoy cada skill lo hace a mano y podría dejar una pista en solo. Parámetros nuevos de `cubase_export_mix` o una herramienta nueva.
 - **Tests:** estado de solo restaurado en todos los caminos; verificado en Cubase.
 
