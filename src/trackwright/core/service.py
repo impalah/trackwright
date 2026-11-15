@@ -11,10 +11,12 @@ from trackwright.core.presets import PresetMixin
 from trackwright.core.reading import ReadingMixin
 from trackwright.core.saving import SavingMixin
 from trackwright.core.settings import SettingsMixin
+from trackwright.core.workspacing import WorkspaceMixin
 from trackwright.core.writing import WritingMixin
 
 
 class CubaseService(
+    WorkspaceMixin,
     AnalyzingMixin,
     PresetMixin,
     SettingsMixin,

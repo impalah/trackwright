@@ -2,6 +2,10 @@
 
 [English](CHANGELOG.md) · **Español**
 
+## Sin publicar
+
+- **Espacio de trabajo del proyecto** (TW-1602): `[workspace] enabled` (desactivado por defecto, `WORKSPACE_DISABLED`) y la herramienta `cubase_workspace` (`status`, `init`), para una carpeta `Trackwright/` dentro de la del proyecto con `renders/`, `previews/`, `analysis/`, `reports/`, `state.json` (lo que crearon las skills) y `profile.toml` (perfil del episodio). `trackwright setup` lo pregunta (`--workspace`); `cubase_status` y `doctor` lo muestran. Dependencia nueva `tomli-w`. El servidor tiene ahora 34 herramientas.
+
 ## 0.5.0 — 2026-11-15
 
 Skills de productor (épica E15) y el resto de la remediación de calidad (E14, fases 3 y 4). El script de Cubase sigue en la **1.6.1**: ni script nuevo ni reinicio de Cubase. **Cambios incompatibles para los clientes MCP:** una herramienta renombrada y dos valores cambiados (TW-1413, abajo).

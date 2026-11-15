@@ -82,6 +82,13 @@ class AnalysisConfig(_Section):
     """Longest file that will be analyzed, in seconds (default 4 hours); longer files are refused."""
 
 
+class WorkspaceConfig(_Section):
+    enabled: bool = False
+    """Allow Trackwright to create and write a ``Trackwright/`` folder inside the open project's folder (renders,
+    analyses, reports, the episode profile and what each skill created; TW-1602). While false:
+    ``WORKSPACE_DISABLED``. Nothing outside that folder is ever written."""
+
+
 class LoggingConfig(_Section):
     level: Literal["TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     file: Path | None = None
@@ -120,6 +127,7 @@ class Settings(_Section):
     bridge: BridgeConfig = Field(default_factory=BridgeConfig)
     writes: WritesConfig = Field(default_factory=WritesConfig)
     analysis: AnalysisConfig = Field(default_factory=AnalysisConfig)
+    workspace: WorkspaceConfig = Field(default_factory=WorkspaceConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     script: ScriptConfig = Field(default_factory=ScriptConfig)
     cubase: CubaseConfig = Field(default_factory=CubaseConfig)

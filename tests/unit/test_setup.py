@@ -97,7 +97,9 @@ def statuses(result: JsonObject) -> dict[str, str]:
 
 
 def test_interactive_yes_to_everything(tmp_path: Path) -> None:
-    prompter = Prompter(True, True, False, True, True, True)  # script; writes, save, analysis; create; register
+    prompter = Prompter(
+        True, True, False, True, True, True, True
+    )  # script; writes, save, analysis, workspace; create; register
     setup, script_dir, runner = make(tmp_path, prompter)
     result = setup.run()
 
@@ -111,6 +113,7 @@ def test_interactive_yes_to_everything(tmp_path: Path) -> None:
     assert loaded.writes.enabled is True
     assert loaded.writes.save is False
     assert loaded.analysis.enabled is True  # TW-1502
+    assert loaded.workspace.enabled is True  # TW-1602
     assert "enabled = true" in prompter.text  # the content is shown before asking
     assert runner.calls[-1][:6] == ["/bin/claude", "mcp", "add", "--scope", "user", "trackwright"]
     assert runner.calls[-1][6] == "--"
@@ -121,7 +124,9 @@ def test_interactive_yes_to_everything(tmp_path: Path) -> None:
 
 
 def test_declining_changes_nothing(tmp_path: Path) -> None:
-    prompter = Prompter(False, False, False, False, False)  # script; writes; analysis; create config; register
+    prompter = Prompter(
+        False, False, False, False, False, False
+    )  # script; writes; analysis; workspace; create; register
     setup, script_dir, runner = make(tmp_path, prompter)
     result = setup.run()
 
@@ -129,7 +134,7 @@ def test_declining_changes_nothing(tmp_path: Path) -> None:
     assert not (script_dir / SCRIPT_NAME).exists()
     assert not (tmp_path / "cfg").exists()
     assert [c[1:3] for c in runner.calls] == [["mcp", "get"]]
-    assert len(prompter.questions) == 5  # save is not asked when writes are off; analysis is
+    assert len(prompter.questions) == 6  # save is not asked when writes are off; analysis, workspace are
     assert any("register the MCP server" in s for s in result["next_steps"])
 
 
@@ -176,6 +181,7 @@ def test_writes_and_save_flags(tmp_path: Path) -> None:
         "writes": True,
         "save": True,
         "analysis": False,  # --yes config without --analysis: off
+        "workspace": False,
     }
 
 
@@ -193,7 +199,7 @@ def test_claude_not_on_path_shows_the_command(tmp_path: Path) -> None:
 
 
 def test_registration_failure(tmp_path: Path) -> None:
-    setup, _, _ = make(tmp_path, Prompter(True, False, False, False, True), runner=Runner(add_code=1))
+    setup, _, _ = make(tmp_path, Prompter(True, False, False, False, False, True), runner=Runner(add_code=1))
     result = setup.run()
     assert result["ok"] is False
     claude = next(s for s in result["steps"] if s["step"] == "claude")

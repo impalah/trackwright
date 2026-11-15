@@ -56,6 +56,7 @@ class ReadingMixin(ServiceBase):
             writes_enabled=self.policy.enabled,
             allowed_tracks=list(self.policy.allowed_tracks),
             analysis_enabled=self.policy.analysis,
+            workspace_enabled=self.policy.workspace,
         )
 
     @operation

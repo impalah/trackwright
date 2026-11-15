@@ -46,6 +46,9 @@ save = false                           # true = cubase_save_project can save the
 enabled = false                        # true = audio files you export can be read and analyzed
 max_seconds = 14400                    # longest file analyzed (4 hours)
 
+[workspace]
+enabled = false                        # true = skills may write a Trackwright/ folder in the project folder
+
 [logging]
 level = "INFO"
 file = "~/Library/Logs/trackwright/trackwright.log"
@@ -98,6 +101,14 @@ Reading audio (TW-1502). Trackwright only reads the samples of an audio file to 
 |---|---|---|
 | `enabled` | `false` | Allows reading audio files to analyze them. Without it: `ANALYSIS_DISABLED`. |
 | `max_seconds` | `14400` | Longest file analyzed, in seconds (4 hours; from 1 to 86400). Longer files: `TOO_LONG`. |
+
+## `[workspace]`
+
+The project workspace (TW-1602): a `Trackwright/` folder inside the open project's folder, next to `Audio/` and `Mixdown/`, where skills keep renders, previews, analyses, reports, the episode profile (`profile.toml`) and what they created (`state.json`). Trackwright never writes anything else in the project folder.
+
+| Key | Default | Description |
+|---|---|---|
+| `enabled` | `false` | Allows creating and writing `Trackwright/` inside the project folder. Without it: `WORKSPACE_DISABLED` (reporting its state still works). |
 
 ## `[logging]`
 

@@ -92,6 +92,7 @@ Las preguntas salen por la salida de error; por la salida estándar, un resumen 
 | `--writes` / `--no-writes` | Al crear la configuración, permite o no las escrituras. Con `--yes config` y sin esta opción: no. |
 | `--save` / `--no-save` | Igual para el guardado del proyecto. Solo cuenta con las escrituras permitidas. |
 | `--analysis` / `--no-analysis` | Igual para leer archivos de audio y analizarlos. Independiente de las escrituras. |
+| `--workspace` / `--no-workspace` | Igual para la carpeta `Trackwright/` que las skills escriben dentro de las carpetas de proyecto. |
 | `--config RUTA` (antes de `setup`) | Crea o usa la configuración en otra ruta. |
 
 `setup` nunca usa `sudo`, ni cambia ajustes de Cubase, IAC o Accesibilidad. Después sigue en el paso 6 (activar el script en Cubase).

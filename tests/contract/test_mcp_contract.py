@@ -46,6 +46,7 @@ WRITE_TOOLS = {
     "cubase_import_audio",
     "cubase_set_project",
     "cubase_plugin_preset",
+    "cubase_workspace",
 }
 NAVIGATION_TOOLS = {
     "cubase_select_track",
@@ -306,3 +307,12 @@ async def test_analyze_audio_tool(fake: FakeCubase, tmp_path: Path) -> None:
         assert "TOO_LONG" not in str(out)
         text = await call_error(on, "cubase_analyze_audio", {"file": str(file), "min_seconds": 0})
         assert "min_seconds" in text  # rejected by the input schema
+
+
+async def test_workspace_tool(fake: FakeCubase) -> None:
+    """TW-1602: status always answers; init is refused while [workspace] is off."""
+    async with Client(build_server(CubaseService(fake, WritePolicy(enabled=True)))) as client:
+        status = await call(client, "cubase_workspace", {})
+        assert status["action"] == "status"
+        assert status["enabled"] is False
+        assert "WORKSPACE_DISABLED" in await call_error(client, "cubase_workspace", {"action": "init"})

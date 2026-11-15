@@ -120,7 +120,7 @@ The plugin starts its own server, so install the Cubase script with `trackwright
 
 ## What it can do (Cubase)
 
-33 tools, all with structured output:
+34 tools, all with structured output:
 
 - **Reading:** status, mixer tracks, selected channel, inserts, plugin catalog, parameters, transport and recent changes.
 - **Writing**, always with a dry run (`dry_run`) and verification by reading back: parameters (as normalized values or in real units), plugin insertion, volume, mute, solo, record arm, track name and tempo.

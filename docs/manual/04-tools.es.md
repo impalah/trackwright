@@ -2,7 +2,7 @@
 
 [English](04-tools.md) · **Español**
 
-El servidor `trackwright` publica 33 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 34 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 Trackwright aspira a admitir varios DAW, pero hoy solo implementa **Cubase**. Por eso todas las herramientas se llaman `cubase_*` y esta página describe el comportamiento de Cubase: se verificó contra Cubase Elements 15.0.30, con scripts de experimento y desde Claude Code (ver el [registro de verificación](../verification.es.md)). Cualquier cliente MCP recibe las mismas herramientas. Otro DAW tendría su propio conjunto de herramientas; ver [Extensión a otros DAW](../architecture.es.md#extensión-a-otros-daw-posible-no-implementada).
 
@@ -67,6 +67,7 @@ Los errores llegan como error de herramienta, con el formato `CÓDIGO: mensaje |
 | `TIMEOUT` | Cubase no respondió a tiempo. En escrituras: resultado desconocido. |
 | `WRITES_DISABLED`, `NOT_ALLOWED` | La configuración no permite esa escritura. |
 | `ANALYSIS_DISABLED`, `TOO_LONG` | La configuración no permite leer audio, o el archivo es más largo de lo permitido. |
+| `WORKSPACE_DISABLED` | La configuración no permite escribir la carpeta `Trackwright/` del proyecto. |
 | `TRACK_NOT_FOUND`, `TRACK_AMBIGUOUS`, `NO_SELECTION` | No se puede resolver la pista. |
 | `INVALID_OBJECT` | El objeto ya no existe (por ejemplo, se borró en Cubase). |
 | `CANNOT_PERFORM` | Cubase dice que ahora no se puede ejecutar ese comando. |
@@ -367,6 +368,28 @@ Trackwright **nunca exporta por sí mismo**: coloca el rango y abre el diálogo 
     - ±(0,5 s + 0,2 %) en MP3, AAC y OGG, cuya duración es una estimación y que pierden o ganan tramas al final. Verificado: un MP3 del episodio de 139,976 s midió 139,721 s.
 - Los localizadores **se quedan** en el rango exportado.
 - **Errores:** `TRANSPORT_RUNNING`, `CANNOT_PERFORM` (hay otro diálogo abierto), `BAD_TIME` y `WRITES_DISABLED`.
+
+## Espacio de trabajo del proyecto
+
+### `cubase_workspace` (`status` lee; `init` escribe archivos, con dry run)
+
+La carpeta `Trackwright/` dentro de la carpeta del proyecto abierto, donde las skills guardan sus archivos (TW-1602). La carpeta del proyecto sale de los archivos que Cubase tiene abiertos; sin proyecto, o con varios, no se adivina.
+
+- **Entrada:** `action` (`status` por defecto, o `init`) y `dry_run` (para `init`).
+- **`status`:** dice si la carpeta existe, qué subcarpetas crearía `init`, si existen `state.json` y `profile.toml`, cuántos elementos tiene anotados cada skill (`owned`, por `skill:tipo`) y un resumen del perfil del episodio. Siempre permitido.
+- **`init`:** crea `Trackwright/` y sus subcarpetas `renders/`, `previews/`, `analysis/` y `reports/`, y nada más. Necesita `[workspace] enabled`; se puede repetir sin efecto.
+- **Estructura:**
+
+  | Ruta | Contenido |
+  |---|---|
+  | `renders/` | audio procesado que las skills vuelven a importar en Cubase |
+  | `previews/` | archivos cortos para escuchar antes de aprobar un cambio |
+  | `analysis/` | resultados de análisis ligados a la exportación de la que salen |
+  | `reports/` | informes de control de calidad y de entrega |
+  | `state.json` | lo que ha creado cada skill, para que al repetirla actualice lo suyo y nunca lo del usuario |
+  | `profile.toml` | el perfil del episodio: roles de las pistas, rangos protegidos, notas |
+- **Seguridad:** cada ruta se comprueba para que quede dentro de `Trackwright/` (sin `..`, rutas absolutas ni enlaces simbólicos que salgan); se rechaza un `Trackwright` que sea un enlace simbólico o un archivo; los archivos se escriben de forma atómica.
+- **Errores:** `WORKSPACE_DISABLED`, `NO_PROJECT_FOLDER` (desconocida o ambigua), `BAD_WORKSPACE`, `NO_WORKSPACE`.
 
 ## Analizar audio
 

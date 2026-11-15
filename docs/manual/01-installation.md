@@ -92,6 +92,7 @@ The questions go to standard error; a JSON summary goes to standard output. Opti
 | `--writes` / `--no-writes` | When creating the configuration, allows writes or not. With `--yes config` and without this option: no. |
 | `--save` / `--no-save` | Same for project saving. Only counts when writes are allowed. |
 | `--analysis` / `--no-analysis` | Same for reading audio files to analyze them. Independent of writes. |
+| `--workspace` / `--no-workspace` | Same for the `Trackwright/` folder that skills write inside project folders. |
 | `--config PATH` (before `setup`) | Creates or uses the configuration at another path. |
 
 `setup` never uses `sudo`, and never changes Cubase, IAC or Accessibility settings. Then continue with step 6 (activate the script in Cubase).

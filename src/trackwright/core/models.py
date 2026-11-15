@@ -76,6 +76,9 @@ class StatusOut(_Out):
     writes_enabled: bool
     allowed_tracks: list[str]
     analysis_enabled: bool = Field(default=False, description="[analysis] enabled: audio files may be read")
+    workspace_enabled: bool = Field(
+        default=False, description="[workspace] enabled: the Trackwright/ folder may be written in the project folder"
+    )
 
 
 class TrackListOut(_Out):
@@ -394,6 +397,23 @@ class RangeEditOut(_Out):
 
 
 # ---------------------------------------------------------------------------- export (TW-1204)
+class WorkspaceOut(_Out):
+    action: Literal["status", "init"]
+    dry_run: bool
+    enabled: bool = Field(description="[workspace] enabled: skills may write the folder")
+    status: Literal["unknown_project", "absent", "planned", "created", "exists"]
+    project_folder: str | None = None
+    path: str | None = Field(default=None, description="<project folder>/Trackwright")
+    exists: bool = False
+    missing: list[str] = Field(default_factory=list, description="folders 'init' would create (relative paths)")
+    created: list[str] = Field(default_factory=list)
+    has_state: bool = False
+    owned: dict[str, int] = Field(default_factory=dict, description="items recorded in state.json, by skill:kind")
+    has_profile: bool = False
+    profile: dict[str, str | int | None] | None = None
+    notes: list[str] = Field(default_factory=list)
+
+
 class SilenceOut(_Out):
     start: str = Field(description="project time, h:mm:ss.mmm (padding already applied)")
     end: str

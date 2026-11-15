@@ -74,4 +74,5 @@ def run_doctor(settings: Settings) -> JsonObject:
         },
     )
     check("analysis", True, {"enabled": settings.analysis.enabled, "max_seconds": settings.analysis.max_seconds})
+    check("workspace", True, {"enabled": settings.workspace.enabled})
     return {"ok": all(c["ok"] for c in checks), "checks": checks}

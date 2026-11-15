@@ -499,3 +499,7 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 ## 2026-11-15 — TW-1601: what Cubase Elements offers for the podcast skills
 
 - Limiter on Stereo Out inserted and set (−1.0 dB, read back); the Compressor's side-chain is not reachable through parameters, the button and the source choice are in its window (user); volume automation recorded in real time lands ~0.1 s late (export midpoints 7.185 and 8.655 s for steps requested at 7.0–7.125 and 8.5–8.625 s), with an unexplained flat first export; PreGain automatable; fade, crossfade, duplicate and repeat key commands exist (user); Cubase's MP3 decodes with soundfile, no AAC export; a render imported at 40 s landed at 40.000–43.000 s; cycle playback with the Gate's Bypass toggled five times, heard by the user, no clicks. Details in `experiments/tw1601/`.
+
+## 2026-11-15 — TW-1602: the project workspace, read live
+
+- `workspace()` (status) from the repository against the open test project: project folder `X0001.test` found through the files Cubase has open; `Trackwright/` exists (from TW-1601) and `previews/`, `analysis/`, `reports/` are missing; `init` refused with `WORKSPACE_DISABLED` under the user's configuration; `cubase_status` reports `workspace_enabled: false`.

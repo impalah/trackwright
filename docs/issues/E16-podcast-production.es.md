@@ -87,7 +87,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1602 El espacio de trabajo `Trackwright/` del proyecto
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-15): `trackwright/workspace.py` (estructura, rutas que no pueden salir, escrituras atómicas, `State`/`OwnedItem` para `state.json`, `EpisodeProfile` para `profile.toml`, escrito con la dependencia nueva `tomli-w`), `[workspace] enabled` (desactivado por defecto, `WORKSPACE_DISABLED`, comprobado antes que nada en `init`), herramienta `cubase_workspace` (`status`, `init`), `setup --workspace`, `cubase_status.workspace_enabled`, `doctor`; capítulos de configuración y de herramientas, y SECURITY. Tests en `tests/unit/test_workspace.py` y el test de contrato. En directo: `status` encontró la carpeta del proyecto de pruebas y el `Trackwright/` incompleto que dejó TW-1601; `init` rechazado con la configuración del usuario (escritura no activada), así que falta ver la creación en directo
 - **Alcance:** la estructura de arriba; un interruptor `[workspace] enabled` (desactivado por defecto, como `[writes]` y `[analysis]`), mostrado en `cubase_status` y `doctor`; Trackwright solo crea `Trackwright/` dentro de la carpeta del proyecto que encuentra `project_folder()`, nunca otro archivo; una herramienta para mostrarlo y crearlo (`cubase_workspace`); `state.json` (propiedad) y `profile.toml` (episodio) con modelos pydantic; SECURITY y el capítulo de configuración actualizados.
 - **Tests:** política, estructura, registros de propiedad, rechazo fuera de la carpeta del proyecto.
 

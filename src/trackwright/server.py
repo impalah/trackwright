@@ -47,6 +47,7 @@ from trackwright.core.models import (
     TempoOut,
     TrackListOut,
     TransportOut,
+    WorkspaceOut,
     WriteOut,
 )
 from trackwright.core.service import CubaseService
@@ -445,6 +446,20 @@ def build_server(service: CubaseService) -> MCPServer:
                 folder=folder, dry_run=dry_run,
             )
         )  # fmt: skip
+
+    # ------------------------------------------------------------------ project workspace (TW-1602)
+    @server.tool(
+        annotations=WRITE,
+        description="The Trackwright/ folder inside the open project's folder, where skills keep renders, "
+        "previews, analyses, reports, the episode profile (profile.toml) and what they created (state.json). "
+        "'status' only reads; 'init' creates the folder and its subfolders (dry run by default; needs "
+        "[workspace] enabled). Nothing outside Trackwright/ is written.",
+    )
+    async def cubase_workspace(
+        action: Annotated[Literal["status", "init"], Field(description="status (read) or init (create)")] = "status",
+        dry_run: DryRunArg = True,
+    ) -> WorkspaceOut:
+        return await run(lambda: service.workspace(action, dry_run=dry_run))
 
     # ------------------------------------------------------------------ audio analysis (TW-1504)
     @server.tool(

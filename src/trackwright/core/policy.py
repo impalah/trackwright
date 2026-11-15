@@ -11,13 +11,16 @@
 It also carries ``[analysis]`` (TW-1502): reading the samples of an audio file is off by default
 (``ANALYSIS_DISABLED``) and limited in duration (``TOO_LONG``). It is independent of ``[writes]``: analysis
 changes nothing in Cubase.
+
+And ``[workspace]`` (TW-1602): writing the ``Trackwright/`` folder inside the project folder is off by
+default (``WORKSPACE_DISABLED``).
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from trackwright.config import AnalysisConfig, WritesConfig
+from trackwright.config import AnalysisConfig, WorkspaceConfig, WritesConfig
 from trackwright.errors import PolicyError, PreconditionFailedError
 
 
@@ -28,17 +31,29 @@ class WritePolicy:
     save: bool = False
     analysis: bool = False
     analysis_max_seconds: float = AnalysisConfig().max_seconds
+    workspace: bool = False
 
     @classmethod
-    def from_config(cls, config: WritesConfig, analysis: AnalysisConfig | None = None) -> WritePolicy:
+    def from_config(
+        cls, config: WritesConfig, analysis: AnalysisConfig | None = None, workspace: WorkspaceConfig | None = None
+    ) -> WritePolicy:
         reading = analysis or AnalysisConfig()
         return cls(
+            workspace=(workspace or WorkspaceConfig()).enabled,
             enabled=config.enabled,
             allowed_tracks=config.allowed_tracks,
             save=config.save,
             analysis=reading.enabled,
             analysis_max_seconds=reading.max_seconds,
         )
+
+    def check_workspace(self) -> None:
+        """Raise unless Trackwright may write its ``Trackwright/`` folder in the project folder."""
+        if not self.workspace:
+            raise PolicyError(
+                "the project workspace is disabled; set [workspace] enabled = true in the Trackwright configuration",
+                code="WORKSPACE_DISABLED",
+            )
 
     def check_analysis(self, seconds: float | None = None) -> None:
         """Raise unless reading audio is allowed and a file of ``seconds`` is within the limit."""
@@ -100,4 +115,5 @@ class WritePolicy:
             "allowed_tracks": list(self.allowed_tracks),
             "save": self.save,
             "analysis_enabled": self.analysis,
+            "workspace_enabled": self.workspace,
         }

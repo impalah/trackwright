@@ -55,6 +55,10 @@ save = {save}
 [analysis]
 # Allow reading the samples of audio files you export, to find silences and measure noise. Read-only.
 enabled = {analysis}
+
+[workspace]
+# Allow skills to write a Trackwright/ folder inside the project folder (renders, analyses, reports).
+enabled = {workspace}
 """
 
 
@@ -151,6 +155,7 @@ class Setup:
         writes: bool | None = None,
         save: bool | None = None,
         analysis: bool | None = None,
+        workspace: bool | None = None,
         runner: Runner | None = None,
         which: Callable[[str], str | None] | None = None,
         doctor: Callable[[Settings], JsonObject] | None = None,
@@ -162,6 +167,7 @@ class Setup:
         self.writes = writes
         self.save = save
         self.analysis = analysis
+        self.workspace = workspace
         self.runner = runner or run_command
         self.which = which or shutil.which
         self._doctor = doctor
@@ -241,8 +247,14 @@ class Setup:
         analysis = self.answer(
             "config", self.analysis, "Allow it to read audio files you export, to analyze them (analysis)?"
         )
+        workspace = self.answer(
+            "config", self.workspace, "Allow skills to write a Trackwright/ folder inside the project (workspace)?"
+        )
         content = CONFIG_TEMPLATE.format(
-            writes=str(writes).lower(), save=str(save).lower(), analysis=str(analysis).lower()
+            writes=str(writes).lower(),
+            save=str(save).lower(),
+            analysis=str(analysis).lower(),
+            workspace=str(workspace).lower(),
         )
         self.prompter.say("  content:")
         for line in content.splitlines():
@@ -260,7 +272,15 @@ class Setup:
             return self.failed("config", exc)
         logger.info("created {}", self.config_file)
         return StepResult(
-            "config", "done", {"path": str(self.config_file), "writes": writes, "save": save, "analysis": analysis}
+            "config",
+            "done",
+            {
+                "path": str(self.config_file),
+                "writes": writes,
+                "save": save,
+                "analysis": analysis,
+                "workspace": workspace,
+            },
         )
 
     # ------------------------------------------------------------------ 3. claude

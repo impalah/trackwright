@@ -82,6 +82,7 @@ def test_policy_allowed_tracks() -> None:
         "allowed_tracks": ["POC-TEST"],
         "save": False,
         "analysis_enabled": False,
+        "workspace_enabled": False,
     }
 
 
