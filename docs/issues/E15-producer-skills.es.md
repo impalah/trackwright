@@ -2,7 +2,7 @@
 
 [English](E15-producer-skills.md) · **Español**
 
-**Estado de la épica: pendiente.** Objetivo: peticiones prácticas como «corta los silencios de más de 3 segundos de la pista X» o «añade una puerta de ruido a la pista de voz», construidas sobre el servidor MCP. Dos partes: un **analizador de audio** en el servidor (la API de Cubase no puede leer el contenido de las pistas, así que los silencios y los niveles de ruido se miden fuera de Cubase) y un **plugin de Claude Code** con skills en el formato abierto Agent Skills, publicado desde este mismo repositorio.
+**Estado de la épica: hecha (2026-11-15).** Publicada en la 0.5.0 (la publicación en PyPI la hace el usuario). Objetivo: peticiones prácticas como «corta los silencios de más de 3 segundos de la pista X» o «añade una puerta de ruido a la pista de voz», construidas sobre el servidor MCP. Dos partes: un **analizador de audio** en el servidor (la API de Cubase no puede leer el contenido de las pistas, así que los silencios y los niveles de ruido se miden fuera de Cubase) y un **plugin de Claude Code** con skills en el formato abierto Agent Skills, publicado desde este mismo repositorio.
 
 **Decisiones (2026-11-14):**
 - **El mismo repositorio.** Las skills nombran las herramientas y dependen de sus contratos; en un solo repositorio, un test detecta una herramienta renombrada en el mismo commit. Se reconsiderará solo si las skills se independizan de Trackwright (varios DAW, otros servidores) o necesitan otra licencia; hasta entonces son AGPL-3.0-or-later como el resto.
@@ -100,7 +100,7 @@
 
 ### TW-1508 Documentación y publicación
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-15): capítulo 6 del manual (`docs/manual/06-claude-code-plugin.es.md`) en ambos idiomas, sección del README con las líneas de instalación (enlaces absolutos, para PyPI), mapa del código en CLAUDE.md; versión 0.5.0 preparada: versión en el paquete, el plugin y la versión fijada en `.mcp.json`, registro de cambios con instrucciones de actualización, `make check`, mutation testing del 87,4 %, las dos validaciones del plugin, construcción y `twine check`. Publicar en PyPI y la etiqueta `v0.5.0` corresponden al usuario
 - **Alcance:** un capítulo del manual «Plugin de Claude Code y skills» (+ inglés): instalación, las skills y lo que preguntan, cómo se relacionan con las herramientas; sección en el README; CHANGELOG; CLAUDE.md (mapa del código). Publicación: la versión que incluya esta épica (puede ser la 0.5.0 junto con los cambios de API de E14, si se publican a la vez).
 
 ### TW-1509 Esperar a Cubase tras arrancar el puente

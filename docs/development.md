@@ -133,6 +133,7 @@ Writes are restored at the end. These tests use your real configuration: they do
 
 - `uv run --with mutmut==3.8.1 mutmut results` lists the surviving mutants; `mutmut show <name>` shows one;
 - a survivor that changes behavior needs a test (see `tests/unit/test_mutation_edges.py` and `test_mutation_host.py`); one that only changes a message text, a log argument or something equivalent in Python is recorded as such;
+- a new test file for one of these modules must be added to `pytest_add_cli_args_test_selection`, or mutmut does not run it: in 0.5.0 the tests of TW-1502 and TW-1509 were missing and the score looked like 82 % instead of 87 %;
 - tests that start subprocesses or real sockets (`test_launcher.py`, `test_bridge.py`, `test_robustness_tw1405.py`) crash mutmut's workers: keep them out of `pytest_add_cli_args_test_selection`.
 
 Goal: at least 85 % of the mutants killed in these modules. The scores of each run are in the verification log.

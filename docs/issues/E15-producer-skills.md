@@ -2,7 +2,7 @@
 
 **English** · [Español](E15-producer-skills.es.md)
 
-**Epic status: pending.** Goal: practical requests such as "cut the silences longer than 3 seconds in track X" or "add a noise gate to the voice track", built on the MCP server. Two parts: an **audio analyzer** in the server (Cubase's API cannot read track contents, so silences and noise levels must be measured outside Cubase), and a **Claude Code plugin** with skills in the open Agent Skills format, published from this same repository.
+**Epic status: done (2026-11-15).** Released in 0.5.0 (publication on PyPI by the user). Goal: practical requests such as "cut the silences longer than 3 seconds in track X" or "add a noise gate to the voice track", built on the MCP server. Two parts: an **audio analyzer** in the server (Cubase's API cannot read track contents, so silences and noise levels must be measured outside Cubase), and a **Claude Code plugin** with skills in the open Agent Skills format, published from this same repository.
 
 **Decisions (2026-11-14):**
 - **Same repository.** The skills name the tools and depend on their contracts; in one repository a test catches a renamed tool in the same commit. To be reconsidered only if the skills become independent of Trackwright (several DAWs, other servers) or need another license; until then they are AGPL-3.0-or-later like the rest.
@@ -100,7 +100,7 @@
 
 ### TW-1508 Documentation and release
 
-- **Status:** pending
+- **Status:** done (2026-11-15): manual chapter 6 (`docs/manual/06-claude-code-plugin.md`) in both languages, README section with the install lines (absolute links, for PyPI), CLAUDE.md code map; release 0.5.0 prepared: version in the package, the plugin and the `.mcp.json` pin, changelog with upgrade notes, `make check`, mutation testing 87.4 %, both plugin validations, build and `twine check`. Publishing to PyPI and the `v0.5.0` tag are the user's
 - **Scope:** a manual chapter "Claude Code plugin and skills" (+ `.es`): installation, the skills and what they ask, how they relate to the tools; README section; CHANGELOG; CLAUDE.md (code map). Release: the version that includes this epic (it may be 0.5.0 together with the API changes of E14, if they are released at once).
 
 ### TW-1509 Wait for Cubase after autostarting the bridge

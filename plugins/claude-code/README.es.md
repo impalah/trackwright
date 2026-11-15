@@ -4,7 +4,7 @@
 
 Skills de productor para Cubase, sobre el servidor MCP [Trackwright](../../README.es.md). El plugin arranca el servidor por sí mismo (`uvx trackwright==<versión> serve`), así que el servidor y las skills siempre van en versiones que encajan.
 
-> **Estado:** en desarrollo (épica E15). Las skills llegan con TW-1506 y TW-1507; la primera versión que incluya el plugin será la siguiente de Trackwright después de la 0.4.0.
+> **Desde Trackwright 0.5.0.** Skills: `podcast-silence-trim` y `noise-gate`; ver el [manual del plugin](../../docs/manual/06-claude-code-plugin.es.md).
 
 ## Instalación
 

@@ -4,7 +4,7 @@ Guidance for Claude Code when working in this repository.
 
 ## What this is
 
-**Trackwright** is an independent MCP server for controlling DAWs. The only implementation today is **Cubase** (15.0.20+, verified on Cubase Elements 15.0.30, macOS 27.2 Apple Silicon). Package and executable: `trackwright` (published on PyPI: 0.4.0, tag `v0.4.0`, requires Cubase script 1.6.1; release procedure in `docs/development.md`). License AGPL-3.0-or-later. Author: impalah.
+**Trackwright** is an independent MCP server for controlling DAWs. The only implementation today is **Cubase** (15.0.20+, verified on Cubase Elements 15.0.30, macOS 27.2 Apple Silicon). Package and executable: `trackwright` (on PyPI: 0.4.0, tag `v0.4.0`; 0.5.0 prepared, requires Cubase script 1.6.1; release procedure in `docs/development.md`). License AGPL-3.0-or-later. Author: impalah.
 
 Chain: `MCP client ──stdio──► trackwright serve ──Unix socket──► trackwright bridge ──virtual MIDI (SysEx "TW")──► Cubase MIDI Remote script (Trackwright_Bridge.js)`.
 
@@ -35,6 +35,7 @@ Integration tests against the real Cubase are opt-in: `TRACKWRIGHT_INTEGRATION=1
 - `core/`: `CubaseService` built from mixins (reading, writing, commanding, automation, project, settings, ranges, exporting, importing, saving, presets, lifecycle), `policy.py` (write policy), `models.py`, `refs.py`.
 - `server.py`: registers the 33 `cubase_*` MCP tools. `commands.py`: Cubase commands with their observed class (`direct`, `dialog`, `confirm`, `ui_selection`, `unknown`); keys must match `COMMANDS` in the script.
 - `analysis/`: audio analysis with numpy + soundfile (window levels, noise floor, silences) on exported files; knows nothing about Cubase (TW-1503).
+- `plugins/claude-code/`: the Claude Code plugin (skills `podcast-silence-trim`, `noise-gate`; `.mcp.json` pins the package version); the repository root `.claude-plugin/marketplace.json` makes it a marketplace. `tests/unit/test_plugin.py` keeps them consistent.
 - `fake/`: `FakeCubase` simulator, in layers (core, editing, automation, writes, reads) (tests and `serve --simulate`). Passing against it proves nothing about real Cubase.
 - `experiments/twNNNN/`: throwaway probes against real Cubase, each with a README of what was observed.
 

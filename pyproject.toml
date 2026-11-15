@@ -1,6 +1,6 @@
 [project]
 name = "trackwright"
-version = "0.4.0"
+version = "0.5.0"
 description = "Independent MCP server for controlling digital audio workstations (DAWs). First implementation: Cubase, through a MIDI Remote script"
 readme = "README.md"
 authors = [
@@ -146,7 +146,8 @@ pytest_add_cli_args_test_selection = [
     "tests/unit/test_mutation_edges.py",
     "tests/unit/test_mutation_host.py",
     "tests/unit/test_session_pinning_tw1402.py",
-    "tests/unit/test_core_basics.py",
+    "tests/unit/test_analysis_policy_tw1502.py",
+    "tests/unit/test_autostart_wait_tw1509.py",
 ]
 pytest_add_cli_args = ["-p", "no:cacheprovider", "-q", "-x"]
 also_copy = ["src", "tests", "docs", "README.md", "README.es.md", "CHANGELOG.md", "CHANGELOG.es.md", "CLAUDE.md", "LICENSE"]

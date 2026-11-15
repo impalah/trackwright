@@ -47,7 +47,7 @@ If the terminal can't find `trackwright`, run `uv tool update-shell` and open a 
 `trackwright setup` is a guided installation. At each step it **shows what it is going to do and asks** before applying it (the default answer is "no"):
 
 1. copies the `Trackwright_Bridge.js` script into the Cubase MIDI Remote folder (`~/Documents/Steinberg/Cubase/MIDI Remote/Driver Scripts/Local/trackwright/bridge/`);
-2. creates `~/.config/trackwright/config.toml` if it doesn't exist, asking whether writes and project saving are allowed (default: no);
+2. creates `~/.config/trackwright/config.toml` if it doesn't exist, asking whether writes, project saving and reading audio files for analysis are allowed (default: no);
 3. registers the server in Claude Code (`claude mcp add --scope user trackwright …`) or, if it can't find `claude`, shows you the command;
 4. checks everything with `trackwright doctor`.
 
@@ -95,6 +95,20 @@ claude mcp add trackwright-sim -- uvx trackwright serve --simulate
 
 Then use Copilot Chat in agent mode. The Trackwright tools appear in its tool list.
 
+## Claude Code plugin: producer skills
+
+The plugin adds **skills** that chain the tools into a producer's job, asking you before changing anything:
+
+- **`podcast-silence-trim`**: "remove the silences longer than 3 seconds". Measures an export, shows every proposed cut and closes the gaps on all tracks.
+- **`noise-gate`**: "put a noise gate on the Voice track". Finds the gate plugins you have (Cubase's or third-party), measures the noise and the quietest speech, and proposes the threshold.
+
+```text
+/plugin marketplace add impalah/trackwright
+/plugin install trackwright@trackwright
+```
+
+The plugin starts its own server, so install the Cubase script with `trackwright setup` but answer **no** when it offers to register the server in Claude Code (or remove an earlier registration with `claude mcp remove trackwright --scope user`). The skills need `[writes] enabled = true` and `[analysis] enabled = true`. Details in the [plugin manual](https://github.com/impalah/trackwright/blob/main/docs/manual/06-claude-code-plugin.md).
+
 ## Update and uninstall
 
 - **Update:** `uv tool upgrade trackwright`, `trackwright bridge-stop` (the MCP server starts the new bridge when it needs it) and `trackwright setup`, which updates the Cubase script if it changed. Restart Cubase and your MCP client. The changelog lists the steps of each version.
@@ -119,6 +133,7 @@ Then use Copilot Chat in agent mode. The Trackwright tools appear in its tool li
 - **Import audio:** on the given track and position, with the Cubase file picker, and verification by the edges of the new event.
 - **Export the mix:** of a range or of the whole project, with the Cubase dialog, and confirmation of the created file.
 - **Analyze audio:** noise floor, levels and silences of an exported file, in project seconds. Reading audio has its own permission (`[analysis] enabled`).
+- **Producer skills for Claude Code:** trim the silences of a podcast and set a noise gate, through the plugin (see above).
 - **Cubase commands:** markers, track deletion, splitting at the locators, track creation with the user's help, and a list of allowed commands. Each command states how it behaves: whether it acts directly, opens a dialog or asks for confirmation.
 
 By default it **only reads**. Writes are enabled in the configuration and can be limited to specific tracks.

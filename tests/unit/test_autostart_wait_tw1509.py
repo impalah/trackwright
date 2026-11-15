@@ -100,6 +100,7 @@ def test_the_last_hello_only_uses_the_time_left() -> None:
     hello_timeouts = [t for op, t, _ in bridge.requests if op == "hello"]
     assert hello_timeouts[0] == 3.0
     assert hello_timeouts[1] == pytest.approx(0.5)  # 4 s - 3 s spent - 0.5 s pause
+    assert len(hello_timeouts) == 2  # at the deadline exactly it gives up: no third attempt
 
 
 def test_other_errors_are_not_retried() -> None:

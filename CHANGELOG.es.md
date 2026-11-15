@@ -2,16 +2,28 @@
 
 [English](CHANGELOG.md) · **Español**
 
-## Sin publicar
+## 0.5.0 — 2026-11-15
+
+Skills de productor (épica E15) y el resto de la remediación de calidad (E14, fases 3 y 4). El script de Cubase sigue en la **1.6.1**: ni script nuevo ni reinicio de Cubase. **Cambios incompatibles para los clientes MCP:** una herramienta renombrada y dos valores cambiados (TW-1413, abajo).
+
+**Actualizar desde la 0.4.0:**
+
+1. `uv tool upgrade trackwright` y después `trackwright bridge-stop` (el servidor MCP arranca el puente nuevo cuando lo necesita).
+2. Si algún prompt, script o cliente tuyo llama a las herramientas por su nombre: `cubase_remove_selected_tracks` pasa a ser `cubase_remove_selected_track`, `cubase_select_track` recibe `step: "previous"` en lugar de `"prev"` y `cubase_save_project` responde `status: "done"` en lugar de `"saved"`.
+3. Opcional: añade `[analysis]` con `enabled = true` a `~/.config/trackwright/config.toml` para usar `cubase_analyze_audio` y las skills. **La 0.4.0 y anteriores rechazan una configuración con `[analysis]`** (las secciones desconocidas son errores), así que no vuelvas con ella a una versión anterior.
+4. Opcional: instala el plugin de Claude Code (`/plugin marketplace add impalah/trackwright`, `/plugin install trackwright@trackwright`) y quita después el registro manual (`claude mcp remove trackwright --scope user`), para que las herramientas no aparezcan dos veces.
+5. Reinicia tu cliente MCP (en Claude Code, `/mcp`).
+
+- **Plugin de Claude Code y skills de productor** (de TW-1505 a TW-1508): `plugins/claude-code/`, publicado desde este repositorio como marketplace; skills `podcast-silence-trim` y `noise-gate`; capítulo 6 del manual.
 
 - **Skill `noise-gate`** (TW-1507): encuentra las puertas de ruido instaladas (de Cubase o de terceros), mide el ruido y la voz más baja sobre una exportación, traduce el umbral a la entrada de la puerta (faders, ley de panorama) y lo aplica con la aprobación del usuario. `cubase_analyze_audio` devuelve además `quiet_sound_db` y `sound_db`.
 - **Corrección:** el valor por defecto de `merge_gap_seconds` de `cubase_analyze_audio` baja de 0,3 a 0,05 s. Con 0,3 s, las sílabas de 250 ms se tomaban por ruidos breves y una frase entera podía salir como silencio.
 - **Skill `podcast-silence-trim`** (TW-1506): encuentra y quita los silencios más largos que una duración, cerrando los huecos en todas las pistas; exporta con el usuario, mide con `cubase_analyze_audio`, enseña los cortes y solo corta lo que el usuario aprueba, del final hacia el principio.
-- **Plugin de Claude Code** (TW-1505): `plugins/claude-code/` (manifiesto, `.mcp.json` que arranca `uvx trackwright==<versión> serve`, carpeta de skills) y el marketplace en `.claude-plugin/marketplace.json`; `tests/unit/test_plugin.py` mantiene coherentes las versiones, los nombres y las herramientas que nombran las skills. Aún sin skills.
+- **Plugin de Claude Code** (TW-1505): `plugins/claude-code/` (manifiesto, `.mcp.json` que arranca `uvx trackwright==<versión> serve`, carpeta de skills) y el marketplace en `.claude-plugin/marketplace.json`; `tests/unit/test_plugin.py` mantiene coherentes las versiones, los nombres y las herramientas que nombran las skills.
 - **El arranque automático espera a Cubase** (TW-1509): tras arrancar el puente, el servidor repite `hello` hasta que Cubase responde (dentro de `[bridge] autostart_timeout`) antes de enviar la petición, en lugar de fallar la primera con `TIMEOUT`.
 - **Herramienta nueva `cubase_analyze_audio`** (TW-1504): ruido de fondo, niveles y silencios de un archivo exportado, en segundos del proyecto; solo lectura, necesita `[analysis] enabled`. El servidor tiene ahora 33 herramientas.
-- **Analizador de audio** (TW-1503): el paquete `trackwright.analysis` lee archivos WAV, AIFF, FLAC y Ogg por bloques (numpy y soundfile, dependencias nuevas) y encuentra el ruido de fondo y los silencios, con un umbral relativo al ruido de fondo o absoluto, una duración mínima, márgenes y unión de ruidos breves. Aún no se expone como herramienta (TW-1504).
-- **Configuración `[analysis]`** (TW-1502): leer archivos de audio es una capacidad propia, desactivada por defecto (`ANALYSIS_DISABLED`) y limitada por `max_seconds` (`TOO_LONG`); `trackwright setup` la pregunta (`--analysis`), y `cubase_status` y `trackwright doctor` la muestran. La herramienta de análisis llega en TW-1504.
+- **Analizador de audio** (TW-1503): el paquete `trackwright.analysis` lee archivos WAV, AIFF, FLAC y Ogg por bloques (numpy y soundfile, dependencias nuevas) y encuentra el ruido de fondo y los silencios, con un umbral relativo al ruido de fondo o absoluto, una duración mínima, márgenes y unión de ruidos breves.
+- **Configuración `[analysis]`** (TW-1502): leer archivos de audio es una capacidad propia, desactivada por defecto (`ANALYSIS_DISABLED`) y limitada por `max_seconds` (`TOO_LONG`); `trackwright setup` la pregunta (`--analysis`), y `cubase_status` y `trackwright doctor` la muestran.
 - **Higiene del repositorio** (TW-1415): pre-commit (ruff, mypy), Dependabot (uv y GitHub Actions), CONTRIBUTING y SECURITY (inglés y castellano), plantillas de issue y de pull request; reglas de ruff PT, PERF, FURB, ASYNC y TRY; pytest falla con avisos y con tests colgados; dependencias de ejecución limitadas por debajo de su siguiente versión mayor (`mcp<3`, `pydantic<3`, `loguru<1`).
 - **Paquete del simulador** (TW-1414): `trackwright.fake` es ahora un paquete por capas (núcleo, edición, automatización, escrituras, lecturas), con los mismos nombres públicos.
 - **Consistencia de la API MCP** (TW-1413). **Cambios incompatibles:**

@@ -4,7 +4,7 @@
       "command": "uvx",
       "args": [
         "--from",
-        "${TRACKWRIGHT_FROM:-trackwright==0.4.0}",
+        "${TRACKWRIGHT_FROM:-trackwright==0.5.0}",
         "trackwright",
         "serve"
       ]

@@ -489,3 +489,9 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 - Export with the track in solo (`gate-check.wav`): noise floor −58.2 dB, quietest speech −39.0 dB, typical −19.1 dB (the source levels minus the 3 dB pan law). Threshold on the export −48.5 dB, translated to the gate's input (+3 dB for a centered mono track, faders at 0 dB): −45.5 dB. The user approved: Threshold −45.5 dB, Range −30 dB, Hold 50 ms, Release 200 ms; each set with `expect_title` and read back.
 - Second export with the gate (`gate-after.wav`), analyzed with the first threshold (−48.2 dB): noise floor −88.05 dB (−30 dB, the Range); quietest speech −39.0 dB and typical −19.06 dB, unchanged; pauses at −83 to −85 dB (the first 200 ms are the release), both phrases at the same level as before.
 - Found on the way: (1) the default `merge_gap_seconds` of 0.3 s took the 250 ms syllables for blips and reported the whole file as one silence; lowered to 0.05 s. (2) Re-analyzing after the gate with the relative threshold compares different things (the threshold drops with the noise); the skill now passes the first threshold.
+
+## 2026-11-15 — Release 0.5.0 checks
+
+- `make check`: 691 tests passed, 18 skipped (integration), coverage 98 %. `claude plugin validate --strict` passes for the plugin and the marketplace.
+- Mutation testing on the safety modules: first 705 of 856 mutants killed (82.4 %), because the new tests of TW-1502 and TW-1509 were not in mutmut's test selection; with them, **747 of 856 (87.3 %)**, and 748 after one more assertion that kills the `>=`/`>` boundary of the wait for Cubase. The remaining survivors in the new code are message texts and a default value overridden in production.
+- The 0.5.0 wheel started through `uvx --from <wheel>` reads the user's configuration with `[analysis]` (0.4.0 refuses it), and `TRACKWRIGHT_FROM=<wheel> claude --plugin-dir plugins/claude-code mcp list` shows the plugin's server connected.

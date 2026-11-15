@@ -8,6 +8,7 @@
   - [Configuration](manual/03-configuration.md)
   - [Tool reference](manual/04-tools.md)
   - [Troubleshooting](manual/05-troubleshooting.md)
+  - [Claude Code plugin and producer skills](manual/06-claude-code-plugin.md)
 - **Tutorials**
   1. [First connection](tutorials/01-first-connection.md)
   2. [Inspect a track](tutorials/02-inspect-track.md)
