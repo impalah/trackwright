@@ -73,7 +73,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1601 Experimento: lo que ofrece Cubase Elements para estas skills
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-15): ver `experiments/tw1601/` y el registro de verificación. Limitador en Stereo Out: sí; cadena lateral: el botón existe, la fuente la elige el usuario; automatización ~0,1 s tarde, cuantizada a ~110 ms; PreGain automatizable; comandos de fundido encontrados («Ajustar fundidos al rango», fundido cruzado, duplicar, repetir), ninguno enlazado aún; MP3 decodificable, sin exportación AAC; los renders se importan en su sitio; la reproducción en ciclo con Bypass para el A/B funciona sin clics
 - **Preguntas:**
   1. ¿Se pueden insertar plugins en Stereo Out y fijar sus parámetros (Brickwall Limiter, Maximizer: techo, umbral)?
   2. ¿Tiene el Compressor de Elements (o VSTDynamics) entrada de cadena lateral, y qué parámetros se ven a través de la API? (El enrutamiento sigue siendo cosa del usuario.)
@@ -249,6 +249,12 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 - **Estado:** pendiente (necesita TW-1604, TW-1630)
 - **Alcance:** una lista de decisiones con tiempos, motivo y confianza: tomas repetidas, arranques fallidos, pausas inusualmente largas, muletillas, indicaciones de grabación, rangos que el usuario marcó para quitar (dados como tiempos o rangos en ciclo, porque los marcadores no se pueden leer); la acción por defecto es «revisar», nunca «cortar»; los cortes aprobados se aplican en todas las pistas, del último al primero, y se invalidan los análisis afectados.
+
+### TW-1635 Corrección: `cubase_record_automation` tras TW-1601
+
+- **Estado:** pendiente
+- **Visto en TW-1601:** (1) tras una grabación que indicó `complete: true`, la primera exportación salió plana y el fader quedó en −1,43 dB en lugar del valor del último punto; una exportación posterior, con la curva presente y R activado, sí la tenía. (2) El dry run indica el título del parámetro de la pista **seleccionada** (`TW1507 / Volumen`) para otra pista de destino (`TW1501`).
+- **Alcance:** encontrar la causa de (1) con un test que la reproduzca (modo de lectura tras grabar, valor final del fader); indicar en la salida el estado de lectura de la pista; dejar el fader en el último punto; tomar el título del dry run de la pista de destino. La tolerancia de la relectura debe tener en cuenta el tick de ~110 ms (sus propias lecturas llegan un tick tarde).
 
 ## Fase 6 — Integración
 

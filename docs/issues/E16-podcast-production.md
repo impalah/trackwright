@@ -73,7 +73,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1601 Experiment: what Cubase Elements offers for these skills
 
-- **Status:** pending
+- **Status:** done (2026-11-15): see `experiments/tw1601/` and the verification log. Limiter on Stereo Out: yes; side-chain: the button exists, the source is the user's; automation ~0.1 s late, quantized to ~110 ms; PreGain automatable; fade commands found ("Ajustar fundidos al rango", crossfade, duplicate, repeat), none bound yet; MP3 decodable, no AAC export; renders import in place; cycle playback with Bypass for A/B works without clicks
 - **Questions:**
   1. Can plugins be inserted on Stereo Out and their parameters set (Brickwall Limiter, Maximizer: ceiling, threshold)?
   2. Does Elements' Compressor (or VSTDynamics) offer a side-chain input at all, and which parameters show through the API? (Routing stays the user's.)
@@ -249,6 +249,12 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 - **Status:** pending (needs TW-1604, TW-1630)
 - **Scope:** a list of decisions with times, reason and confidence: repeated takes, false starts, unusually long pauses, filler words, recording cues, ranges the user marked for removal (given as times or cycle ranges, since markers cannot be read); the default action is "review", never "cut"; approved cuts applied on all tracks, latest first, and the affected analyses invalidated.
+
+### TW-1635 Fix: `cubase_record_automation` after TW-1601
+
+- **Status:** pending
+- **Seen in TW-1601:** (1) after a recording reported `complete: true`, the first export was flat and the fader was left at −1.43 dB instead of the last point's value; a later export, with the curve present and R on, had it. (2) The dry run reports the parameter title of the **selected** track (`TW1507 / Volumen`) for another target track (`TW1501`).
+- **Scope:** find the cause of (1) with a test that reproduces it (read mode after recording, the fader's final value); report the track's read state in the output; leave the fader at the last point; take the title in the dry run from the target track. The read-back tolerance should account for the ~110 ms tick (its own readings arrive one tick late).
 
 ## Phase 6 — Integration
 
