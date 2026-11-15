@@ -219,7 +219,8 @@ def _prune(value: Any) -> Any:
 
 
 def profile_toml(profile: BaseModel) -> str:
-    """A show or episode profile as TOML: unset values, empty texts and empty tables left out, the version always kept."""
+    """A show or episode profile as TOML: unset values, empty texts and empty tables left out, the version
+    always kept."""
     data = _prune(profile.model_dump(mode="python", exclude_none=True))
     data.setdefault("version", FORMAT_VERSION)
     return tomli_w.dumps(data)
