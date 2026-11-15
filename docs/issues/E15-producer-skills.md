@@ -103,6 +103,12 @@
 - **Status:** pending
 - **Scope:** a manual chapter "Claude Code plugin and skills" (+ `.es`): installation, the skills and what they ask, how they relate to the tools; README section; CHANGELOG; CLAUDE.md (code map). Release: the version that includes this epic (it may be 0.5.0 together with the API changes of E14, if they are released at once).
 
+### TW-1509 Wait for Cubase after autostarting the bridge
+
+- **Status:** done (2026-11-15); tests in `tests/unit/test_autostart_wait_tw1509.py`; verified in Cubase (see the verification log)
+- **Why:** seen during TW-1504: right after the bridge was autostarted, the first request timed out because Cubase had not yet bound to the new virtual ports; the second one worked. A skill's first step would fail for no real reason.
+- **Decision:** after starting the bridge, `BridgeHost` repeats `hello` (read-only, so retrying it is safe) until Cubase answers or `[bridge] autostart_timeout` runs out, pausing 0.5 s between attempts; then the caller's request, which never reached the bridge, is sent once. If Cubase does not answer, `TIMEOUT` with `outcome: not_executed` and a message saying the request was not sent. Other errors are not retried. The rule "never retry a write whose outcome is uncertain" is unchanged.
+
 ## Out of scope (possible later epics)
 
 - **GitHub Copilot in VS Code:** try the same skills and the server with `.vscode/mcp.json`, without an extension; record the result and update the "not tested" note.

@@ -4,6 +4,7 @@
 
 ## Unreleased
 
+- **Autostart waits for Cubase** (TW-1509): after starting the bridge, the server repeats `hello` until Cubase answers (within `[bridge] autostart_timeout`) before sending the request, instead of failing the first request with `TIMEOUT`.
 - **New tool `cubase_analyze_audio`** (TW-1504): noise floor, levels and silences of an exported file, in project seconds; read-only, needs `[analysis] enabled`. The server now has 33 tools.
 - **Audio analyzer** (TW-1503): the `trackwright.analysis` package reads WAV, AIFF, FLAC and Ogg files in blocks (numpy and soundfile, new dependencies) and finds the noise floor and the silences, with a threshold relative to the noise floor or absolute, a minimum duration, padding and merging of short blips. Not exposed as a tool yet (TW-1504).
 - **`[analysis]` configuration** (TW-1502): reading audio files is a capability of its own, off by default (`ANALYSIS_DISABLED`) and limited by `max_seconds` (`TOO_LONG`); `trackwright setup` asks for it (`--analysis`), and `cubase_status` and `trackwright doctor` report it. The analysis tool comes in TW-1504.

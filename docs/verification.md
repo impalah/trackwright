@@ -469,3 +469,7 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 - With `[analysis] enabled = true`, `cubase_status` reports `analysis_enabled: true`.
 - `cubase_analyze_audio` on the TW-1501 export (`tw1501-a.wav`, range start 2 s, `min_seconds` 3): noise floor −63.19 dB, threshold −53.19 dB, peak −3.1 dB; four silences in project time, 2.00–5.75, 10.25–13.75, 21.25–25.75 and 29.25–36.00 s, which are where the test signal (placed at 4 s) has its silences of 3 s or more, with 0.25 s of padding; the 1 s silence is not reported.
 - Seen on the way: right after an MCP reconnection the bridge was autostarted and the first request (`hello`) timed out; the second, a few seconds later, was answered. Cubase took a moment to bind to the new virtual ports.
+
+## 2026-11-15 — TW-1509: waiting for Cubase after autostarting the bridge
+
+- `trackwright bridge-stop`, then `status()` from a new process with the new code: it started the bridge, a first `hello` failed (the bridge counted one error) and the next was answered; `status` returned connected, script 1.6.1, 3.7 s after the call. The same situation gave `TIMEOUT` on the first request before this change (see TW-1504).

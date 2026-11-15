@@ -52,7 +52,8 @@ class BridgeConfig(_Section):
     autostart: bool = True
     """``trackwright serve`` starts the bridge when it is not running (TW-1201)."""
     autostart_timeout: float = Field(default=10.0, ge=0.5, le=60.0)
-    """Seconds to wait for an auto-started bridge to accept connections."""
+    """Seconds to wait for an auto-started bridge to accept connections, and then again for Cubase to answer
+    through it (TW-1509: Cubase takes a moment to bind to the new virtual ports)."""
 
     @field_validator("socket_dir", mode="after")
     @classmethod

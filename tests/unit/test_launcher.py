@@ -129,7 +129,7 @@ def test_host_starts_the_bridge_and_retries_once(short_dir: Path) -> None:
     host = BridgeHost(BridgeClient(config.socket_path), read_timeout=1, write_timeout=1, ensure_bridge=ensure)
     try:
         assert host.call("da.param.set", {"id": 1})["op"] == "da.param.set"
-        assert backend.calls == ["da.param.set"]  # sent exactly once
+        assert backend.calls == ["hello", "da.param.set"]  # TW-1509: Cubase answered first; the write sent once
     finally:
         server.stop()
 

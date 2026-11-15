@@ -103,6 +103,12 @@
 - **Estado:** pendiente
 - **Alcance:** un capítulo del manual «Plugin de Claude Code y skills» (+ inglés): instalación, las skills y lo que preguntan, cómo se relacionan con las herramientas; sección en el README; CHANGELOG; CLAUDE.md (mapa del código). Publicación: la versión que incluya esta épica (puede ser la 0.5.0 junto con los cambios de API de E14, si se publican a la vez).
 
+### TW-1509 Esperar a Cubase tras arrancar el puente
+
+- **Estado:** hecha (2026-11-15); tests en `tests/unit/test_autostart_wait_tw1509.py`; verificada en Cubase (ver el registro de verificación)
+- **Por qué:** visto durante TW-1504: justo después de arrancar el puente automáticamente, la primera petición agotó el tiempo porque Cubase aún no se había enlazado a los puertos virtuales nuevos; la segunda funcionó. El primer paso de una skill fallaría sin motivo real.
+- **Decisión:** tras arrancar el puente, `BridgeHost` repite `hello` (solo lee, así que reintentarlo es seguro) hasta que Cubase responde o se agota `[bridge] autostart_timeout`, con una pausa de 0,5 s entre intentos; después envía una vez la petición original, que nunca llegó al puente. Si Cubase no responde, `TIMEOUT` con `outcome: not_executed` y un mensaje que dice que la petición no se envió. Los demás errores no se reintentan. La norma «nunca reintentar una escritura de resultado incierto» no cambia.
+
 ## Fuera de alcance (posibles épicas posteriores)
 
 - **GitHub Copilot en VS Code:** probar las mismas skills y el servidor con `.vscode/mcp.json`, sin extensión; anotar el resultado y actualizar la nota de «no probado».

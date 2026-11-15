@@ -67,7 +67,7 @@ Unknown keys are rejected with `CONFIG_ERROR`, so that a typo doesn't go unnotic
 | `write_timeout` | `5.0` | Seconds to wait for a write (between 0.05 and 30). After a timeout, the result is unknown: Trackwright doesn't retry. |
 | `backend` | `"auto"` | MIDI transport. `coremidi`: CoreMIDI from Python with `ctypes`; it is pure Python, with nothing to compile (macOS). `rtmidi`: mido + python-rtmidi, for other platforms or as an alternative; you need to uncomment those dependencies in `pyproject.toml`. `auto`: `coremidi` on macOS and `rtmidi` elsewhere. |
 | `autostart` | `true` | If `trackwright serve` doesn't find the bridge, it starts it as an independent process. It doesn't duplicate it if one already exists, and its log goes to `bridge.log` inside `socket_dir`. |
-| `autostart_timeout` | `10.0` | Seconds to wait for the started bridge to accept connections (between 0.5 and 60). |
+| `autostart_timeout` | `10.0` | Seconds to wait for the started bridge to accept connections, and then for Cubase to answer through it: Cubase takes a moment to bind to the new virtual ports (between 0.5 and 60). |
 
 If you change the port names, the Cubase script won't find them, because it has them hard-coded too. Leave them as they are unless you know what you're doing.
 

@@ -4,6 +4,7 @@
 
 ## Sin publicar
 
+- **El arranque automático espera a Cubase** (TW-1509): tras arrancar el puente, el servidor repite `hello` hasta que Cubase responde (dentro de `[bridge] autostart_timeout`) antes de enviar la petición, en lugar de fallar la primera con `TIMEOUT`.
 - **Herramienta nueva `cubase_analyze_audio`** (TW-1504): ruido de fondo, niveles y silencios de un archivo exportado, en segundos del proyecto; solo lectura, necesita `[analysis] enabled`. El servidor tiene ahora 33 herramientas.
 - **Analizador de audio** (TW-1503): el paquete `trackwright.analysis` lee archivos WAV, AIFF, FLAC y Ogg por bloques (numpy y soundfile, dependencias nuevas) y encuentra el ruido de fondo y los silencios, con un umbral relativo al ruido de fondo o absoluto, una duración mínima, márgenes y unión de ruidos breves. Aún no se expone como herramienta (TW-1504).
 - **Configuración `[analysis]`** (TW-1502): leer archivos de audio es una capacidad propia, desactivada por defecto (`ANALYSIS_DISABLED`) y limitada por `max_seconds` (`TOO_LONG`); `trackwright setup` la pregunta (`--analysis`), y `cubase_status` y `trackwright doctor` la muestran. La herramienta de análisis llega en TW-1504.

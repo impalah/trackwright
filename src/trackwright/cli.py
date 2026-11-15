@@ -131,6 +131,7 @@ def make_service(settings: Settings, *, simulate: bool) -> Any:
         read_timeout=settings.bridge.request_timeout,
         write_timeout=settings.bridge.write_timeout,
         ensure_bridge=bridge_launcher.ensure if settings.bridge.autostart else None,
+        script_wait=settings.bridge.autostart_timeout,
     )
     return CubaseService(host, policy, launcher=CubaseLauncher(settings.cubase))
 

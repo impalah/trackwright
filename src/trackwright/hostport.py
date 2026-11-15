@@ -8,11 +8,12 @@ Two implementations:
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from typing import Protocol
 
 from trackwright.bridge import BridgeClient, unwrap
-from trackwright.errors import BridgeUnavailableError
+from trackwright.errors import BridgeUnavailableError, RequestTimeoutError
 from trackwright.jsontypes import JsonObject
 from trackwright.ops import WRITE_OPS
 
@@ -46,9 +47,15 @@ class BridgeHost:
         read_timeout: float,
         write_timeout: float,
         ensure_bridge: Callable[[], bool] | None = None,
+        script_wait: float = 10.0,
+        sleep: Callable[[float], None] = time.sleep,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         self._client = client
         self._ensure_bridge = ensure_bridge
+        self._script_wait = script_wait
+        self._sleep = sleep
+        self._clock = clock
         self._read_timeout = read_timeout
         self._write_timeout = write_timeout
         self._session_id: str | None = None
@@ -67,8 +74,33 @@ class BridgeHost:
             if self._ensure_bridge is None or exc.details.get("sent") is not False:
                 raise
             self._ensure_bridge()
+            self._wait_for_script(op)
             response = self._client.request(op, params, timeout=timeout, session=session)
         meta = response.get("meta")
         if isinstance(meta, dict) and isinstance(meta.get("session_id"), str):
             self._session_id = meta["session_id"]
         return unwrap(response)
+
+    def _wait_for_script(self, op: str) -> None:
+        """TW-1509: after starting the bridge, Cubase needs a moment to bind to the new virtual ports.
+
+        ``hello`` only reads, so it is repeated until the script answers or ``script_wait`` runs out; the
+        caller's request (which never reached the bridge) is sent once afterwards, or not at all.
+        """
+        deadline = self._clock() + self._script_wait
+        while True:
+            remaining = deadline - self._clock()
+            try:
+                unwrap(self._client.request("hello", timeout=max(0.05, min(self._read_timeout, remaining))))
+            except RequestTimeoutError as exc:
+                if self._clock() >= deadline:
+                    raise RequestTimeoutError(
+                        f"the bridge started but Cubase did not answer within {self._script_wait:g} s: check "
+                        f"that Cubase is open and the 'Trackwright - Bridge' surface is active in the MIDI "
+                        f"Remote tab; {op} was not sent",
+                        outcome_unknown=False,
+                        details={"op": op, "outcome": "not_executed"},
+                    ) from exc
+                self._sleep(0.5)
+            else:
+                return

@@ -66,7 +66,8 @@ def test_retry_only_when_nothing_was_sent() -> None:
     host = bridge_host(client, ensured)
     host.call("da.param.set", {"v": 1}, session="s1")
     assert ensured == [True]
-    assert client.requests == [("da.param.set", {"v": 1}, 4.5, "s1")] * 2  # the same request, once more
+    write = ("da.param.set", {"v": 1}, 4.5, "s1")
+    assert client.requests == [write, ("hello", None, 1.5, None), write]  # TW-1509: Cubase first, then once more
 
 
 @pytest.mark.parametrize("sent", ["unknown", True, None])

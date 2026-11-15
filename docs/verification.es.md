@@ -469,3 +469,7 @@ Cubase Elements 15.0.30, script 1.6.1, proyecto de pruebas, `TRACKWRIGHT_TEST_TR
 - Con `[analysis] enabled = true`, `cubase_status` indica `analysis_enabled: true`.
 - `cubase_analyze_audio` sobre la exportación de TW-1501 (`tw1501-a.wav`, inicio del rango 2 s, `min_seconds` 3): ruido de fondo −63,19 dB, umbral −53,19 dB, pico −3,1 dB; cuatro silencios en tiempo del proyecto, 2,00–5,75, 10,25–13,75, 21,25–25,75 y 29,25–36,00 s, que es donde la señal de prueba (colocada en 4 s) tiene sus silencios de 3 s o más, con 0,25 s de margen; el silencio de 1 s no aparece.
 - Visto por el camino: justo después de reconectar el MCP, el puente se arrancó solo y la primera petición (`hello`) agotó el tiempo; la segunda, unos segundos después, obtuvo respuesta. Cubase tardó un momento en enlazarse a los puertos virtuales nuevos.
+
+## 2026-11-15 — TW-1509: esperar a Cubase tras arrancar el puente
+
+- `trackwright bridge-stop`, y luego `status()` desde un proceso nuevo con el código nuevo: arrancó el puente, un primer `hello` falló (el puente contó un error) y el siguiente obtuvo respuesta; `status` devolvió conectado, script 1.6.1, 3,7 s después de la llamada. La misma situación daba `TIMEOUT` en la primera petición antes de este cambio (ver TW-1504).
