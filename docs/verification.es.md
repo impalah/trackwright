@@ -503,3 +503,7 @@ Cubase Elements 15.0.30, script 1.6.1, proyecto de pruebas, `TRACKWRIGHT_TEST_TR
 ## 2026-11-15 — TW-1602: el espacio de trabajo del proyecto, leído en directo
 
 - `workspace()` (status) desde el repositorio contra el proyecto de pruebas abierto: carpeta del proyecto `X0001.test` encontrada a partir de los archivos que Cubase tiene abiertos; `Trackwright/` existe (de TW-1601) y faltan `previews/`, `analysis/`, `reports/`; `init` rechazado con `WORKSPACE_DISABLED` con la configuración del usuario; `cubase_status` indica `workspace_enabled: false`.
+
+## 2026-11-15 — TW-1603: sonoridad de exportaciones reales de Cubase
+
+- `measure_loudness` sobre las nueve exportaciones de `Mixdown/` del proyecto de pruebas (WAV de 32 bits float y el MP3 de Cubase): sonoridad integrada a 0,04-0,07 LU de pyloudnorm (por ejemplo el episodio de 140 s `X0001.mp3`: −21,13 frente a −21,18 LUFS); el clic de 1 ms de `tw1501-a.wav` da un true peak 1,1 dB por encima de su pico de muestra; 140 s medidos en 0,59 s.

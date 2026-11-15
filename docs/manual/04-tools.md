@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 34 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 35 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -368,6 +368,23 @@ Trackwright **never exports by itself**: it sets the range and opens the Cubase 
     - ±(0.5 s + 0.2%) for MP3, AAC and OGG, whose duration is an estimate and which lose or gain frames at the end. Verified: an MP3 of the 139.976 s episode measured 139.721 s.
 - The locators **stay** on the exported range.
 - **Errors:** `TRANSPORT_RUNNING`, `CANNOT_PERFORM` (another dialog is open), `BAD_TIME` and `WRITES_DISABLED`.
+
+### `cubase_measure_loudness` (read, needs `[analysis] enabled`)
+
+Loudness as delivery specifications state it, measured as ITU-R BS.1770 and EBU R128 define it (TW-1603).
+
+- **Input:** `file`, an absolute path: WAV, AIFF, FLAC, Ogg, MP3, or AAC (`.m4a`, decoded with macOS `afconvert` into a temporary file that is removed afterwards).
+- **Output:**
+
+  | Field | Meaning |
+  |---|---|
+  | `integrated_lufs` | Integrated loudness: 400 ms blocks, gated at −70 LUFS and 10 LU below their mean. `null` for silence or a file under 400 ms. |
+  | `momentary_max_lufs`, `short_term_max_lufs` | The loudest 400 ms block and the loudest 3 s window. |
+  | `loudness_range_lu` | Loudness range (EBU Tech 3342): spread of the short-term values between their 10th and 95th percentiles. `null` under about 3 s. |
+  | `sample_peak_dbfs`, `true_peak_dbtp` | The largest sample, and the peak of the signal oversampled 4× (what a ceiling such as −1 dBTP refers to). |
+- **Mono files** are measured as one channel: they read 3 dB lower than the same signal on two channels (a note says so).
+- **Checked against** the test signals of EBU Tech 3341 (integrated loudness, gating; ±0.1 LU) and Tech 3342 (loudness range; ±1 LU), the coefficient tables of BS.1770 at 48 kHz, and an independent implementation (pyloudnorm, ±0.1 LU).
+- **Errors:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_REQUEST`.
 
 ## Project workspace
 

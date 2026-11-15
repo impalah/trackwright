@@ -124,3 +124,34 @@ def test_bad_requests(fake: FakeCubase, tmp_path: Path) -> None:
     with pytest.raises(PreconditionFailedError) as bad:
         service.analyze_audio(str(text))
     assert bad.value.code == "BAD_AUDIO"
+
+
+# ---------------------------------------------------------------- loudness (TW-1603)
+def test_measure_loudness(fake: FakeCubase, tmp_path: Path) -> None:
+    t = np.arange(RATE * 6) / RATE
+    tone = 10 ** (-23 / 20) * np.sin(2 * np.pi * 1000 * t)
+    sf.write(str(tmp_path / "st.wav"), np.stack([tone, tone], axis=1), RATE, subtype="FLOAT")
+    sf.write(str(tmp_path / "mono.wav"), tone, RATE, subtype="FLOAT")
+    service = analyzer(fake)
+    out = service.measure_loudness(str(tmp_path / "st.wav"))
+    assert out.integrated_lufs == pytest.approx(-23, abs=0.1)
+    assert out.true_peak_dbtp == pytest.approx(-23, abs=0.2)
+    assert (out.sample_rate, out.channels, out.notes) == (RATE, 2, [])
+    mono = service.measure_loudness(str(tmp_path / "mono.wav"))
+    assert "mono file" in mono.notes[0]
+    assert fake.fired == []
+
+
+def test_measure_loudness_policy_and_paths(fake: FakeCubase, tmp_path: Path) -> None:
+    sf.write(str(tmp_path / "a.wav"), np.zeros(RATE * 3), RATE)
+    with pytest.raises(PolicyError) as off:
+        CubaseService(fake, WritePolicy(enabled=True)).measure_loudness(str(tmp_path / "a.wav"))
+    assert off.value.code == "ANALYSIS_DISABLED"
+    with pytest.raises(PreconditionFailedError) as relative:
+        analyzer(fake).measure_loudness("a.wav")
+    assert relative.value.code == "BAD_REQUEST"
+    with pytest.raises(PreconditionFailedError) as long:
+        analyzer(fake, analysis_max_seconds=2.0).measure_loudness(str(tmp_path / "a.wav"))
+    assert long.value.code == "TOO_LONG"
+    silent = analyzer(fake).measure_loudness(str(tmp_path / "a.wav"))
+    assert (silent.integrated_lufs, silent.sample_peak_dbfs, silent.true_peak_dbtp) == (None, None, None)

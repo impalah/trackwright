@@ -93,7 +93,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1603 Loudness and true peak
 
-- **Status:** pending
+- **Status:** done (2026-11-15): `trackwright/analysis/loudness.py` (K-weighting for any rate, gated integrated loudness, momentary and short-term maxima, LRA, sample and 4x true peak, read in blocks) with scipy as a new dependency (`lfilter`, `resample_poly`; pure numpy would need a per-sample loop); tool `cubase_measure_loudness`; AAC decoded through macOS `afconvert` (`decoded()`, also used by `cubase_analyze_audio`). Tests: BS.1770 coefficient tables at 48 kHz, EBU Tech 3341 cases 1-4 (±0.1 LU), Tech 3342 cases 1-3 (±1 LU), true peak between samples, mono, silence, pyloudnorm at 44.1 and 48 kHz (±0.1 LU), MP3 and AAC. On nine real exports of the test project it agrees with pyloudnorm within 0.07 LU; 140 s measured in 0.6 s
 - **Scope:** ITU-R BS.1770 / EBU R128 measurements in `trackwright.analysis`: integrated loudness (gated), short-term and momentary maxima, loudness range, sample peak and true peak (4× oversampling). Exposed through the analysis tool or a new `cubase_measure_loudness`.
 - **Validation:** conformance signals generated in the tests (as described in EBU Tech 3341 and 3342; the documents cited) and comparison with `pyloudnorm` as a development dependency only; MP3 and AAC deliveries decoded (soundfile, `afconvert`) and measured.
 

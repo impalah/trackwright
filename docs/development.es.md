@@ -71,12 +71,12 @@ src/trackwright/
   fake/             # FakeCubase, el simulador para tests y --simulate: núcleo, edición, automatización, escrituras, lecturas
   commands.py       # comandos de Cubase con su clase observada
   workspace.py      # la carpeta Trackwright/ dentro de un proyecto: estructura, rutas seguras, state.json, profile.toml
-  analysis/         # análisis de audio (numpy + soundfile): niveles por ventana, ruido de fondo, silencios; sin Cubase
+  analysis/         # análisis de audio (numpy, scipy, soundfile): niveles, ruido de fondo, silencios, sonoridad BS.1770; sin Cubase
   jsontypes.py      # JsonObject, el único alias de tipo JSON
   core/             # dominio: servicio (base + mixins), política, modelos, referencias
     tags.py         # tags de parámetros de Cubase por objeto (Channel, Transport, Slot...)
     timefmt.py      # formatos de compases y segundos de los visores de Cubase
-  server.py         # servidor MCP: registro de las 34 herramientas
+  server.py         # servidor MCP: registro de las 35 herramientas
   cubase/           # Trackwright_Bridge.js e instalador
 tests/
   unit/             # tests unitarios (simulador, sockets reales en /tmp)

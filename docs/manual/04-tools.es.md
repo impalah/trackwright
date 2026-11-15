@@ -2,7 +2,7 @@
 
 [English](04-tools.md) · **Español**
 
-El servidor `trackwright` publica 34 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 35 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 Trackwright aspira a admitir varios DAW, pero hoy solo implementa **Cubase**. Por eso todas las herramientas se llaman `cubase_*` y esta página describe el comportamiento de Cubase: se verificó contra Cubase Elements 15.0.30, con scripts de experimento y desde Claude Code (ver el [registro de verificación](../verification.es.md)). Cualquier cliente MCP recibe las mismas herramientas. Otro DAW tendría su propio conjunto de herramientas; ver [Extensión a otros DAW](../architecture.es.md#extensión-a-otros-daw-posible-no-implementada).
 
@@ -368,6 +368,23 @@ Trackwright **nunca exporta por sí mismo**: coloca el rango y abre el diálogo 
     - ±(0,5 s + 0,2 %) en MP3, AAC y OGG, cuya duración es una estimación y que pierden o ganan tramas al final. Verificado: un MP3 del episodio de 139,976 s midió 139,721 s.
 - Los localizadores **se quedan** en el rango exportado.
 - **Errores:** `TRANSPORT_RUNNING`, `CANNOT_PERFORM` (hay otro diálogo abierto), `BAD_TIME` y `WRITES_DISABLED`.
+
+### `cubase_measure_loudness` (lectura, necesita `[analysis] enabled`)
+
+La sonoridad tal como la piden las especificaciones de entrega, medida como la definen ITU-R BS.1770 y EBU R128 (TW-1603).
+
+- **Entrada:** `file`, una ruta absoluta: WAV, AIFF, FLAC, Ogg, MP3, o AAC (`.m4a`, decodificado con `afconvert` de macOS en un archivo temporal que se borra después).
+- **Salida:**
+
+  | Campo | Significado |
+  |---|---|
+  | `integrated_lufs` | Sonoridad integrada: bloques de 400 ms, con puerta en −70 LUFS y 10 LU por debajo de su media. `null` para el silencio o un archivo de menos de 400 ms. |
+  | `momentary_max_lufs`, `short_term_max_lufs` | El bloque de 400 ms más alto y la ventana de 3 s más alta. |
+  | `loudness_range_lu` | Rango de sonoridad (EBU Tech 3342): dispersión de los valores a corto plazo entre sus percentiles 10 y 95. `null` por debajo de unos 3 s. |
+  | `sample_peak_dbfs`, `true_peak_dbtp` | La muestra más alta, y el pico de la señal sobremuestreada 4× (a lo que se refiere un techo como −1 dBTP). |
+- **Los archivos mono** se miden como un solo canal: dan 3 dB menos que la misma señal en dos canales (una nota lo indica).
+- **Comprobado con** las señales de prueba de EBU Tech 3341 (sonoridad integrada, puertas; ±0,1 LU) y Tech 3342 (rango de sonoridad; ±1 LU), las tablas de coeficientes de BS.1770 a 48 kHz y una implementación independiente (pyloudnorm, ±0,1 LU).
+- **Errores:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_REQUEST`.
 
 ## Espacio de trabajo del proyecto
 

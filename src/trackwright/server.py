@@ -32,6 +32,7 @@ from trackwright.core.models import (
     InsertPluginOut,
     InsertsOut,
     LaunchOut,
+    LoudnessOut,
     ParameterOut,
     ParametersOut,
     PluginCatalogOut,
@@ -446,6 +447,18 @@ def build_server(service: CubaseService) -> MCPServer:
                 folder=folder, dry_run=dry_run,
             )
         )  # fmt: skip
+
+    @server.tool(
+        annotations=READ,
+        description="Loudness of an audio file as delivery specifications state it (ITU-R BS.1770 / EBU R128): "
+        "integrated loudness (LUFS), momentary and short-term maxima, loudness range (LU), sample peak and true "
+        "peak (dBTP, 4x oversampled). WAV, AIFF, FLAC, Ogg, MP3, and AAC through macOS afconvert. Reads the file "
+        "only; needs [analysis] enabled.",
+    )
+    async def cubase_measure_loudness(
+        file: Annotated[str, Field(description="absolute path of the audio file")],
+    ) -> LoudnessOut:
+        return await run(lambda: service.measure_loudness(file))
 
     # ------------------------------------------------------------------ project workspace (TW-1602)
     @server.tool(

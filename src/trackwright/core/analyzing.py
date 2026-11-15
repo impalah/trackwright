@@ -9,11 +9,20 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from trackwright.analysis import SilenceCriteria, find_silences, measure, noise_floor, probe, sound_levels
+from trackwright.analysis import (
+    SilenceCriteria,
+    decoded,
+    find_silences,
+    measure,
+    measure_loudness,
+    noise_floor,
+    probe,
+    sound_levels,
+)
 from trackwright.analysis.detect import threshold
 from trackwright.analysis.reader import SILENT_DB
 from trackwright.core.base import ServiceBase
-from trackwright.core.models import AnalysisOut, SilenceOut
+from trackwright.core.models import AnalysisOut, LoudnessOut, SilenceOut
 from trackwright.core.timefmt import format_seconds, parse_seconds
 from trackwright.errors import PreconditionFailedError
 
@@ -39,9 +48,7 @@ class AnalyzingMixin(ServiceBase):
         limit: int = 100,
     ) -> AnalysisOut:
         self.policy.check_analysis()
-        path = Path(file).expanduser()
-        if not path.is_absolute():
-            raise PreconditionFailedError("file must be an absolute path", code="BAD_REQUEST", details={"file": file})
+        path = self._audio_path(file)
         origin = parse_seconds(start)
         if origin is None:
             raise PreconditionFailedError("start looks like '2.5', '1:30' or '0:01:30.000'", code="BAD_TIME")
@@ -53,9 +60,10 @@ class AnalyzingMixin(ServiceBase):
             merge_gap_seconds=merge_gap_seconds,
         )
         criteria.check()
-        info = probe(path)
-        self.policy.check_analysis(info.seconds)  # TOO_LONG before reading any sample
-        levels = measure(path)
+        with decoded(path) as readable:
+            info = probe(readable)
+            self.policy.check_analysis(info.seconds)  # TOO_LONG before reading any sample
+            levels = measure(readable)
         silences = find_silences(levels, criteria)
         limit = max(1, min(limit, MAX_SILENCES))
         page = silences[offset : offset + limit]
@@ -107,3 +115,38 @@ class AnalyzingMixin(ServiceBase):
             ],
             notes=notes,
         )
+
+    def measure_loudness(self, file: str) -> LoudnessOut:
+        """BS.1770 loudness, loudness range and true peak of a file (TW-1603)."""
+        self.policy.check_analysis()
+        path = self._audio_path(file)
+        with decoded(path) as readable:
+            self.policy.check_analysis(probe(readable).seconds)
+            result = measure_loudness(readable)
+        info = result.info
+        notes = []
+        if info.channels == 1:
+            notes.append("mono file: measured as one channel (3 dB lower than the same signal on two channels)")
+        if readable_note := ("decoded with afconvert" if path.suffix.lower() in {".m4a", ".aac", ".mp4"} else ""):
+            notes.append(readable_note)
+        return LoudnessOut(
+            file=str(path),
+            format=info.format,
+            subtype=info.subtype,
+            sample_rate=info.rate,
+            channels=info.channels,
+            seconds=round(info.seconds, 4),
+            integrated_lufs=result.integrated_lufs,
+            momentary_max_lufs=result.momentary_max_lufs,
+            short_term_max_lufs=result.short_term_max_lufs,
+            loudness_range_lu=result.loudness_range_lu,
+            sample_peak_dbfs=_db(result.sample_peak_dbfs),
+            true_peak_dbtp=_db(result.true_peak_dbtp),
+            notes=notes,
+        )
+
+    def _audio_path(self, file: str) -> Path:
+        path = Path(file).expanduser()
+        if not path.is_absolute():
+            raise PreconditionFailedError("file must be an absolute path", code="BAD_REQUEST", details={"file": file})
+        return path

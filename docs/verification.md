@@ -503,3 +503,7 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 ## 2026-11-15 — TW-1602: the project workspace, read live
 
 - `workspace()` (status) from the repository against the open test project: project folder `X0001.test` found through the files Cubase has open; `Trackwright/` exists (from TW-1601) and `previews/`, `analysis/`, `reports/` are missing; `init` refused with `WORKSPACE_DISABLED` under the user's configuration; `cubase_status` reports `workspace_enabled: false`.
+
+## 2026-11-15 — TW-1603: loudness of real Cubase exports
+
+- `measure_loudness` on the nine exports in the test project's `Mixdown/` (WAV 32-bit float and Cubase's MP3): integrated loudness within 0.04-0.07 LU of pyloudnorm (for example the 140 s episode `X0001.mp3`: −21.13 against −21.18 LUFS); the 1 ms click of `tw1501-a.wav` gives a true peak 1.1 dB above its sample peak; 140 s measured in 0.59 s.

@@ -3,6 +3,11 @@
 from __future__ import annotations
 
 import math
+import shutil
+import subprocess
+import tempfile
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -69,6 +74,40 @@ def _open_error(path: Path, exc: Exception) -> PreconditionFailedError:
         code="BAD_AUDIO",
         details={"path": str(path), "reason": str(exc)},
     )
+
+
+AFCONVERT_SUFFIXES = frozenset({".m4a", ".aac", ".mp4", ".m4b", ".caf"})
+DECODE_TIMEOUT = 900.0
+
+
+def _readable(path: Path) -> bool:
+    try:
+        sf.info(str(path))
+    except RuntimeError, sf.LibsndfileError:
+        return False
+    return True
+
+
+@contextmanager
+def decoded(path: Path) -> Iterator[Path]:
+    """``path`` itself when soundfile reads it; an AAC/ALAC file decoded by macOS ``afconvert`` into a temporary
+    32-bit float WAV otherwise (TW-1603: libsndfile cannot read AAC). The temporary file is removed on exit."""
+    afconvert = shutil.which("afconvert")
+    if not path.is_file() or path.suffix.lower() not in AFCONVERT_SUFFIXES or afconvert is None or _readable(path):
+        yield path
+        return
+    with tempfile.TemporaryDirectory(prefix="trackwright-decode-") as folder:
+        out = Path(folder) / "decoded.wav"
+        try:
+            subprocess.run(  # noqa: S603 - fixed program, paths as separate arguments
+                [afconvert, "-f", "WAVE", "-d", "LEF32", str(path), str(out)],
+                check=True,
+                capture_output=True,
+                timeout=DECODE_TIMEOUT,
+            )
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError) as exc:
+            raise _open_error(path, exc) from exc
+        yield out
 
 
 def probe(path: Path) -> AudioInfo:

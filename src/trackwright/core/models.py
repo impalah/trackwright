@@ -414,6 +414,22 @@ class WorkspaceOut(_Out):
     notes: list[str] = Field(default_factory=list)
 
 
+class LoudnessOut(_Out):
+    file: str
+    format: str
+    subtype: str
+    sample_rate: int
+    channels: int
+    seconds: float
+    integrated_lufs: float | None = Field(description="BS.1770 integrated loudness (gated); null for silence")
+    momentary_max_lufs: float | None = Field(description="loudest 400 ms block")
+    short_term_max_lufs: float | None = Field(description="loudest 3 s window")
+    loudness_range_lu: float | None = Field(description="EBU Tech 3342 loudness range; null under ~3 s")
+    sample_peak_dbfs: float | None
+    true_peak_dbtp: float | None = Field(description="peak of the signal oversampled 4x")
+    notes: list[str] = Field(default_factory=list)
+
+
 class SilenceOut(_Out):
     start: str = Field(description="project time, h:mm:ss.mmm (padding already applied)")
     end: str

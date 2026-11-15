@@ -11,15 +11,19 @@ knows nothing about Cubase: times are seconds from the start of the file.
 """
 
 from trackwright.analysis.detect import Silence, SilenceCriteria, find_silences, noise_floor, sound_levels
-from trackwright.analysis.reader import AudioInfo, Levels, measure, probe
+from trackwright.analysis.loudness import Loudness, measure_loudness
+from trackwright.analysis.reader import AudioInfo, Levels, decoded, measure, probe
 
 __all__ = [
     "AudioInfo",
     "Levels",
+    "Loudness",
     "Silence",
     "SilenceCriteria",
+    "decoded",
     "find_silences",
     "measure",
+    "measure_loudness",
     "noise_floor",
     "probe",
     "sound_levels",
