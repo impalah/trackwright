@@ -67,6 +67,7 @@ Read the answer:
 
 - If `threshold_db` is null and a note says there is no contrast, the audio has no quieter part to call silence (constant music, constant noise). Explain; offer a fixed threshold (`threshold_db`, for example -50) only if the user wants to try.
 - `noise_floor_db` and `threshold_db` tell how quiet the "silence" is; mention them in one line.
+- `source` says which export the numbers come from (file, range, SHA-256). Name the file when you report. If `source.project_saved_after` is true, the project was saved after this export: ask whether anything changed since (cuts, processing); if so, export again before cutting. `cache: "hit"` means the same export was already analyzed with these values: no need to say more.
 - A silence marked `digital: true` at the very start or end of the range is empty project time with no audio (before the first event or after the last). Leave it out of the proposal unless the user wants it: cutting it changes nothing they can hear.
 
 ### 5. Propose and ask

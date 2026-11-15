@@ -495,6 +495,26 @@ class ProfileOut(_Out):
     notes: list[str] = Field(default_factory=list)
 
 
+class AudioSourceOut(_Out):
+    """Which audio an analysis measured (TW-1608): its numbers hold for this version of the file only."""
+
+    file: str
+    size_bytes: int
+    modified: str = Field(description="file modification time (UTC, ISO 8601)")
+    sha256: str
+    start: str = Field(description="project time of the file's first sample")
+    end: str = Field(description="project time of its last sample")
+    start_seconds: float
+    end_seconds: float
+    project_saved_after: bool | None = Field(
+        description="the project file (.cpr) was saved after this file was written: if the project changed "
+        "(cuts, processing, automation), export again; null when unknown. Unsaved changes cannot be seen."
+    )
+
+
+AnalysisCacheState = Literal["hit", "stored", "off"]
+
+
 class SpeechRegionOut(_Out):
     start: str = Field(description="project time, h:mm:ss.mmm")
     end: str
@@ -522,6 +542,10 @@ class SpeechOut(_Out):
     total: int = Field(description="number of speech regions")
     speech_seconds: float
     regions: list[SpeechRegionOut] = Field(description="in project seconds, ordered; paged with offset and limit")
+    source: AudioSourceOut | None = Field(default=None, description="the file measured and its project range")
+    cache: AnalysisCacheState = Field(
+        default="off", description="hit: from Trackwright/analysis/; stored: computed and cached; off: no cache"
+    )
     notes: list[str] = Field(default_factory=list)
 
 
@@ -538,6 +562,10 @@ class LoudnessOut(_Out):
     loudness_range_lu: float | None = Field(description="EBU Tech 3342 loudness range; null under ~3 s")
     sample_peak_dbfs: float | None
     true_peak_dbtp: float | None = Field(description="peak of the signal oversampled 4x")
+    source: AudioSourceOut | None = Field(default=None, description="the file measured and its project range")
+    cache: AnalysisCacheState = Field(
+        default="off", description="hit: from Trackwright/analysis/; stored: computed and cached; off: no cache"
+    )
     notes: list[str] = Field(default_factory=list)
 
 
@@ -573,6 +601,10 @@ class AnalysisOut(_Out):
     total: int = Field(description="number of silences found")
     total_seconds: float = Field(description="their total duration")
     silences: list[SilenceOut] = Field(description="in project seconds, ordered; paged with offset and limit")
+    source: AudioSourceOut | None = Field(default=None, description="the file measured and its project range")
+    cache: AnalysisCacheState = Field(
+        default="off", description="hit: from Trackwright/analysis/; stored: computed and cached; off: no cache"
+    )
     notes: list[str] = Field(default_factory=list)
 
 

@@ -43,6 +43,7 @@ A plugin is only usable here if, once loaded, it has a parameter titled like **T
 2. `cubase_export_mix` `phase: "start"` with the range, `solo` set to the track's `uid` (the export only has Stereo Out: only that track sounds, and every solo is put back afterwards), `dry_run: false`; keep `since`, `expected_seconds` and `start`. Ask the user to export Stereo Out as Wave, **32 bit float**, project sample rate, a name like `gate-check`, real-time export off. Wait until they say it is done.
 3. `cubase_export_mix` `phase: "confirm"` (or `phase: "cancel"` if they closed the dialog). Check `solo_restored` is true.
 4. `cubase_analyze_audio` with the file, `start`, and `min_seconds: 0.5`. Keep `noise_floor_db` (N), `quiet_sound_db` (Q) and `sound_db`.
+   Name the export the numbers come from (`source.file`). If `source.project_saved_after` is true, the project was saved after this export: ask whether the track changed since; if so, export again.
 
 If Q is null there is no contrast between noise and sound: a gate cannot help; say so. If `Q - N` is under **12 dB**, the noise is too close to the soft speech for a gate to separate them cleanly: say so and offer a gentle setting (less attenuation, see Range below) or a noise-reduction plugin instead.
 

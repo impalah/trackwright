@@ -454,6 +454,13 @@ Audio procesado para el proyecto, escrito en `Trackwright/renders/` (TW-1606). L
 
 ## Analizar audio
 
+### Qué audio, y la caché (TW-1608)
+
+`cubase_analyze_audio`, `cubase_measure_loudness` y `cubase_detect_speech` dicen qué audio midieron y guardan sus resultados:
+
+- **`source`:** el archivo, su tamaño, fecha de modificación y SHA-256, y el rango del proyecto que cubre (`start`, `end`). `project_saved_after` es true cuando un archivo de proyecto (`.cpr`) de la carpeta del proyecto se guardó después de escribirse el archivo: puede que el proyecto haya cambiado (cortes, procesado, automatización), así que una skill pregunta si exportar de nuevo. Los cambios sin guardar no se pueden ver; solo se leen las fechas de modificación de los `.cpr` de la carpeta.
+- **`cache`:** con el espacio de trabajo creado y `[workspace] enabled`, cada resultado se guarda en `Trackwright/analysis/` con una clave hecha del análisis, el SHA-256 del archivo y los parámetros (`start` incluido). La misma pregunta sobre el mismo audio se responde desde allí (`hit`) sin volver a leer el archivo; una exportación nueva tiene otros bytes, así que nunca se confunde con la anterior (`stored`: calculado y guardado; `off`: sin caché). `hashes.json` recuerda el hash de cada archivo por ruta, tamaño y fecha de modificación, para no calcular el hash de un episodio largo en cada llamada. La paginación (`offset`, `limit`) funciona sobre el resultado guardado.
+
 ### `cubase_analyze_audio` (lectura, necesita `[analysis] enabled`)
 
 La API de Cubase no puede leer lo que contiene una pista, así que los silencios y el ruido se miden sobre un **archivo exportado**. Una exportación entre localizadores está alineada con el proyecto a la muestra (verificado, TW-1501): tiempo del proyecto = inicio del rango + tiempo en el archivo.

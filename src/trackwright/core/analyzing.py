@@ -7,7 +7,12 @@ Read-only and outside Cubase: nothing is sent to the script. Needs ``[analysis] 
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import TypeVar
+
+from pydantic import BaseModel
 
 from trackwright.analysis import (
     SilenceCriteria,
@@ -19,15 +24,39 @@ from trackwright.analysis import (
     probe,
     sound_levels,
 )
+from trackwright.analysis.cache import AnalysisCache, cache_key, load_cached
 from trackwright.analysis.detect import threshold
 from trackwright.analysis.reader import SILENT_DB
 from trackwright.analysis.speech import SpeechCriteria, detect_speech
 from trackwright.core.base import ServiceBase
-from trackwright.core.models import AnalysisOut, LoudnessOut, SilenceOut, SpeechOut, SpeechRegionOut
+from trackwright.core.models import (
+    AnalysisCacheState,
+    AnalysisOut,
+    AudioSourceOut,
+    LoudnessOut,
+    SilenceOut,
+    SpeechOut,
+    SpeechRegionOut,
+)
 from trackwright.core.timefmt import format_seconds, parse_seconds
 from trackwright.errors import PreconditionFailedError
+from trackwright.jsontypes import JsonObject
+from trackwright.workspace import Workspace
 
 MAX_SILENCES = 500
+
+
+OutT = TypeVar("OutT", bound=BaseModel)
+
+
+def _saved_after(folder: Path | None, modified: float) -> bool | None:
+    """Whether a project file (.cpr) in ``folder`` was saved after ``modified``; None when there is none.
+
+    Only the modification times of the project folder's own ``.cpr`` files are read (not Auto Saves)."""
+    if folder is None:
+        return None
+    projects = [p.stat().st_mtime for p in folder.glob("*.cpr") if p.is_file()]
+    return max(projects) > modified if projects else None
 
 
 def _db(value: float | None) -> float | None:
@@ -61,13 +90,25 @@ class AnalyzingMixin(ServiceBase):
             merge_gap_seconds=merge_gap_seconds,
         )
         criteria.check()
+        parameters = {
+            "min_seconds": min_seconds,
+            "above_floor_db": above_floor_db,
+            "threshold_db": threshold_db,
+            "padding_seconds": padding_seconds,
+            "merge_gap_seconds": merge_gap_seconds,
+        }
+        return self._cached(
+            "silences", path, origin, parameters=parameters, model=AnalysisOut,
+            compute=lambda: self._silences(path, origin, criteria), items="silences", offset=offset, limit=limit,
+        )  # fmt: skip
+
+    def _silences(self, path: Path, origin: float, criteria: SilenceCriteria) -> AnalysisOut:
         with decoded(path) as readable:
             info = probe(readable)
             self.policy.check_analysis(info.seconds)  # TOO_LONG before reading any sample
             levels = measure(readable)
         silences = find_silences(levels, criteria)
-        limit = max(1, min(limit, MAX_SILENCES))
-        page = silences[offset : offset + limit]
+        page = silences
         used = threshold(levels, criteria)
         quiet, typical = sound_levels(levels, used)
         notes = []
@@ -121,6 +162,12 @@ class AnalyzingMixin(ServiceBase):
         """BS.1770 loudness, loudness range and true peak of a file (TW-1603)."""
         self.policy.check_analysis()
         path = self._audio_path(file)
+        return self._cached(
+            "loudness", path, 0.0, parameters={}, model=LoudnessOut, compute=lambda: self._loudness(path),
+            items=None, offset=0, limit=1,
+        )  # fmt: skip
+
+    def _loudness(self, path: Path) -> LoudnessOut:
         with decoded(path) as readable:
             self.policy.check_analysis(probe(readable).seconds)
             result = measure_loudness(readable)
@@ -145,6 +192,57 @@ class AnalyzingMixin(ServiceBase):
             true_peak_dbtp=_db(result.true_peak_dbtp),
             notes=notes,
         )
+
+    # ------------------------------------------------------------------ TW-1608: the source and the cache
+    def _cached(
+        self,
+        kind: str,
+        path: Path,
+        origin: float,
+        *,
+        parameters: JsonObject,
+        model: type[OutT],
+        compute: Callable[[], OutT],
+        items: str | None,
+        offset: int,
+        limit: int,
+    ) -> OutT:
+        """``compute`` the whole result, or take it from ``Trackwright/analysis/`` when this version of the
+        file was analyzed with these parameters; then add the source and page ``items``."""
+        try:
+            self.policy.check_analysis(probe(path).seconds)  # TOO_LONG before hashing a long file
+        except PreconditionFailedError as exc:
+            if exc.code != "BAD_AUDIO":  # AAC: probed after decoding, in compute
+                raise
+        folder, _why = self.project_folder()
+        space = Workspace(folder) if folder is not None else None
+        analysis = space.path / "analysis" if space is not None and space.exists else None
+        cache = AnalysisCache(analysis, writable=self.policy.workspace)
+        identity = cache.identify(path)
+        key = cache_key(kind, identity.sha256, {**parameters, "start": origin})
+        out = load_cached(cache, key, model)
+        state: AnalysisCacheState = "hit"
+        if out is None:
+            out = compute()
+            stored = cache.put(key, out.model_dump(mode="json", exclude={"source", "cache"}))
+            state = "stored" if stored is not None else "off"
+        seconds = float(getattr(out, "seconds", 0.0))
+        out.source = AudioSourceOut(  # type: ignore[attr-defined]
+            file=identity.path,
+            size_bytes=identity.size,
+            modified=datetime.fromtimestamp(identity.modified, UTC).isoformat(timespec="seconds"),
+            sha256=identity.sha256,
+            start=format_seconds(origin),
+            end=format_seconds(origin + seconds),
+            start_seconds=origin,
+            end_seconds=round(origin + seconds, 4),
+            project_saved_after=_saved_after(folder, identity.modified),
+        )
+        out.cache = state  # type: ignore[attr-defined]
+        if items is not None:
+            limit = max(1, min(limit, MAX_SILENCES))
+            setattr(out, items, getattr(out, items)[offset : offset + limit])
+        return out
 
     def _audio_path(self, file: str) -> Path:
         path = Path(file).expanduser()
@@ -181,18 +279,31 @@ class AnalyzingMixin(ServiceBase):
             faint_db=faint_db,
         )
         criteria.check()
+        parameters = {
+            "on_db": on_db,
+            "off_db": off_db,
+            "hangover": hangover,
+            "merge_gap": merge_gap,
+            "min_region": min_region,
+            "faint_db": faint_db,
+        }
+        return self._cached(
+            "speech", path, origin, parameters=parameters, model=SpeechOut,
+            compute=lambda: self._speech(path, origin, criteria), items="regions", offset=offset, limit=limit,
+        )  # fmt: skip
+
+    def _speech(self, path: Path, origin: float, criteria: SpeechCriteria) -> SpeechOut:
         with decoded(path) as readable:
             self.policy.check_analysis(probe(readable).seconds)
             result = detect_speech(readable, criteria)
         info = result.info
         notes = []
-        if result.contrast_db is not None and result.contrast_db < on_db:
+        if result.contrast_db is not None and result.contrast_db < criteria.on_db:
             notes.append(
                 f"little contrast ({result.contrast_db:.1f} dB) between the noise and the loudest parts: "
                 "is this a voice track exported alone?"
             )
         notes.append("energy detector: loud non-speech sounds in the voice band (laughs, coughs) count as activity")
-        limit = max(1, min(limit, MAX_SILENCES))
         return SpeechOut(
             file=str(path),
             sample_rate=info.rate,
@@ -207,12 +318,12 @@ class AnalyzingMixin(ServiceBase):
             speech_level_db=result.speech_level_db,
             faint_dropped=result.faint_dropped,
             criteria={
-                "on_db": on_db,
-                "off_db": off_db,
-                "hangover": hangover,
-                "merge_gap": merge_gap,
-                "min_region": min_region,
-                "faint_db": faint_db,
+                "on_db": criteria.on_db,
+                "off_db": criteria.off_db,
+                "hangover": criteria.hangover,
+                "merge_gap": criteria.merge_gap,
+                "min_region": criteria.min_region,
+                "faint_db": criteria.faint_db,
             },
             total=len(result.regions),
             speech_seconds=round(result.speech_seconds, 3),
@@ -226,7 +337,7 @@ class AnalyzingMixin(ServiceBase):
                     level_db=r.level_db,
                     confidence=r.confidence,
                 )
-                for r in result.regions[offset : offset + limit]
+                for r in result.regions
             ],
             notes=notes,
         )

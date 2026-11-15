@@ -124,7 +124,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1608 Analyses tied to an audio version
 
-- **Status:** pending
+- **Status:** code done (2026-11-15), to check live: `trackwright/analysis/cache.py` (file identity with SHA-256 remembered in `hashes.json` by path, size and mtime; one JSON per result keyed by analysis, hash and parameters) and the three analysis tools returning `source` (file, hash, project range, `project_saved_after` from the folder's `.cpr` times) and `cache` (`hit`, `stored`, `off`); both skills name the export and ask for a new one when the project was saved after it. Tests in `tests/unit/test_analysis_cache_tw1608.py`
 - **Scope:** every analysis result records the file, its hash, its project range and the parameters; cached in `Trackwright/analysis/`; a skill states which export its numbers come from and asks for a new export when the project changed after it (cuts, processing, automation).
 
 ### TW-1609 Common skill contract
