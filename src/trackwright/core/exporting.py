@@ -12,10 +12,11 @@ import time
 from pathlib import Path
 from typing import Literal
 
-from trackwright.core.base import operation
-from trackwright.core.models import ExportedFileOut, ExportOut
+from trackwright.core.base import MIXER, SoloChange, operation
+from trackwright.core.models import ExportedFileOut, ExportOut, SoloChangeOut
 from trackwright.core.ranges import RangeMixin
-from trackwright.core.tags import Transport
+from trackwright.core.refs import TrackSelector
+from trackwright.core.tags import Channel, Transport
 from trackwright.core.timefmt import format_seconds
 from trackwright.errors import PreconditionFailedError, TrackwrightError
 
@@ -63,8 +64,9 @@ class ExportMixin(RangeMixin):
     @operation
     def export_mix(
         self,
-        phase: Literal["start", "confirm"],
+        phase: Literal["start", "confirm", "cancel"],
         *,
+        solo: list[str] | None = None,
         start: str | None = None,
         end: str | None = None,
         unit: str = "seconds",
@@ -74,7 +76,21 @@ class ExportMixin(RangeMixin):
         dry_run: bool = True,
     ) -> ExportOut:
         if phase == "confirm":
-            return self._confirm_export(since, expected_seconds, folder)
+            out = self._confirm_export(since, expected_seconds, folder)
+            self._restore_solo(out)
+            return out
+        if phase == "cancel":
+            if since is None:
+                raise PreconditionFailedError("give 'since' from the start phase", code="BAD_REQUEST")
+            out = ExportOut(phase="cancel", status="cancelled", dry_run=False, start=None, end=None,
+                            expected_seconds=None, folder=None, since=since)  # fmt: skip
+            self._restore_solo(out)
+            return out
+        return self._start_export(start, end, unit, solo, dry_run=dry_run)
+
+    def _start_export(
+        self, start: str | None, end: str | None, unit: str, solo: list[str] | None, *, dry_run: bool
+    ) -> ExportOut:
         if (start is None) != (end is None):
             raise PreconditionFailedError("give both start and end, or neither for the whole project",
                                           code="BAD_REQUEST")  # fmt: skip
@@ -90,12 +106,36 @@ class ExportMixin(RangeMixin):
             out.expected_seconds = round(span[1] - span[0], 3)
         else:
             out.notes.append("whole project: the locators will go around all the audio")
+        plan = self._solo_plan(solo) if solo else []
+        out.solo = [SoloChangeOut(track_uid=f"uid:{c.uid}", name=c.name, before=c.before, during=not c.before)
+                    for c in plan]  # fmt: skip
         if dry_run:
             return out
         self.policy.check_project_write()
         if self._transport_flag(transport, Transport.START) or self._transport_flag(transport, Transport.RECORD):
             raise PreconditionFailedError("stop the transport before exporting", code="TRANSPORT_RUNNING")
-        if out.expected_seconds is None:
+        for change in plan:
+            self.policy.check_track(change.name)
+        applied: list[SoloChange] = []
+        try:
+            for change in plan:
+                self._write_solo(change, not change.before)
+                applied.append(change)
+            self._open_export_dialog(transport, out, span if out.expected_seconds is not None else None)
+        except BaseException:
+            for change in reversed(applied):  # nothing was exported: put every solo back before failing
+                try:
+                    self._write_solo(change, change.before)
+                except TrackwrightError:
+                    out.notes.append(f"could not restore the solo of {change.name}")
+            raise
+        if applied:
+            self._export_solo[out.since or 0.0] = applied
+            out.notes.append("solo changed for the export: confirm or cancel puts it back")
+        return out
+
+    def _open_export_dialog(self, transport: int, out: ExportOut, span: tuple[float, float] | None) -> None:
+        if span is None:
             span = self._locators_around_all_audio(transport)
             out.start, out.end = format_seconds(span[0]), format_seconds(span[1])
             out.expected_seconds = round(span[1] - span[0], 3)
@@ -112,7 +152,45 @@ class ExportMixin(RangeMixin):
         out.status = "awaiting_user"
         out.instructions = INSTRUCTIONS
         out.notes.append("the locators stay on the exported range")
-        return out
+
+    # ------------------------------------------------------------------ solo (TW-1605)
+    def _solo_plan(self, selectors: list[str]) -> list[SoloChange]:
+        """The solo flags to change so that exactly the given tracks are soloed (outputs never change)."""
+        wanted = {int(self.resolve_track(TrackSelector.parse(s))["id"]) for s in selectors}
+        plan = []
+        for item in self.channels():
+            info = self.track_info(item)
+            if info.type == "OutputChannel" or info.solo is None:
+                continue
+            soloed = bool(info.solo)
+            if soloed != (int(item["id"]) in wanted):
+                plan.append(SoloChange(int(item["id"]), str(item["uid"]), info.name, soloed))
+        return plan
+
+    def _write_solo(self, change: SoloChange, on: bool) -> None:
+        value = 1.0 if on else 0.0
+        self.write_parameter("da.param.set", {"id": change.channel_id, "tag": Channel.SOLO, "value": value, **MIXER},
+                             change.channel_id, Channel.SOLO)  # fmt: skip
+
+    def _restore_solo(self, out: ExportOut) -> None:
+        """Put back every solo the start phase changed; try them all, report each one."""
+        changes = self._export_solo.pop(out.since or 0.0, [])
+        if not changes:
+            return
+        restored = []
+        for change in changes:
+            ok: bool | None
+            try:
+                self._write_solo(change, change.before)
+                ok = float(self.read_parameter(change.channel_id, Channel.SOLO).get("process") or 0) >= 0.5
+                ok = ok == change.before
+            except TrackwrightError as exc:
+                ok = False
+                out.notes.append(f"could not restore the solo of {change.name}: {exc.code}")
+            restored.append(SoloChangeOut(track_uid=f"uid:{change.uid}", name=change.name, before=change.before,
+                                          during=not change.before, restored=ok))  # fmt: skip
+        out.solo = restored
+        out.solo_restored = all(r.restored for r in restored)
 
     def _confirm_export(self, since: float | None, expected: float | None, folder: str | None) -> ExportOut:
         if since is None:

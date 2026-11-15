@@ -367,7 +367,8 @@ Trackwright **never exports by itself**: it sets the range and opens the Cubase 
     - ±0.15 s for WAV and AIFF;
     - ±(0.5 s + 0.2%) for MP3, AAC and OGG, whose duration is an estimate and which lose or gain frames at the end. Verified: an MP3 of the 139.976 s episode measured 139.721 s.
 - The locators **stay** on the exported range.
-- **Errors:** `TRANSPORT_RUNNING`, `CANNOT_PERFORM` (another dialog is open), `BAD_TIME` and `WRITES_DISABLED`.
+- **Exporting some tracks alone** (TW-1605): Cubase Elements exports only Stereo Out, so `start` takes `solo`, a list of tracks. While exporting, only those are soloed (another solo the user had is cleared for that time); `confirm` puts every solo back as it was, reads each one back and reports `solo_restored`, even when the file is not found. If the user closes the dialog without exporting, `phase: "cancel"` with `since` restores the solos without looking for a file. If something fails before the dialog opens, the solos are restored at once. With `[writes] allowed_tracks`, only those tracks' solo can change (`NOT_ALLOWED`).
+- **Errors:** `TRANSPORT_RUNNING`, `CANNOT_PERFORM` (another dialog is open), `BAD_TIME`, `WRITES_DISABLED` and `NOT_ALLOWED`.
 
 ### `cubase_detect_speech` (read, needs `[analysis] enabled`)
 

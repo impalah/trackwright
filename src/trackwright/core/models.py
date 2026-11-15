@@ -505,9 +505,17 @@ class ExportedFileOut(_Out):
     )
 
 
+class SoloChangeOut(_Out):
+    track_uid: str
+    name: str
+    before: bool = Field(description="solo before the export")
+    during: bool = Field(description="solo while exporting")
+    restored: bool | None = Field(default=None, description="read back after confirm or cancel")
+
+
 class ExportOut(_Out):
-    phase: Literal["start", "confirm"]
-    status: Literal["planned", "awaiting_user", "done", "not_found"]
+    phase: Literal["start", "confirm", "cancel"]
+    status: Literal["planned", "awaiting_user", "done", "not_found", "cancelled"]
     dry_run: bool
     start: str | None = Field(description="range start (h:mm:ss.mmm)")
     end: str | None
@@ -515,6 +523,12 @@ class ExportOut(_Out):
     folder: str | None = Field(description="where Cubase proposes to export (<project folder>/Mixdown)")
     since: float | None = Field(description="pass it back to the confirm phase")
     files: list[ExportedFileOut] = Field(default_factory=list)
+    solo: list[SoloChangeOut] = Field(
+        default_factory=list,
+        description="solo flags the start phase changed so only the given tracks are exported; confirm and cancel "
+        "put them back",
+    )
+    solo_restored: bool | None = Field(default=None, description="every changed solo read back as before")
     verified: bool | None = None
     instructions: str | None = None
     notes: list[str] = Field(default_factory=list)

@@ -40,10 +40,9 @@ A plugin is only usable here if, once loaded, it has a parameter titled like **T
 ## 4. Measure the noise and the quietest speech
 
 1. Agree on a range that has both speech and pauses (the whole track, or a few representative minutes).
-2. Solo the track: `cubase_set_track_mix` with `solo: true` on its `uid` (the export only has Stereo Out). Remember which tracks were soloed before.
-3. `cubase_export_mix` `phase: "start"` with the range, `dry_run: false`; keep `since`, `expected_seconds` and `start`. Ask the user to export Stereo Out as Wave, **32 bit float**, project sample rate, a name like `gate-check`, real-time export off. Wait until they say it is done.
-4. `cubase_export_mix` `phase: "confirm"`; then **undo the solo** at once and read back that it applied.
-5. `cubase_analyze_audio` with the file, `start`, and `min_seconds: 0.5`. Keep `noise_floor_db` (N), `quiet_sound_db` (Q) and `sound_db`.
+2. `cubase_export_mix` `phase: "start"` with the range, `solo` set to the track's `uid` (the export only has Stereo Out: only that track sounds, and every solo is put back afterwards), `dry_run: false`; keep `since`, `expected_seconds` and `start`. Ask the user to export Stereo Out as Wave, **32 bit float**, project sample rate, a name like `gate-check`, real-time export off. Wait until they say it is done.
+3. `cubase_export_mix` `phase: "confirm"` (or `phase: "cancel"` if they closed the dialog). Check `solo_restored` is true.
+4. `cubase_analyze_audio` with the file, `start`, and `min_seconds: 0.5`. Keep `noise_floor_db` (N), `quiet_sound_db` (Q) and `sound_db`.
 
 If Q is null there is no contrast between noise and sound: a gate cannot help; say so. If `Q - N` is under **12 dB**, the noise is too close to the soft speech for a gate to separate them cleanly: say so and offer a gentle setting (less attenuation, see Range below) or a noise-reduction plugin instead.
 
@@ -70,7 +69,7 @@ Show the plan as a short table: plugin, slot, threshold (with the numbers it com
 
 ## 7. Check the result
 
-Offer to check it on a new export, with the gate active: solo, export the same range (`gate-after`), confirm, undo the solo, and analyze with the same `start` **and `threshold_db` set to the `threshold_db` of the first analysis**. With the default relative threshold the comparison is wrong: once the pauses are quieter, the threshold drops with them and the noise left between syllables (the gate stays open there, by Hold and Release) starts counting as sound.
+Offer to check it on a new export, with the gate active: export the same range with `solo` (`gate-after`), confirm, and analyze with the same `start` **and `threshold_db` set to the `threshold_db` of the first analysis**. With the default relative threshold the comparison is wrong: once the pauses are quieter, the threshold drops with them and the noise left between syllables (the gate stays open there, by Hold and Release) starts counting as sound.
 
 - The pauses must be quieter: `noise_floor_db` lower by about the Range (with -oo the pauses become exact silence and count as `digital`).
 - The soft speech must stay: `quiet_sound_db` within about 1 dB of before, and `sound_db` unchanged. If `quiet_sound_db` dropped, the threshold is too high: propose lowering it 3 dB and check again.
@@ -85,7 +84,7 @@ Say what was inserted, where, and the final values. Explain how to undo: the plu
 
 - Do not assume which gate is installed: discover it.
 - Do not write a parameter whose title you have not checked (`expect_title`).
-- Do not leave a track soloed.
+- Do not leave a track soloed: use `solo` in `cubase_export_mix`, and `cancel` if the export is abandoned.
 - Do not apply values the user has not approved.
 - Do not retry a write after a timeout: read the parameter back instead.
 - Do not save the project unless asked.

@@ -47,15 +47,13 @@ From the user's words, or by asking only what is missing:
 
 ### 3. Export
 
-1. If analyzing one track: `cubase_set_track_mix` with `solo: true` on its `uid` (dry run, then apply). Note which tracks were soloed before, to restore exactly that state.
-2. `cubase_export_mix` with `phase: "start"`, the range (`start`, `end`) or none for the whole project, `dry_run: false` once the user agreed to the job. Keep `since`, `expected_seconds` and **`start`** from the answer.
-3. Tell the user what to choose in the "Export Audio Mixdown" dialog, then wait for them to say it is done:
+1. `cubase_export_mix` with `phase: "start"`, the range (`start`, `end`) or none for the whole project, `dry_run: false` once the user agreed to the job. If analyzing one track, add `solo` with its `uid`: only that track is exported, and the tool puts every solo back afterwards. Keep `since`, `expected_seconds` and **`start`** from the answer.
+2. Tell the user what to choose in the "Export Audio Mixdown" dialog, then wait for them to say it is done:
    - channel: Stereo Out (the only one Cubase Elements offers);
    - file type: Wave, **32 bit float**, the project's sample rate;
    - a name they will recognize, for example `silence-check`;
    - real-time export off.
-4. `cubase_export_mix` with `phase: "confirm"`, `since` and `expected_seconds`. If it reports `not_found`, ask where they saved it and confirm again with `folder`.
-5. **Undo the solo now**, whatever happened: `cubase_set_track_mix` with `solo: false` (and restore any solo you changed). Read back that it applied.
+3. `cubase_export_mix` with `phase: "confirm"`, `since` and `expected_seconds`. It also restores the solos; check `solo_restored` is true (if not, say which track and restore it with `cubase_set_track_mix`). If it reports `not_found`, ask where they saved it and confirm again with `folder`. If the user closed the dialog without exporting, call `phase: "cancel"` with `since` instead.
 
 ### 4. Measure
 
@@ -92,7 +90,7 @@ The exported file stays in the project's `Mixdown` folder; tell the user its nam
 ## Do not
 
 - Do not cut anything the user has not approved in this conversation.
-- Do not leave a track soloed.
+- Do not leave a track soloed: use `solo` in `cubase_export_mix`, and `cancel` if the export is abandoned.
 - Do not retry a write after a timeout.
 - Do not save the project unless asked.
 - Do not analyze files the user did not export for this purpose.

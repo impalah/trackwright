@@ -8,6 +8,7 @@ import threading
 import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Concatenate, Protocol, TypeVar
 
@@ -54,6 +55,16 @@ class AppLauncher(Protocol):
 
 MIXER: JsonObject = {"scope": "mixer"}
 _SLOT_SUFFIX = re.compile(r"-\d+$")
+
+
+@dataclass(frozen=True, slots=True)
+class SoloChange:
+    """A solo flag an export changed (TW-1605): which channel and what it was before."""
+
+    channel_id: int
+    uid: str
+    name: str
+    before: bool
 
 
 _INACTIVE = object()
@@ -105,6 +116,8 @@ class ServiceBase:
         self._settle_timeout = settle_timeout
         self._local = threading.local()
         self._import_baselines: dict[float, tuple[int, list[float]]] = {}  # TW-1403: edges before an import
+        # TW-1605: solo changes made by an export's start phase, undone by its confirm or cancel phase
+        self._export_solo: dict[float, list[SoloChange]] = {}
 
     # ------------------------------------------------------------------ host access
     @contextmanager

@@ -430,10 +430,16 @@ def build_server(service: CubaseService) -> MCPServer:
         description="Export the mix with the user, in two phases. 'start' puts the locators on the range "
         "(seconds or bars; omit start/end for all the audio) and opens Cubase's Export Audio Mixdown dialog: "
         "the user picks the format and exports. 'confirm' (with since and expected_seconds from 'start') finds "
-        "the new file in the export folder and checks its duration. Trackwright never exports by itself.",
+        "the new file in the export folder and checks its duration. Trackwright never exports by itself. "
+        "With 'solo' (track selectors) only those tracks are exported: their solo is set and any other solo "
+        "cleared during the export, and 'confirm' or 'cancel' (the user closed the dialog) puts every solo back.",
     )
     async def cubase_export_mix(
-        phase: Literal["start", "confirm"],
+        phase: Literal["start", "confirm", "cancel"],
+        solo: Annotated[
+            list[str] | None,
+            Field(description="start: export only these tracks (soloed for the export, restored afterwards)"),
+        ] = None,
         start: Annotated[str | None, Field(description="range start; omit with end for the whole project")] = None,
         end: Annotated[str | None, Field(description="range end")] = None,
         unit: Annotated[Literal["seconds", "bars"], Field(description="unit of start and end")] = "seconds",
@@ -444,7 +450,7 @@ def build_server(service: CubaseService) -> MCPServer:
     ) -> ExportOut:
         return await run(
             lambda: service.export_mix(
-                phase, start=start, end=end, unit=unit, since=since, expected_seconds=expected_seconds,
+                phase, solo=solo, start=start, end=end, unit=unit, since=since, expected_seconds=expected_seconds,
                 folder=folder, dry_run=dry_run,
             )
         )  # fmt: skip
