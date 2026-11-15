@@ -27,6 +27,7 @@ Las issues documentan cada unidad de trabajo **antes** de implementarla. Al cerr
 | E13 | Distribución: instalación guiada, transporte CoreMIDI sin compilación y canal de distribución | [E13-distribution.es.md](E13-distribution.es.md) |
 | E14 | Remediación de calidad (a partir de la revisión de calidad del código del 2026-11-14) | [E14-quality-remediation.es.md](E14-quality-remediation.es.md) |
 | E15 | Skills de productor: plugin de Claude Code y análisis de audio | [E15-producer-skills.es.md](E15-producer-skills.es.md) |
+| E16 | Skills de producción de podcast (a partir de la lluvia de ideas del 2026-11-15) | [E16-podcast-production.es.md](E16-podcast-production.es.md) |
 
 ## Criterios comunes a todas las issues
 
