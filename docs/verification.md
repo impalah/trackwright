@@ -519,3 +519,12 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 
 - On the test project, with `POC-TEST` soloed beforehand: `start` with `solo=[TW1507]` cleared `POC-TEST`'s solo and soloed `TW1507`; the user exported `tw1605-a.wav` (identical to the earlier `gate-after` export, difference 1e-10); `confirm` found it, reported `solo_restored: true`, and `cubase_list_tracks` showed `POC-TEST` soloed and `TW1507` not.
 - A second `start` with the same solo; the user closed the dialog without exporting; `cancel` reported both tracks restored (`solo_restored: true`), and `cubase_list_tracks` showed the state from before again. `POC-TEST`'s solo was then cleared to leave the project as found.
+
+## 2026-11-15 — TW-1606: a render imported back, against a known signal
+
+- `cubase_workspace init` on the test project created the missing `previews/`, `analysis/` and `reports/`.
+- `cubase_render` on `tw1605-a.wav` (`TW1507` alone, 0–5 s, peak −16.07 dBFS), `gain_db` −6.0206, `track` `TW1507`: `renders/TW1507-gain.wav` (32-bit float, 48 kHz, stereo, peak −22.09 dBFS) and its provenance; the render equals the source × 0.5 within 8e-10.
+- The user created a stereo audio track, `TW1606 render`. `cubase_import_audio` refused the render on `TW1507` (`BAD_REQUEST`) and at 1 s (`MISALIGNED`); at 0 s the user imported it with "Copiar archivo a carpeta del proyecto" unticked.
+- The first confirm found only the end edge (5.000 s): **an edge at the project start cannot be probed**, because Locate Next Event never stops at 0, and Locate Previous Event went to 0 from 2 s on a track whose only event starts at 2 s. Fixed: at position 0 the new end edge stands for the start (an import places the whole file). After the server was reloaded, the confirm returned `done`, `owned: true` (`verified: null`, since the server had lost its snapshot of the track from before the import; the track had just been created empty), and `state.json` recorded the render and the track as `tw1606-test`'s.
+- Cubase left a 0-byte `Audio/TW1606 render_01.wav` (named after the track, not a copy of the render); `copied_to_project` now ignores empty files.
+- `TW1507` muted; the user exported `TW1606 render` alone, 0–5 s (`solo`, restored afterwards): it equals the source × 0.5 to −182 dB (the largest difference, 4.7e-10 against the render), with no offset (cross-correlation lag 0) and the RMS ratio 0.5000. `cubase_render list` shows the render on that track, present, without problems.

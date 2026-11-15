@@ -148,7 +148,10 @@ class ImportMixin(ExportMixin):
         out.edges_found = [format_seconds(e) for e in found]
         project, _unknown = self.project_folder()
         if project is not None:
-            out.copied_to_project = [Path(f.path).name for f in self.exports.find(project / "Audio", since)]
+            # an empty file named after the track is Cubase preparing a recording, not a copy (seen in TW-1606)
+            out.copied_to_project = [
+                Path(f.path).name for f in self.exports.find(project / "Audio", since) if f.size_bytes > 0
+            ]
         if len(found) == len(wanted) and baseline is None:
             out.status, out.verified = "done", None
             out.notes.append(

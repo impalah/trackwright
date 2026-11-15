@@ -55,6 +55,7 @@ def test_full_flow(importer: CubaseService, fake: FakeCubase, exports: FakeExpor
     assert waiting.status == "awaiting_user"
     fake.finish_import(3.0)
     exports.add("/Projects/Demo/Audio/tono.wav", 3.0, modified=(started.since or 0) + 1)
+    exports.add("/Projects/Demo/Audio/POC-TEST_01.wav", None, modified=(started.since or 0) + 1, size=0)
     done = importer.import_audio("confirm", "POC-TEST", "150", file=str(tone), since=started.since)
     assert (done.status, done.verified) == ("done", True)
     assert done.edges_found == ["0:02:30.000", "0:02:33.000"]
