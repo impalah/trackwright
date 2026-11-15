@@ -77,7 +77,7 @@
 
 ### TW-1506 Skill `podcast-silence-trim`
 
-- **Estado:** pendiente (necesita de TW-1501 a TW-1505)
+- **Estado:** en curso (2026-11-15): `plugins/claude-code/skills/podcast-silence-trim/SKILL.md`. Decisiones: analizar por defecto toda la mezcla, porque `delete_time` corta todas las pistas y solo un tramo silencioso en la mezcla lo es en todas; si el usuario nombra una pista, explicarlo y ofrecer la mezcla, esa pista en solo o `delete` solo en esa pista (quedan huecos); una música de fondo hace que la mezcla nunca esté en silencio; el silencio digital en los extremos del rango queda fuera de la propuesta. El flujo se siguió paso a paso contra el proyecto de pruebas (ver el registro de verificación): cuatro cortes aprobados y verificados. Pendiente: la misma petición a través del plugin en una sesión nueva (`claude --plugin-dir`), para comprobar que la skill se elige y se sigue sin ayuda
 - **Flujo:**
   1. Identificar la pista y el rango (todo el proyecto por defecto) con las herramientas de lectura; confirmarlos con el usuario.
   2. Exportar (`cubase_export_mix`, dos fases: el usuario completa el diálogo) y confirmar.

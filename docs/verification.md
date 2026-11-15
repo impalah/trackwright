@@ -473,3 +473,9 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 ## 2026-11-15 — TW-1509: waiting for Cubase after autostarting the bridge
 
 - `trackwright bridge-stop`, then `status()` from a new process with the new code: it started the bridge, a first `hello` failed (the bridge counted one error) and the next was answered; `status` returned connected, script 1.6.1, 3.7 s after the call. The same situation gave `TIMEOUT` on the first request before this change (see TW-1504).
+
+## 2026-11-15 — TW-1506: the `podcast-silence-trim` flow on the test project
+
+- The steps of the skill, followed from a Claude Code session against the real Cubase (not yet loaded through the plugin): `cubase_status` (writes and analysis enabled); the user chose to analyze `TW1501` alone; solo on (read back), `cubase_export_mix` 2–36 s, the user exported `silence-check.wav` (WAV, 48 kHz, 32-bit float), confirm found it (34 s, difference 0), solo off (read back).
+- `cubase_analyze_audio` (`start` 2, `min_seconds` 3): the four expected silences, 18.5 s in total. The user approved all four.
+- Dry run of the latest cut, then `delete_time` from the end to the start: 29.25–36.00, 21.25–25.75, 10.25–13.75 and 2.00–5.75 s, each `verified: true` against the edges of `TW1501` (final edges 2.000, 6.500, 14.000 and 17.500 s) and one undo step each.

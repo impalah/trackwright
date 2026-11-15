@@ -4,6 +4,7 @@
 
 ## Sin publicar
 
+- **Skill `podcast-silence-trim`** (TW-1506): encuentra y quita los silencios más largos que una duración, cerrando los huecos en todas las pistas; exporta con el usuario, mide con `cubase_analyze_audio`, enseña los cortes y solo corta lo que el usuario aprueba, del final hacia el principio.
 - **Plugin de Claude Code** (TW-1505): `plugins/claude-code/` (manifiesto, `.mcp.json` que arranca `uvx trackwright==<versión> serve`, carpeta de skills) y el marketplace en `.claude-plugin/marketplace.json`; `tests/unit/test_plugin.py` mantiene coherentes las versiones, los nombres y las herramientas que nombran las skills. Aún sin skills.
 - **El arranque automático espera a Cubase** (TW-1509): tras arrancar el puente, el servidor repite `hello` hasta que Cubase responde (dentro de `[bridge] autostart_timeout`) antes de enviar la petición, en lugar de fallar la primera con `TIMEOUT`.
 - **Herramienta nueva `cubase_analyze_audio`** (TW-1504): ruido de fondo, niveles y silencios de un archivo exportado, en segundos del proyecto; solo lectura, necesita `[analysis] enabled`. El servidor tiene ahora 33 herramientas.

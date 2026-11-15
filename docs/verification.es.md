@@ -473,3 +473,9 @@ Cubase Elements 15.0.30, script 1.6.1, proyecto de pruebas, `TRACKWRIGHT_TEST_TR
 ## 2026-11-15 — TW-1509: esperar a Cubase tras arrancar el puente
 
 - `trackwright bridge-stop`, y luego `status()` desde un proceso nuevo con el código nuevo: arrancó el puente, un primer `hello` falló (el puente contó un error) y el siguiente obtuvo respuesta; `status` devolvió conectado, script 1.6.1, 3,7 s después de la llamada. La misma situación daba `TIMEOUT` en la primera petición antes de este cambio (ver TW-1504).
+
+## 2026-11-15 — TW-1506: el flujo de `podcast-silence-trim` en el proyecto de pruebas
+
+- Los pasos de la skill, seguidos desde una sesión de Claude Code contra el Cubase real (todavía sin cargarla a través del plugin): `cubase_status` (escrituras y análisis activados); el usuario eligió analizar solo `TW1501`; solo activado (releído), `cubase_export_mix` 2–36 s, el usuario exportó `silence-check.wav` (WAV, 48 kHz, 32 bits float), confirm lo encontró (34 s, diferencia 0), solo desactivado (releído).
+- `cubase_analyze_audio` (`start` 2, `min_seconds` 3): los cuatro silencios esperados, 18,5 s en total. El usuario aprobó los cuatro.
+- Ensayo del último corte y después `delete_time` del final hacia el principio: 29,25–36,00, 21,25–25,75, 10,25–13,75 y 2,00–5,75 s, cada uno `verified: true` frente a los bordes de `TW1501` (bordes finales 2,000, 6,500, 14,000 y 17,500 s) y un paso de deshacer cada uno.
