@@ -133,7 +133,13 @@ class ImportMixin(ExportMixin):
         self.select_channel(int(item["id"]))
         edges, _ = self.probe_edges(transport, max(at - 1.0, 0.0), until=at + (expected or 0.0) + 1.0)
         self._restore(transport, {}, cursor, selected)
-        wanted = [at] + ([at + expected] if expected is not None else [])
+        # The probe walks forward with Locate Next Event, so an edge at the project start is never "next" (seen
+        # in TW-1606: Locate Previous Event goes to 0 either way). An import places the whole file, so there the
+        # new end edge at position + duration stands for the start too.
+        at_origin = at <= SECONDS_TOLERANCE
+        wanted = ([] if at_origin and expected is not None else [at]) + (
+            [at + expected] if expected is not None else []
+        )
         baseline = self._import_baselines.get(since)
         new_edges = edges if baseline is None or baseline[0] != item["id"] else [
             e for e in edges if not any(abs(e - b) <= SECONDS_TOLERANCE for b in baseline[1])
@@ -162,6 +168,11 @@ class ImportMixin(ExportMixin):
             out.render = str(provenance_path(path))
             if out.status == "done":
                 self._own_render(path, provenance, item, out)
+        if at_origin and expected is not None:
+            out.notes.append(
+                "an edge at the project start cannot be probed: the start is inferred from the new end edge "
+                "(an import places the whole file)"
+            )
         if expected is None:
             out.notes.append("only the start was checked: give 'file' to check the end too")
         out.notes.append("Undo in Cubase removes the event, not the copy in the project's Audio folder")

@@ -122,3 +122,18 @@ def test_two_edges_near_the_start_do_not_stand_for_the_end() -> None:
     from trackwright.core.importing import match_edges
 
     assert match_edges([150.0, 150.05], [150.0, 153.0], 0.1) == [150.0]
+
+
+def test_at_the_project_start_the_end_edge_stands_for_the_start(
+    importer: CubaseService, fake: FakeCubase, tone: Path
+) -> None:
+    """TW-1606: Locate Next Event never stops at 0, so an import at 0 is proved by its new end edge."""
+    started = importer.import_audio("start", "POC-TEST", "0", file=str(tone), dry_run=False)
+    fake.finish_import(3.0)
+    done = importer.import_audio("confirm", "POC-TEST", "0", file=str(tone), since=started.since)
+    assert (done.status, done.verified, done.edges_found) == ("done", True, ["0:00:03.000"])
+    assert any("inferred from the new end edge" in n for n in done.notes)
+    cancelled = importer.import_audio("start", "POC-TEST", "0", file=str(tone), dry_run=False)
+    fake.finish_import(None)
+    out = importer.import_audio("confirm", "POC-TEST", "0", file=str(tone), since=cancelled.since)
+    assert (out.status, out.verified) == ("not_found", False)

@@ -344,6 +344,7 @@ Designed for podcast editing: it works in **seconds** and the time signature doe
 - **`confirm` phase** (same track, position and file, plus `since`):
   - if Cubase still does not respond: `awaiting_user`, because the file picker is still open;
   - otherwise, it probes the track and looks for edges at the position and at the position plus the duration. It returns `done` and `verified`, or `not_found` if it was canceled or went somewhere else. Only **new** edges count: the start phase probes the track before opening the dialog, so an event that was already at that position does not confirm a canceled import, and each expected position needs its own edge. If the start phase ran in another server session, the edges before are unknown and `verified` is `null`;
+  - at the project start (position 0) the start edge cannot be probed (Locate Next Event never stops at 0, and Locate Previous Event goes to 0 even without an event there): the new end edge at the position plus the file's duration stands for it, with a note (TW-1606);
   - `copied_to_project` lists the new copies in `<project>/Audio`, by name only.
 - **Verified in Cubase Elements:** a 3 s tone ended up on POC-TEST from 150 to 153 s.
 - **Undo** removes the event, **not** the copy on disk.

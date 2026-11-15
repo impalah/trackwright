@@ -344,6 +344,7 @@ Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
 - **Fase `confirm`** (misma pista, posición y archivo, más `since`):
   - si Cubase aún no responde: `awaiting_user`, porque el selector sigue abierto;
   - si no, sondea la pista y busca bordes en la posición y en la posición más la duración. Devuelve `done` y `verified`, o `not_found` si se canceló o fue a otra parte. Solo cuentan los bordes **nuevos**: la fase de inicio sondea la pista antes de abrir el diálogo, así que un evento que ya estaba en esa posición no confirma una importación cancelada, y cada posición esperada necesita su propio borde. Si la fase de inicio se hizo en otra sesión del servidor, no se conocen los bordes previos y `verified` es `null`;
+  - al inicio del proyecto (posición 0) no se puede sondear el borde de inicio (Localizar evento siguiente nunca se detiene en 0, y Localizar evento anterior va a 0 aunque no haya un evento allí): lo sustituye el borde final nuevo en la posición más la duración del archivo, con una nota (TW-1606);
   - `copied_to_project` lista las copias nuevas en `<proyecto>/Audio`, solo con el nombre.
 - **Verificado en Cubase Elements:** un tono de 3 s quedó en POC-TEST de 150 a 153 s.
 - **Deshacer** quita el evento, **no** la copia en disco.
