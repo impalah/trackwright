@@ -77,7 +77,7 @@
 
 ### TW-1506 Skill `podcast-silence-trim`
 
-- **Status:** in progress (2026-11-15): `plugins/claude-code/skills/podcast-silence-trim/SKILL.md`. Decisions: analyze the whole mix by default, because `delete_time` cuts every track and only a span silent in the mix is silent everywhere; when the user names one track, explain and offer the mix, that track in solo, or `delete` on that track only (gaps stay); a music bed makes the mix never silent; digital silence at the range's ends is left out of the proposal. The flow was run step by step against the test project (see the verification log): four cuts approved and verified. Pending: the same request through the plugin in a fresh session (`claude --plugin-dir`), to check that the skill is chosen and followed without help
+- **Status:** done (2026-11-15): `plugins/claude-code/skills/podcast-silence-trim/SKILL.md`. Decisions: analyze the whole mix by default, because `delete_time` cuts every track and only a span silent in the mix is silent everywhere; when the user names one track, explain and offer the mix, that track in solo, or `delete` on that track only (gaps stay); a music bed makes the mix never silent; digital silence at the range's ends is left out of the proposal. The flow was run step by step against the test project (see the verification log): four cuts approved and verified. The user then ran the request through the plugin in a fresh session (`claude --plugin-dir`) and reported that it worked
 - **Flow:**
   1. Identify the track and the range (whole project by default) with the read tools; confirm them with the user.
   2. Export (`cubase_export_mix`, two phases: the user completes the dialog) and confirm.
