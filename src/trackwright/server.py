@@ -503,13 +503,32 @@ def build_server(service: CubaseService) -> MCPServer:
         description="The Trackwright/ folder inside the open project's folder, where skills keep renders, "
         "previews, analyses, reports, the episode profile (profile.toml) and what they created (state.json). "
         "'status' only reads; 'init' creates the folder and its subfolders (dry run by default; needs "
+        "[workspace] enabled). 'record' and 'forget' keep state.json, what each skill created (a plugin slot, a "
+        "track, a marker…), so a re-run updates its own items and never the user's (dry run by default; needs "
         "[workspace] enabled). Nothing outside Trackwright/ is written.",
     )
     async def cubase_workspace(
-        action: Annotated[Literal["status", "init"], Field(description="status (read) or init (create)")] = "status",
+        action: Annotated[
+            Literal["status", "init", "record", "forget"],
+            Field(description="status (read), init (create), record or forget an item a skill created"),
+        ] = "status",
+        kind: Annotated[
+            Literal["track", "plugin", "render", "preview", "marker", "automation", "report"] | None,
+            Field(description="record/forget: what the item is"),
+        ] = None,
+        key: Annotated[
+            str | None, Field(max_length=256, description="record/forget: a track uid, '<track uid>/slot:N', a path…")
+        ] = None,
+        skill: Annotated[str | None, Field(max_length=64, description="record: the skill that created it")] = None,
+        run_id: Annotated[str | None, Field(max_length=64, description="record: the skill run")] = None,
+        details: Annotated[dict[str, Any] | None, Field(description="record: anything the skill needs later")] = None,
         dry_run: DryRunArg = True,
     ) -> WorkspaceOut:
-        return await run(lambda: service.workspace(action, dry_run=dry_run))
+        return await run(
+            lambda: service.workspace(
+                action, dry_run=dry_run, kind=kind, key=key, skill=skill, run=run_id, details=details
+            )
+        )
 
     # ------------------------------------------------------------------ profiles (TW-1607)
     @server.tool(

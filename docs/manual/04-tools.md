@@ -401,13 +401,14 @@ Loudness as delivery specifications state it, measured as ITU-R BS.1770 and EBU 
 
 ## Project workspace
 
-### `cubase_workspace` (`status` reads; `init` writes files, with dry run)
+### `cubase_workspace` (`status` reads; `init`, `record` and `forget` write files, with dry run)
 
 The `Trackwright/` folder inside the open project's folder, where skills keep their files (TW-1602). The project folder comes from the files Cubase has open; with no project, or several, it is not guessed.
 
 - **Input:** `action` (`status` by default, or `init`) and `dry_run` (for `init`).
 - **`status`:** says whether the folder exists, which subfolders `init` would create, whether `state.json` and `profile.toml` exist, how many items each skill has recorded (`owned`, by `skill:kind`) and a summary of the episode profile. Always allowed.
 - **`init`:** creates `Trackwright/` and its subfolders `renders/`, `previews/`, `analysis/` and `reports/`, and nothing else. Needs `[workspace] enabled`; idempotent.
+- **`record`, `forget`** (TW-1609): keep `state.json`, what each skill created. `record` takes `kind` (`track`, `plugin`, `render`, `preview`, `marker`, `automation`, `report`), `key` (a track uid, `<track uid>/slot:N`, a path…), `skill`, `run_id` and `details`; a record with the same kind and key replaces the old one (the newest creator owns it, and a note says whose it was). `forget` removes it. Dry run by default (`before` and `after`); need `[workspace] enabled` and the workspace created. `status` lists the items (`items`, the first 200). See [the skill contract](07-skill-contract.md).
 - **Layout:**
 
   | Path | Content |

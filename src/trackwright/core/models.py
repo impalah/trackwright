@@ -399,10 +399,10 @@ class RangeEditOut(_Out):
 
 # ---------------------------------------------------------------------------- export (TW-1204)
 class WorkspaceOut(_Out):
-    action: Literal["status", "init"]
+    action: Literal["status", "init", "record", "forget"]
     dry_run: bool
     enabled: bool = Field(description="[workspace] enabled: skills may write the folder")
-    status: Literal["unknown_project", "absent", "planned", "created", "exists"]
+    status: Literal["unknown_project", "absent", "planned", "created", "exists", "recorded", "forgotten"]
     project_folder: str | None = None
     path: str | None = Field(default=None, description="<project folder>/Trackwright")
     exists: bool = False
@@ -410,6 +410,9 @@ class WorkspaceOut(_Out):
     created: list[str] = Field(default_factory=list)
     has_state: bool = False
     owned: dict[str, int] = Field(default_factory=dict, description="items recorded in state.json, by skill:kind")
+    items: list[JsonObject] = Field(default_factory=list, description="status: the items of state.json (first 200)")
+    before: JsonObject | None = Field(default=None, description="record/forget: the item recorded under kind and key")
+    after: JsonObject | None = Field(default=None, description="record: the item as it will be recorded")
     has_profile: bool = False
     profile: dict[str, str | int | None] | None = None
     notes: list[str] = Field(default_factory=list)

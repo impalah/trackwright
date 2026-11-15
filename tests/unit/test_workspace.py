@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -218,3 +219,46 @@ def test_bad_action(fake: FakeCubase) -> None:
     with pytest.raises(PreconditionFailedError) as exc:
         service(fake, []).workspace("delete")  # type: ignore[arg-type]
     assert exc.value.code == "BAD_REQUEST"
+
+
+# ---------------------------------------------------------------- record and forget (TW-1609)
+def test_record_and_forget(fake: FakeCubase, tmp_path: Path) -> None:
+    Workspace(tmp_path).create()
+    tool = service(fake, [str(tmp_path)])
+    args: dict[str, Any] = {"kind": "plugin", "key": "UID1/slot:1", "skill": "noise-gate", "run": "r1"}
+    plan = tool.workspace("record", **args, details={"plugin": "Gate"})
+    assert (plan.status, plan.before, plan.after is not None) == ("planned", None, True)
+    assert not (tmp_path / FOLDER / "state.json").exists()
+    done = tool.workspace("record", **args, details={"plugin": "Gate"}, dry_run=False)
+    assert done.status == "recorded"
+    status = tool.workspace()
+    assert status.owned == {"noise-gate:plugin": 1}
+    assert status.items[0]["details"] == {"plugin": "Gate"}
+    taken = tool.workspace("record", **{**args, "skill": "other"}, dry_run=False)
+    assert taken.before is not None
+    assert any("the newest creator owns it" in n for n in taken.notes)
+    gone = tool.workspace("forget", kind="plugin", key="UID1/slot:1", dry_run=False)
+    assert (gone.status, gone.after) == ("forgotten", None)
+    assert tool.workspace().owned == {}
+    assert "nothing recorded" in tool.workspace("forget", kind="plugin", key="UID1/slot:1").notes[0]
+
+
+def test_record_refusals(fake: FakeCubase, tmp_path: Path) -> None:
+    with pytest.raises(PolicyError):
+        service(fake, [str(tmp_path)], enabled=False).workspace("record", kind="track", key="k", skill="s", run="r")
+    tool = service(fake, [str(tmp_path)])
+    for kwargs in (
+        {"kind": "song", "key": "k"},
+        {"kind": "track", "key": ""},
+        {"kind": "track", "key": "k"},  # no skill and run
+        {"kind": "track", "key": "k", "skill": "s", "run": "r", "details": {"x": object()}},
+    ):
+        with pytest.raises(PreconditionFailedError) as exc:
+            tool.workspace("record", **kwargs)
+        assert exc.value.code == "BAD_REQUEST", kwargs
+    with pytest.raises(PreconditionFailedError) as unknown:
+        service(fake, []).workspace("forget", kind="track", key="k")
+    assert unknown.value.code == "NO_PROJECT_FOLDER"
+    with pytest.raises(PreconditionFailedError) as missing:
+        tool.workspace("record", kind="track", key="k", skill="s", run="r", dry_run=False)
+    assert missing.value.code == "NO_WORKSPACE"

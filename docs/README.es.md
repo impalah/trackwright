@@ -9,6 +9,7 @@
   - [Referencia de herramientas](manual/04-tools.es.md)
   - [Resolución de problemas](manual/05-troubleshooting.es.md)
   - [Plugin de Claude Code y skills de productor](manual/06-claude-code-plugin.es.md)
+  - [El contrato de las skills](manual/07-skill-contract.es.md)
 - **Tutoriales**
   1. [Primera conexión](tutorials/01-first-connection.es.md)
   2. [Inspeccionar una pista](tutorials/02-inspect-track.es.md)

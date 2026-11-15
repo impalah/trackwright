@@ -40,6 +40,8 @@ Every skill follows the same rules, on top of the server's own safety (dry runs,
 - **It never saves the project** unless you ask.
 - **Everything can be undone** with Edit > Undo in Cubase, and the skill tells you how many times.
 
+Every skill has the same sections and phases, and records what it creates so a re-run updates its own items and never yours: see [the skill contract](07-skill-contract.md).
+
 When it asks you to export, choose: Stereo Out, Wave, **32 bit float**, the project's sample rate, the name it suggests, and real-time export off.
 
 ## `podcast-silence-trim`

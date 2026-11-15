@@ -40,6 +40,8 @@ Todas las skills siguen las mismas normas, además de la seguridad propia del se
 - **Nunca guarda el proyecto** si no se lo pides.
 - **Todo se puede deshacer** con Edición > Deshacer en Cubase, y la skill te dice cuántas veces.
 
+Todas las skills tienen las mismas secciones y fases, y registran lo que crean para que al repetirlas actualicen lo suyo y nunca lo tuyo: ver [el contrato de las skills](07-skill-contract.es.md).
+
 Cuando te pida exportar, elige: Stereo Out, Archivo Wave, **32 bit float**, la frecuencia de muestreo del proyecto, el nombre que te sugiera y la exportación en tiempo real desactivada.
 
 ## `podcast-silence-trim`

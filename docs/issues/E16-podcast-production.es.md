@@ -129,7 +129,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1609 Contrato común de las skills
 
-- **Estado:** pendiente
+- **Estado:** hecho (2026-11-15): el contrato en `docs/manual/07-skill-contract.es.md` (secciones Requires, Inputs, Workflow con las siete fases, Safety, Outputs, Ownership), comprobado por `contract_problems` en `tests/unit/test_plugin.py`; `cubase_workspace` ganó `record` y `forget` (y `status` lista los elementos) para que las skills sean dueñas de lo que crean; `podcast-silence-trim` (que ahora usa los valores de edición del perfil y nunca corta un rango protegido) y `noise-gate` (que registra su puerta como elemento `plugin` y la ajusta al repetirse) reescritas según el contrato
 - **Alcance:** todas las skills de podcast tienen las mismas secciones (Requires, Inputs, Workflow: inspeccionar, analizar, proponer, preescuchar, aprobar, aplicar, verificar; Safety; Outputs; Ownership); `tests/unit/test_plugin.py` las comprueba; un documento de convenciones compartido en el manual. Las skills existentes (`podcast-silence-trim`, `noise-gate`) se adaptan.
 
 ## Fase 2 — Sesión, control de calidad y entrega

@@ -401,13 +401,14 @@ La sonoridad tal como la piden las especificaciones de entrega, medida como la d
 
 ## Espacio de trabajo del proyecto
 
-### `cubase_workspace` (`status` lee; `init` escribe archivos, con dry run)
+### `cubase_workspace` (`status` lee; `init`, `record` y `forget` escriben archivos, con dry run)
 
 La carpeta `Trackwright/` dentro de la carpeta del proyecto abierto, donde las skills guardan sus archivos (TW-1602). La carpeta del proyecto sale de los archivos que Cubase tiene abiertos; sin proyecto, o con varios, no se adivina.
 
 - **Entrada:** `action` (`status` por defecto, o `init`) y `dry_run` (para `init`).
 - **`status`:** dice si la carpeta existe, qué subcarpetas crearía `init`, si existen `state.json` y `profile.toml`, cuántos elementos tiene anotados cada skill (`owned`, por `skill:tipo`) y un resumen del perfil del episodio. Siempre permitido.
 - **`init`:** crea `Trackwright/` y sus subcarpetas `renders/`, `previews/`, `analysis/` y `reports/`, y nada más. Necesita `[workspace] enabled`; se puede repetir sin efecto.
+- **`record`, `forget`** (TW-1609): mantienen `state.json`, lo que ha creado cada skill. `record` recibe `kind` (`track`, `plugin`, `render`, `preview`, `marker`, `automation`, `report`), `key` (un uid de pista, `<uid de pista>/slot:N`, una ruta…), `skill`, `run_id` y `details`; un registro con el mismo tipo y clave sustituye al anterior (el creador más reciente es el dueño, y una nota dice de quién era). `forget` lo quita. Dry run por defecto (`before` y `after`); necesitan `[workspace] enabled` y el espacio de trabajo creado. `status` lista los elementos (`items`, los 200 primeros). Ver [el contrato de las skills](07-skill-contract.es.md).
 - **Estructura:**
 
   | Ruta | Contenido |

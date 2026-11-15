@@ -2,7 +2,10 @@
 
 - plugin.json, marketplace.json and .mcp.json agree on the name and on the package version;
 - every skill uses only the fields of the Agent Skills standard (so it can be tried in other clients), has a
-  valid name equal to its folder, and names only tools that the server registers.
+  valid name equal to its folder, and names only tools that the server registers;
+- every skill follows the common contract (TW-1609, docs/manual/07-skill-contract.md): the sections Requires,
+  Inputs, Workflow, Safety, Outputs and Ownership in that order, and in Workflow the phases Inspect, Analyze,
+  Propose, Preview, Approve, Apply and Verify, in that order.
 """
 
 from __future__ import annotations
@@ -21,6 +24,8 @@ SERVER_TOOLS = set(re.findall(r"async def (cubase_\w+)\(", (ROOT / "src/trackwri
 STANDARD_FIELDS = {"name", "description", "license", "compatibility", "metadata", "allowed-tools"}
 SKILL_NAME = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 TOOL = re.compile(r"\bcubase_[a-z_]+\b")
+SECTIONS = ("Requires", "Inputs", "Workflow", "Safety", "Outputs", "Ownership")
+PHASES = ("Inspect", "Analyze", "Propose", "Preview", "Approve", "Apply", "Verify")
 
 
 def load(path: Path) -> dict[str, object]:
@@ -42,6 +47,21 @@ def frontmatter(text: str) -> dict[str, str]:
     return fields
 
 
+def contract_problems(name: str, text: str) -> list[str]:
+    """What the SKILL.md body lacks of the common contract (TW-1609); other sections may come in between."""
+    body = re.sub(r"^---\n.*?\n---\n", "", text, count=1, flags=re.DOTALL)
+    sections = re.findall(r"^## (.+?)\s*$", body, re.MULTILINE)
+    found = [s for s in sections if s in SECTIONS]
+    problems = [f"{name}: missing section '## {s}'" for s in SECTIONS if s not in found]
+    if not problems and found != list(SECTIONS):
+        problems.append(f"{name}: sections out of order: {found}")
+    workflow = re.search(r"^## Workflow\s*$(.*?)(?=^## |\Z)", body, re.MULTILINE | re.DOTALL)
+    phases = re.findall(r"^### \d+\. (\w+)", workflow.group(1), re.MULTILINE) if workflow else []
+    if workflow and phases != list(PHASES):
+        problems.append(f"{name}: Workflow phases must be {list(PHASES)} as '### N. Phase', found {phases}")
+    return problems
+
+
 def skill_problems(folder: Path) -> list[str]:
     """Everything wrong with one skill folder; empty when it is fine."""
     problems: list[str] = []
@@ -55,6 +75,7 @@ def skill_problems(folder: Path) -> list[str]:
         problems.append(f"{folder.name}: name {name!r} must be lowercase-hyphenated and equal the folder")
     if not 1 <= len(fields.get("description", "")) <= 1024:
         problems.append(f"{folder.name}: description must have 1 to 1024 characters")
+    problems += contract_problems(folder.name, skill.read_text(encoding="utf-8"))
     for path in sorted(p for p in folder.rglob("*") if p.is_file() and p.suffix in {".md", ".txt", ".json"}):
         for tool in sorted(set(TOOL.findall(path.read_text(encoding="utf-8"))) - SERVER_TOOLS):
             problems.append(f"{folder.name}: {path.name} names {tool}, which the server does not register")
@@ -110,8 +131,34 @@ def test_every_skill_is_standard_and_names_real_tools() -> None:
 def test_the_skill_checker(tmp_path: Path, front: str, body: str, expected: list[str]) -> None:
     folder = tmp_path / "demo"
     folder.mkdir()
-    (folder / "SKILL.md").write_text(f"---\n{front}\n---\n\n{body}\n", encoding="utf-8")
+    (folder / "SKILL.md").write_text(f"---\n{front}\n---\n\n{body}\n\n{CONTRACT}", encoding="utf-8")
     problems = skill_problems(folder)
+    assert len(problems) == len(expected)
+    for problem, fragment in zip(problems, expected, strict=True):
+        assert fragment in problem
+
+
+def contract(sections: tuple[str, ...] = SECTIONS, phases: tuple[str, ...] = PHASES) -> str:
+    steps = "".join(f"### {n}. {phase}\n\nText.\n\n" for n, phase in enumerate(phases, 1))
+    return "".join(f"## {s}\n\n{steps if s == 'Workflow' else 'Text.'}\n\n" for s in sections)
+
+
+CONTRACT = contract()
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        (CONTRACT, []),
+        ("## What it does\n\nIntro.\n\n" + CONTRACT, []),  # extra sections are allowed
+        (contract(SECTIONS[:-1]), ["missing section '## Ownership'"]),
+        (contract(("Inputs", "Requires", *SECTIONS[2:])), ["sections out of order"]),
+        (contract(phases=PHASES[:3] + PHASES[4:]), ["Workflow phases must be"]),
+        (contract(phases=("Analyze", "Inspect", *PHASES[2:])), ["Workflow phases must be"]),
+    ],
+)
+def test_the_contract_checker(text: str, expected: list[str]) -> None:
+    problems = contract_problems("demo", f"---\nname: demo\n---\n\n{text}")
     assert len(problems) == len(expected)
     for problem, fragment in zip(problems, expected, strict=True):
         assert fragment in problem
