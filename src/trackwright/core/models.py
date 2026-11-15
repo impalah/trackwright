@@ -414,6 +414,34 @@ class WorkspaceOut(_Out):
     notes: list[str] = Field(default_factory=list)
 
 
+class SpeechRegionOut(_Out):
+    start: str = Field(description="project time, h:mm:ss.mmm")
+    end: str
+    start_seconds: float
+    end_seconds: float
+    seconds: float
+    level_db: float = Field(description="mean level of the speech band (dBFS)")
+    confidence: float = Field(description="0..1, how far above the noise floor (30 dB or more is 1)")
+
+
+class SpeechOut(_Out):
+    file: str
+    sample_rate: int
+    channels: int
+    seconds: float
+    start: str = Field(description="project time of the file's first sample")
+    start_seconds: float
+    noise_floor_db: float | None = Field(description="speech band, 10th percentile; null for a silent file")
+    on_threshold_db: float | None
+    off_threshold_db: float | None
+    contrast_db: float | None = Field(description="90th minus 10th percentile; under on_db no clear speech")
+    criteria: dict[str, float]
+    total: int = Field(description="number of speech regions")
+    speech_seconds: float
+    regions: list[SpeechRegionOut] = Field(description="in project seconds, ordered; paged with offset and limit")
+    notes: list[str] = Field(default_factory=list)
+
+
 class LoudnessOut(_Out):
     file: str
     format: str

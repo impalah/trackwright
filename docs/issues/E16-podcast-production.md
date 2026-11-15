@@ -99,7 +99,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1604 Voice activity detection
 
-- **Status:** pending
+- **Status:** in progress (2026-11-15): `trackwright/analysis/speech.py` (speech band 100 Hz-4 kHz, 10 ms levels, hysteresis on/off above the noise floor, hangover, gaps joined, clicks dropped, confidence) and tool `cubase_detect_speech`; tests on syllable signals (phrases and pauses, soft phrase, hum and hiss, a click, syllable gaps, stereo, block boundaries, digital silence). Pending: validation on a real episode
 - **Scope:** speech regions on a voice stem: energy against the noise floor plus a speech-band criterion, hysteresis, minimum region and gap; regions with level and confidence. Each voice is on its own track, so no speaker separation is needed; one track with several voices is out of scope.
 - **Validation:** on whole episodes the user points to, compared with a few minutes they mark by hand (cycle ranges or a list of times); the synthetic syllable signal of TW-1507 in the unit tests.
 

@@ -4,6 +4,7 @@
 
 ## Sin publicar
 
+- **Actividad vocal** (TW-1604): herramienta nueva `cubase_detect_speech`: regiones de voz de la exportación de una pista de voz en segundos del proyecto (banda vocal con histéresis, hangover, huecos unidos, clics descartados). El servidor tiene ahora 36 herramientas.
 - **Sonoridad y true peak** (TW-1603): herramienta nueva `cubase_measure_loudness` (ITU-R BS.1770 / EBU R128: sonoridad integrada, momentánea y a corto plazo, rango de sonoridad, pico de muestra y true peak), comprobada con los casos de prueba de EBU Tech 3341 y 3342 y con pyloudnorm; archivos AAC decodificados con `afconvert` de macOS (también para `cubase_analyze_audio`). Dependencia nueva scipy. El servidor tiene ahora 35 herramientas.
 - **Espacio de trabajo del proyecto** (TW-1602): `[workspace] enabled` (desactivado por defecto, `WORKSPACE_DISABLED`) y la herramienta `cubase_workspace` (`status`, `init`), para una carpeta `Trackwright/` dentro de la del proyecto con `renders/`, `previews/`, `analysis/`, `reports/`, `state.json` (lo que crearon las skills) y `profile.toml` (perfil del episodio). `trackwright setup` lo pregunta (`--workspace`); `cubase_status` y `doctor` lo muestran. Dependencia nueva `tomli-w`. El servidor tiene ahora 34 herramientas.
 

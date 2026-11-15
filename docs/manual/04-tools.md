@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 35 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 36 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -368,6 +368,16 @@ Trackwright **never exports by itself**: it sets the range and opens the Cubase 
     - ±(0.5 s + 0.2%) for MP3, AAC and OGG, whose duration is an estimate and which lose or gain frames at the end. Verified: an MP3 of the 139.976 s episode measured 139.721 s.
 - The locators **stay** on the exported range.
 - **Errors:** `TRANSPORT_RUNNING`, `CANNOT_PERFORM` (another dialog is open), `BAD_TIME` and `WRITES_DISABLED`.
+
+### `cubase_detect_speech` (read, needs `[analysis] enabled`)
+
+Where a voice track has speech (TW-1604), for skills that act around the voice: ducking the music, leveling, placing transitions. Export the voice track alone first (solo it): each voice on its own track means the question is only "speech or not", never "who".
+
+- **Input:** `file` (absolute path), `start` (project time of the file's first sample, as in `cubase_analyze_audio`), `on_db` (12), `off_db` (6), `hangover` (0.15 s), `merge_gap` (0.2 s), `min_region` (0.08 s), `offset`, `limit` (100, at most 500).
+- **How it decides:** the speech band (100 Hz to 4 kHz, so mains hum and hiss do not count) is measured every 10 ms; the noise floor is the 10th percentile of those levels, digital silence left out. Speech starts when the level rises `on_db` above the floor and lasts while it stays `off_db` above it, so the dips between syllables do not split a word; `hangover` is added after each region for word endings, gaps shorter than `merge_gap` are joined and regions shorter than `min_region` (clicks) are dropped.
+- **Output:** `regions` in project time (start, end, duration, mean level of the speech band, `confidence` from how far above the noise floor it is), `total`, `speech_seconds`, the noise floor and both thresholds, and `contrast_db` (with less than `on_db` of contrast there is no clear speech, and a note says so).
+- **Limits:** it is an energy detector. A loud laugh, cough or door in the voice band counts as activity, which is what ducking and leveling need; finding words is the transcription's job (TW-1630).
+- **Errors:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST`.
 
 ### `cubase_measure_loudness` (read, needs `[analysis] enabled`)
 

@@ -2,7 +2,7 @@
 
 [English](04-tools.md) · **Español**
 
-El servidor `trackwright` publica 35 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 36 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 Trackwright aspira a admitir varios DAW, pero hoy solo implementa **Cubase**. Por eso todas las herramientas se llaman `cubase_*` y esta página describe el comportamiento de Cubase: se verificó contra Cubase Elements 15.0.30, con scripts de experimento y desde Claude Code (ver el [registro de verificación](../verification.es.md)). Cualquier cliente MCP recibe las mismas herramientas. Otro DAW tendría su propio conjunto de herramientas; ver [Extensión a otros DAW](../architecture.es.md#extensión-a-otros-daw-posible-no-implementada).
 
@@ -368,6 +368,16 @@ Trackwright **nunca exporta por sí mismo**: coloca el rango y abre el diálogo 
     - ±(0,5 s + 0,2 %) en MP3, AAC y OGG, cuya duración es una estimación y que pierden o ganan tramas al final. Verificado: un MP3 del episodio de 139,976 s midió 139,721 s.
 - Los localizadores **se quedan** en el rango exportado.
 - **Errores:** `TRANSPORT_RUNNING`, `CANNOT_PERFORM` (hay otro diálogo abierto), `BAD_TIME` y `WRITES_DISABLED`.
+
+### `cubase_detect_speech` (lectura, necesita `[analysis] enabled`)
+
+Dónde hay voz en una pista de voz (TW-1604), para las skills que actúan alrededor de la voz: atenuar la música, nivelar, colocar transiciones. Exporta antes la pista de voz sola (en solo): con cada voz en su pista, la pregunta es solo «voz o no», nunca «quién».
+
+- **Entrada:** `file` (ruta absoluta), `start` (tiempo del proyecto de la primera muestra del archivo, como en `cubase_analyze_audio`), `on_db` (12), `off_db` (6), `hangover` (0,15 s), `merge_gap` (0,2 s), `min_region` (0,08 s), `offset`, `limit` (100, como mucho 500).
+- **Cómo decide:** se mide la banda vocal (de 100 Hz a 4 kHz, así que el zumbido de la red y el siseo no cuentan) cada 10 ms; el ruido de fondo es el percentil 10 de esos niveles, sin el silencio digital. La voz empieza cuando el nivel sube `on_db` por encima del ruido y dura mientras se mantiene `off_db` por encima, así que las caídas entre sílabas no parten una palabra; se añade `hangover` tras cada región para los finales de palabra, se unen los huecos más cortos que `merge_gap` y se descartan las regiones más cortas que `min_region` (clics).
+- **Salida:** `regions` en tiempo del proyecto (inicio, fin, duración, nivel medio de la banda vocal, `confidence` según lo lejos que está del ruido de fondo), `total`, `speech_seconds`, el ruido de fondo y los dos umbrales, y `contrast_db` (con menos contraste que `on_db` no hay voz clara, y una nota lo indica).
+- **Límites:** es un detector de energía. Una risa, una tos o una puerta fuerte en la banda vocal cuentan como actividad, que es lo que necesitan el ducking y la nivelación; encontrar palabras es tarea de la transcripción (TW-1630).
+- **Errores:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST`.
 
 ### `cubase_measure_loudness` (lectura, necesita `[analysis] enabled`)
 

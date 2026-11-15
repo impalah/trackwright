@@ -10,6 +10,7 @@ import soundfile as sf
 
 from trackwright.core.policy import WritePolicy
 from trackwright.core.service import CubaseService
+from trackwright.core.timefmt import format_seconds
 from trackwright.errors import NotFoundError, PolicyError, PreconditionFailedError
 from trackwright.fake import FakeCubase
 
@@ -155,3 +156,32 @@ def test_measure_loudness_policy_and_paths(fake: FakeCubase, tmp_path: Path) -> 
     assert long.value.code == "TOO_LONG"
     silent = analyzer(fake).measure_loudness(str(tmp_path / "a.wav"))
     assert (silent.integrated_lufs, silent.sample_peak_dbfs, silent.true_peak_dbtp) == (None, None, None)
+
+
+# ---------------------------------------------------------------- speech (TW-1604)
+def test_detect_speech_in_project_seconds(fake: FakeCubase, tmp_path: Path) -> None:
+    file = export(tmp_path / "voice.wav", [("quiet", 2), ("tone", 3), ("quiet", 2), ("tone", 2), ("quiet", 2)])
+    out = analyzer(fake).detect_speech(str(file), start="10", limit=1, offset=1)
+    assert out.total == 2
+    (region,) = out.regions
+    assert region.start_seconds == pytest.approx(17.0, abs=0.02)
+    assert region.end_seconds == pytest.approx(19.15, abs=0.05)  # 19.0 + hangover + smoothing
+    assert region.start == format_seconds(region.start_seconds)  # h:mm:ss.mmm of the same value
+    assert out.speech_seconds == pytest.approx(5.3, abs=0.3)
+    assert any("energy detector" in n for n in out.notes)
+    assert fake.fired == []
+
+
+def test_detect_speech_refusals_and_notes(fake: FakeCubase, tmp_path: Path) -> None:
+    flat = export(tmp_path / "flat.wav", [("quiet", 4)])
+    assert "little contrast" in analyzer(fake).detect_speech(str(flat)).notes[0]
+    with pytest.raises(PolicyError) as off:
+        CubaseService(fake, WritePolicy(enabled=True)).detect_speech(str(flat))
+    assert off.value.code == "ANALYSIS_DISABLED"
+    for kwargs, code in (({"start": "soon"}, "BAD_TIME"), ({"on_db": 3.0, "off_db": 6.0}, "BAD_REQUEST")):
+        with pytest.raises(PreconditionFailedError) as exc:
+            analyzer(fake).detect_speech(str(flat), **kwargs)
+        assert exc.value.code == code
+    with pytest.raises(PreconditionFailedError) as long:
+        analyzer(fake, analysis_max_seconds=1.0).detect_speech(str(flat))
+    assert long.value.code == "TOO_LONG"

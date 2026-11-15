@@ -32,6 +32,7 @@ READ_TOOLS = {
     "cubase_poll_changes",
     "cubase_analyze_audio",
     "cubase_measure_loudness",
+    "cubase_detect_speech",
 }
 WRITE_TOOLS = {
     "cubase_set_parameter",

@@ -21,8 +21,9 @@ from trackwright.analysis import (
 )
 from trackwright.analysis.detect import threshold
 from trackwright.analysis.reader import SILENT_DB
+from trackwright.analysis.speech import SpeechCriteria, detect_speech
 from trackwright.core.base import ServiceBase
-from trackwright.core.models import AnalysisOut, LoudnessOut, SilenceOut
+from trackwright.core.models import AnalysisOut, LoudnessOut, SilenceOut, SpeechOut, SpeechRegionOut
 from trackwright.core.timefmt import format_seconds, parse_seconds
 from trackwright.errors import PreconditionFailedError
 
@@ -150,3 +151,73 @@ class AnalyzingMixin(ServiceBase):
         if not path.is_absolute():
             raise PreconditionFailedError("file must be an absolute path", code="BAD_REQUEST", details={"file": file})
         return path
+
+    def detect_speech(
+        self,
+        file: str,
+        *,
+        start: str = "0",
+        on_db: float = 12.0,
+        off_db: float = 6.0,
+        hangover: float = 0.15,
+        merge_gap: float = 0.2,
+        min_region: float = 0.08,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> SpeechOut:
+        """Speech regions of a voice track's export, in project seconds (TW-1604)."""
+        self.policy.check_analysis()
+        path = self._audio_path(file)
+        origin = parse_seconds(start)
+        if origin is None:
+            raise PreconditionFailedError("start looks like '2.5', '1:30' or '0:01:30.000'", code="BAD_TIME")
+        criteria = SpeechCriteria(
+            on_db=on_db, off_db=off_db, hangover=hangover, merge_gap=merge_gap, min_region=min_region
+        )
+        criteria.check()
+        with decoded(path) as readable:
+            self.policy.check_analysis(probe(readable).seconds)
+            result = detect_speech(readable, criteria)
+        info = result.info
+        notes = []
+        if result.contrast_db is not None and result.contrast_db < on_db:
+            notes.append(
+                f"little contrast ({result.contrast_db:.1f} dB) between the noise and the loudest parts: "
+                "is this a voice track exported alone?"
+            )
+        notes.append("energy detector: loud non-speech sounds in the voice band (laughs, coughs) count as activity")
+        limit = max(1, min(limit, MAX_SILENCES))
+        return SpeechOut(
+            file=str(path),
+            sample_rate=info.rate,
+            channels=info.channels,
+            seconds=round(info.seconds, 4),
+            start=format_seconds(origin),
+            start_seconds=origin,
+            noise_floor_db=result.noise_floor_db,
+            on_threshold_db=result.on_threshold_db,
+            off_threshold_db=result.off_threshold_db,
+            contrast_db=result.contrast_db,
+            criteria={
+                "on_db": on_db,
+                "off_db": off_db,
+                "hangover": hangover,
+                "merge_gap": merge_gap,
+                "min_region": min_region,
+            },
+            total=len(result.regions),
+            speech_seconds=round(result.speech_seconds, 3),
+            regions=[
+                SpeechRegionOut(
+                    start=format_seconds(origin + r.start),
+                    end=format_seconds(origin + r.end),
+                    start_seconds=round(origin + r.start, 4),
+                    end_seconds=round(origin + r.end, 4),
+                    seconds=round(r.seconds, 4),
+                    level_db=r.level_db,
+                    confidence=r.confidence,
+                )
+                for r in result.regions[offset : offset + limit]
+            ],
+            notes=notes,
+        )

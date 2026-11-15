@@ -44,6 +44,7 @@ from trackwright.core.models import (
     SaveOut,
     SelectedChannelOut,
     SelectOut,
+    SpeechOut,
     StatusOut,
     TempoOut,
     TrackListOut,
@@ -459,6 +460,31 @@ def build_server(service: CubaseService) -> MCPServer:
         file: Annotated[str, Field(description="absolute path of the audio file")],
     ) -> LoudnessOut:
         return await run(lambda: service.measure_loudness(file))
+
+    @server.tool(
+        annotations=READ,
+        description="Where a voice track has speech: regions in project seconds from an export of that track alone "
+        "(solo it; Cubase Elements exports only Stereo Out). Energy in the speech band (100 Hz-4 kHz) with "
+        "hysteresis: starts on_db above the noise floor, lasts while off_db above it; short gaps joined, short "
+        "bumps dropped. Reads the file only; needs [analysis] enabled.",
+    )
+    async def cubase_detect_speech(
+        file: Annotated[str, Field(description="absolute path of the voice track's export")],
+        start: Annotated[str, Field(description="project time of the file's first sample (seconds)")] = "0",
+        on_db: Annotated[float, Field(ge=0, le=60, description="speech starts this far above the floor")] = 12.0,
+        off_db: Annotated[float, Field(ge=0, le=60, description="and lasts while this far above it")] = 6.0,
+        hangover: Annotated[float, Field(ge=0, le=2, description="seconds added after each region")] = 0.15,
+        merge_gap: Annotated[float, Field(ge=0, le=5, description="gaps shorter than this are joined")] = 0.2,
+        min_region: Annotated[float, Field(ge=0, le=5, description="shorter regions are dropped")] = 0.08,
+        offset: Annotated[int, Field(ge=0)] = 0,
+        limit: Annotated[int, Field(ge=1, le=500)] = 100,
+    ) -> SpeechOut:
+        return await run(
+            lambda: service.detect_speech(
+                file, start=start, on_db=on_db, off_db=off_db, hangover=hangover, merge_gap=merge_gap,
+                min_region=min_region, offset=offset, limit=limit,
+            )
+        )  # fmt: skip
 
     # ------------------------------------------------------------------ project workspace (TW-1602)
     @server.tool(

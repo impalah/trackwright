@@ -99,7 +99,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1604 Detección de actividad vocal
 
-- **Estado:** pendiente
+- **Estado:** en curso (2026-11-15): `trackwright/analysis/speech.py` (banda vocal 100 Hz-4 kHz, niveles cada 10 ms, histéresis on/off sobre el ruido de fondo, hangover, huecos unidos, clics descartados, confianza) y herramienta `cubase_detect_speech`; tests con señales de sílabas (frases y pausas, frase suave, zumbido y siseo, un clic, huecos entre sílabas, estéreo, límites de bloque, silencio digital). Pendiente: validación con un episodio real
 - **Alcance:** regiones de voz en una pista de voz: energía frente al ruido de fondo más un criterio de banda vocal, histéresis, región y hueco mínimos; regiones con nivel y confianza. Cada voz va en su propia pista, así que no hace falta separar locutores; una pista con varias voces queda fuera de alcance.
 - **Validación:** en episodios completos que indique el usuario, comparada con unos minutos que marque a mano (rangos en ciclo o una lista de tiempos); la señal sintética de sílabas de TW-1507 en los tests unitarios.
 
