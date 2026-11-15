@@ -9,6 +9,7 @@ from trackwright.core.importing import ImportMixin
 from trackwright.core.lifecycle import LifecycleMixin
 from trackwright.core.presets import PresetMixin
 from trackwright.core.profiling import ProfilesMixin
+from trackwright.core.qc import QualityMixin
 from trackwright.core.reading import ReadingMixin
 from trackwright.core.rendering import RenderingMixin
 from trackwright.core.saving import SavingMixin
@@ -18,6 +19,7 @@ from trackwright.core.writing import WritingMixin
 
 
 class CubaseService(
+    QualityMixin,
     ProfilesMixin,
     RenderingMixin,
     WorkspaceMixin,

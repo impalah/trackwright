@@ -536,6 +536,50 @@ class TrackEdgesOut(_Out):
     notes: list[str] = Field(default_factory=list)
 
 
+class QcItemOut(_Out):
+    id: str = Field(description="what was checked, e.g. loudness, true_peak, codec, long_pauses")
+    kind: Literal["check", "warning", "manual"] = Field(
+        description="check: objective, against a target; warning: worth a listen; manual: cannot be verified here"
+    )
+    status: Literal["pass", "fail", "warn", "info"]
+    title: str
+    target: str | None = Field(default=None, description="the delivery profile it was checked against")
+    measured: str | None = None
+    expected: str | None = None
+    source: str | None = Field(default=None, description="the platform's page the expected value comes from")
+    at: list[str] = Field(default_factory=list, description="project times concerned (h:mm:ss.mmm)")
+
+
+class QcMomentOut(_Out):
+    at: str = Field(description="project time to listen at")
+    at_seconds: float
+    why: str
+
+
+class QcOut(_Out):
+    file: str
+    format: str
+    subtype: str
+    codec: str | None = Field(description="from the extension: wav, mp3, aac (.m4a), flac…")
+    sample_rate: int
+    channels: int
+    seconds: float
+    bitrate_kbps: float | None = Field(description="average, for compressed files (size over duration)")
+    integrated_lufs: float | None
+    loudness_range_lu: float | None
+    true_peak_dbtp: float | None
+    sample_peak_dbfs: float | None
+    targets: list[str] = Field(description="the delivery profiles checked against")
+    verdict: Literal["pass", "fail"] = Field(description="fail when any objective check failed")
+    failed: int
+    warnings: int
+    items: list[QcItemOut]
+    moments: list[QcMomentOut] = Field(description="where to listen, in project time")
+    source: AudioSourceOut | None = None
+    report: list[str] = Field(default_factory=list, description="the report files written (JSON and Markdown)")
+    notes: list[str] = Field(default_factory=list)
+
+
 class SpeechRegionOut(_Out):
     start: str = Field(description="project time, h:mm:ss.mmm")
     end: str

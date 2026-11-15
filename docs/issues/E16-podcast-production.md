@@ -141,7 +141,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1611 Skill `podcast-final-qc`
 
-- **Status:** pending (needs TW-1603, TW-1607)
+- **Status:** code done (2026-11-15), to try live: the skill (contract of TW-1609) and the read-only tool `cubase_final_qc` (checks per target with their sources, `info` for unpublished values, warnings for long pauses, silence at the ends, level changes between 10 s sections and full scale, manual items, moments to listen to, optional JSON and Markdown report); `trackwright/analysis/qc.py` (level changes, codec, bit rate) and the short-term series kept by the loudness measurement. On the test project's 140 s MP3: Apple fails on loudness (−21.13 LUFS), Spotify's loudness and true peak are reported as not published, two long pauses and a −10.8 LU change at 2:10 are flagged. Tests in `tests/unit/test_final_qc_tw1611.py`
 - **Scope:** read-only checks on the delivered file or a fresh export: opens, format, channels, sample rate, duration against the approved range; loudness and true peak against the chosen profile; long pauses; sudden level changes between sections; a list of moments to listen to. Objective checks separated from warnings; items that cannot be verified from a mixdown (excluded tracks) listed as manual. Report in `Trackwright/reports/`.
 
 ### TW-1612 Experiment: reaching a loudness target in Elements

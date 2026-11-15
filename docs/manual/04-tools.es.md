@@ -2,7 +2,7 @@
 
 [English](04-tools.md) · **Español**
 
-El servidor `trackwright` publica 39 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 40 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 Trackwright aspira a admitir varios DAW, pero hoy solo implementa **Cubase**. Por eso todas las herramientas se llaman `cubase_*` y esta página describe el comportamiento de Cubase: se verificó contra Cubase Elements 15.0.30, con scripts de experimento y desde Claude Code (ver el [registro de verificación](../verification.es.md)). Cualquier cliente MCP recibe las mismas herramientas. Otro DAW tendría su propio conjunto de herramientas; ver [Extensión a otros DAW](../architecture.es.md#extensión-a-otros-daw-posible-no-implementada).
 
@@ -469,6 +469,19 @@ Audio procesado para el proyecto, escrito en `Trackwright/renders/` (TW-1606). L
 
 - **`source`:** el archivo, su tamaño, fecha de modificación y SHA-256, y el rango del proyecto que cubre (`start`, `end`). `project_saved_after` es true cuando un archivo de proyecto (`.cpr`) de la carpeta del proyecto se guardó después de escribirse el archivo: puede que el proyecto haya cambiado (cortes, procesado, automatización), así que una skill pregunta si exportar de nuevo (null para un archivo fuera de la carpeta del proyecto abierto). Los cambios sin guardar no se pueden ver; solo se leen las fechas de modificación de los `.cpr` de la carpeta.
 - **`cache`:** para un archivo dentro de la carpeta del proyecto abierto, con el espacio de trabajo creado y `[workspace] enabled`, cada resultado se guarda en `Trackwright/analysis/` con una clave hecha del análisis, el SHA-256 del archivo y los parámetros (`start` incluido). La misma pregunta sobre el mismo audio se responde desde allí (`hit`) sin volver a leer el archivo; una exportación nueva tiene otros bytes, así que nunca se confunde con la anterior (`stored`: calculado y guardado; `off`: sin caché). `hashes.json` recuerda el hash de cada archivo por ruta, tamaño y fecha de modificación, para no calcular el hash de un episodio largo en cada llamada. La paginación (`offset`, `limit`) funciona sobre el resultado guardado.
+
+### `cubase_final_qc` (lectura, necesita `[analysis] enabled`)
+
+Control de calidad final de un archivo de episodio, el entregado o una exportación nueva (TW-1611). Una sola lectura del archivo, comparada con los perfiles de entrega (`targets`, por defecto los `delivery.targets` del perfil; ver `cubase_profile`).
+
+- **Entrada:** `file`, `start` (tiempo de proyecto de su primera muestra), `expected_seconds` (el rango aprobado), `targets`, `long_pause_seconds` (3), `jump_lu` (6), `report`.
+- **Comprobaciones** (`pass` o `fail`, cada una con la `source` de la plataforma): códec (por la extensión: `.m4a` es AAC), canales, frecuencia de muestreo, tasa de bits media de los archivos comprimidos (tamaño entre duración, ±2 %), tamaño del archivo, sonoridad integrada frente a objetivo ± tolerancia, pico real frente al techo, y duración frente a `expected_seconds` (±0,01 s en PCM, ±0,1 s en MP3/AAC, que añaden relleno del codificador). Un valor que la plataforma no publica da un elemento `info` ("not published by the platform"), nunca un aprobado ni un fallo.
+- **Avisos** (`warn`, nunca un fallo): silencio al principio o al final, pausas de `long_pause_seconds` o más, cambios de nivel de `jump_lu` o más entre secciones consecutivas de 10 s (sonoridad a corto plazo, sin contar las pausas), muestras a fondo de escala, una tasa de bits por debajo de la recomendada.
+- **Elementos manuales:** pistas que no deben estar en el archivo (una mezcla no las muestra), etiquetas y portada, contenido.
+- **`moments`:** dónde escuchar, en tiempo de proyecto: el principio, el final, las pausas más largas, los cambios de nivel, los 3 s más fuertes.
+- **`verdict`:** `fail` cuando falló alguna comprobación. `source` dice qué archivo se midió (TW-1608).
+- **`report`:** escribe además `Trackwright/reports/qc-<archivo>-<hora>.json` y `.md`; necesita `[workspace] enabled` y el espacio de trabajo creado.
+- **Errores:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST` (un destino desconocido), `WORKSPACE_DISABLED`, `NO_WORKSPACE`, `NO_PROJECT_FOLDER`.
 
 ### `cubase_analyze_audio` (lectura, necesita `[analysis] enabled`)
 

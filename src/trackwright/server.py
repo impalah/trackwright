@@ -41,6 +41,7 @@ from trackwright.core.models import (
     ProfileOut,
     ProjectOut,
     ProjectSettingsOut,
+    QcOut,
     RangeEditOut,
     RenderOut,
     SaveOut,
@@ -570,6 +571,39 @@ def build_server(service: CubaseService) -> MCPServer:
         dry_run: DryRunArg = True,
     ) -> ProfileOut:
         return await run(lambda: service.profile(action, show=show, data=data, dry_run=dry_run))
+
+    # ------------------------------------------------------------------ final QC (TW-1611)
+    @server.tool(
+        annotations=READ,
+        description="Final quality control of an episode file (the delivered file or a fresh export), read-only. "
+        "Checks against the delivery profiles (default: the profile's delivery.targets): codec, channels, sample "
+        "rate, bit rate, file size, integrated loudness and true peak, each with the platform's source; duration "
+        "against expected_seconds. Warnings: long pauses, silence at the start or end, level changes between 10 s "
+        "sections, samples at full scale. Manual items: what a mixdown cannot show. Moments to listen to, in "
+        "project time. report=true also writes JSON and Markdown to Trackwright/reports/ ([workspace] enabled). "
+        "Needs [analysis] enabled.",
+    )
+    async def cubase_final_qc(
+        file: Annotated[str, Field(description="absolute path of the file (WAV, MP3, M4A/AAC…)")],
+        start: Annotated[str, Field(description="project time of the file's first sample (seconds)")] = "0",
+        expected_seconds: Annotated[
+            float | None, Field(gt=0, description="duration of the approved range, to check the file against")
+        ] = None,
+        targets: Annotated[
+            list[str] | None, Field(description="delivery profile names; null = the profile's delivery.targets")
+        ] = None,
+        long_pause_seconds: Annotated[float, Field(gt=0, le=60, description="pauses this long are listed")] = 3.0,
+        jump_lu: Annotated[
+            float, Field(gt=0, le=30, description="level change between 10 s sections worth a listen")
+        ] = 6.0,
+        report: Annotated[bool, Field(description="also write the report to Trackwright/reports/")] = False,
+    ) -> QcOut:
+        return await run(
+            lambda: service.final_qc(
+                file, start=start, expected_seconds=expected_seconds, targets=targets,
+                long_pause_seconds=long_pause_seconds, jump_lu=jump_lu, report=report,
+            )
+        )  # fmt: skip
 
     # ------------------------------------------------------------------ renders (TW-1606)
     @server.tool(

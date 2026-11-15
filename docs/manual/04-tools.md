@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 39 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 40 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -469,6 +469,19 @@ Processed audio for the project, written to `Trackwright/renders/` (TW-1606). Cu
 
 - **`source`:** the file, its size, modification time and SHA-256, and the project range it covers (`start`, `end`). `project_saved_after` is true when a project file (`.cpr`) in the project folder was saved after the file was written: the project may have changed (cuts, processing, automation), so a skill asks whether to export again (null for a file outside the open project's folder). Unsaved changes cannot be seen; only the modification times of the folder's `.cpr` files are read.
 - **`cache`:** for a file inside the open project's folder, with the workspace created and `[workspace] enabled`, every result is stored in `Trackwright/analysis/` under a key made of the analysis, the file's SHA-256 and the parameters (`start` included). The same question about the same audio answers from there (`hit`) without reading the file again; a new export has other bytes, so it is never mistaken for the old one (`stored`: computed and kept; `off`: no cache). `hashes.json` remembers each file's hash by path, size and modification time, so a long episode is not hashed on every call. Paging (`offset`, `limit`) works on the cached result.
+
+### `cubase_final_qc` (read, needs `[analysis] enabled`)
+
+Final quality control of an episode file, the delivered one or a fresh export (TW-1611). One reading of the file, compared with the delivery profiles (`targets`, by default the profile's `delivery.targets`; see `cubase_profile`).
+
+- **Input:** `file`, `start` (project time of its first sample), `expected_seconds` (the approved range), `targets`, `long_pause_seconds` (3), `jump_lu` (6), `report`.
+- **Checks** (`pass` or `fail`, each with the platform's `source`): codec (from the extension: `.m4a` is AAC), channels, sample rate, average bit rate for compressed files (size over duration, ±2 %), file size, integrated loudness against target ± tolerance, true peak against the ceiling, and duration against `expected_seconds` (±0.01 s for PCM, ±0.1 s for MP3/AAC, which add encoder padding). A value the platform does not publish gives an `info` item ("not published by the platform"), never a pass or a fail.
+- **Warnings** (`warn`, never a failure): silence at the start or end, pauses of `long_pause_seconds` or more, level changes of `jump_lu` or more between consecutive 10 s sections (short-term loudness, pauses left out), samples at full scale, a bit rate under the recommended one.
+- **Manual items:** tracks that must not be in the file (a mixdown cannot show them), tags and artwork, content.
+- **`moments`:** where to listen, in project time: the start, the end, the longest pauses, the level changes, the loudest 3 s.
+- **`verdict`:** `fail` when any check failed. `source` says which file was measured (TW-1608).
+- **`report`:** also writes `Trackwright/reports/qc-<file>-<time>.json` and `.md`; needs `[workspace] enabled` and the workspace created.
+- **Errors:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST` (an unknown target), `WORKSPACE_DISABLED`, `NO_WORKSPACE`, `NO_PROJECT_FOLDER`.
 
 ### `cubase_analyze_audio` (read, needs `[analysis] enabled`)
 

@@ -17,7 +17,7 @@ a mono file is measured as one channel (it reads 3 dB lower than the same signal
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -52,6 +52,9 @@ class Loudness:
     """None with fewer than two gated short-term values (a file shorter than about 3 s)."""
     sample_peak_dbfs: float
     true_peak_dbtp: float
+    short_term: npt.NDArray[np.float64] = field(default_factory=lambda: np.zeros(0), repr=False, compare=False)
+    """Short-term loudness (LUFS, 3 s window) every 100 ms; value ``i`` is the window ending at step ``i + 30``.
+    -inf where the window is digital silence (TW-1611: level changes between sections)."""
 
 
 def k_weighting(rate: int) -> tuple[Coefficients, Coefficients]:
@@ -163,4 +166,5 @@ def measure_loudness(path: Path) -> Loudness:
         loudness_range_lu=lra,
         sample_peak_dbfs=round(_db(sample_peak), 2),
         true_peak_dbtp=round(_db(max(true_peak, sample_peak)), 2),
+        short_term=np.array([_lufs(float(p)) for p in shorts]) if shorts.size else np.zeros(0),
     )

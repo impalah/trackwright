@@ -24,7 +24,7 @@ from trackwright.analysis import (
     probe,
     sound_levels,
 )
-from trackwright.analysis.cache import AnalysisCache, cache_key, load_cached
+from trackwright.analysis.cache import AnalysisCache, FileIdentity, cache_key, load_cached
 from trackwright.analysis.detect import threshold
 from trackwright.analysis.reader import SILENT_DB
 from trackwright.analysis.speech import SpeechCriteria, detect_speech
@@ -57,6 +57,21 @@ def _saved_after(folder: Path | None, modified: float) -> bool | None:
         return None
     projects = [p.stat().st_mtime for p in folder.glob("*.cpr") if p.is_file()]
     return max(projects) > modified if projects else None
+
+
+def audio_source(identity: FileIdentity, origin: float, seconds: float, folder: Path | None) -> AudioSourceOut:
+    """Which audio a result belongs to (TW-1608)."""
+    return AudioSourceOut(
+        file=identity.path,
+        size_bytes=identity.size,
+        modified=datetime.fromtimestamp(identity.modified, UTC).isoformat(timespec="seconds"),
+        sha256=identity.sha256,
+        start=format_seconds(origin),
+        end=format_seconds(origin + seconds),
+        start_seconds=origin,
+        end_seconds=round(origin + seconds, 4),
+        project_saved_after=_saved_after(folder, identity.modified),
+    )
 
 
 def _db(value: float | None) -> float | None:
@@ -214,12 +229,7 @@ class AnalyzingMixin(ServiceBase):
         except PreconditionFailedError as exc:
             if exc.code != "BAD_AUDIO":  # AAC: probed after decoding, in compute
                 raise
-        folder, _why = self.project_folder()
-        if folder is not None and folder.resolve() not in path.resolve().parents:
-            folder = None  # another project's file: neither its cache nor its .cpr belong to the open project
-        space = Workspace(folder) if folder is not None else None
-        analysis = space.path / "analysis" if space is not None and space.exists else None
-        cache = AnalysisCache(analysis, writable=self.policy.workspace)
+        cache, folder = self._analysis_cache(path)
         identity = cache.identify(path)
         key = cache_key(kind, identity.sha256, {**parameters, "start": origin})
         out = load_cached(cache, key, model)
@@ -229,22 +239,21 @@ class AnalyzingMixin(ServiceBase):
             stored = cache.put(key, out.model_dump(mode="json", exclude={"source", "cache"}))
             state = "stored" if stored is not None else "off"
         seconds = float(getattr(out, "seconds", 0.0))
-        out.source = AudioSourceOut(  # type: ignore[attr-defined]
-            file=identity.path,
-            size_bytes=identity.size,
-            modified=datetime.fromtimestamp(identity.modified, UTC).isoformat(timespec="seconds"),
-            sha256=identity.sha256,
-            start=format_seconds(origin),
-            end=format_seconds(origin + seconds),
-            start_seconds=origin,
-            end_seconds=round(origin + seconds, 4),
-            project_saved_after=_saved_after(folder, identity.modified),
-        )
+        out.source = audio_source(identity, origin, seconds, folder)  # type: ignore[attr-defined]
         out.cache = state  # type: ignore[attr-defined]
         if items is not None:
             limit = max(1, min(limit, MAX_SILENCES))
             setattr(out, items, getattr(out, items)[offset : offset + limit])
         return out
+
+    def _analysis_cache(self, path: Path) -> tuple[AnalysisCache, Path | None]:
+        """The open project's analysis cache, and its folder, when ``path`` belongs to that project."""
+        folder, _why = self.project_folder()
+        if folder is not None and folder.resolve() not in path.resolve().parents:
+            folder = None  # another project's file: neither its cache nor its .cpr belong to the open project
+        space = Workspace(folder) if folder is not None else None
+        analysis = space.path / "analysis" if space is not None and space.exists else None
+        return AnalysisCache(analysis, writable=self.policy.workspace), folder
 
     def _audio_path(self, file: str) -> Path:
         path = Path(file).expanduser()

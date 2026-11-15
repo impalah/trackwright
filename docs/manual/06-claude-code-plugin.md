@@ -55,6 +55,16 @@ Takes stock of the session before working on it, and records what you confirm in
 - **What it cannot see** (it says so every time): automation, clip gain and fades, markers, an event starting exactly at 0 s, plugin presets, sends and side-chains.
 - **What it writes:** only `Trackwright/profile.toml`, after showing it to you; nothing in the Cubase project changes.
 
+## `podcast-final-qc`
+
+The last look before publishing: does the file meet the platforms' specs, and is there anything a listener would notice?
+
+- **Ask for it like this:** "is the episode ready for Apple and Spotify?", "check this MP3 before I publish it".
+- **What it checks:** format, channels, sample rate, bit rate, size, loudness and true peak against each target, with the platform's own page as the source; a value the platform does not publish is said to be "not published", never passed. Duration against the approved range.
+- **What it warns about:** long pauses, silence at the start or end, sudden level changes between sections, clipping; and before a fresh export, a soloed track, a reference track that is not muted or a muted voice.
+- **Where to listen:** the start, the end, the longest pauses, the level changes and the loudest moment; it can move the cursor to each one.
+- **What it changes:** nothing. Fixing loudness or peaks is the job of `podcast-delivery`. It can save the report (JSON and Markdown) in `Trackwright/reports/`.
+
 ## `podcast-silence-trim`
 
 Finds the silences longer than a duration and removes them, closing the gaps so the episode gets shorter.

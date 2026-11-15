@@ -55,6 +55,16 @@ Hace inventario de la sesión antes de trabajar en ella, y guarda en el perfil d
 - **Qué no puede ver** (lo dice siempre): la automatización, la ganancia de los clips y los fundidos, los marcadores, un evento que empieza exactamente en 0 s, los presets de los plugins, los envíos y los side-chains.
 - **Qué escribe:** solo `Trackwright/profile.toml`, después de enseñártelo; nada cambia en el proyecto de Cubase.
 
+## `podcast-final-qc`
+
+El último vistazo antes de publicar: ¿cumple el archivo lo que piden las plataformas, y hay algo que notaría un oyente?
+
+- **Pídela así:** "¿está el episodio listo para Apple y Spotify?", "revisa este MP3 antes de publicarlo".
+- **Qué comprueba:** formato, canales, frecuencia de muestreo, tasa de bits, tamaño, sonoridad y pico real frente a cada destino, con la página de la propia plataforma como fuente; un valor que la plataforma no publica se dice "no publicado", nunca se da por bueno. La duración frente al rango aprobado.
+- **De qué avisa:** pausas largas, silencio al principio o al final, cambios bruscos de nivel entre secciones, saturación; y antes de una exportación nueva, una pista en solo, una pista de referencia sin silenciar o una voz silenciada.
+- **Dónde escuchar:** el principio, el final, las pausas más largas, los cambios de nivel y el momento más fuerte; puede llevar el cursor a cada uno.
+- **Qué cambia:** nada. Corregir la sonoridad o los picos es trabajo de `podcast-delivery`. Puede guardar el informe (JSON y Markdown) en `Trackwright/reports/`.
+
 ## `podcast-silence-trim`
 
 Encuentra los silencios más largos que una duración y los quita, cerrando los huecos para que el episodio sea más corto.
