@@ -471,8 +471,13 @@ def build_server(service: CubaseService) -> MCPServer:
             float, Field(ge=0, le=5, description="kept before and after each silence so words are not cut")
         ] = 0.25,
         merge_gap_seconds: Annotated[
-            float, Field(ge=0, le=5, description="louder blips shorter than this do not break a silence")
-        ] = 0.3,
+            float,
+            Field(
+                ge=0,
+                le=5,
+                description="louder blips shorter than this (a click) do not break a silence; keep it below a syllable",
+            ),
+        ] = 0.05,
         offset: Annotated[int, Field(ge=0)] = 0,
         limit: Annotated[int, Field(ge=1, le=500)] = 100,
     ) -> AnalysisOut:

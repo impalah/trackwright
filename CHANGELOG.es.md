@@ -4,6 +4,8 @@
 
 ## Sin publicar
 
+- **Skill `noise-gate`** (TW-1507): encuentra las puertas de ruido instaladas (de Cubase o de terceros), mide el ruido y la voz más baja sobre una exportación, traduce el umbral a la entrada de la puerta (faders, ley de panorama) y lo aplica con la aprobación del usuario. `cubase_analyze_audio` devuelve además `quiet_sound_db` y `sound_db`.
+- **Corrección:** el valor por defecto de `merge_gap_seconds` de `cubase_analyze_audio` baja de 0,3 a 0,05 s. Con 0,3 s, las sílabas de 250 ms se tomaban por ruidos breves y una frase entera podía salir como silencio.
 - **Skill `podcast-silence-trim`** (TW-1506): encuentra y quita los silencios más largos que una duración, cerrando los huecos en todas las pistas; exporta con el usuario, mide con `cubase_analyze_audio`, enseña los cortes y solo corta lo que el usuario aprueba, del final hacia el principio.
 - **Plugin de Claude Code** (TW-1505): `plugins/claude-code/` (manifiesto, `.mcp.json` que arranca `uvx trackwright==<versión> serve`, carpeta de skills) y el marketplace en `.claude-plugin/marketplace.json`; `tests/unit/test_plugin.py` mantiene coherentes las versiones, los nombres y las herramientas que nombran las skills. Aún sin skills.
 - **El arranque automático espera a Cubase** (TW-1509): tras arrancar el puente, el servidor repite `hello` hasta que Cubase responde (dentro de `[bridge] autostart_timeout`) antes de enviar la petición, en lugar de fallar la primera con `TIMEOUT`.

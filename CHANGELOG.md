@@ -4,6 +4,8 @@
 
 ## Unreleased
 
+- **Skill `noise-gate`** (TW-1507): finds the gate plugins installed (Cubase's or third-party), measures the noise and the quietest speech on an export, translates the threshold to the gate's input (faders, pan law) and sets it with the user's approval. `cubase_analyze_audio` now also returns `quiet_sound_db` and `sound_db`.
+- **Fix:** the default `merge_gap_seconds` of `cubase_analyze_audio` drops from 0.3 to 0.05 s. With 0.3 s, syllables of 250 ms were taken for blips and a whole phrase could be reported as silence.
 - **Skill `podcast-silence-trim`** (TW-1506): finds and removes silences longer than a duration, closing the gaps on every track; exports with the user, measures with `cubase_analyze_audio`, shows the cuts and only cuts what the user approves, from the end to the start.
 - **Claude Code plugin** (TW-1505): `plugins/claude-code/` (manifest, `.mcp.json` that starts `uvx trackwright==<version> serve`, skills folder) and the marketplace in `.claude-plugin/marketplace.json`; `tests/unit/test_plugin.py` keeps versions, names and the tools the skills name consistent. No skills yet.
 - **Autostart waits for Cubase** (TW-1509): after starting the bridge, the server repeats `hello` until Cubase answers (within `[bridge] autostart_timeout`) before sending the request, instead of failing the first request with `TIMEOUT`.

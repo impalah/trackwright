@@ -37,8 +37,9 @@ class SilenceCriteria:
     threshold_db: float | None = None
     padding_seconds: float = 0.25
     """Kept before and after each silence so the edges of words are not cut (not at the file's ends)."""
-    merge_gap_seconds: float = 0.3
-    """Louder blips shorter than this inside a silence (a click, a breath) do not break it."""
+    merge_gap_seconds: float = 0.05
+    """Louder blips shorter than this inside a silence (a click) do not break it. Keep it below the length of
+    a syllable (TW-1507: with 0.3 s, 250 ms syllables were taken for blips and a whole phrase for silence)."""
 
     def check(self) -> None:
         if self.min_seconds <= 0:
@@ -80,6 +81,18 @@ def threshold(levels: Levels, criteria: SilenceCriteria) -> float | None:
     limit = floor + criteria.above_floor_db
     sound = float(np.percentile(levels.rms_db[~levels.digital_silence], SOUND_PERCENTILE))
     return limit if limit < sound else None
+
+
+def sound_levels(levels: Levels, limit: float | None) -> tuple[float | None, float | None]:
+    """Level of the quietest part of the sound (10th percentile) and its typical level (median), over the
+    windows at or above ``limit`` (TW-1507). A noise gate threshold belongs between the noise floor and the
+    first value: below it, soft speech would be cut. ``(None, None)`` without a threshold or without sound."""
+    if limit is None:
+        return None, None
+    sound = levels.rms_db[(levels.rms_db >= limit) & ~levels.digital_silence]
+    if sound.size == 0:
+        return None, None
+    return float(np.percentile(sound, FLOOR_PERCENTILE)), float(np.percentile(sound, 50.0))
 
 
 def _runs(mask: list[bool]) -> list[tuple[int, int]]:

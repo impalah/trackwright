@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from trackwright.analysis import SilenceCriteria, find_silences, measure, noise_floor, probe
+from trackwright.analysis import SilenceCriteria, find_silences, measure, noise_floor, probe, sound_levels
 from trackwright.analysis.detect import threshold
 from trackwright.analysis.reader import SILENT_DB
 from trackwright.core.base import ServiceBase
@@ -34,7 +34,7 @@ class AnalyzingMixin(ServiceBase):
         above_floor_db: float = 10.0,
         threshold_db: float | None = None,
         padding_seconds: float = 0.25,
-        merge_gap_seconds: float = 0.3,
+        merge_gap_seconds: float = 0.05,
         offset: int = 0,
         limit: int = 100,
     ) -> AnalysisOut:
@@ -60,6 +60,7 @@ class AnalyzingMixin(ServiceBase):
         limit = max(1, min(limit, MAX_SILENCES))
         page = silences[offset : offset + limit]
         used = threshold(levels, criteria)
+        quiet, typical = sound_levels(levels, used)
         notes = []
         if used is None:
             notes.append(
@@ -78,6 +79,8 @@ class AnalyzingMixin(ServiceBase):
             start_seconds=origin,
             noise_floor_db=_db(noise_floor(levels)),
             threshold_db=_db(used),
+            quiet_sound_db=_db(quiet),
+            sound_db=_db(typical),
             peak_db=_db(levels.peak_db),
             rms_db=_db(levels.rms_total_db),
             criteria={

@@ -10,7 +10,7 @@ knows nothing about Cubase: times are seconds from the start of the file.
 - :func:`noise_floor` and :func:`find_silences` work on those levels and are pure.
 """
 
-from trackwright.analysis.detect import Silence, SilenceCriteria, find_silences, noise_floor
+from trackwright.analysis.detect import Silence, SilenceCriteria, find_silences, noise_floor, sound_levels
 from trackwright.analysis.reader import AudioInfo, Levels, measure, probe
 
 __all__ = [
@@ -22,4 +22,5 @@ __all__ = [
     "measure",
     "noise_floor",
     "probe",
+    "sound_levels",
 ]

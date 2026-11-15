@@ -381,7 +381,7 @@ The Cubase API cannot read what a track contains, so silences and noise are meas
 - **Input:**
   - `file`: absolute path (WAV, AIFF, FLAC or Ogg).
   - `start`: project time of the file's first sample, in seconds (`"2"`, `"0:00:02.000"`); `"0"` by default.
-  - `min_seconds` (2), `above_floor_db` (10), `threshold_db` (none), `padding_seconds` (0.25), `merge_gap_seconds` (0.3), `offset` and `limit` (100, at most 500).
+  - `min_seconds` (2), `above_floor_db` (10), `threshold_db` (none), `padding_seconds` (0.25), `merge_gap_seconds` (0.05: shorter than a syllable, so speech is never taken for a blip), `offset` and `limit` (100, at most 500).
 - **How it measures:** the RMS level of every 20 ms window, over all channels together. The noise floor is the 10th percentile of those levels, leaving out digital silence (the exact zeros an export holds before and after the events). A silence is a span below the threshold lasting at least `min_seconds`; blips shorter than `merge_gap_seconds` inside it do not break it, and `padding_seconds` is kept at each side so words are not cut (not at the file's ends).
 - **Threshold:** noise floor + `above_floor_db`, which does not depend on faders or pan law (a centered mono track exports 3 dB lower). Only when it stays below the level of the sound (90th percentile); otherwise only digital silence counts, and a note says so. `threshold_db` gives an absolute value in dBFS instead.
 - **Output:** format, sample rate, channels and duration; `noise_floor_db`, `threshold_db`, `peak_db`, `rms_db`; `silences` in project time (`start`, `end`, their values in seconds, `seconds`, `level_db`, `digital`), `total` and `total_seconds`. The levels are the export's, not the source file's.

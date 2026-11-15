@@ -415,6 +415,11 @@ class AnalysisOut(_Out):
     start_seconds: float
     noise_floor_db: float | None = Field(description="10th percentile of 20 ms levels, digital silence excluded")
     threshold_db: float | None = Field(description="threshold used; null when only digital silence counted")
+    quiet_sound_db: float | None = Field(
+        description="10th percentile of the levels above the threshold: the quietest part of the sound (soft "
+        "speech); a noise gate threshold belongs between noise_floor_db and this value"
+    )
+    sound_db: float | None = Field(description="median level above the threshold: the typical level of the sound")
     peak_db: float | None
     rms_db: float | None = Field(description="RMS of the whole file")
     criteria: dict[str, float | None]

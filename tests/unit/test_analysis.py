@@ -11,7 +11,16 @@ import soundfile as sf
 from hypothesis import given, settings
 from hypothesis import strategies as st
 
-from trackwright.analysis import AudioInfo, Levels, SilenceCriteria, find_silences, measure, noise_floor, probe
+from trackwright.analysis import (
+    AudioInfo,
+    Levels,
+    SilenceCriteria,
+    find_silences,
+    measure,
+    noise_floor,
+    probe,
+    sound_levels,
+)
 from trackwright.analysis.detect import threshold
 from trackwright.analysis.reader import BLOCK_WINDOWS, SILENT_DB
 from trackwright.errors import NotFoundError, PreconditionFailedError
@@ -129,7 +138,7 @@ def test_short_blips_do_not_break_a_silence(tmp_path: Path) -> None:
     rate = 8_000
     blip = layout(rate, [("tone", 1), ("quiet", 2), ("tone", 0.1), ("quiet", 2), ("tone", 1)])
     levels = measure(write(tmp_path / "blip.wav", blip, rate))
-    assert spans(find_silences(levels, SilenceCriteria(min_seconds=3.0))) == [(1.25, 4.85)]
+    assert spans(find_silences(levels, SilenceCriteria(min_seconds=3.0, merge_gap_seconds=0.3))) == [(1.25, 4.85)]
     split = find_silences(levels, SilenceCriteria(min_seconds=1.5, merge_gap_seconds=0.0))
     assert spans(split) == [(1.25, 2.75), (3.35, 4.85)]
 
@@ -237,3 +246,37 @@ def test_silences_are_ordered_inside_and_long_enough(
         assert silence.start >= previous_end
         assert silence.seconds >= min_seconds - 2 * padding - 1e-6
         previous_end = silence.end
+
+
+def test_quiet_and_typical_sound_levels(tmp_path: Path) -> None:
+    """TW-1507: a gate threshold must stay below the soft phrase; the quiet level finds it."""
+    rate = 8_000
+    rng = np.random.default_rng(5)
+    floor = rng.normal(0.0, 10 ** (-55 / 20), rate * 20)
+    t = np.arange(rate * 4) / rate
+    loud = np.sqrt(2) * 10 ** (-16 / 20) * np.sin(2 * np.pi * 220 * t)
+    soft = np.sqrt(2) * 10 ** (-36 / 20) * np.sin(2 * np.pi * 220 * t)
+    data = floor.copy()
+    data[rate * 2 : rate * 6] += loud
+    data[rate * 8 : rate * 12] += soft
+    data[rate * 14 : rate * 18] += loud
+    levels = measure(write(tmp_path / "gate.wav", data, rate))
+    limit = threshold(levels, SilenceCriteria())
+    assert noise_floor(levels) == pytest.approx(-55.0, abs=1.0)
+    quiet, typical = sound_levels(levels, limit)
+    assert quiet == pytest.approx(-36.0, abs=1.0)  # the soft phrase, not the noise and not the loud parts
+    assert typical == pytest.approx(-16.0, abs=1.0)
+    assert sound_levels(levels, None) == (None, None)
+    assert sound_levels(levels, 10.0) == (None, None)  # nothing above the limit
+
+
+def test_syllables_are_not_blips(tmp_path: Path) -> None:
+    """TW-1507: speech is 250 ms syllables with 100 ms gaps; the default merge gap must not join the pauses
+    around a phrase into one silence (0.3 s did: the whole file became a silence)."""
+    rate = 8_000
+    t = np.arange(rate * 4) / rate
+    envelope = ((t % 0.35) < 0.25).astype(np.float64)
+    phrase = np.sqrt(2) * 10 ** (-16 / 20) * np.sin(2 * np.pi * 220 * t) * envelope
+    data = np.concatenate([noise(3, rate, -55.0, 1), phrase + noise(4, rate, -55.0, 2), noise(3, rate, -55.0, 3)])
+    levels = measure(write(tmp_path / "speech.wav", data, rate))
+    assert spans(find_silences(levels, SilenceCriteria(min_seconds=1.0))) == [(0.0, 2.75), (7.25, 10.0)]

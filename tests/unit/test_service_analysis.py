@@ -46,6 +46,8 @@ def test_silences_in_project_seconds(fake: FakeCubase, tmp_path: Path) -> None:
     assert out.start == "0:00:02.000"
     assert out.noise_floor_db == pytest.approx(-60.0, abs=1.5)
     assert out.threshold_db == pytest.approx(out.noise_floor_db + 10, abs=0.01)  # type: ignore[operator]
+    assert out.quiet_sound_db == pytest.approx(-12.0, abs=1.0)  # only the tone is above the threshold
+    assert out.sound_db == pytest.approx(-12.0, abs=1.0)
     assert [(s.start, s.end) for s in out.silences] == [
         ("0:00:02.000", "0:00:05.750"),  # zeros + noise before the tone; no padding at the file's start
         ("0:00:10.250", "0:00:13.750"),
@@ -72,6 +74,7 @@ def test_no_contrast_says_so(fake: FakeCubase, tmp_path: Path) -> None:
     assert out.silences == []
     assert out.threshold_db is None
     assert "no contrast" in out.notes[0]
+    assert (out.quiet_sound_db, out.sound_db) == (None, None)
 
 
 def test_absolute_threshold_and_paging(fake: FakeCubase, tmp_path: Path) -> None:
