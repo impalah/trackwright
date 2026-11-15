@@ -33,7 +33,7 @@ Integration tests against the real Cubase are opt-in: `TRACKWRIGHT_INTEGRATION=1
 - `cli.py` (commands), `installer.py` (`trackwright setup`), `doctor.py`, `config.py` (TOML + pydantic, `~/.config/trackwright/config.toml`), `launcher.py` (bridge and Cubase launchers).
 - `protocol.py` (SysEx framing), `coremidi.py` / `transport.py`, `bridge.py` (daemon + client), `host.py`, `hostport.py`, `ops.py` (script operations: read vs write allowlist).
 - `core/`: `CubaseService` built from mixins (reading, writing, commanding, automation, project, settings, ranges, exporting, importing, saving, presets, lifecycle), `policy.py` (write policy), `models.py`, `refs.py`.
-- `server.py`: registers the 32 `cubase_*` MCP tools. `commands.py`: Cubase commands with their observed class (`direct`, `dialog`, `confirm`, `ui_selection`, `unknown`); keys must match `COMMANDS` in the script.
+- `server.py`: registers the 33 `cubase_*` MCP tools. `commands.py`: Cubase commands with their observed class (`direct`, `dialog`, `confirm`, `ui_selection`, `unknown`); keys must match `COMMANDS` in the script.
 - `analysis/`: audio analysis with numpy + soundfile (window levels, noise floor, silences) on exported files; knows nothing about Cubase (TW-1503).
 - `fake/`: `FakeCubase` simulator, in layers (core, editing, automation, writes, reads) (tests and `serve --simulate`). Passing against it proves nothing about real Cubase.
 - `experiments/twNNNN/`: throwaway probes against real Cubase, each with a README of what was observed.

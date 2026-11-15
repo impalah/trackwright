@@ -106,7 +106,7 @@ Then use Copilot Chat in agent mode. The Trackwright tools appear in its tool li
 
 ## What it can do (Cubase)
 
-32 tools, all with structured output:
+33 tools, all with structured output:
 
 - **Reading:** status, mixer tracks, selected channel, inserts, plugin catalog, parameters, transport and recent changes.
 - **Writing**, always with a dry run (`dry_run`) and verification by reading back: parameters (as normalized values or in real units), plugin insertion, volume, mute, solo, record arm, track name and tempo.
@@ -118,6 +118,7 @@ Then use Copilot Chat in agent mode. The Trackwright tools appear in its tool li
 - **Save the project:** only on request, with its own permission (`[writes] save`), dry run and verification by the file's timestamp.
 - **Import audio:** on the given track and position, with the Cubase file picker, and verification by the edges of the new event.
 - **Export the mix:** of a range or of the whole project, with the Cubase dialog, and confirmation of the created file.
+- **Analyze audio:** noise floor, levels and silences of an exported file, in project seconds. Reading audio has its own permission (`[analysis] enabled`).
 - **Cubase commands:** markers, track deletion, splitting at the locators, track creation with the user's help, and a list of allowed commands. Each command states how it behaves: whether it acts directly, opens a dialog or asks for confirmation.
 
 By default it **only reads**. Writes are enabled in the configuration and can be limited to specific tracks.

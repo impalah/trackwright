@@ -20,6 +20,7 @@ from pydantic import Field
 
 from trackwright import SERVER_NAME, __version__
 from trackwright.core.models import (
+    AnalysisOut,
     AutomationPoint,
     AutomationRecordOut,
     AutomationTargetsOut,
@@ -442,6 +443,44 @@ def build_server(service: CubaseService) -> MCPServer:
             lambda: service.export_mix(
                 phase, start=start, end=end, unit=unit, since=since, expected_seconds=expected_seconds,
                 folder=folder, dry_run=dry_run,
+            )
+        )  # fmt: skip
+
+    # ------------------------------------------------------------------ audio analysis (TW-1504)
+    @server.tool(
+        annotations=READ,
+        description="Analyze an exported audio file: noise floor, levels and the silences longer than "
+        "min_seconds, in project seconds. Export first with cubase_export_mix (Cubase Elements exports only "
+        "Stereo Out: solo the track to analyze it alone) and pass the file and the range start. Reads the file "
+        "only; needs [analysis] enabled. Levels are the export's (pan law, faders, inserts): prefer the "
+        "threshold relative to the noise floor.",
+    )
+    async def cubase_analyze_audio(
+        file: Annotated[str, Field(description="absolute path of the audio file (WAV, AIFF, FLAC, Ogg)")],
+        start: Annotated[
+            str, Field(description="project time of the file's first sample: the export's range start (seconds)")
+        ] = "0",
+        min_seconds: Annotated[float, Field(gt=0, le=3600, description="shortest silence reported")] = 2.0,
+        above_floor_db: Annotated[
+            float, Field(ge=0, le=60, description="threshold = noise floor + this many dB (if threshold_db is null)")
+        ] = 10.0,
+        threshold_db: Annotated[
+            float | None, Field(ge=-120, le=0, description="absolute threshold in dBFS instead of the relative one")
+        ] = None,
+        padding_seconds: Annotated[
+            float, Field(ge=0, le=5, description="kept before and after each silence so words are not cut")
+        ] = 0.25,
+        merge_gap_seconds: Annotated[
+            float, Field(ge=0, le=5, description="louder blips shorter than this do not break a silence")
+        ] = 0.3,
+        offset: Annotated[int, Field(ge=0)] = 0,
+        limit: Annotated[int, Field(ge=1, le=500)] = 100,
+    ) -> AnalysisOut:
+        return await run(
+            lambda: service.analyze_audio(
+                file, start=start, min_seconds=min_seconds, above_floor_db=above_floor_db,
+                threshold_db=threshold_db, padding_seconds=padding_seconds,
+                merge_gap_seconds=merge_gap_seconds, offset=offset, limit=limit,
             )
         )  # fmt: skip
 

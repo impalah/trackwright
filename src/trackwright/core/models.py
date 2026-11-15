@@ -394,6 +394,36 @@ class RangeEditOut(_Out):
 
 
 # ---------------------------------------------------------------------------- export (TW-1204)
+class SilenceOut(_Out):
+    start: str = Field(description="project time, h:mm:ss.mmm (padding already applied)")
+    end: str
+    start_seconds: float
+    end_seconds: float
+    seconds: float
+    level_db: float | None = Field(description="mean level of the span in dBFS; null for exact digital silence")
+    digital: bool = Field(description="the whole span is exact zeros (no audio there in the project)")
+
+
+class AnalysisOut(_Out):
+    file: str
+    format: str
+    subtype: str = Field(description="sample format, e.g. FLOAT, PCM_24")
+    sample_rate: int
+    channels: int
+    seconds: float = Field(description="duration of the file")
+    start: str = Field(description="project time of the file's first sample (the export's left locator)")
+    start_seconds: float
+    noise_floor_db: float | None = Field(description="10th percentile of 20 ms levels, digital silence excluded")
+    threshold_db: float | None = Field(description="threshold used; null when only digital silence counted")
+    peak_db: float | None
+    rms_db: float | None = Field(description="RMS of the whole file")
+    criteria: dict[str, float | None]
+    total: int = Field(description="number of silences found")
+    total_seconds: float = Field(description="their total duration")
+    silences: list[SilenceOut] = Field(description="in project seconds, ordered; paged with offset and limit")
+    notes: list[str] = Field(default_factory=list)
+
+
 class ExportedFileOut(_Out):
     path: str
     size_bytes: int

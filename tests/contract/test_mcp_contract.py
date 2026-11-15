@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
+from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pytest
+import soundfile as sf
 from mcp.client import Client
 
 from trackwright import SERVER_NAME
@@ -27,6 +30,7 @@ READ_TOOLS = {
     "cubase_get_parameter",
     "cubase_get_transport",
     "cubase_poll_changes",
+    "cubase_analyze_audio",
 }
 WRITE_TOOLS = {
     "cubase_set_parameter",
@@ -283,3 +287,22 @@ async def test_unexpected_errors_reach_the_client_with_a_code(client: Client, fa
     result = await client.call_tool("cubase_get_transport", {})
     assert result.is_error
     assert "INTERNAL_ERROR" in str(result.content[0].text)  # type: ignore[union-attr]
+
+
+async def test_analyze_audio_tool(fake: FakeCubase, tmp_path: Path) -> None:
+    """TW-1504: refused while [analysis] is off; read-only; silences in project seconds."""
+    rate = 8_000
+    quiet = np.random.default_rng(3).normal(0.0, 0.001, rate * 4)
+    loud = np.sin(2 * np.pi * 440 * np.arange(rate) / rate) * 0.3
+    file = tmp_path / "mix.wav"
+    sf.write(str(file), np.concatenate([loud, quiet, loud]), rate, subtype="FLOAT")
+    async with Client(build_server(CubaseService(fake, WritePolicy(enabled=True)))) as off:
+        assert "ANALYSIS_DISABLED" in await call_error(off, "cubase_analyze_audio", {"file": str(file)})
+    async with Client(build_server(CubaseService(fake, WritePolicy(analysis=True)))) as on:
+        tools = {t.name: t for t in (await on.list_tools()).tools}
+        assert tools["cubase_analyze_audio"].annotations.read_only_hint is True  # type: ignore[union-attr]
+        out = await call(on, "cubase_analyze_audio", {"file": str(file), "start": "10", "min_seconds": 3})
+        assert [(s["start_seconds"], s["end_seconds"]) for s in out["silences"]] == [(11.25, 14.75)]
+        assert "TOO_LONG" not in str(out)
+        text = await call_error(on, "cubase_analyze_audio", {"file": str(file), "min_seconds": 0})
+        assert "min_seconds" in text  # rejected by the input schema

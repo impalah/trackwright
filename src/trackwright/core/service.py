@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from trackwright.core.analyzing import AnalyzingMixin
 from trackwright.core.automation import AutomationMixin
 from trackwright.core.commanding import CommandingMixin
 from trackwright.core.importing import ImportMixin
@@ -14,6 +15,7 @@ from trackwright.core.writing import WritingMixin
 
 
 class CubaseService(
+    AnalyzingMixin,
     PresetMixin,
     SettingsMixin,
     SavingMixin,
@@ -24,4 +26,5 @@ class CubaseService(
     WritingMixin,
     ReadingMixin,
 ):
-    """Every tool: read, write, commands, automation, launch, project, ranges, export, import and save (E05-E12)."""
+    """Every tool: read, write, commands, automation, launch, project, ranges, export, import, save and
+    audio analysis (E05-E12, E15)."""

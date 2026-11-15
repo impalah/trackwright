@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 32 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 33 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -66,6 +66,7 @@ Errors arrive as tool errors, in the format `CODE: message | details: {...}`. Th
 | `STALE_SESSION` | Cubase reloaded the script during the operation; it stopped before writing further. |
 | `TIMEOUT` | Cubase did not respond in time. For writes: outcome unknown. |
 | `WRITES_DISABLED`, `NOT_ALLOWED` | The configuration does not allow that write. |
+| `ANALYSIS_DISABLED`, `TOO_LONG` | The configuration does not allow reading audio, or the file is longer than allowed. |
 | `TRACK_NOT_FOUND`, `TRACK_AMBIGUOUS`, `NO_SELECTION` | The track cannot be resolved. |
 | `INVALID_OBJECT` | The object no longer exists (for example, it was removed in Cubase). |
 | `CANNOT_PERFORM` | Cubase says the command cannot be run right now. |
@@ -366,6 +367,26 @@ Trackwright **never exports by itself**: it sets the range and opens the Cubase 
     - ±(0.5 s + 0.2%) for MP3, AAC and OGG, whose duration is an estimate and which lose or gain frames at the end. Verified: an MP3 of the 139.976 s episode measured 139.721 s.
 - The locators **stay** on the exported range.
 - **Errors:** `TRANSPORT_RUNNING`, `CANNOT_PERFORM` (another dialog is open), `BAD_TIME` and `WRITES_DISABLED`.
+
+## Analyzing audio
+
+### `cubase_analyze_audio` (read, needs `[analysis] enabled`)
+
+The Cubase API cannot read what a track contains, so silences and noise are measured on an **exported file**. An export between the locators is aligned with the project to the sample (verified, TW-1501): project time = range start + time in the file.
+
+- **Typical flow:**
+  1. Solo the track to analyze (`cubase_set_track_mix`): Cubase Elements exports only Stereo Out.
+  2. `cubase_export_mix` with the range; the user exports WAV, 32-bit float, at the project's sample rate.
+  3. `cubase_analyze_audio` with the file from the `confirm` phase and `start` = the range start. Undo the solo.
+- **Input:**
+  - `file`: absolute path (WAV, AIFF, FLAC or Ogg).
+  - `start`: project time of the file's first sample, in seconds (`"2"`, `"0:00:02.000"`); `"0"` by default.
+  - `min_seconds` (2), `above_floor_db` (10), `threshold_db` (none), `padding_seconds` (0.25), `merge_gap_seconds` (0.3), `offset` and `limit` (100, at most 500).
+- **How it measures:** the RMS level of every 20 ms window, over all channels together. The noise floor is the 10th percentile of those levels, leaving out digital silence (the exact zeros an export holds before and after the events). A silence is a span below the threshold lasting at least `min_seconds`; blips shorter than `merge_gap_seconds` inside it do not break it, and `padding_seconds` is kept at each side so words are not cut (not at the file's ends).
+- **Threshold:** noise floor + `above_floor_db`, which does not depend on faders or pan law (a centered mono track exports 3 dB lower). Only when it stays below the level of the sound (90th percentile); otherwise only digital silence counts, and a note says so. `threshold_db` gives an absolute value in dBFS instead.
+- **Output:** format, sample rate, channels and duration; `noise_floor_db`, `threshold_db`, `peak_db`, `rms_db`; `silences` in project time (`start`, `end`, their values in seconds, `seconds`, `level_db`, `digital`), `total` and `total_seconds`. The levels are the export's, not the source file's.
+- **Reads only the file:** nothing is sent to Cubase, and only the measurements are returned.
+- **Errors:** `ANALYSIS_DISABLED`, `TOO_LONG` (longer than `[analysis] max_seconds`), `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST` (relative path, invalid criteria).
 
 ## Opening Cubase
 

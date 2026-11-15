@@ -4,6 +4,7 @@
 
 ## Unreleased
 
+- **New tool `cubase_analyze_audio`** (TW-1504): noise floor, levels and silences of an exported file, in project seconds; read-only, needs `[analysis] enabled`. The server now has 33 tools.
 - **Audio analyzer** (TW-1503): the `trackwright.analysis` package reads WAV, AIFF, FLAC and Ogg files in blocks (numpy and soundfile, new dependencies) and finds the noise floor and the silences, with a threshold relative to the noise floor or absolute, a minimum duration, padding and merging of short blips. Not exposed as a tool yet (TW-1504).
 - **`[analysis]` configuration** (TW-1502): reading audio files is a capability of its own, off by default (`ANALYSIS_DISABLED`) and limited by `max_seconds` (`TOO_LONG`); `trackwright setup` asks for it (`--analysis`), and `cubase_status` and `trackwright doctor` report it. The analysis tool comes in TW-1504.
 - **Repository hygiene** (TW-1415): pre-commit (ruff, mypy), Dependabot (uv and GitHub Actions), CONTRIBUTING and SECURITY (English and Spanish), issue and pull request templates; ruff rules PT, PERF, FURB, ASYNC and TRY; pytest fails on warnings and on hung tests; runtime dependencies bounded below their next major version (`mcp<3`, `pydantic<3`, `loguru<1`).

@@ -2,7 +2,7 @@
 
 [English](04-tools.md) · **Español**
 
-El servidor `trackwright` publica 32 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 33 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 Trackwright aspira a admitir varios DAW, pero hoy solo implementa **Cubase**. Por eso todas las herramientas se llaman `cubase_*` y esta página describe el comportamiento de Cubase: se verificó contra Cubase Elements 15.0.30, con scripts de experimento y desde Claude Code (ver el [registro de verificación](../verification.es.md)). Cualquier cliente MCP recibe las mismas herramientas. Otro DAW tendría su propio conjunto de herramientas; ver [Extensión a otros DAW](../architecture.es.md#extensión-a-otros-daw-posible-no-implementada).
 
@@ -66,6 +66,7 @@ Los errores llegan como error de herramienta, con el formato `CÓDIGO: mensaje |
 | `STALE_SESSION` | Cubase recargó el script durante la operación; se detuvo antes de seguir escribiendo. |
 | `TIMEOUT` | Cubase no respondió a tiempo. En escrituras: resultado desconocido. |
 | `WRITES_DISABLED`, `NOT_ALLOWED` | La configuración no permite esa escritura. |
+| `ANALYSIS_DISABLED`, `TOO_LONG` | La configuración no permite leer audio, o el archivo es más largo de lo permitido. |
 | `TRACK_NOT_FOUND`, `TRACK_AMBIGUOUS`, `NO_SELECTION` | No se puede resolver la pista. |
 | `INVALID_OBJECT` | El objeto ya no existe (por ejemplo, se borró en Cubase). |
 | `CANNOT_PERFORM` | Cubase dice que ahora no se puede ejecutar ese comando. |
@@ -366,6 +367,26 @@ Trackwright **nunca exporta por sí mismo**: coloca el rango y abre el diálogo 
     - ±(0,5 s + 0,2 %) en MP3, AAC y OGG, cuya duración es una estimación y que pierden o ganan tramas al final. Verificado: un MP3 del episodio de 139,976 s midió 139,721 s.
 - Los localizadores **se quedan** en el rango exportado.
 - **Errores:** `TRANSPORT_RUNNING`, `CANNOT_PERFORM` (hay otro diálogo abierto), `BAD_TIME` y `WRITES_DISABLED`.
+
+## Analizar audio
+
+### `cubase_analyze_audio` (lectura, necesita `[analysis] enabled`)
+
+La API de Cubase no puede leer lo que contiene una pista, así que los silencios y el ruido se miden sobre un **archivo exportado**. Una exportación entre localizadores está alineada con el proyecto a la muestra (verificado, TW-1501): tiempo del proyecto = inicio del rango + tiempo en el archivo.
+
+- **Flujo habitual:**
+  1. Poner en solo la pista que se quiere analizar (`cubase_set_track_mix`): Cubase Elements solo exporta Stereo Out.
+  2. `cubase_export_mix` con el rango; el usuario exporta WAV, 32 bits float, a la frecuencia del proyecto.
+  3. `cubase_analyze_audio` con el archivo de la fase `confirm` y `start` = el inicio del rango. Quitar el solo.
+- **Entrada:**
+  - `file`: ruta absoluta (WAV, AIFF, FLAC u Ogg).
+  - `start`: tiempo del proyecto de la primera muestra del archivo, en segundos (`"2"`, `"0:00:02.000"`); `"0"` por defecto.
+  - `min_seconds` (2), `above_floor_db` (10), `threshold_db` (ninguno), `padding_seconds` (0,25), `merge_gap_seconds` (0,3), `offset` y `limit` (100, como mucho 500).
+- **Cómo mide:** el nivel RMS de cada ventana de 20 ms, con todos los canales a la vez. El ruido de fondo es el percentil 10 de esos niveles, sin contar el silencio digital (los ceros exactos que tiene una exportación antes y después de los eventos). Un silencio es un tramo por debajo del umbral que dura al menos `min_seconds`; los ruidos más cortos que `merge_gap_seconds` dentro de él no lo rompen, y se conserva `padding_seconds` a cada lado para no cortar palabras (no en los extremos del archivo).
+- **Umbral:** ruido de fondo + `above_floor_db`, que no depende de los faders ni de la ley de panorama (una pista mono centrada se exporta 3 dB más baja). Solo si queda por debajo del nivel del sonido (percentil 90); si no, solo cuenta el silencio digital, y una nota lo indica. `threshold_db` da en su lugar un valor absoluto en dBFS.
+- **Salida:** formato, frecuencia de muestreo, canales y duración; `noise_floor_db`, `threshold_db`, `peak_db`, `rms_db`; `silences` en tiempo del proyecto (`start`, `end`, sus valores en segundos, `seconds`, `level_db`, `digital`), `total` y `total_seconds`. Los niveles son los de la exportación, no los del archivo de origen.
+- **Solo lee el archivo:** no se envía nada a Cubase, y solo se devuelven las medidas.
+- **Errores:** `ANALYSIS_DISABLED`, `TOO_LONG` (más largo que `[analysis] max_seconds`), `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST` (ruta relativa, criterios no válidos).
 
 ## Abrir Cubase
 
