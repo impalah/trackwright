@@ -65,7 +65,7 @@
 
 ### TW-1505 Estructura del plugin y del marketplace
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-15): plugin en `plugins/claude-code/` (`plugin.json` con la versión del paquete, README en ambos idiomas), marketplace en la raíz, `.mcp.json` con `uvx --from ${TRACKWRIGHT_FROM:-trackwright==<versión>} trackwright serve` (`uvx` funciona; la variable permite usar un repositorio durante el desarrollo, porque la 0.4.0 publicada rechaza una configuración con `[analysis]`). `claude plugin validate --strict` pasa para el plugin y el marketplace (solo un aviso por falta de icono, que solo importa para el catálogo de Anthropic); no está en la integración continua, que no tiene la CLI `claude`: es un paso de la publicación. Registro duplicado: documentado en el README del plugin con la orden para quitar el manual; `doctor` no lo detecta, porque Claude Code no documenta dónde registra los plugins. Verificado: `TRACKWRIGHT_FROM=$PWD claude --plugin-dir plugins/claude-code mcp list` muestra `plugin:trackwright:trackwright` conectado
 - **Alcance:**
   1. `plugins/claude-code/` con `.claude-plugin/plugin.json` (`name: "trackwright"`, versión, descripción, autor, homepage, repositorio, licencia) y `skills/`.
   2. `.mcp.json` del plugin: el servidor arrancado como `uvx trackwright==X.Y.Z serve`, con la versión que corresponde al plugin. **Por comprobar:** la documentación muestra `npx` pero no dice nada de `uvx`; si falla, documentar la alternativa.

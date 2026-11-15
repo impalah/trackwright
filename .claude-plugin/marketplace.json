@@ -1,0 +1,15 @@
+{
+  "name": "trackwright",
+  "owner": {
+    "name": "impalah",
+    "url": "https://pressanykey.tech"
+  },
+  "description": "Trackwright: MCP server and producer skills for controlling Cubase from Claude Code.",
+  "plugins": [
+    {
+      "name": "trackwright",
+      "source": "./plugins/claude-code",
+      "description": "Producer skills for Cubase through the Trackwright MCP server."
+    }
+  ]
+}

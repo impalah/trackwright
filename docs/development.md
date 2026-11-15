@@ -139,8 +139,8 @@ Goal: at least 85 % of the mutants killed in these modules. The scores of each r
 
 ## Releasing a version
 
-1. Update `version` in `pyproject.toml` and the changelog (`CHANGELOG.md` and `CHANGELOG.es.md`); `uv sync` updates `uv.lock`.
-2. `make check` and `make mutation` (see the section above), then commit.
+1. Update `version` in `pyproject.toml` and the changelog (`CHANGELOG.md` and `CHANGELOG.es.md`); `uv sync` updates `uv.lock`. Update the same version in the Claude Code plugin: `version` in `plugins/claude-code/.claude-plugin/plugin.json` and the `trackwright==` pin in `plugins/claude-code/.mcp.json` (`tests/unit/test_plugin.py` fails otherwise).
+2. `make check`, `make mutation` (see the section above) and `claude plugin validate plugins/claude-code --strict` and `claude plugin validate . --strict` (CI cannot run them: it has no `claude` CLI), then commit.
 3. Publish (the user does it, with their own token):
    ```sh
    UV_PUBLISH_TOKEN="$(security find-generic-password -a "$USER" -s pypi-token -w)" make publish

@@ -1,0 +1,19 @@
+{
+  "name": "trackwright",
+  "version": "0.4.0",
+  "description": "Producer skills for Cubase through the Trackwright MCP server: podcast editing, audio analysis, mixing.",
+  "author": {
+    "name": "impalah",
+    "url": "https://pressanykey.tech"
+  },
+  "homepage": "https://github.com/impalah/trackwright",
+  "repository": "https://github.com/impalah/trackwright",
+  "license": "AGPL-3.0-or-later",
+  "keywords": [
+    "cubase",
+    "daw",
+    "audio",
+    "podcast",
+    "mcp"
+  ]
+}

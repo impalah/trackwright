@@ -4,6 +4,7 @@
 
 ## Unreleased
 
+- **Claude Code plugin** (TW-1505): `plugins/claude-code/` (manifest, `.mcp.json` that starts `uvx trackwright==<version> serve`, skills folder) and the marketplace in `.claude-plugin/marketplace.json`; `tests/unit/test_plugin.py` keeps versions, names and the tools the skills name consistent. No skills yet.
 - **Autostart waits for Cubase** (TW-1509): after starting the bridge, the server repeats `hello` until Cubase answers (within `[bridge] autostart_timeout`) before sending the request, instead of failing the first request with `TIMEOUT`.
 - **New tool `cubase_analyze_audio`** (TW-1504): noise floor, levels and silences of an exported file, in project seconds; read-only, needs `[analysis] enabled`. The server now has 33 tools.
 - **Audio analyzer** (TW-1503): the `trackwright.analysis` package reads WAV, AIFF, FLAC and Ogg files in blocks (numpy and soundfile, new dependencies) and finds the noise floor and the silences, with a threshold relative to the noise floor or absolute, a minimum duration, padding and merging of short blips. Not exposed as a tool yet (TW-1504).

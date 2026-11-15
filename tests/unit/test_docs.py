@@ -58,6 +58,7 @@ def doc_pages() -> list[Path]:
         for suffix in (".md", ".es.md")
     ]
     pages += sorted(DOCS.rglob("*.md")) + sorted((ROOT / "experiments").rglob("*.md"))
+    pages += sorted((ROOT / "plugins").rglob("README*.md"))  # TW-1505; SKILL.md files are not docs
     return pages
 
 

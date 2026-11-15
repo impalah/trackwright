@@ -139,8 +139,8 @@ Objetivo: al menos el 85 % de los mutantes muertos en estos módulos. Las puntua
 
 ## Publicar una versión
 
-1. Actualiza `version` en `pyproject.toml` y el registro de cambios (`CHANGELOG.md` y `CHANGELOG.es.md`); `uv sync` actualiza `uv.lock`.
-2. `make check` y `make mutation` (ver la sección anterior), y commit.
+1. Actualiza `version` en `pyproject.toml` y el registro de cambios (`CHANGELOG.md` y `CHANGELOG.es.md`); `uv sync` actualiza `uv.lock`. Actualiza la misma versión en el plugin de Claude Code: `version` en `plugins/claude-code/.claude-plugin/plugin.json` y la versión fijada `trackwright==` en `plugins/claude-code/.mcp.json` (si no, falla `tests/unit/test_plugin.py`).
+2. `make check`, `make mutation` (ver la sección anterior) y `claude plugin validate plugins/claude-code --strict` y `claude plugin validate . --strict` (la integración continua no puede ejecutarlos: no tiene la CLI `claude`), y commit.
 3. Publica (lo hace el usuario, con su propio token):
    ```sh
    UV_PUBLISH_TOKEN="$(security find-generic-password -a "$USER" -s pypi-token -w)" make publish
