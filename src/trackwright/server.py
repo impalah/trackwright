@@ -476,13 +476,16 @@ def build_server(service: CubaseService) -> MCPServer:
         hangover: Annotated[float, Field(ge=0, le=2, description="seconds added after each region")] = 0.15,
         merge_gap: Annotated[float, Field(ge=0, le=5, description="gaps shorter than this are joined")] = 0.2,
         min_region: Annotated[float, Field(ge=0, le=5, description="shorter regions are dropped")] = 0.08,
+        faint_db: Annotated[
+            float, Field(ge=0, le=80, description="fragments this far below the typical speech level are dropped")
+        ] = 30.0,
         offset: Annotated[int, Field(ge=0)] = 0,
         limit: Annotated[int, Field(ge=1, le=500)] = 100,
     ) -> SpeechOut:
         return await run(
             lambda: service.detect_speech(
                 file, start=start, on_db=on_db, off_db=off_db, hangover=hangover, merge_gap=merge_gap,
-                min_region=min_region, offset=offset, limit=limit,
+                min_region=min_region, faint_db=faint_db, offset=offset, limit=limit,
             )
         )  # fmt: skip
 

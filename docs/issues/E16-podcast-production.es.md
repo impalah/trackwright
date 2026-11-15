@@ -99,7 +99,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1604 Detección de actividad vocal
 
-- **Estado:** en curso (2026-11-15): `trackwright/analysis/speech.py` (banda vocal 100 Hz-4 kHz, niveles cada 10 ms, histéresis on/off sobre el ruido de fondo, hangover, huecos unidos, clics descartados, confianza) y herramienta `cubase_detect_speech`; tests con señales de sílabas (frases y pausas, frase suave, zumbido y siseo, un clic, huecos entre sílabas, estéreo, límites de bloque, silencio digital). Pendiente: validación con un episodio real
+- **Estado:** hecha (2026-11-15): `trackwright/analysis/speech.py` y herramienta `cubase_detect_speech`. Validada con un episodio real (46 min, una voz, `Pod Mic` exportada sola): 2,5 s para todo el episodio; ruido de fondo −61,8 dB, voz típica −13,1 dB. Un ruido de 0,37 s a −52 dB dentro de una pausa se tomó por voz y partía la pausa; corregido con `faint_db` (fragmentos 30 dB por debajo del nivel típico de la voz descartados **antes** de unir: descartarlos después no bastaba, ya habían unido pausas), que descartó 108 fragmentos así y dejó ver 35 pausas de más de 1 s en lugar de ocultarlas. El usuario escuchó los 10 primeros minutos con un tono que marcaba la voz detectada: entradas y salidas correctas. No comentó respiraciones ni falsos positivos
 - **Alcance:** regiones de voz en una pista de voz: energía frente al ruido de fondo más un criterio de banda vocal, histéresis, región y hueco mínimos; regiones con nivel y confianza. Cada voz va en su propia pista, así que no hace falta separar locutores; una pista con varias voces queda fuera de alcance.
 - **Validación:** en episodios completos que indique el usuario, comparada con unos minutos que marque a mano (rangos en ciclo o una lista de tiempos); la señal sintética de sílabas de TW-1507 en los tests unitarios.
 
@@ -119,6 +119,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 - **Estado:** pendiente
 - **Alcance:** esquema pydantic para un perfil de programa (`~/.config/trackwright/shows/<programa>.toml`: roles de las pistas por nombre, voces, música aprobada, estilo de ducking, criterios de edición, perfiles de entrega) y un perfil de episodio (`Trackwright/profile.toml`), resueltos integrado < programa < episodio; herramientas para leerlos y para escribirlos tras aprobación.
+- **Identidad de las pistas (visto en TW-1604):** los uid de las pistas no son únicos entre proyectos hechos con la misma plantilla (el episodio del usuario y el proyecto de pruebas comparten uno), así que un perfil de programa nombra las pistas por nombre; los uid, solo dentro de un proyecto (`state.json`).
 - **Perfiles de entrega (investigación):** Apple Podcasts (RSS), Spotify, YouTube e iVoox, cada uno con objetivo de sonoridad y tolerancia, techo de true peak, códec, canales, frecuencia de muestreo y bitrate **solo como los publica la plataforma**, con la URL y la fecha de consulta. Una plataforma sin número publicado no recibe ninguno (por ejemplo, una plataforma que normaliza por su cuenta quizá solo reciba un techo). Otros servicios cuando el usuario los nombre.
 
 ### TW-1608 Análisis ligados a una versión del audio

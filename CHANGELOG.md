@@ -4,7 +4,7 @@
 
 ## Unreleased
 
-- **Voice activity** (TW-1604): new tool `cubase_detect_speech`: speech regions of a voice track's export in project seconds (speech band with hysteresis, hangover, gaps joined, clicks dropped). The server now has 36 tools.
+- **Voice activity** (TW-1604): new tool `cubase_detect_speech`: speech regions of a voice track's export in project seconds (speech band with hysteresis, hangover, gaps joined, clicks and fragments far below the typical speech level dropped), validated on a real 46-minute episode. The server now has 36 tools.
 - **Loudness and true peak** (TW-1603): new tool `cubase_measure_loudness` (ITU-R BS.1770 / EBU R128: integrated, momentary and short-term loudness, loudness range, sample and true peak), checked against the EBU Tech 3341 and 3342 test cases and pyloudnorm; AAC files decoded with macOS `afconvert` (also for `cubase_analyze_audio`). New dependency scipy. The server now has 35 tools.
 - **Project workspace** (TW-1602): `[workspace] enabled` (off by default, `WORKSPACE_DISABLED`) and the tool `cubase_workspace` (`status`, `init`), for a `Trackwright/` folder inside the project folder with `renders/`, `previews/`, `analysis/`, `reports/`, `state.json` (what skills created) and `profile.toml` (episode profile). `trackwright setup` asks for it (`--workspace`); `cubase_status` and `doctor` report it. New dependency `tomli-w`. The server now has 34 tools.
 

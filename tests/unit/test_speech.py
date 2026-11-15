@@ -130,3 +130,26 @@ def test_bad_criteria_and_read_errors(tmp_path: Path, monkeypatch: pytest.Monkey
     with pytest.raises(PreconditionFailedError) as read:
         detect_speech(path)
     assert read.value.code == "BAD_AUDIO"
+
+
+def test_a_faint_noise_in_a_pause_is_not_speech(tmp_path: Path) -> None:
+    """TW-1604, seen on a real episode: a short noise 39 dB below the voice inside a pause split it in two."""
+    data = episode([(1, None), (4, -14), (1, None), (4, -14), (1, None)], noise_db=-62)
+    rng = np.random.default_rng(7)
+    bump = rng.normal(0, 10 ** (-48 / 20), int(0.37 * RATE))
+    data[int(5.3 * RATE) : int(5.3 * RATE) + len(bump)] += bump
+    result = detect_speech(write(tmp_path, data))
+    assert len(result.regions) == 2
+    assert result.faint_dropped == 1
+    assert result.speech_level_db == pytest.approx(-14, abs=2)
+    kept = detect_speech(write(tmp_path, data), SpeechCriteria(faint_db=60))
+    assert kept.faint_dropped == 0
+    assert len(kept.regions) == 1  # without the filter the noise bridges the pause and it disappears
+
+
+def test_soft_speech_is_not_faint(tmp_path: Path) -> None:
+    """A soft phrase 20 dB below the loud ones is speech, not a faint noise."""
+    data = episode([(1, None), (4, -16), (1, None), (4, -36), (1, None)])
+    result = detect_speech(write(tmp_path, data))
+    assert len(result.regions) == 2
+    assert result.faint_dropped == 0

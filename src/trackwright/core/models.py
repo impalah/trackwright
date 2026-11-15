@@ -435,6 +435,8 @@ class SpeechOut(_Out):
     on_threshold_db: float | None
     off_threshold_db: float | None
     contrast_db: float | None = Field(description="90th minus 10th percentile; under on_db no clear speech")
+    speech_level_db: float | None = Field(description="typical speech level (duration-weighted median)")
+    faint_dropped: int = Field(description="fragments dropped for being faint_db below the typical speech level")
     criteria: dict[str, float]
     total: int = Field(description="number of speech regions")
     speech_seconds: float

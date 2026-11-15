@@ -99,7 +99,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1604 Voice activity detection
 
-- **Status:** in progress (2026-11-15): `trackwright/analysis/speech.py` (speech band 100 Hz-4 kHz, 10 ms levels, hysteresis on/off above the noise floor, hangover, gaps joined, clicks dropped, confidence) and tool `cubase_detect_speech`; tests on syllable signals (phrases and pauses, soft phrase, hum and hiss, a click, syllable gaps, stereo, block boundaries, digital silence). Pending: validation on a real episode
+- **Status:** done (2026-11-15): `trackwright/analysis/speech.py` and tool `cubase_detect_speech`. Validated on a real episode (46 min, one voice, `Pod Mic` exported alone): 2.5 s for the whole episode; floor −61.8 dB, typical speech −13.1 dB. A 0.37 s noise at −52 dB inside a pause was taken for speech and split the pause; fixed with `faint_db` (fragments 30 dB below the typical speech level dropped **before** joining: dropping them after was not enough, they had already bridged pauses), which dropped 108 such fragments and revealed 35 pauses over 1 s instead of hiding them. The user listened to the first 10 minutes with a tone marking detected speech: starts and ends correct. Breaths and false positives were not commented on
 - **Scope:** speech regions on a voice stem: energy against the noise floor plus a speech-band criterion, hysteresis, minimum region and gap; regions with level and confidence. Each voice is on its own track, so no speaker separation is needed; one track with several voices is out of scope.
 - **Validation:** on whole episodes the user points to, compared with a few minutes they mark by hand (cycle ranges or a list of times); the synthetic syllable signal of TW-1507 in the unit tests.
 
@@ -119,6 +119,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 - **Status:** pending
 - **Scope:** pydantic schema for a show profile (`~/.config/trackwright/shows/<show>.toml`: track roles by name, voices, approved music, ducking style, editing criteria, delivery profiles) and an episode profile (`Trackwright/profile.toml`), resolved built-in < show < episode; tools to read them and to write them after approval.
+- **Track identity (seen in TW-1604):** track uids are not unique across projects made from the same template (the user's episode and the test project share one), so a show profile names tracks by name; uids only within one project (`state.json`).
 - **Delivery profiles (research):** Apple Podcasts (RSS), Spotify, YouTube and iVoox, each with loudness target and tolerance, true peak ceiling, codec, channels, sample rate and bitrate **only as published by the platform**, with the URL and the date read. A platform without a published number gets none (for example, a platform that normalizes on its own may only get a ceiling). Other hosts when the user names them.
 
 ### TW-1608 Analyses tied to an audio version

@@ -10,7 +10,9 @@ Each voice is on its own track (exported alone with solo), so the question is on
 3. **Hysteresis:** speech starts when the level rises ``on_db`` above the floor and lasts while it stays
    ``off_db`` above it, so the dips between syllables do not split a word.
 4. **Clean-up:** a hangover after each region (word endings decay slowly), gaps shorter than ``merge_gap``
-   joined, regions shorter than ``min_region`` dropped (clicks, bumps).
+   joined, regions shorter than ``min_region`` dropped (clicks, bumps), and regions more than ``faint_db``
+   below the typical speech level dropped: on a real episode (TW-1604) a 0.37 s noise at -52 dB inside a
+   pause, 39 dB below the voice, passed the noise-floor test and split the pause in two.
 
 Every region has its mean level and a confidence (how far above the floor it is). This is an energy
 detector: a loud non-speech sound in the voice band (a laugh, a cough, a door) counts as activity, which is
@@ -51,11 +53,13 @@ class SpeechCriteria:
     """Gaps shorter than this inside speech are joined (pauses between words)."""
     min_region: float = 0.08
     """Shorter regions are dropped (clicks, bumps)."""
+    faint_db: float = 30.0
+    """Regions this far below the typical speech level (duration-weighted median) are dropped."""
 
     def check(self) -> None:
         if self.off_db < 0 or self.on_db < self.off_db:
             raise PreconditionFailedError("need 0 <= off_db <= on_db", code="BAD_REQUEST")
-        if min(self.hangover, self.merge_gap, self.min_region) < 0:
+        if min(self.hangover, self.merge_gap, self.min_region, self.faint_db) < 0:
             raise PreconditionFailedError("hangover, merge_gap and min_region cannot be negative", code="BAD_REQUEST")
 
 
@@ -83,6 +87,10 @@ class SpeechActivity:
     contrast_db: float | None
     """90th minus 10th percentile: under ``on_db`` there is no clear speech to find."""
     regions: list[SpeechRegion]
+    speech_level_db: float | None = None
+    """Typical speech level: the duration-weighted median of the regions' levels."""
+    faint_dropped: int = 0
+    """Regions dropped for being ``faint_db`` below the typical speech level."""
 
     @property
     def speech_seconds(self) -> float:
@@ -155,9 +163,24 @@ def detect_speech(path: Path, criteria: SpeechCriteria | None = None) -> SpeechA
     contrast = float(np.percentile(sound, SOUND_PERCENTILE)) - floor
     on, off = floor + criteria.on_db, floor + criteria.off_db
     total = info.seconds
-    spans = [(a * FRAME, min(b * FRAME + criteria.hangover, total)) for a, b in _hysteresis(level, on, off)]
+
+    def mean_level(start: float, end: float) -> float:
+        first, last = round(start / FRAME), round(end / FRAME)
+        frames = level[first : max(first + 1, last)]
+        return float(10 * np.log10(np.mean(10 ** (frames / 10))))
+
+    # Faint spans are dropped before joining: once joined to a phrase they could no longer be told apart.
+    raw = [(a * FRAME, b * FRAME) for a, b in _hysteresis(level, on, off)]
+    raw_levels = [mean_level(a, b) for a, b in raw]
+    typical = _weighted_median(raw_levels, [b - a for a, b in raw])
+    loud = [
+        span
+        for span, value in zip(raw, raw_levels, strict=True)
+        if typical is None or value >= typical - criteria.faint_db
+    ]
+    faint = len(raw) - len(loud)
     merged: list[tuple[float, float]] = []
-    for start, end in spans:
+    for start, end in ((a, min(b + criteria.hangover, total)) for a, b in loud):
         if merged and start - merged[-1][1] < criteria.merge_gap:
             merged[-1] = (merged[-1][0], max(end, merged[-1][1]))
         else:
@@ -166,9 +189,7 @@ def detect_speech(path: Path, criteria: SpeechCriteria | None = None) -> SpeechA
     for start, end in merged:
         if end - start < criteria.min_region + criteria.hangover:
             continue
-        first, last = round(start / FRAME), round(end / FRAME)
-        frames = level[first : max(first + 1, last)]
-        mean = float(10 * np.log10(np.mean(10 ** (frames / 10))))
+        mean = mean_level(start, end)
         regions.append(
             SpeechRegion(
                 start=round(start, 3),
@@ -178,6 +199,8 @@ def detect_speech(path: Path, criteria: SpeechCriteria | None = None) -> SpeechA
             )
         )
     return SpeechActivity(
+        speech_level_db=None if typical is None else round(typical, 2),
+        faint_dropped=faint,
         info=info,
         noise_floor_db=round(floor, 2),
         on_threshold_db=round(on, 2),
@@ -185,3 +208,12 @@ def detect_speech(path: Path, criteria: SpeechCriteria | None = None) -> SpeechA
         contrast_db=round(contrast, 2),
         regions=regions,
     )
+
+
+def _weighted_median(values: list[float], weights: list[float]) -> float | None:
+    if not values:
+        return None
+    order = np.argsort(values)
+    cumulative = np.cumsum(np.asarray(weights)[order])
+    index = int(np.searchsorted(cumulative, cumulative[-1] / 2))
+    return float(np.asarray(values)[order][index])

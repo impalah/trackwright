@@ -507,3 +507,10 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 ## 2026-11-15 — TW-1603: loudness of real Cubase exports
 
 - `measure_loudness` on the nine exports in the test project's `Mixdown/` (WAV 32-bit float and Cubase's MP3): integrated loudness within 0.04-0.07 LU of pyloudnorm (for example the 140 s episode `X0001.mp3`: −21.13 against −21.18 LUFS); the 1 ms click of `tw1501-a.wav` gives a true peak 1.1 dB above its sample peak; 140 s measured in 0.59 s.
+
+## 2026-11-15 — TW-1604: voice activity on a real episode
+
+- A 46-minute episode with one voice and five music and effects tracks: `Pod Mic` exported alone (solo, whole project, WAV 32-bit float, duration exact). Detection in 2.5 s; floor −61.8 dB, contrast 52 dB, typical speech −13.1 dB, 87 % speech.
+- A 0.37 s fragment at −52 dB at 17:15.36 was a noise inside a pause (the user checked: a pause there); with `faint_db` the detector drops 108 such fragments before joining, and the pause at 17:15 is whole again.
+- The user listened to the first 10 minutes with a tone on the right channel during detected speech: it starts and stops in the right places.
+- Seen on the way: the episode's `Pod Mic` and the test project's `POC-TEST` have the same track uid (projects from the same template).

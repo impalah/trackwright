@@ -162,6 +162,7 @@ class AnalyzingMixin(ServiceBase):
         hangover: float = 0.15,
         merge_gap: float = 0.2,
         min_region: float = 0.08,
+        faint_db: float = 30.0,
         offset: int = 0,
         limit: int = 100,
     ) -> SpeechOut:
@@ -172,7 +173,12 @@ class AnalyzingMixin(ServiceBase):
         if origin is None:
             raise PreconditionFailedError("start looks like '2.5', '1:30' or '0:01:30.000'", code="BAD_TIME")
         criteria = SpeechCriteria(
-            on_db=on_db, off_db=off_db, hangover=hangover, merge_gap=merge_gap, min_region=min_region
+            on_db=on_db,
+            off_db=off_db,
+            hangover=hangover,
+            merge_gap=merge_gap,
+            min_region=min_region,
+            faint_db=faint_db,
         )
         criteria.check()
         with decoded(path) as readable:
@@ -198,12 +204,15 @@ class AnalyzingMixin(ServiceBase):
             on_threshold_db=result.on_threshold_db,
             off_threshold_db=result.off_threshold_db,
             contrast_db=result.contrast_db,
+            speech_level_db=result.speech_level_db,
+            faint_dropped=result.faint_dropped,
             criteria={
                 "on_db": on_db,
                 "off_db": off_db,
                 "hangover": hangover,
                 "merge_gap": merge_gap,
                 "min_region": min_region,
+                "faint_db": faint_db,
             },
             total=len(result.regions),
             speech_seconds=round(result.speech_seconds, 3),

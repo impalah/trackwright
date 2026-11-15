@@ -507,3 +507,10 @@ Cubase Elements 15.0.30, script 1.6.1, proyecto de pruebas, `TRACKWRIGHT_TEST_TR
 ## 2026-11-15 — TW-1603: sonoridad de exportaciones reales de Cubase
 
 - `measure_loudness` sobre las nueve exportaciones de `Mixdown/` del proyecto de pruebas (WAV de 32 bits float y el MP3 de Cubase): sonoridad integrada a 0,04-0,07 LU de pyloudnorm (por ejemplo el episodio de 140 s `X0001.mp3`: −21,13 frente a −21,18 LUFS); el clic de 1 ms de `tw1501-a.wav` da un true peak 1,1 dB por encima de su pico de muestra; 140 s medidos en 0,59 s.
+
+## 2026-11-15 — TW-1604: actividad vocal en un episodio real
+
+- Un episodio de 46 minutos con una voz y cinco pistas de música y efectos: `Pod Mic` exportada sola (solo, todo el proyecto, WAV de 32 bits float, duración exacta). Detección en 2,5 s; ruido de fondo −61,8 dB, contraste 52 dB, voz típica −13,1 dB, 87 % de voz.
+- Un fragmento de 0,37 s a −52 dB en 17:15,36 era un ruido dentro de una pausa (el usuario lo comprobó: ahí hay una pausa); con `faint_db` el detector descarta 108 fragmentos así antes de unir, y la pausa de 17:15 vuelve a estar entera.
+- El usuario escuchó los 10 primeros minutos con un tono en el canal derecho durante la voz detectada: entra y sale en los sitios correctos.
+- Visto por el camino: `Pod Mic` del episodio y `POC-TEST` del proyecto de pruebas tienen el mismo uid de pista (proyectos de la misma plantilla).
