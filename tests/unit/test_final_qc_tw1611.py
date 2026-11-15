@@ -12,7 +12,9 @@ import pytest
 import soundfile as sf
 
 from trackwright.analysis.qc import bitrate_kbps, codec_of, level_changes, loudest_moment, section_levels
+from trackwright.core.models import QcMomentOut
 from trackwright.core.policy import WritePolicy
+from trackwright.core.qc import merge_moments
 from trackwright.core.service import CubaseService
 from trackwright.errors import PolicyError, PreconditionFailedError
 from trackwright.fake import FakeCubase
@@ -132,6 +134,8 @@ def test_failures_and_warnings(svc: CubaseService, project: Path) -> None:
     assert by[("apple", "codec")].status == "fail"  # WAV is not an RSS codec
     warnings = {i.id for i in out.items if i.kind == "warning"}
     assert {"edge_silence", "long_pauses", "level_changes"} <= warnings
+    titles = {i.id: i.title for i in out.items}
+    assert titles["long_pauses"].startswith("1 pause of 3 s")  # singular
     assert any(m.why.startswith("level change") for m in out.moments)
     assert any(m.why.startswith("pause of") for m in out.moments)
 
@@ -186,3 +190,12 @@ def test_refusals(fake: FakeCubase, svc: CubaseService, project: Path, tmp_path:
     assert unknown.value.code == "NO_PROJECT_FOLDER"
     out = nowhere.final_qc(str(path), targets=[])
     assert out.notes[0].startswith("no delivery targets")
+
+
+def test_close_moments_are_merged() -> None:
+    moments = [
+        QcMomentOut(at=str(t), at_seconds=t, why=w)
+        for t, w in ((130.042, "the end"), (0.0, "the start"), (130.0, "level change -10.8 LU"))
+    ]
+    merged = merge_moments(moments)
+    assert [(m.at_seconds, m.why) for m in merged] == [(0.0, "the start"), (130.0, "level change -10.8 LU; the end")]

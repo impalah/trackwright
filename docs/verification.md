@@ -548,3 +548,10 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 - `cubase_list_inserts` does not say that `TW1501`'s Compressor is bypassed: added to the skill's capability report.
 - The episode profile's dry run, built from `resolve`'s new `episode` field, added only the new role line; the built-in `min_silence_seconds` was not copied into the episode. Not applied (the role was an example, not the user's).
 - `cubase_workspace` `record` (the Gate on `TW1507` as a `noise-gate` plugin item), `status` (three items) and `forget` worked; `state.json` is back as it was. Their answers left `owned` and `items` empty; they now carry the state after the change.
+
+## 2026-11-15 — TW-1611: the final QC through the server
+
+- `cubase_final_qc` on the test project's `Mixdown/X0001.mp3` (140 s, MP3 128 kbps, 44.1 kHz) with the episode profile's targets (Apple, Spotify) and `expected_seconds` 140: verdict `fail`, one failure: Apple's loudness, −21.13 LUFS against −16 ± 1 (with Apple's page as the source); codec, channels, sample rate, bit rate (127.7 kbps measured from size and duration), true peak (−9.47 dBTP) and duration (140.042 s, within the 0.1 s allowed for MP3) pass. Spotify's loudness and true peak came out as `info`, "not published by the platform".
+- Warnings: two pauses of 32.1 s and 35.2 s (23.26 s and 76.58 s) and a level change of −10.8 LU at 2:10. `project_saved_after: true` (the MP3 is from 13 November, the project was saved on the 15th), with its note.
+- The cursor moved to the longest pause with `cubase_set_position`. With `report: true` the JSON and Markdown reports were written to `Trackwright/reports/`, and the Markdown one recorded with `cubase_workspace` as a `report` item of `podcast-final-qc`.
+- Fixed after the run: a title said "1 level changes"; the end (2:10.042) and the level change (2:10.000) were two moments 42 ms apart, now joined; the report's notes now have their own heading.

@@ -46,6 +46,21 @@ def _fmt(value: float | None, unit: str) -> str | None:
     return None if value is None else f"{value:g} {unit}"
 
 
+def _count(number: int, noun: str) -> str:
+    return f"{number} {noun}" + ("" if number == 1 else "s")
+
+
+def merge_moments(moments: list[QcMomentOut], within: float = 1.0) -> list[QcMomentOut]:
+    """In time order, with moments closer than ``within`` seconds joined into one (their reasons together)."""
+    merged: list[QcMomentOut] = []
+    for moment in sorted(moments, key=lambda m: m.at_seconds):
+        if merged and moment.at_seconds - merged[-1].at_seconds < within:
+            merged[-1] = merged[-1].model_copy(update={"why": f"{merged[-1].why}; {moment.why}"})
+        else:
+            merged.append(moment)
+    return merged
+
+
 def _source(profile: DeliveryProfileOut, field: str) -> str | None:
     return next((s.url for s in profile.sources if field in s.covers), None)
 
@@ -173,14 +188,14 @@ def _warnings(
     if pauses:
         longest = sorted(pauses, key=lambda s: s.seconds, reverse=True)
         items.append(QcItemOut(id="long_pauses", kind="warning", status="warn",
-                               title=f"{len(pauses)} pauses of {long_pause:g} s or more",
+                               title=f"{_count(len(pauses), 'pause')} of {long_pause:g} s or more",
                                measured=f"longest {longest[0].seconds:.1f} s",
                                at=[clock.text(s.start) for s in pauses[:MAX_LISTED]]))  # fmt: skip
         moments += [clock.moment(s.start, f"pause of {s.seconds:.1f} s") for s in longest[:5]]
     changes = level_changes(loud.short_term, loud.integrated_lufs, jump_lu=jump_lu)[:MAX_LISTED]
     if changes:
-        items.append(QcItemOut(id="level_changes", kind="warning", status="warn",
-                               title=f"{len(changes)} level changes of {jump_lu:g} LU or more between 10 s sections",
+        title = f"{_count(len(changes), 'level change')} of {jump_lu:g} LU or more between 10 s sections"
+        items.append(QcItemOut(id="level_changes", kind="warning", status="warn", title=title,
                                measured=", ".join(f"{c.change_lu:+.1f} LU" for c in changes),
                                at=[clock.text(c.at) for c in changes]))  # fmt: skip
         moments += [clock.moment(c.at, f"level change {c.change_lu:+.1f} LU") for c in changes]
@@ -250,7 +265,7 @@ class QualityMixin(ProfilesMixin, AnalyzingMixin):
         loudest = loudest_moment(loud.short_term)
         if loudest is not None:
             moments.append(clock.moment(loudest, "the loudest 3 s"))
-        moments.sort(key=lambda m: m.at_seconds)
+        moments = merge_moments(moments)
         failed = sum(1 for i in items if i.status == "fail")
         out = QcOut(
             file=str(path), format=info.format, subtype=info.subtype, codec=codec, sample_rate=info.rate,
@@ -343,5 +358,6 @@ def report_markdown(out: QcOut) -> str:
             lines.append("| " + " | ".join(c.replace("|", "/") for c in cells) + " |")
         lines.append("")
     lines += ["## Listen at", ""] + [f"- {m.at}: {m.why}" for m in out.moments] + [""]
-    lines += [f"- {n}" for n in out.notes]
+    if out.notes:
+        lines += ["## Notes", ""] + [f"- {n}" for n in out.notes]
     return "\n".join(lines).rstrip() + "\n"

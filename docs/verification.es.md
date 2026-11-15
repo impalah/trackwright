@@ -548,3 +548,10 @@ Cubase Elements 15.0.30, script 1.6.1, proyecto de pruebas, `TRACKWRIGHT_TEST_TR
 - `cubase_list_inserts` no dice que el Compressor de `TW1501` está en bypass: añadido al informe de capacidades de la skill.
 - El dry run del perfil del episodio, construido desde el nuevo campo `episode` de `resolve`, solo añadió la línea del rol nuevo; el `min_silence_seconds` integrado no se copió en el episodio. No se aplicó (el rol era un ejemplo, no del usuario).
 - `cubase_workspace` `record` (la Gate de `TW1507` como elemento `plugin` de `noise-gate`), `status` (tres elementos) y `forget` funcionaron; `state.json` quedó como estaba. Sus respuestas dejaban `owned` e `items` vacíos; ahora llevan el estado después del cambio.
+
+## 2026-11-15 — TW-1611: el control final a través del servidor
+
+- `cubase_final_qc` sobre `Mixdown/X0001.mp3` del proyecto de pruebas (140 s, MP3 de 128 kbps, 44,1 kHz) con los destinos del perfil del episodio (Apple, Spotify) y `expected_seconds` 140: veredicto `fail`, un fallo: la sonoridad de Apple, −21,13 LUFS frente a −16 ± 1 (con la página de Apple como fuente); códec, canales, frecuencia de muestreo, tasa de bits (127,7 kbps medidos a partir del tamaño y la duración), pico real (−9,47 dBTP) y duración (140,042 s, dentro de los 0,1 s permitidos en MP3) pasan. La sonoridad y el pico real de Spotify salieron como `info`, "not published by the platform".
+- Avisos: dos pausas de 32,1 s y 35,2 s (en 23,26 s y 76,58 s) y un cambio de nivel de −10,8 LU en 2:10. `project_saved_after: true` (el MP3 es del 13 de noviembre y el proyecto se guardó el 15), con su nota.
+- El cursor fue a la pausa más larga con `cubase_set_position`. Con `report: true` se escribieron los informes JSON y Markdown en `Trackwright/reports/`, y el Markdown se registró con `cubase_workspace` como elemento `report` de `podcast-final-qc`.
+- Corregido después: un título decía "1 level changes"; el final (2:10,042) y el cambio de nivel (2:10,000) eran dos momentos a 42 ms, ahora unidos; las notas del informe tienen ya su propio encabezado.
