@@ -534,3 +534,9 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 - With the server reloaded and the test project open: `resolve` found no episode profile and no show, and gave the built-in silence criteria (2 s, 0.25 s padding); `shows` found none in `~/.config/trackwright/shows`; `delivery` listed Apple, iVoox, Spotify and YouTube with their sources.
 - `write_episode` on the test project: the dry run showed the TOML and wrote nothing; applied, it wrote `Trackwright/profile.toml` (roles of `POC-TEST`, `TW1507` and `TW1606 render`, a pan, padding 0.3 s, targets Apple and Spotify, a protected range at 40–43 s). `resolve` then gave padding from `episode` and the minimum silence from `built-in`, the protected range, and the two delivery profiles with their sources.
 - `write_show` as a dry run only (nothing written in the user's configuration): its TOML carried an empty `notes = ""`, now left out.
+
+## 2026-11-15 — TW-1608: analyses with their source, cached
+
+- `cubase_analyze_audio` on `X0001.test/Mixdown/tw1606-render.wav`: `cache: stored`, `source.sha256` equal to `shasum -a 256` of the file, range 0–5 s, `project_saved_after: false` (the newest `.cpr` was saved at 15:03, the export at 19:39); `Trackwright/analysis/` got `hashes.json` and one `silences-….json`. The same call again with `offset` 1: `cache: hit`, the same source, the page applied to the cached list.
+- Two identical calls sent in parallel both answered `stored` (both missed before either stored); harmless, since writes are atomic and the second wrote the same result.
+- `cubase_measure_loudness` on the 46-minute episode export of another project (`E0004…/Mixdown/tw1604-podmic.wav`, read-only): `cache: off`, `project_saved_after: null`, nothing written anywhere. On that 1.07 GB file the SHA-256 takes 0.39 s and the loudness measurement 12.25 s, so a hit saves almost all of it.
