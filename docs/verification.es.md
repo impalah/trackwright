@@ -463,3 +463,9 @@ Cubase Elements 15.0.30, script 1.6.1, proyecto de pruebas, `TRACKWRIGHT_TEST_TR
 
 - En Cubase Elements 15 el diálogo «Exportar mezcla de audio» solo exporta Stereo Out; una pista se aísla con solo. WAV hasta 64 bits float, de 8 a 192 kHz.
 - Una señal de prueba conocida importada en 4,000 s y exportada entre localizadores en 2 y 36 s (WAV, 48 kHz, 32 bits float), con su pista en solo: el clic de alineación cae a 3,000 s del archivo, con **0 muestras** de error; 34,000 s de duración. La pista mono llega por los dos canales 3 dB más baja (ley de panorama centrada). Antes y después del evento el archivo contiene ceros exactos. Detalles en `experiments/tw1501/`.
+
+## 2026-11-15 — TW-1504: `cubase_analyze_audio` por MCP
+
+- Con `[analysis] enabled = true`, `cubase_status` indica `analysis_enabled: true`.
+- `cubase_analyze_audio` sobre la exportación de TW-1501 (`tw1501-a.wav`, inicio del rango 2 s, `min_seconds` 3): ruido de fondo −63,19 dB, umbral −53,19 dB, pico −3,1 dB; cuatro silencios en tiempo del proyecto, 2,00–5,75, 10,25–13,75, 21,25–25,75 y 29,25–36,00 s, que es donde la señal de prueba (colocada en 4 s) tiene sus silencios de 3 s o más, con 0,25 s de margen; el silencio de 1 s no aparece.
+- Visto por el camino: justo después de reconectar el MCP, el puente se arrancó solo y la primera petición (`hello`) agotó el tiempo; la segunda, unos segundos después, obtuvo respuesta. Cubase tardó un momento en enlazarse a los puertos virtuales nuevos.

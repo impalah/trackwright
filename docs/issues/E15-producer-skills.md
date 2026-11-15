@@ -53,7 +53,7 @@
 
 ### TW-1504 Tool `cubase_analyze_audio`
 
-- **Status:** pending
+- **Status:** done (2026-11-15): `core/analyzing.py` (`AnalyzingMixin`), `AnalysisOut`/`SilenceOut`, tool registered as `READ`; the duration limit is checked from the header before reading samples. Tests in `tests/unit/test_service_analysis.py` and the contract test. Verified through MCP on the TW-1501 export (see the verification log)
 - **Scope:**
   1. **Input:** the file (from the `confirm` phase of `cubase_export_mix`) and the project time of its start (the left locator, which that tool knows); threshold, minimum duration and padding, with documented defaults for spoken voice.
   2. **Output:** silences in **project seconds** (start, end, duration, level), noise floor, peak and RMS of the whole file, and the parameters used. A list capped like the other tools (`clamp_limit`), with the total.

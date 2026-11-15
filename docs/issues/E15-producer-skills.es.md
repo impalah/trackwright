@@ -53,7 +53,7 @@
 
 ### TW-1504 Herramienta `cubase_analyze_audio`
 
-- **Estado:** pendiente
+- **Estado:** hecha (2026-11-15): `core/analyzing.py` (`AnalyzingMixin`), `AnalysisOut`/`SilenceOut`, herramienta registrada como `READ`; el límite de duración se comprueba con la cabecera antes de leer muestras. Tests en `tests/unit/test_service_analysis.py` y el test de contrato. Verificada por MCP sobre la exportación de TW-1501 (ver el registro de verificación)
 - **Alcance:**
   1. **Entrada:** el archivo (de la fase `confirm` de `cubase_export_mix`) y el tiempo del proyecto en que empieza (el localizador izquierdo, que esa herramienta conoce); umbral, duración mínima y margen, con valores por defecto documentados para voz hablada.
   2. **Salida:** silencios en **segundos del proyecto** (inicio, fin, duración, nivel), ruido de fondo, pico y RMS de todo el archivo, y los parámetros usados. Una lista limitada como en las demás herramientas (`clamp_limit`), con el total.

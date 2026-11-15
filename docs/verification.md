@@ -463,3 +463,9 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 
 - In Cubase Elements 15 the "Export Audio Mixdown" dialog exports only Stereo Out; a track is isolated with solo. WAV up to 64-bit float, 8 to 192 kHz.
 - A known test signal imported at 4.000 s and exported between locators at 2 and 36 s (WAV, 48 kHz, 32-bit float), with its track in solo: the alignment click lands at 3.000 s in the file, **0 samples** off; 34.000 s long. The mono track arrives on both channels 3 dB lower (centered pan law). Before and after the event the file holds exact zeros. Details in `experiments/tw1501/`.
+
+## 2026-11-15 — TW-1504: `cubase_analyze_audio` through MCP
+
+- With `[analysis] enabled = true`, `cubase_status` reports `analysis_enabled: true`.
+- `cubase_analyze_audio` on the TW-1501 export (`tw1501-a.wav`, range start 2 s, `min_seconds` 3): noise floor −63.19 dB, threshold −53.19 dB, peak −3.1 dB; four silences in project time, 2.00–5.75, 10.25–13.75, 21.25–25.75 and 29.25–36.00 s, which are where the test signal (placed at 4 s) has its silences of 3 s or more, with 0.25 s of padding; the 1 s silence is not reported.
+- Seen on the way: right after an MCP reconnection the bridge was autostarted and the first request (`hello`) timed out; the second, a few seconds later, was answered. Cubase took a moment to bind to the new virtual ports.
