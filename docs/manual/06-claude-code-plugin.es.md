@@ -65,6 +65,15 @@ El último vistazo antes de publicar: ¿cumple el archivo lo que piden las plata
 - **Dónde escuchar:** el principio, el final, las pausas más largas, los cambios de nivel y el momento más fuerte; puede llevar el cursor a cada uno.
 - **Qué cambia:** nada. Corregir la sonoridad o los picos es trabajo de `podcast-delivery`. Puede guardar el informe (JSON y Markdown) en `Trackwright/reports/`.
 
+## `podcast-dialogue-leveling`
+
+Iguala las voces para que todos suenen igual de fuertes y ninguna respuesta se pierda, sin aplanar la interpretación.
+
+- **Pídelo así:** «el invitado está muy bajo», «nivela las voces», «la segunda mitad de la entrevista suena más baja».
+- **Cómo:** cada pista de voz se exporta sola y se mide solo sobre su habla. Cada voz se acerca a un nivel común (por defecto la voz intermedia, así nadie se mueve mucho). Una intervención que se aleja más de 2 dB de su voz se corrige solo en el exceso. Dentro de una intervención no cambia nada, así se mantienen susurros, risas y énfasis. Las ganancias están acotadas (±6 dB) y cambian en las pausas.
+- **Comparas antes:** el fragmento más subido, el más bajado y uno típico, antes y después.
+- **Qué cambia, tras tu sí:** una pista nivelada nueva por voz, con las originales silenciadas (nunca borradas). Compresión solo si la pides después.
+
 ## `podcast-delivery`
 
 Lleva el episodio terminado a la especificación de una plataforma: la sonoridad con el fader de Stereo Out, y un limitador después del fader solo cuando los picos lo necesitan; después, el archivo de entrega, exportado por ti y medido él mismo.

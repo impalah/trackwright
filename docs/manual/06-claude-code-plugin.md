@@ -65,6 +65,15 @@ The last look before publishing: does the file meet the platforms' specs, and is
 - **Where to listen:** the start, the end, the longest pauses, the level changes and the loudest moment; it can move the cursor to each one.
 - **What it changes:** nothing. Fixing loudness or peaks is the job of `podcast-delivery`. It can save the report (JSON and Markdown) in `Trackwright/reports/`.
 
+## `podcast-dialogue-leveling`
+
+Evens out the voices so people sound equally loud and no answer drops away, without flattening the performance.
+
+- **Ask for it like this:** "the guest is too quiet", "level the voices", "the second half of the interview sounds lower".
+- **How:** each voice track is exported alone and measured over its speech only. Each voice moves towards a common level (by default the middle voice, so nobody moves much). An intervention that strays more than 2 dB from its voice is brought back by the excess only. Nothing changes inside an intervention, so whispers, laughs and emphasis stay. Gains are bounded (±6 dB) and change in the pauses.
+- **You compare first:** the most raised, the most lowered and a typical fragment, before and after.
+- **What it changes, after your yes:** a new leveled track per voice, the originals muted (never deleted). Compression only if you ask for it afterwards.
+
 ## `podcast-delivery`
 
 Brings the finished episode to a platform's spec: the loudness with the Stereo Out fader, and a limiter after the fader only when the peaks need it; then the delivery file, exported by you and measured itself.

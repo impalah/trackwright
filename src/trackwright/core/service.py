@@ -7,6 +7,7 @@ from trackwright.core.automation import AutomationMixin
 from trackwright.core.commanding import CommandingMixin
 from trackwright.core.effects import EffectsMixin
 from trackwright.core.importing import ImportMixin
+from trackwright.core.leveling import LevelingMixin
 from trackwright.core.librarying import LibraryMixin
 from trackwright.core.lifecycle import LifecycleMixin
 from trackwright.core.music import MusicMixin
@@ -23,6 +24,7 @@ from trackwright.core.writing import WritingMixin
 
 
 class CubaseService(
+    LevelingMixin,
     EffectsMixin,
     TransitionMixin,
     LibraryMixin,

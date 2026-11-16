@@ -26,6 +26,7 @@ from scipy import signal
 
 from trackwright import __version__
 from trackwright.analysis import decoded, probe
+from trackwright.analysis.leveling import curve_db
 from trackwright.analysis.music import (
     BedPlan,
     Loop,
@@ -40,6 +41,7 @@ from trackwright.analysis.music import (
 from trackwright.analysis.transitions import render_clip
 from trackwright.core.analyzing import AnalyzingMixin
 from trackwright.core.ducking import DuckingMixin, DuckingSpec, parse_spec
+from trackwright.core.leveling import LevelSpec, gain_curve, level_gains, parse_level
 from trackwright.core.models import PreviewOut, RenderItemOut, RenderOut
 from trackwright.core.refs import TrackSelector
 from trackwright.core.timefmt import format_seconds, parse_seconds
@@ -137,7 +139,7 @@ class PreviewSource(BaseModel):
     gain_db: float = Field(default=0.0, ge=-60, le=24)
 
 
-PROCESSES = ("gain", "duck", "bed", "clip")
+PROCESSES = ("gain", "duck", "bed", "clip", "level")
 MAX_PREVIEW_SOURCES = 8
 DOUBTFUL_SEAM = 0.5  # TW-1618: under this seam score a bed's seams are pointed out for a listen
 MAX_PREVIEW_SECONDS = 120.0
@@ -181,6 +183,7 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         ducking: JsonObject | None = None,
         bed: JsonObject | None = None,
         clip: JsonObject | None = None,
+        level: JsonObject | None = None,
         name: str | None = None,
         track: str | None = None,
         skill: str = "manual",
@@ -197,6 +200,7 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         spec = parse_spec(ducking) if process == "duck" else None
         bed_spec = parse_bed(bed) if process == "bed" else None
         clip_spec = parse_clip(clip) if process == "clip" else None
+        level_spec = parse_level(level) if process == "level" else None
         whole = bed_spec or clip_spec  # processes that read the whole file
         source = self._audio_path(file or "")
         if not source.is_file():
@@ -215,7 +219,9 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
             info_in = probe(readable)
         self.policy.check_analysis(info_in.seconds)
         run_id = run or datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
-        effect, parameters, duck_notes = self._render_effect(spec, gain_db, position, info_in.seconds, info_in.rate)
+        effect, parameters, duck_notes = self._render_effect(
+            spec, gain_db, position, info_in.seconds, info_in.rate, level=level_spec
+        )
         bed_plan, out_seconds = None, round(info_in.seconds, 4)
         if bed_spec is not None:
             bed_plan, parameters, duck_notes = self._bed_plan(bed_spec, source, info_in.seconds)
@@ -376,9 +382,19 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         return float(np.abs(rendered).max(initial=0.0))
 
     def _render_effect(
-        self, spec: DuckingSpec | None, gain_db: float, position: float, seconds: float, rate: int
+        self,
+        spec: DuckingSpec | None,
+        gain_db: float,
+        position: float,
+        seconds: float,
+        rate: int,
+        *,
+        level: LevelSpec | None = None,
     ) -> tuple[Process, JsonObject, list[str]]:
         """The block function of the process, the parameters recorded in the provenance, and notes."""
+        if level is not None:  # TW-1622: the leveling plan's gains over project time
+            xs, ys = gain_curve(level_gains(level), level.ramp)
+            return envelope_gain(lambda t: curve_db(xs, ys, t), rate, position), level.model_dump(mode="json"), []
         if spec is None:
             return gain(gain_db), {"gain_db": gain_db}, []
         env, regions, protected, notes = self.ducking_envelope(spec, start=position, seconds=seconds)

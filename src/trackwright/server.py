@@ -35,6 +35,7 @@ from trackwright.core.models import (
     InsertPluginOut,
     InsertsOut,
     LaunchOut,
+    LevelingPlanOut,
     LibraryOut,
     LoudnessOut,
     MusicAnalysisOut,
@@ -662,6 +663,38 @@ def build_server(service: CubaseService) -> MCPServer:
             )
         )
 
+    # ------------------------------------------------------------------ dialogue leveling (TW-1622)
+    @server.tool(
+        annotations=READ,
+        description="Plan the leveling of the voices, read-only. Each voice is an export of one voice track "
+        "alone (file, start = its range start, name). Speech-gated loudness (BS.1770, over speech only) per "
+        "voice and per segment (phrases joined over pauses shorter than join_gap: an intervention). Each voice "
+        "is brought towards the target (default: the median voice); a segment straying more than tolerance_db "
+        "from its voice is brought back by the excess only; nothing changes inside a segment (whispers, laughs "
+        "and emphasis keep their shape), segments shorter than min_segment get only the voice's gain, every "
+        "gain is bounded by max_gain_db and ramps in the pauses. Returns per voice the segments (paged), the "
+        "fragments to compare and the 'level' object for cubase_render (process 'level').",
+    )
+    async def cubase_leveling_plan(
+        voices: Annotated[list[dict[str, Any]], Field(description="[{file, start, name}]: one export per voice track")],
+        target_lufs: Annotated[
+            float | None, Field(ge=-40, le=-5, description="speech loudness to reach (default: the median voice)")
+        ] = None,
+        max_gain_db: Annotated[float, Field(gt=0, le=12, description="bound of any gain")] = 6.0,
+        tolerance_db: Annotated[float, Field(ge=0, le=12, description="deviation left alone")] = 2.0,
+        join_gap: Annotated[float, Field(gt=0, le=10, description="pauses joined into one segment")] = 1.5,
+        min_segment: Annotated[float, Field(ge=0, le=60, description="shorter segments: voice gain only")] = 3.0,
+        ramp: Annotated[float, Field(ge=0, le=2, description="gain changes, in the pauses")] = 0.2,
+        offset: Annotated[int, Field(ge=0)] = 0,
+        limit: Annotated[int, Field(ge=1, le=500)] = 100,
+    ) -> LevelingPlanOut:
+        return await run(
+            lambda: service.leveling_plan(
+                voices, target_lufs=target_lufs, max_gain_db=max_gain_db, tolerance_db=tolerance_db,
+                join_gap=join_gap, min_segment=min_segment, ramp=ramp, offset=offset, limit=limit,
+            )
+        )  # fmt: skip
+
     # ------------------------------------------------------------------ sound effects (TW-1621)
     @server.tool(
         annotations=READ,
@@ -813,7 +846,7 @@ def build_server(service: CubaseService) -> MCPServer:
         file: Annotated[str | None, Field(description="render: absolute path of the export to process")] = None,
         start: Annotated[str, Field(description="project time of the export's first sample (seconds)")] = "0",
         process: Annotated[
-            Literal["gain", "duck", "bed", "clip"], Field(description="what to do to the audio")
+            Literal["gain", "duck", "bed", "clip", "level"], Field(description="what to do to the audio")
         ] = "gain",
         gain_db: Annotated[float, Field(ge=-40, le=40, description="gain: dB to apply")] = 0.0,
         bed: Annotated[
@@ -831,6 +864,10 @@ def build_server(service: CubaseService) -> MCPServer:
                 description="clip (a stinger or an effect to place): trim_end (cut at this second), fade_in, "
                 "fade_out (ends at the new end), sample_rate (the project's); gain_db applies"
             ),
+        ] = None,
+        level: Annotated[
+            dict[str, Any] | None,
+            Field(description="level: a voice's 'level' object from cubase_leveling_plan (gains, ramp)"),
         ] = None,
         ducking: Annotated[
             dict[str, Any] | None,
@@ -853,7 +890,7 @@ def build_server(service: CubaseService) -> MCPServer:
         return await run(
             lambda: service.render(
                 action, file=file, start=start, process=process, gain_db=gain_db, ducking=ducking, bed=bed,
-                clip=clip, name=name, track=track, skill=skill, run=run_id, dry_run=dry_run,
+                clip=clip, level=level, name=name, track=track, skill=skill, run=run_id, dry_run=dry_run,
             )
         )  # fmt: skip
 

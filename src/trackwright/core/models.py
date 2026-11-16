@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -652,6 +652,41 @@ class EffectPlanOut(_Out):
     suggested_gain_db: float | None = Field(description="gain_db for cubase_render so the effect sits there")
     overlaps: list[EffectOverlapOut] = Field(default_factory=list, description="this skill's earlier effects")
     preview: list[float]
+    notes: list[str] = Field(default_factory=list)
+
+
+class LevelSegmentOut(_Out):
+    start: float
+    end: float
+    speech_seconds: float
+    loudness_lufs: float | None
+    deviation_db: float | None = Field(description="against the voice's loudness")
+    segment_gain_db: float = Field(description="the segment's own correction (the excess over the tolerance)")
+    gain_db: float = Field(description="total: the voice's gain plus the segment's, bounded")
+    reason: str
+
+
+class LevelVoiceOut(_Out):
+    name: str
+    file: str
+    start: float
+    loudness_lufs: float | None = Field(description="speech-gated: measured over its speech only")
+    voice_gain_db: float
+    segments_total: int
+    corrected: int = Field(description="segments with their own correction")
+    bounded: int = Field(description="segments whose gain hit max_gain_db")
+    gain_range_db: list[float] = Field(description="lowest and highest total gain")
+    segments: list[LevelSegmentOut] = Field(default_factory=list, description="paged with offset and limit")
+    compare: list[list[float]] = Field(
+        default_factory=list, description="fragments to compare before and after (project seconds)"
+    )
+    level: dict[str, Any] = Field(description="the 'level' object for cubase_render (process 'level')")
+
+
+class LevelingPlanOut(_Out):
+    target_lufs: float | None = Field(description="the speech loudness every voice is brought towards")
+    parameters: dict[str, float | None]
+    voices: list[LevelVoiceOut]
     notes: list[str] = Field(default_factory=list)
 
 

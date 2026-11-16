@@ -26,6 +26,7 @@ from trackwright.jsontypes import JsonObject
 from trackwright.renders import SILENT_DBFS, range_level_db
 
 MAX_SPANS = 500
+SPEECH_MEMO = 8  # voice exports whose regions are kept (one per version of each file)
 MOMENT_WINDOW = 3.0  # seconds around a moment where the music must be audible
 
 
@@ -92,7 +93,8 @@ class DuckingMixin(ProfilesMixin):
             with decoded(voice) as readable:
                 self.policy.check_analysis(probe(readable).seconds)
                 speech = detect_speech(readable, SpeechCriteria())
-            self._speech_memo.clear()
+            if len(self._speech_memo) >= SPEECH_MEMO:  # TW-1622: several voices at once; the oldest goes
+                self._speech_memo.pop(next(iter(self._speech_memo)))
             self._speech_memo[key] = speech
         return speech
 

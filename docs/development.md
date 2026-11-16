@@ -76,7 +76,7 @@ src/trackwright/
   core/             # domain: service (base + mixins), policy, models, references
     tags.py         # Cubase parameter tags by object (Channel, Transport, Slot...)
     timefmt.py      # bars and seconds formats of Cubase's displays
-  server.py         # MCP server: registration of the 47 tools
+  server.py         # MCP server: registration of the 48 tools
   cubase/           # Trackwright_Bridge.js and installer
 tests/
   unit/             # unit tests (simulator, real sockets in /tmp)

@@ -201,7 +201,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1622 Skill `podcast-dialogue-leveling`
 
-- **Status:** pending (needs TW-1603, TW-1604, TW-1606)
+- **Status:** code done (2026-11-16), to try live: `analysis/leveling.py` (speech-gated K-weighted loudness in 10 ms steps, segments, the excess over the tolerance, bounds, ramps in the pauses), the tool `cubase_leveling_plan`, the `level` process of `cubase_render` and the skill (compression optional, with the existing tools). Tests in `tests/unit/test_leveling_tw1622.py`
 - **Scope:** speech-gated loudness per region and per voice, separating differences between people, between takes and within an intervention; bounded gains (±6 dB by default) that keep whispers, laughter and emphasis; leveled stems rendered and imported; optional moderate compression with Compressor; representative fragments compared before and after. Never every phrase to the same value.
 
 ### TW-1623 Voice diagnostics
