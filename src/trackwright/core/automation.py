@@ -302,7 +302,12 @@ class AutomationMixin(ProjectMixin):
             out.verified, out.mismatches = self._verify(item, parameter, curve, start_beats, meter)
             if out.verified is False:
                 out.notes.append("the read-back did not follow the curve: check the automation lane in Cubase")
-        out.notes.append("with read automation (R) on, the recorded curve controls the parameter")
+        out.read_automation = self._flag_state(item, Channel.READ_AUTOMATION)
+        out.notes.append(
+            "read automation (R) is on: the recorded curve controls the parameter in playback and exports"
+            if out.read_automation
+            else "read automation (R) is off: Cubase plays the parameter's last value, not the curve; turn R on"
+        )
         return out
 
     # ------------------------------------------------------------------ internals
@@ -396,7 +401,9 @@ class AutomationMixin(ProjectMixin):
                 self.call("auto.control", {"key": key, "touch": False})
             self._stop()
             self._flag(item, Channel.WRITE_AUTOMATION, write_before)
-            self._flag(item, Channel.READ_AUTOMATION, read_before)
+            # TW-1616: Read stays on after a recording, or Cubase plays the parameter's last value instead of the
+            # new curve (seen live: an export flat at the last point's -10 dB, TW-1635 (1)); untouched, as before
+            self._flag(item, Channel.READ_AUTOMATION, True if touched else read_before)
         if not written:
             raise TrackwrightError("playback did not reach the first point; nothing was recorded", code="NOT_RECORDED")
         return written, complete

@@ -169,7 +169,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1616 Experiment: ducking inside Cubase
 
-- **Status:** pending (needs TW-1601)
+- **Status:** in progress (2026-11-16), see `experiments/tw1616/`: part (b) found and fixed two automation bugs (controls bound to the previous track; Read left off after recording), showed that PreGain sits before the inserts (a compressor after it changes the ducking), and that a track created during the session records no automation from the MIDI Remote (to confirm after reloading the scripts); part (a) to do
 - **Scope:** (a) a guided sidechain setup the user completes, if Elements' Compressor allows it; (b) the planned envelope written by real-time automation recording on a parameter the skill owns, with the precision measured. Decide whether either becomes a second mode of `podcast-music-ducking`.
 
 ### TW-1617 Loop and ending analysis
@@ -253,7 +253,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1635 Fix: `cubase_record_automation` after TW-1601
 
-- **Status:** in progress: (2) fixed in TW-1616 (2026-11-16): the automation controls are bound to a new selection a moment later, and every reading or write right after selecting used the previous track's controls; the tools now wait until the volume control carries the track's name and stop with `CONTROLS_NOT_BOUND` otherwise. (1) is still open; it may share this cause (a recording that started on the previous selection's controls).
+- **Status:** in progress: (1) fixed in TW-1616 (2026-11-16): after recording, the tool put Read (R) back to off, so Cubase played the last value instead of the curve; R now stays on and the result reports it. (2) fixed in TW-1616 (2026-11-16): the automation controls are bound to a new selection a moment later, and every reading or write right after selecting used the previous track's controls; the tools now wait until the volume control carries the track's name and stop with `CONTROLS_NOT_BOUND` otherwise. (1) is still open; it may share this cause (a recording that started on the previous selection's controls).
 - **Seen in TW-1601:** (1) after a recording reported `complete: true`, the first export was flat and the fader was left at −1.43 dB instead of the last point's value; a later export, with the curve present and R on, had it. (2) The dry run reports the parameter title of the **selected** track (`TW1507 / Volumen`) for another target track (`TW1501`). Seen again in TW-1613: `cubase_convert_value` on Stereo Out answered `TW1612 episode / Volumen`, the title of the selected track (`TW1612 episode`); the value was right, since every volume shares the scale, but a control without an equivalent on the selected track could be converted on the wrong one.
 - **Scope:** find the cause of (1) with a test that reproduces it (read mode after recording, the fader's final value); report the track's read state in the output; leave the fader at the last point; take the title in the dry run from the target track. The read-back tolerance should account for the ~110 ms tick (its own readings arrive one tick late).
 

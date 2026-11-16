@@ -169,7 +169,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1616 Experimento: ducking dentro de Cubase
 
-- **Estado:** pendiente (necesita TW-1601)
+- **Estado:** en curso (2026-11-16), ver `experiments/tw1616/`: la parte (b) encontró y corrigió dos errores de automatización (controles vinculados a la pista anterior; lectura desactivada tras grabar), mostró que PreGain está antes de las inserciones (un compresor después cambia el ducking), y que una pista creada durante la sesión no graba automatización desde el MIDI Remote (por confirmar tras recargar los scripts); falta la parte (a)
 - **Alcance:** (a) una preparación guiada del sidechain que completa el usuario, si el Compressor de Elements lo permite; (b) la envolvente planificada escrita grabando automatización en tiempo real en un parámetro propio de la skill, con la precisión medida. Decidir si alguna de las dos pasa a ser un segundo modo de `podcast-music-ducking`.
 
 ### TW-1617 Análisis de bucles y finales
@@ -253,7 +253,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1635 Corrección: `cubase_record_automation` tras TW-1601
 
-- **Estado:** en curso: (2) corregido en TW-1616 (2026-11-16): los controles de automatización se vinculan a una nueva selección un momento después, y toda lectura o escritura justo después de seleccionar usaba los controles de la pista anterior; las herramientas esperan ahora a que el control de volumen lleve el nombre de la pista y se detienen con `CONTROLS_NOT_BOUND` si no. (1) sigue abierto; puede tener la misma causa (una grabación que empezó con los controles de la selección anterior).
+- **Estado:** en curso: (1) corregido en TW-1616 (2026-11-16): tras grabar, la herramienta devolvía la lectura (R) a desactivada, así que Cubase tocaba el último valor en lugar de la curva; R queda ahora activada y el resultado lo indica. (2) corregido en TW-1616 (2026-11-16): los controles de automatización se vinculan a una nueva selección un momento después, y toda lectura o escritura justo después de seleccionar usaba los controles de la pista anterior; las herramientas esperan ahora a que el control de volumen lleve el nombre de la pista y se detienen con `CONTROLS_NOT_BOUND` si no. (1) sigue abierto; puede tener la misma causa (una grabación que empezó con los controles de la selección anterior).
 - **Visto en TW-1601:** (1) tras una grabación que indicó `complete: true`, la primera exportación salió plana y el fader quedó en −1,43 dB en lugar del valor del último punto; una exportación posterior, con la curva presente y R activado, sí la tenía. (2) El dry run indica el título del parámetro de la pista **seleccionada** (`TW1507 / Volumen`) para otra pista de destino (`TW1501`). Visto de nuevo en TW-1613: `cubase_convert_value` sobre Stereo Out respondió `TW1612 episode / Volumen`, el título de la pista seleccionada; el valor era correcto, porque todos los volúmenes comparten escala, pero un control sin equivalente en la pista seleccionada podría convertirse en la equivocada.
 - **Alcance:** encontrar la causa de (1) con un test que la reproduzca (modo de lectura tras grabar, valor final del fader); indicar en la salida el estado de lectura de la pista; dejar el fader en el último punto; tomar el título del dry run de la pista de destino. La tolerancia de la relectura debe tener en cuenta el tick de ~110 ms (sus propias lecturas llegan un tick tarde).
 

@@ -314,6 +314,9 @@ class AutomationRecordOut(_Out):
     complete: bool | None = Field(
         default=None, description="playback reached the last point (false: stopped early, the curve is cut)"
     )
+    read_automation: bool | None = Field(
+        default=None, description="the track's read automation (R) after recording: on, the curve plays (TW-1616)"
+    )
     verified: bool | None = Field(description="a read-back pass followed the curve (null when not verified)")
     mismatches: list[str] = Field(default_factory=list)
     notes: list[str] = Field(default_factory=list)

@@ -82,10 +82,12 @@ def test_record_and_verify_volume_ramp(service: CubaseService, fake: FakeCubase)
     recorded = fake.automation[(fake.channel_by_title("POC-TEST").id, "volume")]
     assert recorded[0][1] == pytest.approx(0.79)
     assert recorded[-1][1] == pytest.approx(0.4)
-    # state restored: transport stopped, W/R as before, touch released
+    # transport stopped, W as before, touch released; R on so the new curve plays (TW-1616: with R off as
+    # before, the export played the last point's value instead of the curve)
     audio = fake.channel_by_title("POC-TEST")
     assert fake.playing is False
-    assert (audio.params[4013].value, audio.params[4014].value) == (0, 0)
+    assert (audio.params[4013].value, audio.params[4014].value) == (0, 1)
+    assert out.read_automation is True
     assert fake.auto_touched == set()
     assert fake.fired.count("transport.start") == 2  # record + verify
     assert fake.fired.count("transport.stop") == 2
