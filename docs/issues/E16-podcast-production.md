@@ -194,7 +194,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1621 Skill `podcast-sound-effects`
 
-- **Status:** code done (2026-11-16), to try live: the tool `cubase_effect_plan` (the speech it lands on, the overlaps with earlier effects, the level against the voice), the `credits` action of `cubase_workspace` (`Trackwright/credits.md` from every licence recorded) and the skill; effects are rendered with the `clip` process of TW-1619. Tests in `tests/unit/test_effects_tw1621.py`
+- **Status:** done (2026-11-16), run on the test project with a door from the user's library (see the verification log): the tool `cubase_effect_plan` (the speech it lands on, the overlaps with earlier effects, the level against the voice), the `credits` action of `cubase_workspace` (`Trackwright/credits.md` from every licence recorded) and the skill; effects are rendered with the `clip` process of TW-1619. Tests in `tests/unit/test_effects_tw1621.py`
 - **Scope:** search the library, place an effect at an approved point, gain and fades, overlaps; provenance and license recorded in the episode (`Trackwright/credits`).
 
 ## Phase 4 — Voice
