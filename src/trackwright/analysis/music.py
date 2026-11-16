@@ -283,6 +283,37 @@ def find_loops(
     return loops
 
 
+def seam_score(x: Audio, rate: int, tempo: Tempo, start: float, end: float) -> float | None:
+    """How well the jump from ``end`` back to ``start`` agrees, as :func:`find_loops` ranks its candidates (a bar
+    on each side, timbre and harmony): for a loop the user marked (TW-1618). None when there is too little
+    audio around the seam (a whole file looped on itself)."""
+    spec = spectrogram(x)
+    fps = rate / HOP
+    bar = 4 * 60 / tempo.bpm if tempo.beats and tempo.bpm else None
+    half = max(1, round((bar or SEAM_WINDOW) * fps))
+    first, lag = round(start * fps), round((end - start) * fps)
+    lo, hi = max(0, first - half), min(first + half, len(spec) - lag)
+    if lag <= 0 or hi - lo < max(1, round(SEAM_WINDOW * fps)):
+        return None
+    timbre = _normalised(band_features(spec, rate))
+    harmony = _normalised(chroma_features(spec, rate))
+    agree = np.minimum(
+        np.sum(timbre[lo:hi] * timbre[lo + lag : hi + lag], axis=1),
+        np.sum(harmony[lo:hi] * harmony[lo + lag : hi + lag], axis=1),
+    )
+    return round(max(0.0, float(agree.mean())), 3)
+
+
+def seam_times(plan: BedPlan) -> list[float]:
+    """Where each seam falls in the bed, seconds from its start."""
+    times, position = [], 0.0
+    for index, (start, end) in enumerate(plan.pieces):
+        if index:
+            times.append(round(position, 3))
+        position += (end - start) - (plan.crossfade if index < len(plan.pieces) - 1 else 0.0)
+    return times
+
+
 def _normalised(features: Audio) -> Audio:
     centred = features - features.mean(axis=1, keepdims=True)
     norms = np.linalg.norm(centred, axis=1, keepdims=True)

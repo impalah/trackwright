@@ -179,7 +179,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1618 Skill `podcast-music-bed`
 
-- **Status:** pending (needs TW-1606, TW-1617)
+- **Status:** code done (2026-11-16), to try live: the skill (contract of TW-1609: a prepared loop, a marked region lined up by correlation, or the analysis' candidates; a preview of every seam; markers at doubtful seams; import on a new track); the `bed` render gained `align`, the seams' places in the bed and a seam score for any loop (`seam_score`, with a note under 0.5, calibrated on the march the user accepted at 0.59). Tests in `tests/unit/test_music_bed_tw1618.py`
 - **Scope:** modes: a prepared loop, a region the user approves, or regions proposed by the analysis (the user always approves); no time stretch; previews of each seam; markers at doubtful seams; import of the result. A crossfade is not imposed: a well-made loop may need none.
 
 ### TW-1619 Skill `podcast-section-transitions`

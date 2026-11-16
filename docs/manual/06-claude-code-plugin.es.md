@@ -85,6 +85,16 @@ Baja la música bajo las voces: abajo justo antes de que alguien hable, abajo du
 - **Qué cambia, tras tu sí:** una pista nueva con la música atenuada en su sitio, y la pista de música original silenciada (nunca borrada). Una ejecución posterior sustituye su propia pista atenuada y nada más.
 - **De qué avisa:** una voz con pausas cortas por todas partes (un monólogo) mantiene la música baja casi todo el tiempo; ofrece dejarla arriba en la intro, el cierre o una transición.
 
+## `podcast-music-bed`
+
+Hace una cama de música de una duración dada a partir de una música demasiado corta: un bucle repetido, la música terminando por sí sola, nunca estirada.
+
+- **Pídela así:** "haz que esta música dure 3 minutos bajo la entrevista", "repite la música de entrada de 0:30 a 4:00".
+- **Tres formas:** un archivo hecho para repetirse (se repite entero), una región que marcas tú (su final se alinea a la muestra con su inicio), o un bucle que propone el análisis (tempo, compases, y cómo de bien encaja su unión en timbre y armonía).
+- **Cómo suena:** el salto se coloca donde la música más se parece a sí misma, alineado por correlación, con un fundido de medio pulso; tras la última pasada la música sigue hasta su propio final. Con una marcha real (TW-1617) las uniones "casi no se notaban".
+- **Escuchas antes:** una preescucha corta de cada unión, antes de que cambie nada en el proyecto. La cama nunca es más larga de lo pedido ni se estira: te dice cuánto le falta.
+- **Qué cambia, tras tu sí:** una pista nueva con la cama en su sitio, y marcadores en las uniones que te dejaron dudas.
+
 ## `podcast-silence-trim`
 
 Encuentra los silencios más largos que una duración y los quita, cerrando los huecos para que el episodio sea más corto.

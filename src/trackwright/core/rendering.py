@@ -25,7 +25,17 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from trackwright import __version__
 from trackwright.analysis import decoded, probe
-from trackwright.analysis.music import BedPlan, Loop, plan_bed, render_bed
+from trackwright.analysis.music import (
+    BedPlan,
+    Loop,
+    estimate_tempo,
+    mono,
+    plan_bed,
+    refine_end,
+    render_bed,
+    seam_score,
+    seam_times,
+)
 from trackwright.core.analyzing import AnalyzingMixin
 from trackwright.core.ducking import DuckingMixin, DuckingSpec, parse_spec
 from trackwright.core.models import PreviewOut, RenderItemOut, RenderOut
@@ -69,6 +79,9 @@ class BedSpec(BaseModel):
     )
     target_seconds: float = Field(gt=0, le=3 * 3600, description="the bed's length; never exceeded")
     crossfade: float = Field(default=0.1, ge=0, le=4, description="equal-power crossfade at every seam")
+    align: bool = Field(
+        default=False, description="line loop_end up with loop_start by correlation (a region the user marked)"
+    )
 
 
 def parse_bed(raw: JsonObject | None) -> BedSpec:
@@ -99,6 +112,7 @@ class PreviewSource(BaseModel):
 
 PROCESSES = ("gain", "duck", "bed")
 MAX_PREVIEW_SOURCES = 8
+DOUBTFUL_SEAM = 0.5  # TW-1618: under this seam score a bed's seams are pointed out for a listen
 MAX_PREVIEW_SECONDS = 120.0
 PREVIEWS = "previews"
 MAX_GAIN_DB = 40.0
@@ -175,7 +189,7 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         effect, parameters, duck_notes = self._render_effect(spec, gain_db, position, info_in.seconds, info_in.rate)
         bed_plan = None
         if bed_spec is not None:
-            bed_plan, parameters, duck_notes = self._bed_plan(bed_spec, info_in.seconds)
+            bed_plan, parameters, duck_notes = self._bed_plan(bed_spec, source, info_in.seconds)
         out = RenderOut(action="render", dry_run=dry_run, status="planned", workspace=str(space.path))
         notes = out.notes
         notes += duck_notes
@@ -258,17 +272,32 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         return {"name": info.name, "uid": info.uid}
 
     @staticmethod
-    def _bed_plan(bed: BedSpec, total: float) -> tuple[BedPlan, JsonObject, list[str]]:
-        """Intro, the loop repeated and the ending, as near the target as the loop allows (TW-1617)."""
+    def _bed_plan(bed: BedSpec, source: Path, total: float) -> tuple[BedPlan, JsonObject, list[str]]:
+        """Intro, the loop repeated and the ending, as near the target as the loop allows (TW-1617), with the
+        seams' places in the bed and the loop's seam score (TW-1618)."""
         if bed.loop_end > total or (bed.ending_start is not None and bed.ending_start >= total):
             raise PreconditionFailedError("the loop or the ending is beyond the end of the file", code="BAD_REQUEST")
-        plan = plan_bed(Loop(bed.loop_start, bed.loop_end, 1.0, bed.crossfade), total, bed.target_seconds,
+        with decoded(source) as readable:
+            data, rate = sf.read(str(readable), dtype="float64", always_2d=True)
+        x = mono(data)
+        loop_end = refine_end(x, rate, bed.loop_start, bed.loop_end) if bed.align else bed.loop_end
+        if loop_end > total or loop_end <= bed.loop_start:
+            raise PreconditionFailedError("the aligned loop does not fit in the file", code="BAD_REQUEST")
+        score = seam_score(x, rate, estimate_tempo(x, rate), bed.loop_start, loop_end)
+        plan = plan_bed(Loop(bed.loop_start, loop_end, 1.0, bed.crossfade), total, bed.target_seconds,
                         ending_start=bed.ending_start)  # fmt: skip
         short = round(bed.target_seconds - plan.seconds, 3)
-        parameters: JsonObject = {**bed.model_dump(mode="json"), "repeats": plan.repeats, "seconds": plan.seconds,
-                                  "short_by": short}  # fmt: skip
-        note = f"{plan.repeats} repeats of the loop: {plan.seconds:g} s, {short:g} s short of the target (no stretch)"
-        return plan, parameters, [note]
+        parameters: JsonObject = {**bed.model_dump(mode="json"), "loop_end_used": loop_end, "seam_score": score,
+                                  "repeats": plan.repeats, "seconds": plan.seconds, "short_by": short,
+                                  "seams": seam_times(plan)}  # fmt: skip
+        seams = ", ".join(f"{t:g}" for t in seam_times(plan)) or "none"
+        notes = [f"{plan.repeats} repeats of the loop: {plan.seconds:g} s, {short:g} s short of the target "
+                 f"(no stretch); seams at {seams} s of the bed"]  # fmt: skip
+        if bed.align:
+            notes.append(f"loop_end lined up with loop_start: {bed.loop_end:g} -> {loop_end:g} s")
+        if score is not None and score < DOUBTFUL_SEAM:
+            notes.append(f"seam score {score:g}: listen to the seams before using the bed")
+        return plan, parameters, notes
 
     @staticmethod
     def _write_render(readable: Path, target: Path, effect: Process, bed: BedPlan | None) -> float:

@@ -85,6 +85,16 @@ Lowers the music under the voices: down just before someone speaks, down through
 - **What it changes, after your yes:** a new track with the ducked music at the right place, and the original music track muted (never deleted). A later run replaces its own ducked track and nothing else.
 - **What it warns about:** a voice with short pauses everywhere (a monologue) keeps the music low almost all the time; it offers to keep it up at the intro, the outro or a transition.
 
+## `podcast-music-bed`
+
+Makes a music bed of a given length from music that is too short: a loop repeated, the music ending on its own, never stretched.
+
+- **Ask for it like this:** "make this music last 3 minutes under the interview", "loop the intro music from 0:30 to 4:00".
+- **Three ways:** a file made to loop (it repeats whole), a region you mark (its end is lined up to the sample with its start), or a loop the analysis proposes (tempo, bars, and how well its seam matches in timbre and harmony).
+- **How it sounds:** the jump is placed where the music matches itself best, lined up by correlation, with a half-beat crossfade; after the last pass the music plays on to its own end. On a real march (TW-1617) the seams were "hardly noticeable".
+- **You listen first:** a short preview of every seam, before anything changes in the project. The bed is never longer than asked and never stretched: it tells you how much shorter it is.
+- **What it changes, after your yes:** a new track with the bed at its place, and markers at the seams you doubted.
+
 ## `podcast-silence-trim`
 
 Finds the silences longer than a duration and removes them, closing the gaps so the episode gets shorter.
