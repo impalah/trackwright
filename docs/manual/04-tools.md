@@ -599,13 +599,15 @@ Mechanism verified in Cubase Elements 15.0.30: the script has one control per pa
   2. enables W and disables R;
   3. plays from one bar before the first point;
   4. "touches" the control, follows the curve (linear between points) according to the cursor position and "releases" it;
-  5. stops playback and leaves W and R as they were.
+  5. stops playback, leaves W as it was and **R enabled**, so the new curve plays (TW-1616: with R back off, an export played the last point's value instead of the curve); `read_automation` reports it.
   - With `verify`, it plays again with R enabled and compares the value read with the curve (tolerance 0.05).
-- **Output:** the curve with the normalized value of each point (`points`), the values written (`written`), `complete` (`false` when playback stopped before the last point, for example because the user pressed Stop: the curve is cut), `verified`, the discrepancies (`mismatches`) and notes.
-- **Errors:** `PARAM_NOT_FOUND`, `OUT_OF_RANGE`, `NO_UNIT_CONVERSION`, `NOT_AUTOMATABLE` (nothing is bound: empty slot or unassigned Quick Control), `TRANSPORT_RUNNING`, `NOT_RECORDED`, `BAD_TIME` and `WRITES_DISABLED`.
+- **Output:** the curve with the normalized value of each point (`points`), the values written (`written`), `complete` (`false` when playback stopped before the last point, for example because the user pressed Stop: the curve is cut), `read_automation`, `verified`, the discrepancies (`mismatches`) and notes.
+- **Errors:** `PARAM_NOT_FOUND`, `OUT_OF_RANGE`, `NO_UNIT_CONVERSION`, `NOT_AUTOMATABLE` (nothing is bound: empty slot or unassigned Quick Control), `TRANSPORT_RUNNING`, `NOT_RECORDED`, `BAD_TIME`, `CONTROLS_NOT_BOUND` (the controls did not follow the track's selection) and `WRITES_DISABLED`.
 - **Limitations:**
   - positions use the time signature at the cursor position (`cubase_get_project`). Time signature changes across the project are not followed; if Cubase does not report the time signature, 4/4 is assumed;
   - a point is written every ~0.1–0.3 s;
+  - **a track created after the MIDI Remote script loaded records no automation from it** (TW-1616: the parameter moves, but Cubase writes nothing; after reloading the scripts the same curve recorded and verified). Use `verify`: a failed read-back says so; reload the MIDI Remote scripts or restart Cubase, then record again;
+  - the curve acts where the parameter does: PreGain is before the inserts, so a compressor on the track changes how much of a PreGain drop is heard (TW-1616: −10 dB came out as −7 to −9 dB);
   - **it makes sound**: turn down the monitor volume;
   - with R enabled, the recorded curve overrides the parameter.
 

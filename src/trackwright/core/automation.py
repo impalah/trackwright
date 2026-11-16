@@ -301,7 +301,11 @@ class AutomationMixin(ProjectMixin):
         if verify:
             out.verified, out.mismatches = self._verify(item, parameter, curve, start_beats, meter)
             if out.verified is False:
-                out.notes.append("the read-back did not follow the curve: check the automation lane in Cubase")
+                out.notes.append(
+                    "the read-back did not follow the curve: check the automation lane in Cubase. A track created "
+                    "after the MIDI Remote script loaded records no automation from it (TW-1616): reload the "
+                    "MIDI Remote scripts (or restart Cubase) and record again"
+                )
         out.read_automation = self._flag_state(item, Channel.READ_AUTOMATION)
         out.notes.append(
             "read automation (R) is on: the recorded curve controls the parameter in playback and exports"

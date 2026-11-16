@@ -599,13 +599,15 @@ Mecanismo verificado en Cubase Elements 15.0.30: el script tiene en la superfici
   2. activa W y desactiva R;
   3. reproduce desde un compás antes del primer punto;
   4. «toca» el control, recorre la curva (lineal entre puntos) siguiendo la posición del cursor y lo «suelta»;
-  5. para la reproducción y deja W y R como estaban.
+  5. para la reproducción, deja W como estaba y **R activada**, para que suene la curva nueva (TW-1616: con R desactivada de nuevo, una exportación sonó con el valor del último punto en lugar de la curva); `read_automation` lo indica.
   - Con `verify`, vuelve a reproducir con R activado y compara el valor leído con la curva (tolerancia 0,05).
-- **Salida:** la curva con el valor normalizado de cada punto (`points`), los valores escritos (`written`), `complete` (`false` si la reproducción se paró antes del último punto, por ejemplo porque el usuario pulsó Stop: la curva queda cortada), `verified`, las discrepancias (`mismatches`) y notas.
-- **Errores:** `PARAM_NOT_FOUND`, `OUT_OF_RANGE`, `NO_UNIT_CONVERSION`, `NOT_AUTOMATABLE` (no hay nada enlazado: slot vacío o Quick Control sin asignar), `TRANSPORT_RUNNING`, `NOT_RECORDED`, `BAD_TIME` y `WRITES_DISABLED`.
+- **Salida:** la curva con el valor normalizado de cada punto (`points`), los valores escritos (`written`), `complete` (`false` si la reproducción se paró antes del último punto, por ejemplo porque el usuario pulsó Stop: la curva queda cortada), `read_automation`, `verified`, las discrepancias (`mismatches`) y notas.
+- **Errores:** `PARAM_NOT_FOUND`, `OUT_OF_RANGE`, `NO_UNIT_CONVERSION`, `NOT_AUTOMATABLE` (no hay nada enlazado: slot vacío o Quick Control sin asignar), `TRANSPORT_RUNNING`, `NOT_RECORDED`, `BAD_TIME`, `CONTROLS_NOT_BOUND` (los controles no siguieron la selección de la pista) y `WRITES_DISABLED`.
 - **Limitaciones:**
   - las posiciones usan el compás en la posición del cursor (`cubase_get_project`). Si hay cambios de compás a lo largo del proyecto, no se siguen; si Cubase no informa del compás, se supone 4/4;
   - hay un punto escrito cada ~0,1–0,3 s;
+  - **una pista creada después de cargarse el script de MIDI Remote no graba automatización desde él** (TW-1616: el parámetro se mueve, pero Cubase no escribe nada; tras recargar los scripts la misma curva se grabó y verificó). Usa `verify`: una relectura fallida lo indica; recarga los scripts de MIDI Remote o reinicia Cubase, y graba de nuevo;
+  - la curva actúa donde actúa el parámetro: PreGain está antes de las inserciones, así que un compresor en la pista cambia cuánto se oye de una bajada de PreGain (TW-1616: −10 dB salieron entre −7 y −9 dB);
   - **suena**: baja el volumen del monitor;
   - con R activado, la curva grabada manda sobre el parámetro.
 

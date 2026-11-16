@@ -169,7 +169,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1616 Experimento: ducking dentro de Cubase
 
-- **Estado:** en curso (2026-11-16), ver `experiments/tw1616/`: la parte (b) encontró y corrigió dos errores de automatización (controles vinculados a la pista anterior; lectura desactivada tras grabar), mostró que PreGain está antes de las inserciones (un compresor después cambia el ducking), y que una pista creada durante la sesión no graba automatización desde el MIDI Remote (por confirmar tras recargar los scripts); falta la parte (a)
+- **Estado:** en curso (2026-11-16), ver `experiments/tw1616/`: la parte (b) encontró y corrigió dos errores de automatización (controles vinculados a la pista anterior; lectura desactivada tras grabar), mostró que PreGain está antes de las inserciones (un compresor después cambia el ducking), y que una pista creada durante la sesión no graba automatización desde el MIDI Remote hasta recargar los scripts (confirmado); con una señal limpia la envolvente grabada sigue al plan con un retardo constante de +0,22 s, niveles exactos y rampas suaves. Decisión para (b): el render fuera de línea sigue siendo el único modo. Falta la parte (a)
 - **Alcance:** (a) una preparación guiada del sidechain que completa el usuario, si el Compressor de Elements lo permite; (b) la envolvente planificada escrita grabando automatización en tiempo real en un parámetro propio de la skill, con la precisión medida. Decidir si alguna de las dos pasa a ser un segundo modo de `podcast-music-ducking`.
 
 ### TW-1617 Análisis de bucles y finales
