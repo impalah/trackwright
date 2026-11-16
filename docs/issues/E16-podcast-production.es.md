@@ -184,7 +184,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1619 Skill `podcast-section-transitions`
 
-- **Estado:** código hecho (2026-11-16), falta probarlo en directo: `analysis/transitions.py` (la pausa más cercana, la cortinilla después de la última frase, su cola audible, las opciones cuando no cabe), la herramienta `cubase_transition_plan`, el proceso `clip` de `cubase_render` (ganancia, corte, fundidos, la frecuencia del proyecto) y la skill. Tests en `tests/unit/test_transitions_tw1619.py`. «La transición habitual» del perfil del programa queda para cuando el perfil tenga roles (E0004)
+- **Estado:** hecho (2026-11-16), ejecutada en el proyecto de pruebas con un whoosh de la biblioteca del usuario (ver el registro de verificación; el registro de la licencia ahora se fusiona con el de la importación): `analysis/transitions.py` (la pausa más cercana, la cortinilla después de la última frase, su cola audible, las opciones cuando no cabe), la herramienta `cubase_transition_plan`, el proceso `clip` de `cubase_render` (ganancia, corte, fundidos, la frecuencia del proyecto) y la skill. Tests en `tests/unit/test_transitions_tw1619.py`. «La transición habitual» del perfil del programa queda para cuando el perfil tenga roles (E0004)
 - **Alcance:** una cortinilla aprobada o una entrada/salida de música en un marcador o tiempo, nunca encima del final de la última frase, respetando su cola, fundidos renderizados fuera de línea; «la transición habitual» sale del perfil del programa.
 
 ### TW-1620 Biblioteca de audio con licencias

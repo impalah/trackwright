@@ -245,6 +245,28 @@ def test_record_and_forget(fake: FakeCubase, tmp_path: Path) -> None:
     assert "nothing recorded" in tool.workspace("forget", kind="plugin", key="UID1/slot:1").notes[0]
 
 
+def test_a_record_by_the_same_skill_merges_and_paths_are_one_key(fake: FakeCubase, tmp_path: Path) -> None:
+    """TW-1619 live: the import recorded renders/x.wav with its track; the skill added the licence under the
+    absolute path, making a second record. Now it is one record, with both."""
+    Workspace(tmp_path).create()
+    tool = service(fake, [str(tmp_path)])
+    tool.workspace("record", kind="render", key="renders/x.wav", skill="sk", run="r1",
+                   details={"track_uid": "U1", "position": 21.48}, dry_run=False)  # fmt: skip
+    absolute = str(tmp_path / FOLDER / "renders" / "x.wav")
+    done = tool.workspace("record", kind="render", key=absolute, skill="sk", run="r1",
+                          details={"license": "CC0"}, dry_run=False)  # fmt: skip
+    assert done.before is not None
+    assert len(done.items) == 1
+    assert done.items[0]["key"] == "renders/x.wav"
+    assert done.items[0]["details"] == {"track_uid": "U1", "position": 21.48, "license": "CC0"}
+    other = tool.workspace("record", kind="render", key="renders/x.wav", skill="other", run="r2",
+                           details={"license": "CC-BY"}, dry_run=False)  # fmt: skip
+    assert other.items[0]["details"] == {"license": "CC-BY"}  # another skill replaces
+    outside = tool.workspace("record", kind="render", key="/elsewhere/x.wav", skill="sk", run="r3")
+    assert outside.after is not None
+    assert outside.after["key"] == "/elsewhere/x.wav"
+
+
 def test_record_refusals(fake: FakeCubase, tmp_path: Path) -> None:
     with pytest.raises(PolicyError):
         service(fake, [str(tmp_path)], enabled=False).workspace("record", kind="track", key="k", skill="s", run="r")

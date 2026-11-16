@@ -69,7 +69,7 @@ An explicit yes to the transition (name the render and where it goes) after the 
 1. If chosen, open the pause first: `cubase_edit_range` (`insert_silence`, dry run, then `dry_run: false`).
 2. The track: the transitions track this skill created, or a new one with `cubase_add_track_interactive` (`kind: "audio"`, a name like `Transitions`; stereo if the stinger is stereo).
 3. `cubase_import_audio` on it at the plan's `start`, `file` = the approved render: start (dry run, then `dry_run: false`), the user **unticks "Copy file to project folder"**, then confirm.
-4. Record the licence: `cubase_workspace` (`action: "record"`, `kind: "render"`, `key` = the render's path, `details` = `{title, license, source, attribution, at}` from the library), so the credits can be gathered later.
+4. Record the licence: `cubase_workspace` (`action: "record"`, `kind: "render"`, `key` = `renders/<the render's file name>`, the same `skill` and `run_id`, `details` = `{title, license, source, attribution, at}` from the library). The import already recorded that render with its track; the same skill's details are merged into that record, so the credits can be gathered later.
 
 ### 7. Verify
 

@@ -607,3 +607,11 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 
 - The user chose a folder of 29 sounds (mostly Storyblocks, file names ending in `SBA-…`) as the library, added to `[library] folders` with their permission, and gave the licence of one, the march used as an intro: Storyblocks, an active subscription. Its sidecar was written with only that (credit and allowed uses left empty, with a note to complete them).
 - `trackwright library check`: 1 licensed sound, 28 without a sidecar (left out), no invalid or orphan sidecar. `search march`: the march, 36.15 s, its licence and source. `search march --use podcast`: nothing, since the sidecar does not yet list podcast as an allowed use.
+
+## 2026-11-16 — TW-1619: `podcast-section-transitions` on the test project
+
+- The library: with the user's permission, sidecars for the 21 Storyblocks sounds of their folder (licence "Storyblocks (active subscription)", kind guessed from the name; credit and uses left to complete). `check`: 22 licensed, 7 without a sidecar (no SBA id: left out). `cubase_library` search "whoosh": three, with their licence.
+- Voice: TW1501 alone exported 0–140 s (`transitions-voices`; the whole project was 46 min because of `TW1612 episode`, so the first dialog was cancelled and the solo restored). Four phrases; pauses 10.18–13.99 and 21.18–25.99 s.
+- `cubase_transition_plan` at 23 s with `Flash whoosh swoosh 3` (1.846 s file): pause 21.18–25.99, start 21.48 (0.3 s after the phrase), audible end 22.17, fits. Its "sound ends at 0.69 s" was checked against the file's envelope: −8.8 dB at 0.2 s, −67.6 dB at 0.7 s, digital silence from 1.0 s.
+- `cubase_render` `clip` at 48 kHz (the MP3 is 44.1 kHz), peak −0.73 dBFS; `cubase_preview` 18.18–28.99 s with the voice: the user: "sounds good". New stereo track `Transitions`, imported at 21.480 without a copy (edges 21.480 and 23.326, `verified: true`).
+- Found: the licence record under the render's absolute path made a second record next to the one the import had made (`renders/…`), and a record with the same key would have replaced the import's details. Fixed: an absolute path inside `Trackwright/` is stored relative, and a record from the same skill merges its details.

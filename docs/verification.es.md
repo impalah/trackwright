@@ -607,3 +607,11 @@ Cubase Elements 15.0.30, script 1.6.1, proyecto de pruebas, `TRACKWRIGHT_TEST_TR
 
 - El usuario eligió como biblioteca una carpeta de 29 sonidos (casi todos de Storyblocks, con nombres terminados en `SBA-…`), añadida a `[library] folders` con su permiso, y dio la licencia de uno, la marcha que usa de entrada: Storyblocks, una suscripción activa. Su archivo de datos se escribió solo con eso (crédito y usos permitidos vacíos, con una nota para completarlos).
 - `trackwright library check`: 1 sonido con licencia, 28 sin archivo de datos (fuera), ningún archivo de datos inválido ni huérfano. `search march`: la marcha, 36,15 s, su licencia y origen. `search march --use podcast`: nada, porque el archivo de datos aún no incluye podcast entre los usos permitidos.
+
+## 2026-11-16 — TW-1619: `podcast-section-transitions` en el proyecto de pruebas
+
+- La biblioteca: con permiso del usuario, archivos de datos para los 21 sonidos de Storyblocks de su carpeta (licencia "Storyblocks (active subscription)", tipo deducido del nombre; crédito y usos por completar). `check`: 22 con licencia, 7 sin archivo de datos (sin id SBA: fuera). `cubase_library` buscando "whoosh": tres, con su licencia.
+- Voz: TW1501 sola exportada 0–140 s (`transitions-voices`; el proyecto entero eran 46 min por `TW1612 episode`, así que el primer diálogo se canceló y se restauró el solo). Cuatro frases; pausas 10,18–13,99 y 21,18–25,99 s.
+- `cubase_transition_plan` en 23 s con `Flash whoosh swoosh 3` (archivo de 1,846 s): pausa 21,18–25,99, inicio 21,48 (0,3 s después de la frase), final audible 22,17, cabe. Su "el sonido acaba en 0,69 s" se comprobó con la envolvente del archivo: −8,8 dB en 0,2 s, −67,6 dB en 0,7 s, silencio digital desde 1,0 s.
+- `cubase_render` `clip` a 48 kHz (el MP3 está a 44,1 kHz), pico −0,73 dBFS; `cubase_preview` 18,18–28,99 s con la voz: el usuario: "suena bien". Pista estéreo nueva `Transitions`, importada en 21,480 sin copia (bordes 21,480 y 23,326, `verified: true`).
+- Encontrado: el registro de la licencia con la ruta absoluta del render creó un segundo registro junto al de la importación (`renders/…`), y un registro con la misma clave habría sustituido los detalles de la importación. Corregido: una ruta absoluta dentro de `Trackwright/` se guarda relativa, y un registro de la misma skill fusiona sus detalles.

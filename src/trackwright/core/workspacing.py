@@ -8,6 +8,7 @@ never guessed between several projects. Creating the folder needs ``[workspace] 
 from __future__ import annotations
 
 from collections import Counter
+from pathlib import Path
 from typing import Literal, get_args
 
 from pydantic import ValidationError
@@ -105,6 +106,9 @@ class WorkspaceMixin(ServiceBase):
                 f"cannot find the workspace: {why}", code="NO_PROJECT_FOLDER", details={"reason": why}
             )
         space = Workspace(folder)
+        inside = Path(key)
+        if inside.is_absolute() and inside.is_relative_to(space.path):  # TW-1619: one key per item
+            key = inside.relative_to(space.path).as_posix()
         out = WorkspaceOut(
             action=action,
             dry_run=dry_run,
@@ -121,8 +125,9 @@ class WorkspaceMixin(ServiceBase):
         if action == "record":
             if not skill or not run:
                 raise PreconditionFailedError("give 'skill' and 'run' to record an item", code="BAD_REQUEST")
+            merged = {**before.details, **(details or {})} if before is not None and before.skill == skill else details
             try:
-                item = OwnedItem(kind=item_kind, key=key, skill=skill, run=run, updated=now(), details=details or {})
+                item = OwnedItem(kind=item_kind, key=key, skill=skill, run=run, updated=now(), details=merged or {})
                 out.after = item.model_dump(mode="json")
             except (ValidationError, PydanticSerializationError) as exc:
                 reason = {"reason": str(exc)[:500]}
