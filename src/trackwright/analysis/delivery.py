@@ -5,7 +5,8 @@ Built on what TW-1612 measured on a whole episode (``experiments/tw1612/``):
 - the Stereo Out fader moves the integrated loudness by exactly its gain; it goes up to +6.02 dB;
 - Stereo Out's insert slots 1-6 are **before** the fader and 7-8 **after** it: a ceiling must sit in 7 or 8;
 - the Brickwall Limiter lets about 0.24 dB of intersample peaks through with DIC on;
-- MP3 128 kbps raised the true peak by 0.78-0.82 dB.
+- MP3 128 kbps raised the true peak by 0.78-0.82 dB (on another mix, TW-1613, it lowered it by 0.42 dB: the
+  rise is a cautious margin, not a constant).
 
 So: gain = target - measured; the delivered true peak is predicted as the master's plus the gain plus the
 encoding's rise; when it would pass the ceiling, a limiter goes in a post-fader slot with its threshold that
