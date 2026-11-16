@@ -2,25 +2,28 @@
 length that keeps the ending. Pure numpy and scipy; no time stretch, ever.
 
 1. **Onsets and tempo.** Spectral flux of the magnitude spectrogram (frames of 1024 samples, hop 512) is the
-   onset strength; its autocorrelation gives the beat period between 60 and 180 BPM; the beat phase is the one
-   whose comb of beats collects the most onset strength. Beats are then evenly spaced at that period (a bed
-   rarely changes tempo); ``tempo_confidence`` says how clear the periodicity was (ambient material has none,
-   and then loops fall back to whole seconds instead of beats).
+   onset strength; its autocorrelation, weighed by a prior around 120 BPM (a tempo and its half correlate
+   alike), gives the beat period between 60 and 180 BPM; a beat grid is fitted to the onset peaks.
+   ``tempo_confidence`` says how clear the periodicity was (ambient material has none, and then loop lengths
+   are free instead of whole bars).
 2. **Features.** Log energy in 24 bands (timbre) and energy in the 12 pitch classes (chroma, 55 Hz-5 kHz) per
-   frame, averaged per beat (or per half second without a beat), each vector normalised.
-3. **Loop candidates** (all before the ending). A loop ``[a, b)`` is good when the music just after ``b``
-   would continue like the music just after ``a`` (the jump back is musically invisible): its seam score
-   compares the beats after ``b`` with those after ``a``, and those before ``b`` with those before ``a``, in
-   timbre (the bands) and in harmony (chroma: energy per pitch class); the lower of the two counts, so a jump
-   between two chords that sound alike in timbre is still caught. Lengths are whole bars (4 beats) when
-   there is a beat. The cut points move to the nearest zero
-   crossing (of the channels' sum) within 5 ms, so a seam needs at most a short crossfade.
-4. **Crossfade.** A suggestion from the level jump at the seam: none for a seam that matches, longer when the
-   two sides differ (10 ms to one beat).
+   frame, each vector normalised.
+3. **Loop candidates** (all before the ending). For each repetition lag (whole bars when there is a beat, up
+   to 40 s), the agreement of the music with itself that much later is the lower of the timbre and harmony
+   similarities, frame by frame; the seam goes where it is best within 1 s on each side, the loop is ranked by
+   the agreement over a bar on each side of that point (a jump between two equal chords that drops the rest of
+   a progression agrees within 1 s, not over a bar), and the loop's end is
+   then lined up with its start by correlation (envelopes within 80 ms, waveforms within 3 ms). The score is
+   that agreement: a piece that evolves (a march that builds up) scores lower, and its seams need a listen.
+4. **Crossfade.** Half a beat (0.1 s without a beat), equal-power.
 5. **Ending.** The tail is where the level falls for good below the music's typical level minus 10 dB; the
    ending starts at the beginning of the last bar (or the last two seconds) before that fall.
-6. **Bed.** ``intro [0, a)`` + n x ``[a, b)`` + ``ending [e, end]`` with equal-power crossfades at the seams;
-   n is chosen so the length is the nearest to the target without going over (the difference is reported).
+6. **Bed.** The music to the end of the loop, back to its start as many times as fit, and on the last pass on
+   to the end of the file (or, if asked, a jump to a given ending): the nearest length to the target without
+   going over, never stretched.
+
+Checked by ear on a real bed (TW-1617): with the first version (features per beat, a grid off the beat, a jump
+to the ending) the seams were clearly heard; with this one, "hardly noticeable, more than acceptable".
 """
 
 from __future__ import annotations
@@ -39,6 +42,9 @@ MIN_BPM, MAX_BPM = 60.0, 180.0
 ONSET_DELAY = FRAME - HOP  # samples: a frame's flux rises when the onset enters its window
 ZERO_SEARCH = 0.005  # seconds around a cut point to look for a zero crossing
 CONFIDENT_TEMPO = 0.3
+PRIOR_BPM = 120.0
+MAX_LOOP_SECONDS = 40.0
+SEAM_WINDOW = 1.0  # seconds on each side of a seam where the two passes must agree, without a beat
 Audio = npt.NDArray[np.float64]
 
 
@@ -119,7 +125,12 @@ def estimate_tempo(x: Audio, rate: int) -> Tempo:
     usable = (lags >= fps * 60 / MAX_BPM) & (lags <= fps * 60 / MIN_BPM)
     if not usable.any():
         return Tempo(None, 0.0)
-    best = int(lags[usable][np.argmax(corr[usable])])
+    # A tempo and its half or double correlate alike; weigh by a prior around 120 BPM (one octave wide), as
+    # most music sits there. A strong half-time accent still wins (TW-1617: a march at 129 BPM correlates 0.69
+    # at 64 and 0.32 at 129); its bars are then twice as long, which keeps loop lengths in whole bars.
+    candidates = lags[usable]
+    prior = np.exp(-0.5 * np.log2((60 * fps / candidates) / PRIOR_BPM) ** 2)
+    best = int(candidates[np.argmax(corr[usable] * prior)])
     confidence = float(max(0.0, corr[best]))
     # refine the period with a parabola through the peak
     if 0 < best < len(corr) - 1:
@@ -180,18 +191,6 @@ def chroma_features(spec: Audio, rate: int) -> Audio:
     return np.asarray(np.sqrt(out), dtype=np.float64)
 
 
-def unit_features(features: Audio, times: Audio, grid: list[float]) -> Audio:
-    """Mean features between consecutive grid points, each row normalised (zero mean, unit length)."""
-    rows = []
-    for a, b in itertools.pairwise(grid):
-        inside = (times >= a) & (times < b)
-        rows.append(features[inside].mean(axis=0) if inside.any() else np.zeros(features.shape[1]))
-    out = np.asarray(rows, dtype=np.float64)
-    out -= out.mean(axis=1, keepdims=True)
-    norms = np.linalg.norm(out, axis=1, keepdims=True)
-    return np.asarray(out / np.where(norms > 0, norms, 1.0), dtype=np.float64)
-
-
 def nearest_zero(x: Audio, rate: int, at: float) -> float:
     """``at`` moved to the nearest zero crossing within ZERO_SEARCH seconds (or kept)."""
     centre = round(at * rate)
@@ -206,11 +205,23 @@ def nearest_zero(x: Audio, rate: int, at: float) -> float:
     return float(crossings[np.argmin(np.abs(crossings - centre))] / rate)
 
 
-def _level_db(x: Audio, rate: int, at: float, width: float = 0.05) -> float:
-    a, b = max(0, round((at - width) * rate)), min(len(x), round((at + width) * rate))
-    seg = x[a:b]
-    rms = float(np.sqrt(np.mean(seg**2))) if len(seg) else 0.0
-    return 20 * np.log10(rms) if rms > 0 else -240.0
+def refine_end(x: Audio, rate: int, start: float, end: float) -> float:
+    """``end`` moved so the audio after it lines up with the audio after ``start``: first the envelopes
+    (within 80 ms, the rhythm), then the waveforms (within 3 ms, the phase)."""
+    envelope = np.abs(signal.hilbert(x))
+    envelope = signal.sosfiltfilt(signal.butter(2, 40, fs=rate, output="sos"), envelope)
+
+    def best(curve: Audio, at: float, reach: float, length: float) -> float:
+        ref = curve[round(start * rate) : round((start + length) * rate)]
+        lo = max(0, round((at - reach) * rate))
+        seg = curve[lo : round((at + reach + length) * rate)]
+        if len(ref) < 2 or len(seg) <= len(ref):
+            return at
+        corr = signal.correlate(seg - seg.mean(), ref - ref.mean(), mode="valid", method="fft")
+        return float((lo + int(np.argmax(corr))) / rate)
+
+    coarse = best(envelope, end, 0.08, 2.0)
+    return round(best(x, coarse, 0.003, 0.5), 5)
 
 
 def find_loops(
@@ -220,52 +231,62 @@ def find_loops(
     *,
     before: float | None = None,
     min_seconds: float = 4.0,
-    context: int = 4,
     top: int = 5,
 ) -> list[Loop]:
-    """The best loop candidates, each a whole number of bars (or seconds without a beat)."""
+    """The best loop candidates before ``before``: for each repetition lag (whole bars when there is a beat),
+    the point where the two passes agree best within SEAM_WINDOW, and the end lined up with the start.
+
+    Agreement is the lower of the timbre and the harmony similarities, frame by frame, averaged over the
+    window: a seam is only as good as the worse of the two."""
     spec = spectrogram(x)
     if len(spec) == 0:
         return []
-    times = (np.arange(len(spec)) * HOP + FRAME / 2) / rate
-    beat = tempo.beats or None
-    grid = list(beat) if beat else list(np.arange(0.0, len(x) / rate, 0.5))
-    if before is not None:
-        grid = [g for g in grid if g <= before]
-    if len(grid) < 2:
-        return []
-    timbre = unit_features(band_features(spec, rate), times, grid)
-    harmony = unit_features(chroma_features(spec, rate), times, grid)
-    unit = 4 if beat else 2  # a bar of beats, or a second of half-seconds
-    candidates: list[Loop] = []
-    n = len(timbre)
-
-    def similar(feats: Audio, i: int, j: int) -> float:
-        after = float(np.mean(np.sum(feats[j : j + context] * feats[i : i + context], axis=1)))
-        before = float(np.mean(np.sum(feats[j - context : j] * feats[i - context : i], axis=1)))
-        return (after + before) / 2
-
-    per_second = tempo.bpm / 60 if beat and tempo.bpm else 2.0
-    shortest = unit * max(1, int(np.ceil(min_seconds * per_second / unit)))  # whole bars (or seconds) only
-    for i in range(context, n - context):
-        for j in range(i + shortest, n - context, unit):
-            score = min(similar(timbre, i, j), similar(harmony, i, j))
-            if score > 0.5:
-                start, end = nearest_zero(x, rate, grid[i]), nearest_zero(x, rate, grid[j])
-                jump = abs(_level_db(x, rate, end) - _level_db(x, rate, start))
-                period = 60 / tempo.bpm if beat and tempo.bpm else 0.5
-                crossfade = 0.0 if score > 0.95 and jump < 1 else round(min(period, 0.01 + jump * 0.02), 3)
-                candidates.append(Loop(round(start, 4), round(end, 4), round(score, 3), float(crossfade),
-                                       (j - i) // 4 if beat else None))  # fmt: skip
-    # the best seams first; among equally good ones the shortest, which fits a target length more finely
-    candidates.sort(key=lambda c: (-round(c.score, 2), c.seconds))
-    chosen: list[Loop] = []
-    for c in candidates:  # keep distinct ones
-        if all(abs(c.start - o.start) > 1.0 or abs(c.end - o.end) > 1.0 for o in chosen):
-            chosen.append(c)
-        if len(chosen) == top:
+    fps = rate / HOP
+    timbre = _normalised(band_features(spec, rate))
+    harmony = _normalised(chroma_features(spec, rate))
+    usable = len(spec) if before is None else min(len(spec), int(before * fps))
+    bar = 4 * 60 / tempo.bpm if tempo.beats and tempo.bpm else None
+    # The seam goes where the passes agree best within 1 s (the seams the user approved by ear, TW-1617); the
+    # loop is ranked by the agreement over a bar on each side of that point, which catches a jump between two
+    # equal chords that would drop the rest of a progression (it scored 1.0 within 1 s).
+    near = max(1, round(SEAM_WINDOW * fps))
+    half = max(near, round((bar or SEAM_WINDOW) * fps))
+    if bar:
+        lags = [round(k * bar * fps) for k in range(1, int(MAX_LOOP_SECONDS / bar) + 1) if k * bar >= min_seconds]
+    else:
+        lags = list(range(round(min_seconds * fps), round(MAX_LOOP_SECONDS * fps), max(1, round(fps / 4))))
+    found: list[tuple[float, int, int]] = []
+    for lag in lags:
+        count = usable - lag
+        if count <= 2 * half:
+            continue
+        agree = np.minimum(
+            np.sum(timbre[:count] * timbre[lag : lag + count], axis=1),
+            np.sum(harmony[:count] * harmony[lag : lag + count], axis=1),
+        )
+        local = np.convolve(agree, np.ones(2 * near) / (2 * near), mode="same")
+        wide = np.convolve(agree, np.ones(2 * half) / (2 * half), mode="same")
+        point = half + int(np.argmax(local[half:-half]))
+        found.append((float(wide[point]), lag, point))
+    found.sort(key=lambda f: (-round(f[0], 2), f[1]))  # the best seams first; on a tie, the shortest loop
+    beat = 60 / tempo.bpm if tempo.beats and tempo.bpm else None
+    fade = round(beat / 2, 3) if beat else 0.1
+    loops: list[Loop] = []
+    for score, lag, point in found:
+        start = point / fps
+        end = refine_end(x, rate, start, start + lag / fps)
+        if all(abs(start - o.start) > 1.0 or abs(end - o.end) > 1.0 for o in loops):
+            loops.append(Loop(round(start, 5), end, round(max(0.0, score), 3), fade,
+                              round((lag / fps) / bar) if bar else None))  # fmt: skip
+        if len(loops) == top:
             break
-    return chosen
+    return loops
+
+
+def _normalised(features: Audio) -> Audio:
+    centred = features - features.mean(axis=1, keepdims=True)
+    norms = np.linalg.norm(centred, axis=1, keepdims=True)
+    return np.asarray(centred / np.where(norms > 0, norms, 1.0), dtype=np.float64)
 
 
 def find_ending(x: Audio, rate: int, tempo: Tempo) -> Ending | None:
@@ -308,18 +329,31 @@ class BedPlan:
     crossfade: float
 
 
-def plan_bed(loop: Loop, ending: Ending, total: float, target: float, *, crossfade: float | None = None) -> BedPlan:
-    """Intro + n loops + ending, the nearest to ``target`` seconds without going over (never stretched).
+def plan_bed(
+    loop: Loop,
+    total: float,
+    target: float,
+    *,
+    ending_start: float | None = None,
+    crossfade: float | None = None,
+) -> BedPlan:
+    """A bed the nearest to ``target`` seconds without going over (never stretched).
 
-    Each seam between two pieces overlaps them by the crossfade, so the length is the sum of the pieces
-    minus one crossfade per seam."""
-    if ending.start < loop.end:
+    By default the music plays to the end of the loop, goes back to its start as many times as fit, and on the
+    last pass carries on to the end of the file: the only artificial seams are the loop's own (TW-1617: the
+    user found that clearly better than jumping to a separate ending). With ``ending_start`` the last pass
+    jumps there instead. Each seam overlaps its two pieces by the crossfade."""
+    if ending_start is not None and ending_start < loop.end:
         raise ValueError("the ending starts inside the loop: choose an earlier loop or a later ending")
     fade = loop.crossfade if crossfade is None else crossfade
 
     def build(repeats: int) -> list[tuple[float, float]]:
+        if ending_start is None:
+            if repeats == 0:
+                return [(0.0, total)]
+            return [(0.0, loop.end), *([(loop.start, loop.end)] * (repeats - 1)), (loop.start, total)]
         intro = [(0.0, loop.start)] if loop.start > 0 else []
-        return [*intro, *([(loop.start, loop.end)] * repeats), (ending.start, total)]
+        return [*intro, *([(loop.start, loop.end)] * repeats), (ending_start, total)]
 
     def length(pieces: list[tuple[float, float]]) -> float:
         return sum(b - a for a, b in pieces) - fade * (len(pieces) - 1)

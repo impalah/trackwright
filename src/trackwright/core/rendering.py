@@ -25,7 +25,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from trackwright import __version__
 from trackwright.analysis import decoded, probe
-from trackwright.analysis.music import BedPlan, Ending, Loop, plan_bed, render_bed
+from trackwright.analysis.music import BedPlan, Loop, plan_bed, render_bed
 from trackwright.core.analyzing import AnalyzingMixin
 from trackwright.core.ducking import DuckingMixin, DuckingSpec, parse_spec
 from trackwright.core.models import PreviewOut, RenderItemOut, RenderOut
@@ -64,9 +64,11 @@ class BedSpec(BaseModel):
 
     loop_start: float = Field(ge=0, description="seconds in the music file")
     loop_end: float = Field(gt=0)
-    ending_start: float = Field(ge=0, description="where the ending starts (after the loop)")
+    ending_start: float | None = Field(
+        default=None, ge=0, description="jump to this ending; null: the last pass carries on to the end of the file"
+    )
     target_seconds: float = Field(gt=0, le=3 * 3600, description="the bed's length; never exceeded")
-    crossfade: float = Field(default=0.01, ge=0, le=4, description="equal-power crossfade at every seam")
+    crossfade: float = Field(default=0.1, ge=0, le=4, description="equal-power crossfade at every seam")
 
 
 def parse_bed(raw: JsonObject | None) -> BedSpec:
@@ -80,7 +82,7 @@ def parse_bed(raw: JsonObject | None) -> BedSpec:
                                       details={"reason": str(exc)[:500]}) from exc  # fmt: skip
     if bed.loop_end <= bed.loop_start:
         raise PreconditionFailedError("loop_end must be after loop_start", code="BAD_REQUEST")
-    if bed.ending_start < bed.loop_end:
+    if bed.ending_start is not None and bed.ending_start < bed.loop_end:
         raise PreconditionFailedError("the ending must start after the loop ends", code="BAD_REQUEST")
     if bed.crossfade * 2 >= bed.loop_end - bed.loop_start:
         raise PreconditionFailedError("the crossfade is too long for the loop", code="BAD_REQUEST")
@@ -258,10 +260,10 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
     @staticmethod
     def _bed_plan(bed: BedSpec, total: float) -> tuple[BedPlan, JsonObject, list[str]]:
         """Intro, the loop repeated and the ending, as near the target as the loop allows (TW-1617)."""
-        if bed.ending_start >= total:
-            raise PreconditionFailedError("the ending starts after the end of the file", code="BAD_REQUEST")
-        plan = plan_bed(Loop(bed.loop_start, bed.loop_end, 1.0, bed.crossfade),
-                        Ending(bed.ending_start, bed.ending_start, total), total, bed.target_seconds)  # fmt: skip
+        if bed.loop_end > total or (bed.ending_start is not None and bed.ending_start >= total):
+            raise PreconditionFailedError("the loop or the ending is beyond the end of the file", code="BAD_REQUEST")
+        plan = plan_bed(Loop(bed.loop_start, bed.loop_end, 1.0, bed.crossfade), total, bed.target_seconds,
+                        ending_start=bed.ending_start)  # fmt: skip
         short = round(bed.target_seconds - plan.seconds, 3)
         parameters: JsonObject = {**bed.model_dump(mode="json"), "repeats": plan.repeats, "seconds": plan.seconds,
                                   "short_by": short}  # fmt: skip

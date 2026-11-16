@@ -10,7 +10,6 @@ import pytest
 import soundfile as sf
 
 from trackwright.analysis.music import (
-    Ending,
     Loop,
     analyze,
     estimate_tempo,
@@ -83,23 +82,36 @@ def test_zero_crossings() -> None:
     assert nearest_zero(np.ones(RATE), RATE, 0.5) == 0.5  # none nearby: kept
 
 
-def test_a_bed_never_goes_over_and_keeps_the_ending() -> None:
-    loop, ending = Loop(2.0, 10.0, 1.0, 0.01), Ending(34.0, 37.0, 38.0)
-    plan = plan_bed(loop, ending, 38.0, target=60.0)
-    assert plan.seconds <= 60.0
-    assert plan.pieces[0] == (0.0, 2.0)
-    assert plan.pieces[-1] == (34.0, 38.0)
-    assert plan.repeats == 6  # 2 + 6 x 8 + 4 - 7 x 0.01 = 53.93; one more would be 61.92
-    assert plan.seconds == pytest.approx(53.93)
-    assert plan_bed(loop, ending, 38.0, target=1.0).repeats == 0  # shorter than intro + ending: just those
+def test_a_bed_never_goes_over_and_ends_naturally() -> None:
+    loop = Loop(2.0, 10.0, 1.0, 0.01)
+    plan = plan_bed(loop, 38.0, target=60.0)
+    # to the loop's end, back to its start, and on the last pass on to the end of the file
+    assert plan.pieces[0] == (0.0, 10.0)
+    assert plan.pieces[-1] == (2.0, 38.0)
+    assert plan.repeats == 2  # 38 + 2 x 8 - 2 x 0.01 = 53.98; three would be 61.97
+    assert plan.seconds == pytest.approx(53.98)
+    assert plan_bed(loop, 38.0, target=1.0).pieces == [(0.0, 38.0)]  # shorter than the music: the music as it is
+    jump = plan_bed(loop, 38.0, target=60.0, ending_start=34.0)
+    assert jump.pieces[0] == (0.0, 2.0)
+    assert jump.pieces[-1] == (34.0, 38.0)
+    assert jump.seconds <= 60.0
     with pytest.raises(ValueError, match="inside the loop"):
-        plan_bed(Loop(2.0, 36.0, 1.0, 0.0), ending, 38.0, target=60.0)
+        plan_bed(loop, 38.0, target=60.0, ending_start=5.0)
     x = song(120.0)
-    rendered = render_bed(x, RATE, plan_bed(Loop(2.0, 10.0, 1.0, 0.01), Ending(34.0, 37.0, 38.0), 38.0, 60.0))
-    assert len(rendered) / RATE == pytest.approx(53.93, abs=0.001)
-    fade = round(0.01 * RATE)  # after its crossfade the ending is the original, sample for sample
-    assert np.allclose(rendered[-4 * RATE + fade :, 0], x[34 * RATE + fade : 38 * RATE], atol=1e-9)
+    rendered = render_bed(x, RATE, plan)
+    assert len(rendered) / RATE == pytest.approx(53.98, abs=0.001)
+    fade = round(0.01 * RATE)  # after its crossfade the last pass is the original, sample for sample
+    assert np.allclose(rendered[-28 * RATE :, 0], x[10 * RATE : 38 * RATE], atol=1e-9)
+    assert rendered.shape[0] > fade
     assert np.max(np.abs(np.diff(rendered[:, 0]))) <= np.max(np.abs(np.diff(x))) * 1.5  # no clicks at the seams
+
+
+def test_the_loop_end_is_lined_up_with_its_start() -> None:
+    from trackwright.analysis.music import refine_end
+
+    x = song(120.0)
+    # 8 s is exactly one pattern; ask for an end 30 ms late: the correlation brings it back
+    assert refine_end(x, RATE, 4.0, 12.03) == pytest.approx(12.0, abs=0.001)
 
 
 # ---------------------------------------------------------------- the tools
@@ -125,8 +137,7 @@ def test_the_analysis_and_the_bed_render(fake: FakeCubase, tmp_path: Path) -> No
     assert out.loops[0].bars == 4
     assert out.ending is not None
     assert out.cache == "stored"
-    bed = {"loop_start": out.loops[0].start, "loop_end": out.loops[0].end, "ending_start": out.ending.start,
-           "target_seconds": 90.0}  # fmt: skip
+    bed = {"loop_start": out.loops[0].start, "loop_end": out.loops[0].end, "target_seconds": 90.0}
     plan = svc.render(file=str(music), process="bed", bed=bed, name="bed-90")
     assert plan.render is not None
     assert plan.render.seconds <= 90.0
@@ -138,7 +149,7 @@ def test_the_analysis_and_the_bed_render(fake: FakeCubase, tmp_path: Path) -> No
     assert any("short of the target" in n for n in done.notes)
     for bad in (
         {**bed, "loop_end": bed["loop_start"]},
-        {**bed, "ending_start": 1.0},
+        {**bed, "ending_start": 1.0},  # inside the loop
         {**bed, "loop_end": bed["loop_start"] + 1.0, "crossfade": 0.6},
         {**bed, "colour": 1},
     ):
@@ -148,3 +159,6 @@ def test_the_analysis_and_the_bed_render(fake: FakeCubase, tmp_path: Path) -> No
         svc.render(file=str(music), process="bed")
     with pytest.raises(PreconditionFailedError):
         svc.render(file=str(music), process="bed", bed={**bed, "ending_start": 500.0})
+    jumped = svc.render(file=str(music), process="bed", bed={**bed, "ending_start": out.ending.start})
+    assert jumped.render is not None
+    assert jumped.render.seconds <= 90.0
