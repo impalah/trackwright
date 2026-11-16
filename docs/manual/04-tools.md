@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 41 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 42 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -451,12 +451,23 @@ Show, episode and delivery profiles (TW-1607). Three layers, each overriding the
   Spotify's −14 LUFS is on its music page, not for podcasts, so it is not used. A show can add a host with `delivery.profiles.<name>` and the user's source.
 - **Errors:** `WORKSPACE_DISABLED`, `NO_PROJECT_FOLDER`, `NO_WORKSPACE`, `NOT_FOUND` (a show), `BAD_PROFILE`, `BAD_REQUEST`.
 
+### `cubase_ducking_plan` (read, needs `[analysis] enabled`)
+
+Plans how the music goes down under the voice (TW-1614), without writing anything. The same `ducking` object renders the music with `cubase_render` (`process: "duck"`).
+
+- **Input:** `ducking`: `voice_file` (the export of the voice tracks soloed together) and `voice_start` (its range start), `attenuation_db` (−10), `pre_roll` (0.25 s), `hold` (0.8 s), `recovery` (1.2 s), `merge_gap` (0.9 s), `overrides` and `use_protected` (true); `music_start` and `music_seconds` (the music export's place, to cut the spans to it); `offset`, `limit`. The defaults are the brainstorm's starting values, not norms.
+- **How:** speech regions from the voice export (as `cubase_detect_speech`), joined over pauses shorter than `merge_gap`, held `hold` after the last word; two spans too close for the music to come up and go down again become one (no pumping). The music starts going down `pre_roll` before the first word and comes back up over `recovery`, along straight lines in dB: no jumps, exactly `attenuation_db` on the flat part.
+- **Overrides** (project seconds): `hold` keeps the music down over a span ("do not bring it up between those two phrases"), `free` keeps it up ("no ducking under the intro"), `depth` uses another `depth_db`. With `use_protected`, the episode profile's protected ranges are kept up too. Next to a `free` span or a protected range, the duck ends `recovery` before it and starts `pre_roll` after it, so the music is at full level all through it.
+- **Output:** the number of speech regions, the protected ranges used, the ducked spans (start and end, depth, where the ramps begin and end) and the ducked time.
+- **Errors:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_REQUEST` (a bad specification), `BAD_TIME`.
+
 ### `cubase_render` (`render` writes files, with dry run; `list` reads)
 
 Processed audio for the project, written to `Trackwright/renders/` (TW-1606). Cubase's API cannot process a track's audio, so a skill exports the track alone, processes the export in Python, and imports the result on a new track, muting the original.
 
-- **Input:** `action` (`render` by default, or `list`); for `render`: `file` (absolute path of the export), `start` (project time of the export's first sample: its range start), `process` (`gain`), `gain_db` (±40), `name` (default `<track or source>-<process>`), `track` (the track the render replaces), `skill` and `run_id` (who renders, recorded in the provenance), `dry_run`.
+- **Input:** `action` (`render` by default, or `list`); for `render`: `file` (absolute path of the export), `start` (project time of the export's first sample: its range start), `process` (`gain` or `duck`), `gain_db` (±40), `ducking` (for `duck`: the object of `cubase_ducking_plan`), `name` (default `<track or source>-<process>`), `track` (the track the render replaces), `skill` and `run_id` (who renders, recorded in the provenance), `dry_run`.
 - **`render`:** writes `<name>.wav` (32-bit float WAV, the source's rate and channels) and `<name>.json`, the **provenance**: the source's path, size and SHA-256, the process and its parameters, the project position, the track it replaces (name and uid), the render's own SHA-256 and peak, and the Trackwright version. An existing render is never overwritten (Cubase may still reference it): the next one is `<name>-2.wav`. Needs `[analysis] enabled` (it reads audio, with its `max_seconds`) and `[workspace] enabled`, and the workspace created with `cubase_workspace`.
+- **`duck`** (TW-1614): the music export (`file`, `start`) ducked under the voice with the envelope `cubase_ducking_plan` shows for the same `ducking` object; the provenance stores the whole object, the voice export's SHA-256, the protected ranges used and the ducked time.
 - **Then:** create an audio track (`cubase_add_track_interactive`), import the render on it with `cubase_import_audio` at the position returned, and mute the original track (`cubase_set_track_mix`). In Cubase's import options, untick "Copy file to project folder" (the render already is in the project folder) and leave the 24-bit conversion off.
 - **`list`:** every render with its provenance, the track it was imported on (from `state.json`), whether that track is still in the project, and `problems`: the render changed after it was made, its source changed or is gone.
 - **Errors:** `WORKSPACE_DISABLED`, `ANALYSIS_DISABLED`, `TOO_LONG`, `NO_PROJECT_FOLDER`, `NO_WORKSPACE`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST`, `BAD_RENDER`.

@@ -606,6 +606,27 @@ class DeliveryPlanOut(_Out):
     notes: list[str] = Field(default_factory=list)
 
 
+class DuckSpanOut(_Out):
+    start: str = Field(description="the music is at depth_db from here (the first word)")
+    end: str = Field(description="to here (the end of the hold)")
+    start_seconds: float
+    end_seconds: float
+    depth_db: float
+    fall_from: float = Field(description="where the music starts going down (project seconds)")
+    rise_to: float = Field(description="where it is back at full level")
+
+
+class DuckingPlanOut(_Out):
+    parameters: dict[str, float]
+    speech_regions: int = Field(description="speech regions found in the voice export")
+    protected: list[list[float]] = Field(description="protected ranges kept at full level (project seconds)")
+    total: int = Field(description="ducked spans")
+    ducked_seconds: float
+    spans: list[DuckSpanOut] = Field(description="paged with offset and limit")
+    points: int = Field(description="points of the gain envelope")
+    notes: list[str] = Field(default_factory=list)
+
+
 class SpeechRegionOut(_Out):
     start: str = Field(description="project time, h:mm:ss.mmm")
     end: str

@@ -20,8 +20,8 @@ from trackwright.core.writing import WritingMixin
 
 class CubaseService(
     QualityMixin,
-    ProfilesMixin,
     RenderingMixin,
+    ProfilesMixin,
     WorkspaceMixin,
     AnalyzingMixin,
     PresetMixin,

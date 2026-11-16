@@ -28,6 +28,7 @@ from trackwright.core.models import (
     CommandOut,
     ConvertOut,
     DeliveryPlanOut,
+    DuckingPlanOut,
     ExportOut,
     ImportOut,
     InsertPluginOut,
@@ -625,6 +626,37 @@ def build_server(service: CubaseService) -> MCPServer:
     ) -> DeliveryPlanOut:
         return await run(lambda: service.delivery_plan(file, target, codec=codec))
 
+    # ------------------------------------------------------------------ ducking plan (TW-1614)
+    @server.tool(
+        annotations=READ,
+        description="Plan the ducking of the music under the voice, read-only: speech regions from the voice "
+        "export (the voice tracks soloed together, placed by voice_start), joined over pauses shorter than "
+        "merge_gap, held after the last word, never re-raised for a short gap, kept up in the episode "
+        "profile's protected ranges and in 'free' overrides. Returns the ducked spans (paged) with their depth "
+        "and ramps. The same ducking object renders the music with cubase_render (process 'duck'). Defaults: "
+        "-10 dB, pre_roll 0.25 s, hold 0.8 s, recovery 1.2 s, merge_gap 0.9 s (starting values, not norms).",
+    )
+    async def cubase_ducking_plan(
+        ducking: Annotated[
+            dict[str, Any],
+            Field(
+                description="voice_file (absolute), voice_start, attenuation_db, pre_roll, hold, recovery, "
+                "merge_gap, overrides [{start, end, mode: hold|free|depth, depth_db, note}], use_protected"
+            ),
+        ],
+        music_start: Annotated[str, Field(description="project time of the music export's first sample")] = "0",
+        music_seconds: Annotated[
+            float | None, Field(gt=0, description="length of the music export: spans are cut to it")
+        ] = None,
+        offset: Annotated[int, Field(ge=0)] = 0,
+        limit: Annotated[int, Field(ge=1, le=500)] = 100,
+    ) -> DuckingPlanOut:
+        return await run(
+            lambda: service.ducking_plan(
+                ducking, music_start=music_start, music_seconds=music_seconds, offset=offset, limit=limit
+            )
+        )
+
     # ------------------------------------------------------------------ renders (TW-1606)
     @server.tool(
         annotations=WRITE,
@@ -634,14 +666,23 @@ def build_server(service: CubaseService) -> MCPServer:
         "render; dry run by default; needs [analysis] and [workspace] enabled. Then import it on a new track at "
         "the given position with cubase_import_audio, which checks the position and records the track in "
         "state.json, and mute the original. 'list' shows the renders, where they were imported and whether "
-        "the render or its source changed. Processes: gain (gain_db).",
+        "the render or its source changed. Processes: gain (gain_db); duck (the music ducked under the voice, "
+        "from a ducking specification: see cubase_ducking_plan).",
     )
     async def cubase_render(
         action: Annotated[Literal["render", "list"], Field(description="render (write) or list (read)")] = "render",
         file: Annotated[str | None, Field(description="render: absolute path of the export to process")] = None,
         start: Annotated[str, Field(description="project time of the export's first sample (seconds)")] = "0",
-        process: Annotated[Literal["gain"], Field(description="what to do to the audio")] = "gain",
+        process: Annotated[Literal["gain", "duck"], Field(description="what to do to the audio")] = "gain",
         gain_db: Annotated[float, Field(ge=-40, le=40, description="gain: dB to apply")] = 0.0,
+        ducking: Annotated[
+            dict[str, Any] | None,
+            Field(
+                description="duck: voice_file and voice_start (the voice tracks' export), attenuation_db, "
+                "pre_roll, hold, recovery, merge_gap (seconds), overrides [{start, end, mode: hold|free|depth, "
+                "depth_db}], use_protected; see cubase_ducking_plan"
+            ),
+        ] = None,
         name: Annotated[
             str | None, Field(max_length=64, description="file name (default: <track or source>-<process>)")
         ] = None,
@@ -654,8 +695,8 @@ def build_server(service: CubaseService) -> MCPServer:
     ) -> RenderOut:
         return await run(
             lambda: service.render(
-                action, file=file, start=start, process=process, gain_db=gain_db, name=name, track=track,
-                skill=skill, run=run_id, dry_run=dry_run,
+                action, file=file, start=start, process=process, gain_db=gain_db, ducking=ducking, name=name,
+                track=track, skill=skill, run=run_id, dry_run=dry_run,
             )
         )  # fmt: skip
 

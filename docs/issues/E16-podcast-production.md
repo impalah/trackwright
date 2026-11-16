@@ -158,7 +158,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1614 Ducking planner
 
-- **Status:** pending (needs TW-1604)
+- **Status:** done (2026-11-16): `trackwright/analysis/ducking.py` (pure: join, hold, no pumping, `hold`/`free`/`depth` overrides, protected ranges and `free` spans kept at full level with the whole ramps outside them, an envelope of straight lines in dB), the read-only tool `cubase_ducking_plan`, and the process `duck` of `cubase_render` (the envelope applied in project time, the specification and the voice's SHA-256 in the provenance). Tests: concrete envelopes, a Hypothesis property over random regions, protected ranges and `free` spans (continuity within 1 ms, exact depth, full level in every hole; 3,000 examples passed once), and a render of synthetic music under a synthetic voice (−12 dB exactly under the speech, 0 dB between, no jump larger than the music's own). Live use comes with TW-1615
 - **Scope:** pure functions from voice regions to a gain envelope: attenuation, pre-roll before the first word, hold, merging gaps shorter than a threshold, recovery curve, protected ranges and per-region overrides ("do not bring the music up between these two phrases"); render of the ducked music. The brainstorm's values are starting points, not norms.
 - **Tests:** envelopes on synthetic regions; continuity (no clicks), exact attenuation.
 

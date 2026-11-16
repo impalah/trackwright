@@ -1,0 +1,133 @@
+"""Ducking from the voice (TW-1614): the plan, read-only, and the envelope a ``duck`` render applies.
+
+The voice is an export of the voice tracks (soloed together), the music an export of the music track, both
+placed in project time by their range starts. Speech regions come from :mod:`trackwright.analysis.speech`;
+the episode profile's protected ranges are added unless told otherwise; the planner is
+:mod:`trackwright.analysis.ducking`. The same specification gives the same envelope in the plan and in the
+render, and is stored in the render's provenance.
+"""
+
+from __future__ import annotations
+
+from dataclasses import asdict
+from pathlib import Path
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+from trackwright.analysis import decoded, probe
+from trackwright.analysis.ducking import DuckingParams, Envelope, Override, plan
+from trackwright.analysis.speech import SpeechCriteria, detect_speech
+from trackwright.core.models import DuckingPlanOut, DuckSpanOut
+from trackwright.core.profiling import ProfilesMixin
+from trackwright.core.timefmt import format_seconds, parse_seconds
+from trackwright.errors import NotFoundError, PreconditionFailedError
+from trackwright.jsontypes import JsonObject
+
+MAX_SPANS = 500
+
+
+class OverrideSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    start: float = Field(ge=0, description="project seconds")
+    end: float = Field(gt=0)
+    mode: Literal["hold", "free", "depth"]
+    depth_db: float | None = Field(default=None, ge=-60, le=0)
+    note: str = ""
+
+
+class DuckingSpec(BaseModel):
+    """What a ducking plan or render needs; stored as the render's parameters."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    voice_file: str = Field(description="absolute path of the voice export (the voice tracks soloed together)")
+    voice_start: float = Field(default=0.0, ge=0, description="project time of its first sample")
+    attenuation_db: float = Field(default=-10.0, ge=-60, le=0)
+    pre_roll: float = Field(default=0.25, ge=0, le=5)
+    hold: float = Field(default=0.8, ge=0, le=10)
+    recovery: float = Field(default=1.2, ge=0, le=10)
+    merge_gap: float = Field(default=0.9, ge=0, le=10)
+    overrides: list[OverrideSpec] = Field(default_factory=list)
+    use_protected: bool = Field(default=True, description="keep the episode profile's protected ranges up")
+
+    def params(self) -> DuckingParams:
+        return DuckingParams(self.attenuation_db, self.pre_roll, self.hold, self.recovery, self.merge_gap)
+
+
+def parse_spec(raw: JsonObject | None) -> DuckingSpec:
+    if raw is None:
+        raise PreconditionFailedError("give the ducking specification (at least voice_file)", code="BAD_REQUEST")
+    try:
+        spec = DuckingSpec.model_validate(raw)
+    except ValidationError as exc:
+        errors = [{"loc": ".".join(str(p) for p in e["loc"]), "msg": e["msg"]} for e in exc.errors()]
+        raise PreconditionFailedError("not a valid ducking specification", code="BAD_REQUEST",
+                                      details={"errors": errors[:20]}) from exc  # fmt: skip
+    for override in spec.overrides:
+        if override.end <= override.start:
+            raise PreconditionFailedError("an override must end after it starts", code="BAD_REQUEST")
+        if override.mode == "depth" and override.depth_db is None:
+            raise PreconditionFailedError("a 'depth' override needs depth_db", code="BAD_REQUEST")
+    return spec
+
+
+class DuckingMixin(ProfilesMixin):
+    def ducking_envelope(
+        self, spec: DuckingSpec, *, start: float = 0.0, seconds: float | None = None
+    ) -> tuple[Envelope, int, list[tuple[float, float]], list[str]]:
+        """The envelope over the music's span (``start`` .. ``start + seconds``, project time), the number of
+        speech regions, the protected ranges used, and notes."""
+        self.policy.check_analysis()
+        voice = Path(spec.voice_file).expanduser()
+        if not voice.is_absolute():
+            raise PreconditionFailedError("voice_file must be an absolute path", code="BAD_REQUEST")
+        if not voice.is_file():
+            raise NotFoundError(f"not a file: {voice}", code="NOT_FOUND")
+        with decoded(voice) as readable:
+            self.policy.check_analysis(probe(readable).seconds)
+            speech = detect_speech(readable, SpeechCriteria())
+        regions = [(spec.voice_start + r.start, spec.voice_start + r.end) for r in speech.regions]
+        notes: list[str] = []
+        protected: list[tuple[float, float]] = []
+        if spec.use_protected:
+            resolved = self.profile("resolve")
+            protected = [(float(r["start"]), float(r["end"])) for r in resolved.protected]
+        if speech.contrast_db is not None and speech.contrast_db < SpeechCriteria().on_db:
+            notes.append("little contrast in the voice export: is it the voice tracks alone?")
+        overrides = [Override(o.start, o.end, o.mode, o.depth_db, o.note) for o in spec.overrides]
+        end = None if seconds is None else start + seconds
+        envelope = plan(regions, spec.params(), overrides=overrides, protected=protected, total=end)
+        return envelope, len(regions), protected, notes
+
+    def ducking_plan(self, ducking: JsonObject, *, music_start: str = "0", music_seconds: float | None = None,
+                     offset: int = 0, limit: int = 100) -> DuckingPlanOut:  # fmt: skip
+        """The ducked spans the render would apply, read-only (TW-1614)."""
+        spec = parse_spec(ducking)
+        origin = parse_seconds(music_start)
+        if origin is None:
+            raise PreconditionFailedError("music_start looks like '2.5' or '1:30'", code="BAD_TIME")
+        env, regions, protected, notes = self.ducking_envelope(spec, start=origin, seconds=music_seconds)
+        limit = max(1, min(limit, MAX_SPANS))
+        return DuckingPlanOut(
+            parameters=asdict(spec.params()),
+            speech_regions=regions,
+            protected=[[a, b] for a, b in protected],
+            total=len(env.spans),
+            ducked_seconds=round(env.ducked_seconds, 3),
+            spans=[
+                DuckSpanOut(
+                    start=format_seconds(s.start),
+                    end=format_seconds(s.end),
+                    start_seconds=round(s.start, 3),
+                    end_seconds=round(s.end, 3),
+                    depth_db=s.depth_db,
+                    fall_from=round(s.fall_from, 3),
+                    rise_to=round(s.rise_to, 3),
+                )
+                for s in env.spans[offset : offset + limit]
+            ],
+            points=len(env.points),
+            notes=notes,
+        )

@@ -7,7 +7,8 @@ records the track as the skill's) and mutes the original track. Reading the sour
 enabled``; writing the render needs ``[workspace] enabled`` and an existing workspace. Nothing is sent to
 Cubase except, with ``track``, reading that track's name and uid.
 
-Processes: ``gain`` (``gain_db``). The skills that need others (ducking, leveling) add them here.
+Processes: ``gain`` (``gain_db``) and ``duck`` (TW-1614: the music under the voice, from a ``ducking``
+specification; see :mod:`trackwright.core.ducking`). Other skills (leveling) add theirs here.
 """
 
 from __future__ import annotations
@@ -20,6 +21,7 @@ from typing import Literal
 from trackwright import __version__
 from trackwright.analysis import decoded, probe
 from trackwright.core.analyzing import AnalyzingMixin
+from trackwright.core.ducking import DuckingMixin, DuckingSpec, parse_spec
 from trackwright.core.models import RenderItemOut, RenderOut
 from trackwright.core.refs import TrackSelector
 from trackwright.core.timefmt import format_seconds, parse_seconds
@@ -27,8 +29,10 @@ from trackwright.errors import NotFoundError, PreconditionFailedError
 from trackwright.jsontypes import JsonObject
 from trackwright.renders import (
     RENDERS,
+    Process,
     Provenance,
     SourceInfo,
+    envelope_gain,
     gain,
     load_provenance,
     next_name,
@@ -42,7 +46,7 @@ from trackwright.renders import (
 )
 from trackwright.workspace import Workspace
 
-PROCESSES = ("gain",)
+PROCESSES = ("gain", "duck")
 MAX_GAIN_DB = 40.0
 
 
@@ -70,7 +74,7 @@ def item_out(render: Path, provenance: Provenance, *, check: bool = True) -> Ren
     )
 
 
-class RenderingMixin(AnalyzingMixin):
+class RenderingMixin(DuckingMixin, AnalyzingMixin):
     def render(
         self,
         action: Literal["render", "list"] = "render",
@@ -79,6 +83,7 @@ class RenderingMixin(AnalyzingMixin):
         start: str = "0",
         process: str = "gain",
         gain_db: float = 0.0,
+        ducking: JsonObject | None = None,
         name: str | None = None,
         track: str | None = None,
         skill: str = "manual",
@@ -91,16 +96,9 @@ class RenderingMixin(AnalyzingMixin):
             raise PreconditionFailedError("action must be 'render' or 'list'", code="BAD_REQUEST")
         self.policy.check_workspace()  # the permissions first: they are what the user must change
         self.policy.check_analysis()
-        if file is None:
-            raise PreconditionFailedError("give the file to render from (an export)", code="BAD_REQUEST")
-        if process not in PROCESSES:
-            raise PreconditionFailedError(
-                f"unknown process {process!r}", code="BAD_REQUEST", details={"processes": list(PROCESSES)}
-            )
-        if abs(gain_db) > MAX_GAIN_DB:
-            raise PreconditionFailedError(f"gain_db must be within ±{MAX_GAIN_DB:.0f} dB", code="BAD_REQUEST")
-        if not skill.strip():
-            raise PreconditionFailedError("skill cannot be empty", code="BAD_REQUEST")
+        self._check_render_request(file, process, gain_db, skill)
+        assert file is not None  # checked above
+        spec = parse_spec(ducking) if process == "duck" else None
         source = self._audio_path(file)
         if not source.is_file():
             raise NotFoundError(f"not a file: {source}", code="NOT_FOUND")
@@ -121,12 +119,14 @@ class RenderingMixin(AnalyzingMixin):
             info_in = probe(readable)
         self.policy.check_analysis(info_in.seconds)
         run_id = run or datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
+        effect, parameters, duck_notes = self._render_effect(spec, gain_db, position, info_in.seconds, info_in.rate)
         out = RenderOut(action="render", dry_run=dry_run, status="planned", workspace=str(space.path))
         notes = out.notes
+        notes += duck_notes
         if dry_run:
             out.render = RenderItemOut(
                 file=str(target), provenance=str(provenance_path(target)), skill=skill, run=run_id,
-                process=process, parameters={"gain_db": gain_db}, position=format_seconds(position),
+                process=process, parameters=parameters, position=format_seconds(position),
                 position_seconds=position, seconds=round(info_in.seconds, 4), sample_rate=info_in.rate,
                 channels=info_in.channels, peak_dbfs=None, replaces=replaced["name"] if replaced else None,
                 source=str(source),
@@ -144,7 +144,7 @@ class RenderingMixin(AnalyzingMixin):
                 path=str(source), sha256=sha256(source), size=source.stat().st_size,
                 seconds=round(info_in.seconds, 6), rate=info_in.rate, channels=info_in.channels,
             )  # fmt: skip
-            _, peak = render_file(readable, target, gain(gain_db))
+            _, peak = render_file(readable, target, effect)
         written = probe(target)
         provenance = Provenance(
             file=target.name,
@@ -153,7 +153,7 @@ class RenderingMixin(AnalyzingMixin):
             skill=skill,
             run=run_id,
             process=process,
-            parameters={"gain_db": gain_db},
+            parameters=parameters,
             position=position,
             track=replaced["name"] if replaced else None,
             track_uid=replaced["uid"] if replaced else None,
@@ -179,6 +179,36 @@ class RenderingMixin(AnalyzingMixin):
             "folder) and do not convert to 24 bit."
         )
         return out
+
+    @staticmethod
+    def _check_render_request(file: str | None, process: str, gain_db: float, skill: str) -> None:
+        if file is None:
+            raise PreconditionFailedError("give the file to render from (an export)", code="BAD_REQUEST")
+        if process not in PROCESSES:
+            raise PreconditionFailedError(
+                f"unknown process {process!r}", code="BAD_REQUEST", details={"processes": list(PROCESSES)}
+            )
+        if abs(gain_db) > MAX_GAIN_DB:
+            raise PreconditionFailedError(f"gain_db must be within ±{MAX_GAIN_DB:.0f} dB", code="BAD_REQUEST")
+        if not skill.strip():
+            raise PreconditionFailedError("skill cannot be empty", code="BAD_REQUEST")
+
+    def _render_effect(
+        self, spec: DuckingSpec | None, gain_db: float, position: float, seconds: float, rate: int
+    ) -> tuple[Process, JsonObject, list[str]]:
+        """The block function of the process, the parameters recorded in the provenance, and notes."""
+        if spec is None:
+            return gain(gain_db), {"gain_db": gain_db}, []
+        env, regions, protected, notes = self.ducking_envelope(spec, start=position, seconds=seconds)
+        parameters: JsonObject = {
+            **spec.model_dump(mode="json"),
+            "voice_sha256": sha256(Path(spec.voice_file).expanduser()),
+            "speech_regions": regions,
+            "protected_used": [[a, b] for a, b in protected],
+            "ducked_spans": len(env.spans),
+            "ducked_seconds": round(env.ducked_seconds, 3),
+        }
+        return envelope_gain(env.gain_db, rate, position), parameters, notes
 
     def _render_workspace(self) -> Workspace:
         folder, why = self.project_folder()

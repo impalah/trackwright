@@ -158,7 +158,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1614 Planificador de ducking
 
-- **Estado:** pendiente (necesita TW-1604)
+- **Estado:** hecho (2026-11-16): `trackwright/analysis/ducking.py` (puro: unir, mantener, sin bombeo, excepciones `hold`/`free`/`depth`, rangos protegidos y tramos `free` a nivel completo con las rampas enteras fuera de ellos, una envolvente de líneas rectas en dB), la herramienta de solo lectura `cubase_ducking_plan` y el proceso `duck` de `cubase_render` (la envolvente aplicada en tiempo de proyecto, la especificación y el SHA-256 de la voz en la procedencia). Tests: envolventes concretas, una propiedad de Hypothesis sobre regiones, rangos protegidos y tramos `free` aleatorios (continuidad en 1 ms, profundidad exacta, nivel completo en cada hueco; 3.000 ejemplos pasaron una vez), y un render de música sintética bajo una voz sintética (−12 dB exactos bajo la voz, 0 dB entre medias, ningún salto mayor que los de la propia música). El uso en directo llega con TW-1615
 - **Alcance:** funciones puras de regiones de voz a una envolvente de ganancia: atenuación, pre-roll antes de la primera palabra, hold, unión de huecos más cortos que un umbral, curva de recuperación, rangos protegidos y excepciones por región («no subas la música entre estas dos frases»); render de la música atenuada. Los valores de la lluvia de ideas son puntos de partida, no normas.
 - **Tests:** envolventes sobre regiones sintéticas; continuidad (sin clics), atenuación exacta.
 

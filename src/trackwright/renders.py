@@ -113,6 +113,21 @@ def gain(db: float) -> Process:
     return lambda block: block * factor
 
 
+def envelope_gain(gain_db: Callable[[npt.NDArray[np.float64]], npt.NDArray[np.float64]], rate: int,
+                  origin: float) -> Process:  # fmt: skip
+    """A gain that changes over time: ``gain_db`` of the project time of each sample (the file starts at
+    ``origin``). The blocks must come in order, as :func:`render_file` gives them."""
+    position = 0
+
+    def apply(block: Block) -> Block:
+        nonlocal position
+        times = origin + (position + np.arange(len(block))) / rate
+        position += len(block)
+        return block * (10 ** (gain_db(times) / 20))[:, None]
+
+    return apply
+
+
 def _blocks(path: Path, rate: int) -> Iterator[Block]:
     size = max(1, round(rate * READ_SECONDS))
     try:
