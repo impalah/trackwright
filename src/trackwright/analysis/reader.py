@@ -19,6 +19,10 @@ from trackwright.errors import NotFoundError, PreconditionFailedError
 
 DEFAULT_WINDOW = 0.020  # seconds; short enough for the gaps of speech, long enough to smooth a waveform
 SILENT_DB = -240.0  # level reported for exact digital silence (log of zero)
+DIGITAL_SILENCE_DB = -120.0
+"""Windows quieter than this count as digital silence: Cubase exports the silence between events as residue of
+about 5e-9 (-166 dBFS), not as exact zeros (TW-1616); no room noise or 24-bit dither is this quiet."""
+_DIGITAL_POWER = 10 ** (DIGITAL_SILENCE_DB / 10)
 BLOCK_WINDOWS = 500  # windows read per block (10 s at the default window)
 
 
@@ -153,7 +157,7 @@ def measure(path: Path, *, window: float = DEFAULT_WINDOW) -> Levels:
                 mean = part.mean(axis=1)
                 with np.errstate(divide="ignore"):
                     levels.append(np.where(mean > 0, 10.0 * np.log10(mean), SILENT_DB))
-                zeros.append(mean == 0)
+                zeros.append(mean < _DIGITAL_POWER)
     except (RuntimeError, sf.LibsndfileError) as exc:
         raise _open_error(path, exc) from exc
     rms_db = np.concatenate(levels) if levels else np.zeros(0, dtype=np.float64)

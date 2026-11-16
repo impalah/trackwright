@@ -6,7 +6,7 @@ Each voice is on its own track (exported alone with solo), so the question is on
 1. **Speech band:** the signal (channels averaged) goes through a band-pass filter, 100 Hz to 4 kHz, so a
    mains hum below it or hiss above it does not count as a voice.
 2. **Levels:** RMS of that band every 10 ms, lightly smoothed; the noise floor is their 10th percentile,
-   leaving out digital silence (exact zeros).
+   leaving out digital silence (frames under -120 dBFS: Cubase exports silence as -166 dBFS residue, TW-1616).
 3. **Hysteresis:** speech starts when the level rises ``on_db`` above the floor and lasts while it stays
    ``off_db`` above it, so the dips between syllables do not split a word.
 4. **Clean-up:** a hangover after each region (word endings decay slowly), gaps shorter than ``merge_gap``
@@ -29,7 +29,7 @@ import numpy.typing as npt
 import soundfile as sf
 from scipy import signal
 
-from trackwright.analysis.reader import SILENT_DB, AudioInfo, probe
+from trackwright.analysis.reader import DIGITAL_SILENCE_DB, SILENT_DB, AudioInfo, probe
 from trackwright.errors import PreconditionFailedError
 
 FRAME = 0.010
@@ -39,6 +39,7 @@ READ_SECONDS = 10.0
 FLOOR_PERCENTILE = 10.0
 SOUND_PERCENTILE = 90.0
 CONFIDENT_MARGIN_DB = 30.0
+DIGITAL_POWER = 10 ** (DIGITAL_SILENCE_DB / 10)  # TW-1616: Cubase's silence is -166 dBFS, not zeros
 
 
 @dataclass(frozen=True, slots=True)
@@ -121,7 +122,7 @@ def band_levels(path: Path) -> tuple[AudioInfo, npt.NDArray[np.float64], npt.NDA
                 power = (data[:full] ** 2).reshape(-1, frame).mean(axis=1)
                 with np.errstate(divide="ignore"):
                     levels.append(np.where(power > 0, 10 * np.log10(power), SILENT_DB))
-                zeros.append(~np.any(raw[:full].reshape(-1, frame) != 0, axis=1))
+                zeros.append((raw[:full].reshape(-1, frame) ** 2).mean(axis=1) < DIGITAL_POWER)
             pending, pending_raw = data[full:], raw[full:]
     except RuntimeError as exc:  # soundfile read errors
         raise PreconditionFailedError(
