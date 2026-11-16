@@ -197,6 +197,19 @@ def mix_range(sources: list[tuple[Path, float, float]], start: float, end: float
     return mixed, rate
 
 
+SILENT_DBFS = -60.0  # a source quieter than this in a range has nothing to hear there (TW-1615)
+
+
+def range_level_db(path: Path, origin: float, start: float, end: float) -> float | None:
+    """RMS level (dBFS) of ``path`` (its first sample at project time ``origin``) between ``start`` and ``end``;
+    None when the file has no audio there at all."""
+    data, _ = mix_range([(path, origin, 0.0)], start, end)
+    if data.size == 0:
+        return None
+    rms = float(np.sqrt(np.mean(data**2)))
+    return round(20 * np.log10(rms), 1) if rms > 0 else None
+
+
 def write_audio(target: Path, data: Block, rate: int) -> None:
     """``data`` as a 32-bit float WAV at ``target``, which appears only when complete."""
     fd, tmp = tempfile.mkstemp(prefix=f".{target.name}.", suffix=SUFFIX, dir=target.parent)

@@ -650,6 +650,9 @@ def build_server(service: CubaseService) -> MCPServer:
         music_seconds: Annotated[
             float | None, Field(gt=0, description="length of the music export: spans are cut to it")
         ] = None,
+        music_file: Annotated[
+            str | None, Field(description="the music export: moments are kept only where the music has sound")
+        ] = None,
         previous: Annotated[
             dict[str, Any] | None,
             Field(description="the plan before an edit: 'changed' then lists the spans the edit changes"),
@@ -659,8 +662,8 @@ def build_server(service: CubaseService) -> MCPServer:
     ) -> DuckingPlanOut:
         return await run(
             lambda: service.ducking_plan(
-                ducking, music_start=music_start, music_seconds=music_seconds, previous=previous, offset=offset,
-                limit=limit,
+                ducking, music_start=music_start, music_seconds=music_seconds, music_file=music_file,
+                previous=previous, offset=offset, limit=limit,
             )
         )  # fmt: skip
 

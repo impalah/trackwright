@@ -43,7 +43,7 @@ Speak to the user in their language and keep them informed; they are in front of
 
 1. Export the voices: `cubase_export_mix` with `phase: "start"`, the range, `solo` = the uids of **all** the voice tracks, `dry_run: false`. Ask for WAV, 32-bit float, the project's sample rate, a name like `ducking-voices`. Confirm (or cancel); check `solo_restored`.
 2. Export the music the same way, with `solo` = the music track's uid (name it `ducking-music`).
-3. `cubase_ducking_plan` with `ducking` = `{voice_file, voice_start: <range start>, attenuation_db, pre_roll, hold, recovery, merge_gap, overrides, use_protected}`, `music_start` = the range start, `music_seconds` = the music export's length.
+3. `cubase_ducking_plan` with `ducking` = `{voice_file, voice_start: <range start>, attenuation_db, pre_roll, hold, recovery, merge_gap, overrides, use_protected}`, `music_start` = the range start, `music_seconds` = the music export's length, and `music_file` = the music export, so the `moments` it proposes have music to hear.
 
 ### 3. Propose
 
@@ -52,7 +52,8 @@ In plain words: how many speech regions, how many ducked spans, how much of the 
 ### 4. Preview
 
 1. Render the ducked music: `cubase_render` with `file` = the music export, `start` = the range start, `process: "duck"`, `ducking` = the same object, `track` = the music track, `skill: "podcast-music-ducking"`, a `run_id`; dry run, then `dry_run: false`. It writes only to `Trackwright/renders/`.
-2. Previews with `cubase_preview`: `sources` = the voice export and the ducked render, both at the range start; about 12 s around 3 to 5 `moments` of the plan: the first word, a recovery after a long block, a pause where the music comes up, a protected range, the end. Name them by the moment (for example `duck-first-word`). Ask the user to listen to them (Quick Look in the Finder).
+2. Previews with `cubase_preview`: `sources` = the voice export and the ducked render, both at the range start; about 15 s around 3 to 5 `moments` of the plan (a first word, a recovery after a long block, a pause where the music comes up, the end). Only moments where **both** the voice and the music have sound show anything: music tracks often have gaps, and a preview in one only plays the voice (seen live in TW-1615). If a preview's notes say a source is silent, drop it and pick another moment.
+3. Make one **before/after pair** of the same stretch: the voice with the original music export, then with the ducked render, named so the user knows which is which (`…-BEFORE-…`, `…-AFTER-…`). Hearing the difference is what lets the user judge the ducking. Ask the user to listen to them (Quick Look in the Finder).
 
 **Edits in plain words** ("less obvious", "deeper", "do not bring it up between 12:30 and 13:10", "no ducking under the intro") change the specification: the parameters, or an override (`hold`, `free`, `depth` with project seconds). Call `cubase_ducking_plan` with the new `ducking` and `previous` = the one before: `changed` lists the spans the edit changes. Render again and preview **only** those spans; say what changed and where.
 

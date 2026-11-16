@@ -23,8 +23,10 @@ from trackwright.core.profiling import ProfilesMixin
 from trackwright.core.timefmt import format_seconds, parse_seconds
 from trackwright.errors import NotFoundError, PreconditionFailedError
 from trackwright.jsontypes import JsonObject
+from trackwright.renders import SILENT_DBFS, range_level_db
 
 MAX_SPANS = 500
+MOMENT_WINDOW = 3.0  # seconds around a moment where the music must be audible
 
 
 class OverrideSpec(BaseModel):
@@ -74,6 +76,23 @@ def parse_spec(raw: JsonObject | None) -> DuckingSpec:
 
 
 class DuckingMixin(ProfilesMixin):
+    def _audible_moments(
+        self, moments: list[DuckMomentOut], music_file: str, origin: float, notes: list[str]
+    ) -> list[DuckMomentOut]:
+        """Only the moments where the music has sound to hear (TW-1615: two previews fell in a gap of the
+        music track and showed nothing)."""
+        music = Path(music_file).expanduser()
+        if not music.is_absolute() or not music.is_file():
+            raise NotFoundError(f"not a file: {music}", code="NOT_FOUND")
+        kept = []
+        for moment in moments:
+            level = range_level_db(music, origin, max(origin, moment.at - MOMENT_WINDOW), moment.at + MOMENT_WINDOW)
+            if level is not None and level >= SILENT_DBFS:
+                kept.append(moment.model_copy(update={"music_db": level}))
+        if len(kept) < len(moments):
+            notes.append(f"{len(moments) - len(kept)} moments left out: the music is silent around them")
+        return kept
+
     def ducking_envelope(
         self, spec: DuckingSpec, *, start: float = 0.0, seconds: float | None = None
     ) -> tuple[Envelope, int, list[tuple[float, float]], list[str]]:
@@ -113,6 +132,7 @@ class DuckingMixin(ProfilesMixin):
         *,
         music_start: str = "0",
         music_seconds: float | None = None,
+        music_file: str | None = None,
         previous: JsonObject | None = None,
         offset: int = 0,
         limit: int = 100,
@@ -136,6 +156,8 @@ class DuckingMixin(ProfilesMixin):
             DuckMomentOut(at=round(s.fall_from, 3), why="the music goes down for the first word"),
             DuckMomentOut(at=round(s.end, 3), why="the music comes back up after the last word"),
         )]  # fmt: skip
+        if music_file is not None:
+            moments = self._audible_moments(moments, music_file, origin, notes)
         return DuckingPlanOut(
             changed=changed,
             moments=moments,

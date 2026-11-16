@@ -32,6 +32,7 @@ from trackwright.errors import NotFoundError, PreconditionFailedError
 from trackwright.jsontypes import JsonObject
 from trackwright.renders import (
     RENDERS,
+    SILENT_DBFS,
     Process,
     Provenance,
     SourceInfo,
@@ -42,6 +43,7 @@ from trackwright.renders import (
     next_name,
     problems,
     provenance_path,
+    range_level_db,
     render_file,
     renders_of,
     sha256,
@@ -272,6 +274,10 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         placed = [(path, src.start, src.gain_db) for path, src in zip(paths, parsed, strict=True)]
         mix, rate = mix_range(placed, first, last)
         write_audio(target, mix, rate)
+        out.levels_db = [range_level_db(path, origin, first, last) for path, origin, _ in placed]
+        for label, level in zip(names, out.levels_db, strict=True):
+            if level is None or level < SILENT_DBFS:
+                out.notes.append(f"{label} is silent in this range: the preview does not show it (TW-1615)")
         peak = float(np.abs(mix).max(initial=0.0))
         out.status, out.peak_dbfs = "done", _peak_db(peak)
         out.notes.append(f"{skill}: listen to it in the Finder (Quick Look) or any player; it is not in the project")

@@ -164,7 +164,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1615 Skill `podcast-music-ducking`
 
-- **Estado:** código hecho (2026-11-16), falta probarlo en directo: la skill (contrato de TW-1609); `cubase_preview` (una mezcla corta de exportaciones en un rango del proyecto, en `Trackwright/previews/`); `cubase_ducking_plan` con `previous` (los tramos que cambia una edición) y `moments` para preescuchar; las regiones de voz se recuerdan por versión del archivo, así que un plan y su edición las detectan una sola vez. Tests en `tests/unit/test_music_ducking_tw1615.py`
+- **Estado:** hecho (2026-11-16), ejecutada en el proyecto de pruebas y aprobada por el usuario tras una preescucha antes/después (ver el registro de verificación; las preescuchas en un hueco de la música no mostraban nada, corregido con los niveles de las fuentes y `music_file`): la skill (contrato de TW-1609); `cubase_preview` (una mezcla corta de exportaciones en un rango del proyecto, en `Trackwright/previews/`); `cubase_ducking_plan` con `previous` (los tramos que cambia una edición) y `moments` para preescuchar; las regiones de voz se recuerdan por versión del archivo, así que un plan y su edición las detectan una sola vez. Tests en `tests/unit/test_music_ducking_tw1615.py`
 - **Alcance:** exportar juntas las pistas de voz, y la música; planificar; preescuchas en primeras palabras, pausas, cambios de sección y finales; aplicar importando la música atenuada y silenciando la original; las peticiones con palabras cambian el plan guardado y vuelven a renderizar solo los tramos afectados. Aceptación: la voz sigue clara y las recuperaciones no distraen, a juicio del usuario.
 
 ### TW-1616 Experimento: ducking dentro de Cubase

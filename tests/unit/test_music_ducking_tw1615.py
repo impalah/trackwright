@@ -111,3 +111,23 @@ def test_an_edit_lists_what_it_changes(fake: FakeCubase, project: Path, voice: P
     assert len(out.changed) == 1  # only the second phrase
     assert 19.0 <= out.changed[0][0] <= 20.0
     assert svc.ducking_plan(before, previous=before).changed == []
+
+
+def test_silent_sources_and_moments_are_pointed_out(fake: FakeCubase, project: Path, voice: Path) -> None:
+    """Live, two previews fell in a gap of the music track and showed only the voice."""
+    music = np.zeros(30 * RATE)
+    music[: 12 * RATE] = 0.1  # music only for the first 12 s: the second phrase (20-24 s) has none
+    music_file = write(project / "Mixdown" / "music.wav", music)
+    svc = make(fake, project)
+    plan = svc.ducking_plan({"voice_file": str(voice)}, music_seconds=30.0, music_file=str(music_file))
+    # the first phrase's fall and recovery have music around them; the second phrase's do not
+    assert [m.at for m in plan.moments] == [pytest.approx(4.75, abs=0.05), pytest.approx(10.0, abs=0.05)]
+    assert plan.moments[0].music_db == pytest.approx(-20.0, abs=0.1)
+    assert any("left out" in n for n in plan.notes)
+    out = svc.preview(
+        [{"file": str(voice)}, {"file": str(music_file)}], start="18", end="26", name="gap", dry_run=False
+    )
+    assert out.levels_db[1] is None
+    assert any("music.wav (+0 dB) is silent" in n for n in out.notes)
+    with pytest.raises(NotFoundError):
+        svc.ducking_plan({"voice_file": str(voice)}, music_file=str(project / "missing.wav"))

@@ -619,6 +619,7 @@ class DuckSpanOut(_Out):
 class DuckMomentOut(_Out):
     at: float = Field(description="project seconds")
     why: str
+    music_db: float | None = Field(default=None, description="with music_file: the music's level around it")
 
 
 class DuckingPlanOut(_Out):
@@ -646,6 +647,9 @@ class PreviewOut(_Out):
     end: str
     seconds: float
     sources: list[str] = Field(description="the files mixed, with their gain")
+    levels_db: list[float | None] = Field(
+        default_factory=list, description="each source's RMS level in the range (null: no audio there)"
+    )
     peak_dbfs: float | None = None
     notes: list[str] = Field(default_factory=list)
 
