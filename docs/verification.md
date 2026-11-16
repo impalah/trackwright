@@ -602,3 +602,8 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 - The user's 36 s march (44.1 kHz MP3, read-only), a 60 s target at 0:00. `cubase_music_analysis`: 64.05 BPM, best loop 5.457 → 20.477 s (4 bars, score 0.594). The `bed` render: one repeat, 50.703 s (9.297 s short, never stretched nor exceeded), one seam at 20.009 s of the bed, seam score 0.645.
 - The project runs at 48 kHz and the music at 44.1 kHz: Cubase would have converted it on import by copying it into `Audio/`. Added `sample_rate` to the bed (polyphase resampling); the bed was rendered at 48 kHz, its peak +0.23 dBFS (the MP3 is close to full scale).
 - `cubase_preview` of the seam (17–23 s, music at −15.3 dBFS): the user: "the seam sounds good". New stereo track `Music bed`, the bed imported at 0 s without a copy and without a rate conversion (end edge 0:00:50.702, `verified: true`, recorded as the skill's). No markers: the user had no doubt about the seam and its score is over 0.5. The cursor at 0:17 to hear it in the mix.
+
+## 2026-11-16 — TW-1620: the licensed library on the user's folder
+
+- The user chose a folder of 29 sounds (mostly Storyblocks, file names ending in `SBA-…`) as the library, added to `[library] folders` with their permission, and gave the licence of one, the march used as an intro: Storyblocks, an active subscription. Its sidecar was written with only that (credit and allowed uses left empty, with a note to complete them).
+- `trackwright library check`: 1 licensed sound, 28 without a sidecar (left out), no invalid or orphan sidecar. `search march`: the march, 36.15 s, its licence and source. `search march --use podcast`: nothing, since the sidecar does not yet list podcast as an allowed use.

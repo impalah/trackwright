@@ -189,7 +189,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1620 Biblioteca de audio con licencias
 
-- **Estado:** código hecho (2026-11-16), falta montar la biblioteca del usuario: `[library] folders`, un archivo `<archivo>.toml` por sonido (título, tipo, licencia obligatoria, origen, atribución, usos permitidos, etiquetas), `trackwright/library.py` (recorrer, comprobar, buscar; un sonido sin licencia o con `unknown` nunca se ofrece), la herramienta `cubase_library` (`search`, `check`) y la CLI `trackwright library search|check|template` (la plantilla se imprime, nunca se escribe). Tests en `tests/unit/test_library_tw1620.py`
+- **Estado:** hecho (2026-11-16), probada sobre la carpeta del usuario (ver el registro de verificación; 28 de sus 29 sonidos aún necesitan archivo de datos del usuario): `[library] folders`, un archivo `<archivo>.toml` por sonido (título, tipo, licencia obligatoria, origen, atribución, usos permitidos, etiquetas), `trackwright/library.py` (recorrer, comprobar, buscar; un sonido sin licencia o con `unknown` nunca se ofrece), la herramienta `cubase_library` (`search`, `check`) y la CLI `trackwright library search|check|template` (la plantilla se imprime, nunca se escribe). Tests en `tests/unit/test_library_tw1620.py`
 - **Alcance:** una carpeta local (o varias) con un archivo lateral por elemento: procedencia, licencia, atribución, usos permitidos, etiquetas; índice y búsqueda (`trackwright library` y una herramienta MCP); los elementos sin nota de licencia no se ofrecen. Nunca se descarga nada.
 
 ### TW-1621 Skill `podcast-sound-effects`
