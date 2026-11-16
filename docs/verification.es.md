@@ -555,3 +555,9 @@ Cubase Elements 15.0.30, script 1.6.1, proyecto de pruebas, `TRACKWRIGHT_TEST_TR
 - Avisos: dos pausas de 32,1 s y 35,2 s (en 23,26 s y 76,58 s) y un cambio de nivel de −10,8 LU en 2:10. `project_saved_after: true` (el MP3 es del 13 de noviembre y el proyecto se guardó el 15), con su nota.
 - El cursor fue a la pausa más larga con `cubase_set_position`. Con `report: true` se escribieron los informes JSON y Markdown en `Trackwright/reports/`, y el Markdown se registró con `cubase_workspace` como elemento `report` de `podcast-final-qc`.
 - Corregido después: un título decía "1 level changes"; el final (2:10,042) y el cambio de nivel (2:10,000) eran dos momentos a 42 ms, ahora unidos; las notas del informe tienen ya su propio encabezado.
+
+## 2026-11-16 — TW-1612: alcanzar un objetivo de sonoridad en Elements, en un episodio entero
+
+- La exportación de 46 minutos del episodio E0004 (`Pod Mic` sola), importada sin copiar en el proyecto de pruebas y exportada sola cinco veces por el usuario: detalles y tabla en `experiments/tw1612/`. El fader a −5,25 dB lo llevó de −10,75 a −16,00 LUFS en una pasada; el MP3 de 128 kbps subió el pico real 0,78–0,82 dB; el Brickwall Limiter de la ranura 1 actúa antes del fader y el de la ranura 7 después; con DIC activado, 0,24 dB de picos entre muestras pasan el umbral de −1 dB.
+- `cubase_export_mix` confirmó las dos exportaciones MP3 como 6,3 s más cortas, por la duración estimada de afinfo (2767,55 s frente a 2773,92 s decodificados); las duraciones salen ahora de soundfile, y de afinfo solo para AAC.
+- Queda en el proyecto de pruebas: la pista `TW1612 episode`, un segundo Brickwall Limiter en la ranura 7 de Stereo Out (en bypass; los plugins no se pueden quitar por la API), las cinco exportaciones `tw1612-r0` … `r4` en `Mixdown`. El fader de Stereo Out vuelve a estar en 0,00 dB.

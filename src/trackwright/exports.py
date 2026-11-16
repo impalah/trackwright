@@ -1,6 +1,8 @@
 """Find the audio files Cubase exported (TW-1204). Only metadata is read: name, size, time and duration.
 
-The duration comes from macOS ``afinfo`` ("estimated duration: 27.991125 sec"), which reads the file header.
+The duration comes from the file's header through soundfile (exact sample count, MP3 included); only what
+soundfile cannot open (AAC) falls back to macOS ``afinfo``. Its "estimated duration" divides the size by the
+nominal bit rate: a 46-minute MP3 at 128 kbps came out 6.3 s short (TW-1612).
 """
 
 from __future__ import annotations
@@ -10,6 +12,8 @@ import subprocess
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from pathlib import Path
+
+import soundfile as sf
 
 AUDIO_SUFFIXES = frozenset({".wav", ".mp3", ".aif", ".aiff", ".flac", ".ogg", ".m4a", ".wv"})
 PROJECT_SUFFIXES = frozenset({".cpr"})
@@ -38,6 +42,12 @@ class ExportInspector:
         self._output = output
 
     def duration(self, path: Path) -> float | None:
+        try:
+            info = sf.info(str(path))
+        except RuntimeError, sf.LibsndfileError:  # not readable by soundfile (AAC): ask afinfo
+            info = None
+        if info is not None and info.samplerate > 0 and info.frames > 0:
+            return float(info.frames / info.samplerate)
         match = DURATION.search(self._output(["/usr/bin/afinfo", str(path.resolve())]))  # I-13: never an option
         return float(match.group(1)) if match else None
 

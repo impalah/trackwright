@@ -342,7 +342,7 @@ Designed for podcast editing: it works in **seconds** and the time signature doe
 - **`start` phase** (`dry_run` by default):
   - **Input:**
     - `track` and `position` (seconds or bars);
-    - `file`, optional: the path of the file the user will choose. It is used to tell the user the path and to get its duration with `afinfo`.
+    - `file`, optional: the path of the file the user will choose. It is used to tell the user the path and to get its duration (from the header with soundfile; macOS `afinfo` only for AAC).
   - **What it does:**
     1. selects the track;
     2. moves the cursor to the position;
@@ -371,7 +371,7 @@ Trackwright **never exports by itself**: it sets the range and opens the Cubase 
 - **The user,** in the dialog, checks the channel (Stereo Out), the name, the path and the format (WAV for archiving, MP3 for publishing) and clicks **Export Audio**.
 - **`confirm` phase:**
   - **Input:** `since` and `expected_seconds` from the previous phase; `folder` if another folder was chosen.
-  - **What it does:** looks in the folder for audio files created after `since` and reads **only** their name, size, date and duration (with macOS `afinfo`).
+  - **What it does:** looks in the folder for audio files created after `since` and reads **only** their name, size, date and duration (from the header with soundfile, exact for MP3 too; macOS `afinfo`, whose MP3 duration is an estimate that was 6.3 s short on 46 minutes, only for AAC; TW-1612).
   - **Output:** `done` and `verified`, with the duration difference for each file (`difference_seconds`), or `not_found`.
   - **Tolerance:**
     - ±0.15 s for WAV and AIFF;

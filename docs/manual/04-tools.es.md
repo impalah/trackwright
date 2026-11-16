@@ -342,7 +342,7 @@ Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
 - **Fase `start`** (`dry_run` por defecto):
   - **Entrada:**
     - `track` y `position` (segundos o compases);
-    - `file`, opcional: la ruta del archivo que el usuario elegirá. Sirve para indicársela y para conocer su duración con `afinfo`.
+    - `file`, opcional: la ruta del archivo que el usuario elegirá. Sirve para indicársela y para conocer su duración (de la cabecera con soundfile; `afinfo` de macOS solo para AAC).
   - **Qué hace:**
     1. selecciona la pista;
     2. pone el cursor en la posición;
@@ -371,7 +371,7 @@ Trackwright **nunca exporta por sí mismo**: coloca el rango y abre el diálogo 
 - **El usuario,** en el diálogo, revisa el canal (Stereo Out), el nombre, la ruta y el formato (WAV para archivar, MP3 para publicar) y pulsa **Exportar audio**.
 - **Fase `confirm`:**
   - **Entrada:** `since` y `expected_seconds` de la fase anterior; `folder` si se eligió otra carpeta.
-  - **Qué hace:** busca en la carpeta los archivos de audio creados después de `since` y lee **solo** su nombre, tamaño, fecha y duración (con `afinfo` de macOS).
+  - **Qué hace:** busca en la carpeta los archivos de audio creados después de `since` y lee **solo** su nombre, tamaño, fecha y duración (de la cabecera con soundfile, exacta también en MP3; `afinfo` de macOS, cuya duración de un MP3 es una estimación que se quedó 6,3 s corta en 46 minutos, solo para AAC; TW-1612).
   - **Salida:** `done` y `verified`, con la diferencia de duración de cada archivo (`difference_seconds`), o `not_found`.
   - **Tolerancia:**
     - ±0,15 s en WAV y AIFF;

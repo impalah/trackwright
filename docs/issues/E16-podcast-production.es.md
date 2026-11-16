@@ -146,7 +146,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1612 Experimento: alcanzar un objetivo de sonoridad en Elements
 
-- **Estado:** pendiente (necesita TW-1601, TW-1603)
+- **Estado:** hecho (2026-11-16): ver `experiments/tw1612/` y el registro de verificación. Una pasada de ganancia en el fader alcanza el objetivo exactamente al bajar; las ranuras 1–6 de Stereo Out están antes del fader y las 7–8 después, así que un techo va en la ranura 7 u 8; el Brickwall Limiter deja pasar 0,24 dB de picos entre muestras con DIC activado; el MP3 de 128 kbps sube el pico real unos 0,8 dB, así que un MP3 a −1 dBTP necesita un umbral cercano a −2,1 dB y medir el propio MP3. Encontrado y corregido por el camino: la duración estimada de afinfo de un MP3 de 46 minutos se quedaba 6,3 s corta; las duraciones de las exportaciones salen ahora de soundfile
 - **Alcance:** en un episodio completo: ganancia en el fader de Stereo Out (su rango), Brickwall Limiter o Maximizer en Stereo Out (techo, liberación), medidos tras exportar; cuánto sube el true peak al codificar en MP3; cuántas vueltas de medir y ajustar hacen falta.
 
 ### TW-1613 Skill `podcast-delivery`

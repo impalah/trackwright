@@ -125,3 +125,21 @@ def test_lossy_files_get_a_wider_tolerance(exporter: CubaseService, exports: Fak
     assert (by_name[".mp3"].duration_matches, by_name[".mp3"].difference_seconds) == (True, -0.255)
     assert by_name[".wav"].duration_matches is False
     assert out.verified is True  # the newest file
+
+
+def test_the_duration_is_exact_where_soundfile_reads_the_file(tmp_path: Path) -> None:
+    """TW-1612: afinfo's "estimated duration" of a 46-minute MP3 was 6.3 s short; the header's sample count is
+    exact, and afinfo is only asked about files soundfile cannot open (AAC)."""
+    import numpy as np
+    import soundfile as sf
+
+    wav = tmp_path / "a.wav"
+    sf.write(wav, np.zeros((48000 * 3 + 7, 2)), 48000)
+    inspector = ExportInspector(output=lambda _a: "estimated duration: 99.0 sec")
+    assert inspector.duration(wav) == (48000 * 3 + 7) / 48000
+    mp3 = tmp_path / "a.mp3"
+    sf.write(mp3, np.zeros((44100 * 2, 2)), 44100, format="MP3")
+    assert abs((inspector.duration(mp3) or 0) - 2.0) < 0.1  # encoder padding only
+    m4a = tmp_path / "a.m4a"
+    m4a.write_bytes(b"not readable by soundfile")
+    assert inspector.duration(m4a) == 99.0

@@ -146,7 +146,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1612 Experiment: reaching a loudness target in Elements
 
-- **Status:** pending (needs TW-1601, TW-1603)
+- **Status:** done (2026-11-16): see `experiments/tw1612/` and the verification log. One round of fader gain reaches the target exactly when lowering; slots 1–6 of Stereo Out are before the fader and 7–8 after it, so a ceiling goes in slot 7 or 8; the Brickwall Limiter lets 0.24 dB of intersample peaks through with DIC on; MP3 128 kbps raises the true peak by about 0.8 dB, so a −1 dBTP MP3 needs a threshold near −2.1 dB and a measurement of the MP3 itself. Found and fixed on the way: afinfo's estimated MP3 duration was 6.3 s short on 46 minutes; export durations now come from soundfile
 - **Scope:** on a whole episode: gain on Stereo Out's fader (its range), Brickwall Limiter or Maximizer on Stereo Out (ceiling, release), measured after export; how much the MP3 encoding raises the true peak; how many measure-adjust rounds are needed.
 
 ### TW-1613 Skill `podcast-delivery`
