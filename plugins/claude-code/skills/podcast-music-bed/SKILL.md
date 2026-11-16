@@ -53,7 +53,7 @@ The plan: the loop (start, end, length), how many times it repeats, the bed's le
 
 ### 4. Preview
 
-1. Render the bed: `cubase_render` with `file`, `process: "bed"`, `bed` = `{loop_start, loop_end, target_seconds, crossfade, align, ending_start}`, `skill: "podcast-music-bed"`, a `run_id`; dry run first (it gives `seams`, `seam_score` and the notes), then `dry_run: false`. It writes only to `Trackwright/renders/`.
+1. Render the bed: `cubase_render` with `file`, `process: "bed"`, `bed` = `{loop_start, loop_end, target_seconds, crossfade, align, ending_start, sample_rate}`, `skill: "podcast-music-bed"`, a `run_id`; dry run first (it gives `seams`, `seam_score` and the notes), then `dry_run: false`. It writes only to `Trackwright/renders/`. Set `sample_rate` to the project's rate (an export of the project shows it, for example the `sample_rate` of `cubase_measure_loudness` on a recent mixdown, or ask the user): music at another rate (44.1 kHz in a 48 kHz project) would be copied by Cubase on import to convert it.
 2. A preview of **every seam** (up to five; with more, the first, a middle one and the last): `cubase_preview` with `sources` = the bed render at `start` = where the bed goes in the project, a range of about 3 s before to 3 s after the seam (project time = bed start + seam). Name them `bed-seam-1`, `bed-seam-2`…
 3. Ask the user to listen to them (Quick Look in the Finder). A seam they hear: try the next candidate loop, a longer crossfade (up to half a bar), or mark a region by ear.
 

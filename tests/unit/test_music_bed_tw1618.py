@@ -85,3 +85,23 @@ def test_a_prepared_loop_repeats_the_whole_file(svc: CubaseService, tmp_path: Pa
     data, _ = sf.read(out.render.file, always_2d=True)
     assert len(data) == 24 * RATE  # three passes, no crossfade: the file as it is, three times
     assert np.allclose(data[8 * RATE : 16 * RATE, 0], data[: 8 * RATE, 0], atol=1e-7)
+
+
+def test_a_bed_at_the_projects_rate(svc: CubaseService, tmp_path: Path) -> None:
+    """Live: the user's music was 44.1 kHz in a 48 kHz project; Cubase would copy it on import to convert it."""
+    t = np.arange(16 * 44100) / 44100
+    music = tmp_path / "music441.wav"
+    tone = 0.2 * np.sin(2 * np.pi * 440 * t)
+    sf.write(music, np.column_stack([tone, tone]), 44100, subtype="FLOAT")
+    bed = {"loop_start": 2.0, "loop_end": 10.0, "target_seconds": 30.0, "crossfade": 0.0, "sample_rate": 48000}
+    plan = svc.render(file=str(music), process="bed", bed=bed, name="bed48")
+    assert plan.render is not None
+    assert plan.render.sample_rate == 48000
+    done = svc.render(file=str(music), process="bed", bed=bed, name="bed48", dry_run=False)
+    assert done.render is not None
+    info = sf.info(done.render.file)
+    assert info.samplerate == 48000
+    assert info.frames / 48000 == pytest.approx(plan.render.seconds, abs=0.001)
+    data, _ = sf.read(done.render.file, always_2d=True)
+    spectrum = np.abs(np.fft.rfft(data[48000:96000, 0]))
+    assert np.argmax(spectrum) == pytest.approx(440, abs=1)  # still 440 Hz: resampled, not replayed faster

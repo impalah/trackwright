@@ -700,8 +700,9 @@ def build_server(service: CubaseService) -> MCPServer:
     @server.tool(
         annotations=READ,
         description="Analyze a music file for a bed, read-only: tempo (BPM, with a confidence: ambient music may "
-        "have no usable beat), loop candidates before the ending (whole bars, on beats moved to zero crossings, "
-        "each with a seam score in timbre and harmony and a suggested crossfade), and the ending (where the last "
+        "have no usable beat), loop candidates before the ending (whole bars, the seam where the music agrees "
+        "with itself best, its end lined up by correlation, a score in timbre and harmony, a half-beat "
+        "crossfade), and the ending (where the last "
         "phrase starts and where the level falls for good). A bed of a given length is then rendered with "
         "cubase_render (process 'bed'), never time-stretched. Needs [analysis] enabled.",
     )
@@ -734,7 +735,9 @@ def build_server(service: CubaseService) -> MCPServer:
             dict[str, Any] | None,
             Field(
                 description="bed: loop_start, loop_end, ending_start (seconds in the music file, from "
-                "cubase_music_analysis or the user), target_seconds, crossfade (default 0.01 s)"
+                "cubase_music_analysis or the user), target_seconds, crossfade (default 0.1 s), align (line a "
+                "marked loop's end up with its start), sample_rate (the project's, so Cubase imports it without "
+                "a copy)"
             ),
         ] = None,
         ducking: Annotated[

@@ -22,6 +22,7 @@ from typing import Literal
 import numpy as np
 import soundfile as sf
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from scipy import signal
 
 from trackwright import __version__
 from trackwright.analysis import decoded, probe
@@ -81,6 +82,12 @@ class BedSpec(BaseModel):
     crossfade: float = Field(default=0.1, ge=0, le=4, description="equal-power crossfade at every seam")
     align: bool = Field(
         default=False, description="line loop_end up with loop_start by correlation (a region the user marked)"
+    )
+    sample_rate: int | None = Field(
+        default=None,
+        ge=8000,
+        le=192000,
+        description="resample the bed to this rate (the project's: Cubase would copy a file at another rate)",
     )
 
 
@@ -198,7 +205,7 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
                 file=str(target), provenance=str(provenance_path(target)), skill=skill, run=run_id,
                 process=process, parameters=parameters, position=format_seconds(position),
                 position_seconds=position, seconds=bed_plan.seconds if bed_plan else round(info_in.seconds, 4),
-                sample_rate=info_in.rate,
+                sample_rate=(bed_spec.sample_rate if bed_spec else None) or info_in.rate,
                 channels=info_in.channels, peak_dbfs=None, replaces=replaced["name"] if replaced else None,
                 source=str(source),
             )  # fmt: skip
@@ -215,7 +222,7 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
                 path=str(source), sha256=sha256(source), size=source.stat().st_size,
                 seconds=round(info_in.seconds, 6), rate=info_in.rate, channels=info_in.channels,
             )  # fmt: skip
-            peak = self._write_render(readable, target, effect, bed_plan)
+            peak = self._write_render(readable, target, effect, bed_plan, bed_spec.sample_rate if bed_spec else None)
         written = probe(target)
         provenance = Provenance(
             file=target.name,
@@ -300,13 +307,19 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         return plan, parameters, notes
 
     @staticmethod
-    def _write_render(readable: Path, target: Path, effect: Process, bed: BedPlan | None) -> float:
+    def _write_render(
+        readable: Path, target: Path, effect: Process, bed: BedPlan | None, out_rate: int | None = None
+    ) -> float:
         """Write the render; return its sample peak (linear)."""
         if bed is None:
             _, peak = render_file(readable, target, effect)
             return peak
         data, rate = sf.read(str(readable), dtype="float64", always_2d=True)  # a bed is minutes, not hours
         rendered = render_bed(data, rate, bed)
+        if out_rate is not None and out_rate != rate:  # TW-1618: at the project's rate, imported without a copy
+            common = math.gcd(out_rate, rate)
+            rendered = signal.resample_poly(rendered, out_rate // common, rate // common, axis=0)
+            rate = out_rate
         write_audio(target, rendered, rate)
         return float(np.abs(rendered).max(initial=0.0))
 
