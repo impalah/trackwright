@@ -244,7 +244,7 @@ def test_silences_are_ordered_inside_and_long_enough(
     for silence in found:
         assert 0.0 <= silence.start < silence.end <= levels.seconds + 1e-9
         assert silence.start >= previous_end
-        assert silence.seconds >= min_seconds - 2 * padding - 1e-6
+        assert silence.seconds >= min_seconds - 2 * padding - 1e-4  # start and end are rounded to 0.1 ms
         previous_end = silence.end
 
 

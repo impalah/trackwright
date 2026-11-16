@@ -4,13 +4,16 @@ Pure analyses of one voice track's export, read once in blocks (an hour of voice
 the speech regions from :mod:`trackwright.analysis.speech` (file seconds). Nothing is treated here: the
 findings say what was measured, how sure the measure is, and where to listen.
 
-- **spectrum:** the long-term average spectrum of the speech, in six bands, relative to the whole;
-- **hum:** peaks at 50 or 60 Hz and their harmonics in the pauses, against the spectrum around each;
+- **spectrum:** the long-term average spectrum of the speech, in six bands, relative to the whole and (TW-1624)
+  as absolute levels, so a before and after can be compared band by band;
+- **hum:** peaks at 50 or 60 Hz and their harmonics in the pauses, against the spectrum around each, and each
+  harmonic's own level (a 30 dB peak over near silence can still be inaudible);
 - **noise:** the signal-to-noise ratio (typical speech level against the floor of the pauses) and its colour;
 - **plosives:** bursts below 80 Hz that dominate a 10 ms window inside speech (a voice's fundamental is above
   80 Hz, a "p" or "b" hitting the microphone is not);
 - **clicks:** short transients above 3 kHz standing far above their surroundings, near speech;
-- **sibilance:** windows where the 5-10 kHz band is as loud as typical speech;
+- **sibilance:** windows where the 5-10 kHz band is as loud as typical speech, and how loud its peaks are (a
+  de-esser lowers the peaks without always taking them under the threshold);
 - **reverb:** how fast the level falls after a phrase ends (followed by a pause), as a T60 estimate.
 
 The thresholds are starting values, chosen on synthetic signals and checked on a real episode (TW-1623);
@@ -72,6 +75,13 @@ class VoiceDiagnosis:
     rate: int
     speech_seconds: float
     findings: list[Finding]
+
+
+def _band_dbfs(power: Array, frame: int) -> float:
+    """RMS level (dBFS: 10 log10 of the mean square, a full-scale sine is -3) of the bins in ``power``, a
+    one-sided Hann-windowed power spectrum of ``frame`` samples (Parseval with the window's energy)."""
+    window = np.hanning(frame)
+    return round(_db(2 * float(power.sum()) / (frame * float((window * window).sum()))), 1)
 
 
 def _db(power: float) -> float:
@@ -243,6 +253,9 @@ def spectrum_finding(spectrum: Array, rate: int, frames: int) -> Finding:
     for name, low, high in BANDS:
         band = float(spectrum[(freqs >= low) & (freqs < min(high, rate / 2))].sum())
         measures[f"{name}_db"] = round(_db(band) - _db(total), 1) if total > 0 else None
+    for name, low, high in BANDS:  # TW-1624: absolute, so a cleanup's before and after compare band by band
+        inside = spectrum[(freqs >= low) & (freqs < min(high, rate / 2))]
+        measures[f"{name}_dbfs"] = _band_dbfs(inside, LTAS_FRAME) if total > 0 else None
     notes = []
     rumble = measures["rumble_db"]
     if isinstance(rumble, float) and rumble > -20:
@@ -263,17 +276,21 @@ def spectrum_finding(spectrum: Array, rate: int, frames: int) -> Finding:
 def hum_finding(spectrum: Array, rate: int, pause_frames: int) -> Finding:
     freqs = np.fft.rfftfreq(HUM_FRAME, 1 / rate)
     db = 10 * np.log10(np.maximum(spectrum, EPS))
-    best: tuple[int, list[float]] = (50, [0.0] * 6)
+    best: tuple[int, list[float], list[float | None]] = (50, [0.0] * 6, [None] * 6)
     for base in (50, 60):
-        prominences = []
+        prominences: list[float] = []
+        levels: list[float | None] = []
         for k in range(1, 7):
             f = base * k
-            peak = db[(freqs >= f - 1.5) & (freqs <= f + 1.5)]
+            near = (freqs >= f - 1.5) & (freqs <= f + 1.5)
+            peak = db[near]
             flank = db[((freqs >= f - 15) & (freqs <= f - 5)) | ((freqs >= f + 5) & (freqs <= f + 15))]
             prominences.append(float(peak.max() - np.median(flank)) if len(peak) and len(flank) else 0.0)
+            lobe = (freqs >= f - 3) & (freqs <= f + 3)  # the Hann window's main lobe: +-2 bins, 2.9 Hz
+            levels.append(_band_dbfs(spectrum[lobe], HUM_FRAME) if len(peak) else None)
         if sum(p for p in prominences if p > 0) > sum(p for p in best[1] if p > 0):
-            best = (base, prominences)
-    base, prominences = best
+            best = (base, prominences, levels)
+    base, prominences, levels = best
     strong = [p for p in prominences if p >= 10]
     top = max(prominences) if prominences else 0.0
     # over the voice its harmonics make peaks too: then only the mains fundamental, under any voice, counts
@@ -295,6 +312,8 @@ def hum_finding(spectrum: Array, rate: int, pause_frames: int) -> Finding:
             "measured_on": "pauses" if pause_frames else "everything",
             # TW-1624: each harmonic's prominence, so a cleanup knows which ones need a notch
             **{f"h{k}_db": round(p, 1) for k, p in enumerate(prominences, start=1)},
+            # and its own level (dBFS): the 30 dB prominence of a -59 dBFS harmonic is near silence's doing
+            **{f"h{k}_dbfs": level for k, level in enumerate(levels, start=1)},
         },
         note=f"peaks at {base} Hz and its harmonics above the spectrum around them"
         if detected
@@ -416,6 +435,9 @@ def sibilance_finding(
     events = _events(flags, 10 * np.log10(np.maximum(sib, EPS) / max(reference, EPS)))
     per_minute = len(events) / max(minutes, 1e-9)
     severity = _rate_severity(per_minute, 0.5, 2.0, 6.0)
+    # TW-1624: how loud the esses' peaks are (the 5-10 kHz band in the loudest 5 % of the speech's 10 ms
+    # windows): a de-esser lowers them without always taking them under the rate's threshold
+    peak = round(_db(float(np.percentile(sib[speech], 95))), 1)
     return Finding(
         "sibilance",
         severity != "none",
@@ -426,6 +448,7 @@ def sibilance_finding(
             "per_minute": round(per_minute, 2),
             "band_low_hz": low_hz,
             "band_high_hz": high_hz,
+            "peak_dbfs": peak,
         },
         times=_times(events),
         note="windows where 5-10 kHz is as loud as typical speech (harsh 's' and 'sh')",

@@ -211,7 +211,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1624 Skill `podcast-voice-cleanup`
 
-- **Status:** code done (2026-11-16), to try live: the skill and its reference of the Steinberg plugins measured live (StudioEQ's bands, `LFTypeL` 3 = Cut, 20 Hz, ±24 dB, Q up to 10; DeEsser's parameters); `cubase_voice_diagnostics` gives each hum harmonic's prominence and the esses' band
+- **Status:** done (2026-11-16, tried live on a synthetic dirty voice: see the verification log; it added absolute levels to `cubase_voice_diagnostics`): the skill and its reference of the Steinberg plugins measured live (StudioEQ's bands, `LFTypeL` 3 = Cut, 20 Hz, ±24 dB, Q up to 10; DeEsser's parameters); `cubase_voice_diagnostics` gives each hum harmonic's prominence and the esses' band
 - **Scope:** a diagnosis per problem; treatment only with plugins found installed (dynamic discovery as in `noise-gate`): StudioEQ notches for hum, high-pass on the channel for rumble and plosives, DeEsser for sibilance, Gate or the `noise-gate` skill for noise in pauses; clicks, reverberation and intrusive sounds reported for review or another tool. Gentle settings and previews; artifacts named as a risk.
 
 ### TW-1625 Skill `podcast-voice-tone`

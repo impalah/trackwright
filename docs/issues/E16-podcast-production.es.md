@@ -211,7 +211,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1624 Skill `podcast-voice-cleanup`
 
-- **Estado:** código hecho (2026-11-16), falta probarlo en directo: la skill y su referencia de los plugins de Steinberg medidos en directo (las bandas de StudioEQ, `LFTypeL` 3 = Cut, 20 Hz, ±24 dB, Q hasta 10; los parámetros de DeEsser); `cubase_voice_diagnostics` da la prominencia de cada armónico del zumbido y la banda de las eses
+- **Estado:** hecho (2026-11-16, probado en directo sobre una voz sucia sintética: ver el registro de verificación; añadió niveles absolutos a `cubase_voice_diagnostics`): la skill y su referencia de los plugins de Steinberg medidos en directo (las bandas de StudioEQ, `LFTypeL` 3 = Cut, 20 Hz, ±24 dB, Q hasta 10; los parámetros de DeEsser); `cubase_voice_diagnostics` da la prominencia de cada armónico del zumbido y la banda de las eses
 - **Alcance:** un diagnóstico por problema; tratamiento solo con plugins instalados (descubrimiento dinámico como en `noise-gate`): muescas con StudioEQ para el zumbido, paso alto en el canal para el retumbe y las plosivas, DeEsser para la sibilancia, Gate o la skill `noise-gate` para el ruido en las pausas; clics, reverberación y sonidos intrusivos se informan para revisión o para otra herramienta. Ajustes suaves y preescuchas; los artefactos se nombran como riesgo.
 
 ### TW-1625 Skill `podcast-voice-tone`

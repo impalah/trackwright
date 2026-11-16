@@ -102,6 +102,8 @@ def test_the_measures(cases: dict[str, VoiceDiagnosis]) -> None:
     hum = finding(cases["hum"], "hum")
     assert (hum.measures["mains_hz"], hum.measures["measured_on"]) == (50, "pauses")
     assert all(hum.measures[f"h{k}_db"] > 10 for k in range(1, 5))  # type: ignore[operator]  # four injected
+    for k in range(1, 5):  # TW-1624: each harmonic's own level, 0.003/k of amplitude: RMS 20 log10(0.003/k/sqrt 2)
+        assert hum.measures[f"h{k}_dbfs"] == pytest.approx(20 * np.log10(0.003 / k / np.sqrt(2)), abs=0.5)
     sibilant = finding(cases["sibilance"], "sibilance").measures
     assert 4700 <= sibilant["band_low_hz"] <= 6000  # type: ignore[operator]  # the injected noise: 5.5-9 kHz
     assert 8000 <= sibilant["band_high_hz"] <= 10600  # type: ignore[operator]
@@ -113,7 +115,12 @@ def test_the_measures(cases: dict[str, VoiceDiagnosis]) -> None:
     assert clicks.times
     assert clicks.measures["per_minute"] > 20  # type: ignore[operator]
     spectrum = finding(cases["clean"], "spectrum")
-    assert set(spectrum.measures) == {f"{b}_db" for b in ("rumble", "low", "body", "presence", "sibilance", "air")}
+    bands = ("rumble", "low", "body", "presence", "sibilance", "air")
+    assert set(spectrum.measures) == {f"{b}_db" for b in bands} | {f"{b}_dbfs" for b in bands}
+    # TW-1624: absolute levels, and the esses' peaks louder where noise bursts were added
+    assert spectrum.measures["body_dbfs"] < 0  # type: ignore[operator]
+    peaks = [finding(cases[c], "sibilance").measures["peak_dbfs"] for c in ("clean", "sibilance")]
+    assert peaks[1] > peaks[0] + 6  # type: ignore[operator]
     assert finding(cases["sibilance"], "spectrum").detected  # its 4-10 kHz band outweighs the presence band
 
 

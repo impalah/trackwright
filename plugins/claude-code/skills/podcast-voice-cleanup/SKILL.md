@@ -49,13 +49,13 @@ Explain each finding in plain words with its severity **and confidence** (a find
 
 | Found | Treatment (only if the plugin is there) | Gentle values |
 |---|---|---|
-| `hum` detected | StudioEQ peak bands as notches at `mains_hz` × k for each harmonic with `hK_db` ≥ 10 (up to three: P1, P2, and HF as a peak if free) | gain −(hK_db − 3), at most −24 dB; Q 10 |
-| `spectrum` rumble (`rumble_db` > −20) or `plosives` detected | StudioEQ LF band type `Cut` (high-pass) | 80 Hz; never above 100 Hz on a voice |
+| `spectrum` rumble (`rumble_db` > −20), `plosives` detected, or hum whose fundamental is under 80 Hz | StudioEQ LF band type `Cut` (high-pass) | 80 Hz; never above 100 Hz on a voice. It also takes a 50 Hz hum fundamental: decide it first, then the notches |
+| `hum` detected | StudioEQ peak bands as notches at `mains_hz` × k, only for a harmonic above the cut with `hK_db` ≥ 10 **and** `hK_dbfs` ≥ −60 (a peak far over near silence is itself inaudible; −60 is a starting value). Up to two: P1, P2 | gain −(hK_db − 3), at most −24 dB, but **at most −6 dB between 80 and 250 Hz**, where the voice's own fundamental lives; Q 10 |
 | `sibilance` mild or more | DeEsser | `LowFreq` = `band_low_hz` (at least 4 kHz), `HighFreq` = `band_high_hz` (at least 2 kHz above), Auto Threshold on, `Reduction` 3 for mild, 4 for moderate or strong |
 | `noise` moderate or strong | the `noise-gate` skill for the pauses; a spectral denoiser if the user has one (name it, do not set it blindly) | as in noise-gate |
 | `clicks`, `reverb`, plosives too strong for a filter | not treated here: the times, for review by ear or another tool (spectral repair, de-reverb) | — |
 
-Show the plan as a table: problem, measure, plugin, slot, values, the risk of each. A problem not found is not treated, even if the user expected it: say what was measured.
+Show the plan as a table: problem, measure, plugin, slot, values, the risk of each. Prominence (`hK_db`) says a peak stands out; its level (`hK_dbfs`) says whether anyone can hear it: say both. A problem not found is not treated, even if the user expected it: say what was measured.
 
 ### 4. Preview
 
@@ -63,6 +63,7 @@ A plugin cannot be heard before it is loaded; loaded **with Bypass on** it chang
 
 1. `cubase_insert_plugin` (dry run, then `dry_run: false`) in the free slot; `cubase_set_parameter` its `Bypass` to on first (`expect_title`), then each value of the plan (dry run, then apply, `unit: "plain"`, `expect_title` the title checked with `cubase_list_parameters`; read `after`: Cubase may clamp).
 2. A cycle range around the strongest `times` of the problem (`cubase_set_position`), and ask the user to play it in Cubase toggling Bypass. For the de-esser, its `Solo` switch lets the user hear only what it removes.
+3. Say what may not be heard: changes under about 150 Hz (a high-pass, hum notches) barely reach laptop speakers and many headphones, and a 3-4 dB de-esser is subtle. If the user hears no difference, that settles nothing: offer to measure instead (turn Bypass off, step 7, and compare).
 
 ### 5. Approve
 
@@ -76,7 +77,12 @@ An explicit yes to keep each plugin with its values (or a change: "less", "only 
 
 ### 7. Verify
 
-Export the same range again (`cleanup-after`) and run `cubase_voice_diagnostics` on it. Compare: the treated problems should fall (the harmonics' `hK_db`, `rumble_db`, the sibilance rate), and the voice should not lose body (`spectrum` `body_db` and `presence_db` within about 1 dB of before). Report both, with the numbers. If the voice lost body, propose a gentler value and check again. No measure replaces listening: ask the user to listen once more.
+Export the same range again (`cleanup-after`) and run `cubase_voice_diagnostics` on it. Compare **absolute** levels, not relative ones: the relative bands (`*_db`) and the prominences (`hK_db`) move when the whole moves or when a notch also lowers a peak's surroundings. So:
+
+- the treated problems should fall: the harmonics' `hK_dbfs`, `rumble_dbfs`, and for the de-esser the esses' `peak_dbfs` (2-4 dB down for `Reduction` 3-4; the sibilance rate often does not move, since its threshold follows the voice);
+- the voice should keep its body: `low_dbfs` (80-250 Hz), `body_dbfs` and `presence_dbfs` within about 1 dB of before. A notch or a high-pass can take much more than its nominal shape suggests: on TW-1624's test, StudioEQ's 80 Hz cut with notches at 100 Hz (−6 dB) and 150 Hz (Q 10) took 8-15 dB from 80 to 200 Hz, 5-7 dB more than the settings suggest.
+
+Report both, with the numbers. If the voice lost body, propose a gentler value and check again. No measure replaces listening: ask the user to listen once more.
 
 ## Safety
 
