@@ -609,6 +609,23 @@ class DeliveryPlanOut(_Out):
     notes: list[str] = Field(default_factory=list)
 
 
+class TransitionPlanOut(_Out):
+    at: float = Field(description="the time asked for (project seconds)")
+    pause_start: float = Field(description="end of the last phrase before the pause")
+    pause_end: float | None = Field(description="start of the next phrase (null: no more speech)")
+    start: float = Field(description="where the stinger goes (project seconds)")
+    start_time: str
+    end: float = Field(description="where its audible tail ends")
+    fits: bool
+    overlap: float = Field(description="seconds the tail would run into the next phrase (with post_gap); 0 fits")
+    stinger_seconds: float = Field(description="the file's length")
+    audible_seconds: float = Field(description="where its sound really ends (above -60 dBFS)")
+    sample_rate: int
+    options: list[str] = Field(default_factory=list, description="when it does not fit: what can be done")
+    preview: list[float] = Field(description="a range to preview (project seconds): last phrase to next one")
+    notes: list[str] = Field(default_factory=list)
+
+
 class DuckSpanOut(_Out):
     start: str = Field(description="the music is at depth_db from here (the first word)")
     end: str = Field(description="to here (the end of the hold)")

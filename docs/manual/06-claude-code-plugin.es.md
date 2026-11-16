@@ -95,6 +95,15 @@ Hace una cama de música de una duración dada a partir de una música demasiado
 - **Escuchas antes:** una preescucha corta de cada unión, antes de que cambie nada en el proyecto. La cama nunca es más larga de lo pedido ni se estira: te dice cuánto le falta.
 - **Qué cambia, tras tu sí:** una pista nueva con la cama en su sitio, y marcadores en las uniones que te dejaron dudas.
 
+## `podcast-section-transitions`
+
+Coloca una transición (una cortinilla, una entrada o salida de música corta) entre dos secciones, en la pausa entre ellas.
+
+- **Pídelo así:** «pon la transición habitual entre la entrevista y las noticias, sin tapar la última frase», «una cortinilla en el 12:30».
+- **Cómo:** das más o menos dónde (el tiempo de tu marcador) y eliges la cortinilla de tu biblioteca con licencia (título, duración, licencia, crédito). La skill exporta las voces alrededor de ese punto, encuentra la pausa, empieza la cortinilla justo después de la última frase y comprueba que su sonido (no el silencio que pueda llevar el archivo) acaba antes de la frase siguiente. La renderiza a la frecuencia del proyecto y hace una escucha previa con las voces.
+- **Cuando no cabe:** dice por cuánto y ofrece abrir la pausa (insertar silencio: todas las pistas se desplazan), desvanecer su cola o una cortinilla más corta. No se corta ni se mueve nada sin que lo elijas.
+- **Qué cambia, tras tu sí:** la transición en una pista de transiciones en su sitio; su licencia y crédito, registrados en la carpeta `Trackwright/` del proyecto.
+
 ## `podcast-silence-trim`
 
 Encuentra los silencios más largos que una duración y los quita, cerrando los huecos para que el episodio sea más corto.

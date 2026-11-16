@@ -36,6 +36,7 @@ READ_TOOLS = {
     "cubase_final_qc",
     "cubase_music_analysis",
     "cubase_library",
+    "cubase_transition_plan",
     "cubase_delivery_plan",
     "cubase_ducking_plan",
 }

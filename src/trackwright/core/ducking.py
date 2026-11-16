@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from trackwright.analysis import decoded, probe
 from trackwright.analysis.ducking import DuckingParams, Envelope, Override, changed_spans, plan
-from trackwright.analysis.speech import SpeechCriteria, detect_speech
+from trackwright.analysis.speech import SpeechActivity, SpeechCriteria, detect_speech
 from trackwright.core.models import DuckingPlanOut, DuckMomentOut, DuckSpanOut
 from trackwright.core.profiling import ProfilesMixin
 from trackwright.core.timefmt import format_seconds, parse_seconds
@@ -76,6 +76,26 @@ def parse_spec(raw: JsonObject | None) -> DuckingSpec:
 
 
 class DuckingMixin(ProfilesMixin):
+    def voice_activity(self, voice_file: str) -> SpeechActivity:
+        """Speech regions of a voice export, detected once per version of the file (a plan and its edit, or a
+        transition and its re-plan, share them)."""
+        self.policy.check_analysis()
+        voice = Path(voice_file).expanduser()
+        if not voice.is_absolute():
+            raise PreconditionFailedError("voice_file must be an absolute path", code="BAD_REQUEST")
+        if not voice.is_file():
+            raise NotFoundError(f"not a file: {voice}", code="NOT_FOUND")
+        stat = voice.stat()
+        key = (str(voice), stat.st_size, stat.st_mtime_ns)
+        speech = self._speech_memo.get(key)
+        if speech is None:
+            with decoded(voice) as readable:
+                self.policy.check_analysis(probe(readable).seconds)
+                speech = detect_speech(readable, SpeechCriteria())
+            self._speech_memo.clear()
+            self._speech_memo[key] = speech
+        return speech
+
     def _audible_moments(
         self, moments: list[DuckMomentOut], music_file: str, origin: float, notes: list[str]
     ) -> list[DuckMomentOut]:
@@ -99,20 +119,7 @@ class DuckingMixin(ProfilesMixin):
         """The envelope over the music's span (``start`` .. ``start + seconds``, project time), the number of
         speech regions, the protected ranges used, and notes."""
         self.policy.check_analysis()
-        voice = Path(spec.voice_file).expanduser()
-        if not voice.is_absolute():
-            raise PreconditionFailedError("voice_file must be an absolute path", code="BAD_REQUEST")
-        if not voice.is_file():
-            raise NotFoundError(f"not a file: {voice}", code="NOT_FOUND")
-        stat = voice.stat()
-        key = (str(voice), stat.st_size, stat.st_mtime_ns)
-        speech = self._speech_memo.get(key)
-        if speech is None:  # one detection per version of the voice export (a plan and its edit share it)
-            with decoded(voice) as readable:
-                self.policy.check_analysis(probe(readable).seconds)
-                speech = detect_speech(readable, SpeechCriteria())
-            self._speech_memo.clear()
-            self._speech_memo[key] = speech
+        speech = self.voice_activity(spec.voice_file)
         regions = [(spec.voice_start + r.start, spec.voice_start + r.end) for r in speech.regions]
         notes: list[str] = []
         protected: list[tuple[float, float]] = []

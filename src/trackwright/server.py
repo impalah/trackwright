@@ -57,6 +57,7 @@ from trackwright.core.models import (
     TempoOut,
     TrackEdgesOut,
     TrackListOut,
+    TransitionPlanOut,
     TransportOut,
     WorkspaceOut,
     WriteOut,
@@ -633,6 +634,30 @@ def build_server(service: CubaseService) -> MCPServer:
     ) -> DeliveryPlanOut:
         return await run(lambda: service.delivery_plan(file, target, codec=codec))
 
+    # ------------------------------------------------------------------ transitions (TW-1619)
+    @server.tool(
+        annotations=READ,
+        description="Plan where a stinger (a transition between sections) goes, read-only: in the pause "
+        "between speech nearest to 'at' (the voice export, the voice tracks soloed together, placed by "
+        "voice_start), starting pre_gap after the last phrase so it is never covered, and checking that its "
+        "audible tail (not the file's silence) ends post_gap before the next phrase. When it does not fit it "
+        "says by how much and the options: open the pause (insert silence), fade the tail out (cubase_render "
+        "process 'clip'), or a shorter stinger. Returns a range to preview with cubase_preview.",
+    )
+    async def cubase_transition_plan(
+        voice_file: Annotated[str, Field(description="absolute path of the voice export")],
+        at: Annotated[str, Field(description="about where the transition goes: '754', '12:34' (project time)")],
+        stinger_file: Annotated[str, Field(description="absolute path of the stinger (from cubase_library)")],
+        voice_start: Annotated[float, Field(ge=0, description="project time of the voice export's start")] = 0.0,
+        pre_gap: Annotated[float, Field(ge=0, le=5, description="seconds after the last phrase")] = 0.3,
+        post_gap: Annotated[float, Field(ge=0, le=5, description="seconds before the next phrase")] = 0.3,
+    ) -> TransitionPlanOut:
+        return await run(
+            lambda: service.transition_plan(
+                voice_file, at, stinger_file, voice_start=voice_start, pre_gap=pre_gap, post_gap=post_gap
+            )
+        )
+
     # ------------------------------------------------------------------ ducking plan (TW-1614)
     @server.tool(
         annotations=READ,
@@ -758,7 +783,9 @@ def build_server(service: CubaseService) -> MCPServer:
         action: Annotated[Literal["render", "list"], Field(description="render (write) or list (read)")] = "render",
         file: Annotated[str | None, Field(description="render: absolute path of the export to process")] = None,
         start: Annotated[str, Field(description="project time of the export's first sample (seconds)")] = "0",
-        process: Annotated[Literal["gain", "duck", "bed"], Field(description="what to do to the audio")] = "gain",
+        process: Annotated[
+            Literal["gain", "duck", "bed", "clip"], Field(description="what to do to the audio")
+        ] = "gain",
         gain_db: Annotated[float, Field(ge=-40, le=40, description="gain: dB to apply")] = 0.0,
         bed: Annotated[
             dict[str, Any] | None,
@@ -767,6 +794,13 @@ def build_server(service: CubaseService) -> MCPServer:
                 "cubase_music_analysis or the user), target_seconds, crossfade (default 0.1 s), align (line a "
                 "marked loop's end up with its start), sample_rate (the project's, so Cubase imports it without "
                 "a copy)"
+            ),
+        ] = None,
+        clip: Annotated[
+            dict[str, Any] | None,
+            Field(
+                description="clip (a stinger or an effect to place): trim_end (cut at this second), fade_in, "
+                "fade_out (ends at the new end), sample_rate (the project's); gain_db applies"
             ),
         ] = None,
         ducking: Annotated[
@@ -790,7 +824,7 @@ def build_server(service: CubaseService) -> MCPServer:
         return await run(
             lambda: service.render(
                 action, file=file, start=start, process=process, gain_db=gain_db, ducking=ducking, bed=bed,
-                name=name, track=track, skill=skill, run=run_id, dry_run=dry_run,
+                clip=clip, name=name, track=track, skill=skill, run=run_id, dry_run=dry_run,
             )
         )  # fmt: skip
 

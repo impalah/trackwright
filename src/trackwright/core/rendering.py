@@ -37,6 +37,7 @@ from trackwright.analysis.music import (
     seam_score,
     seam_times,
 )
+from trackwright.analysis.transitions import render_clip
 from trackwright.core.analyzing import AnalyzingMixin
 from trackwright.core.ducking import DuckingMixin, DuckingSpec, parse_spec
 from trackwright.core.models import PreviewOut, RenderItemOut, RenderOut
@@ -91,6 +92,25 @@ class BedSpec(BaseModel):
     )
 
 
+class ClipSpec(BaseModel):
+    """A stinger or an effect made ready to place (TW-1619): cut, fades, the project's rate; gain_db applies."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    trim_end: float | None = Field(default=None, gt=0, description="cut at this second of the file")
+    fade_in: float = Field(default=0.0, ge=0, le=30)
+    fade_out: float = Field(default=0.0, ge=0, le=30, description="ends at the (new) end")
+    sample_rate: int | None = Field(default=None, ge=8000, le=192000)
+
+
+def parse_clip(raw: JsonObject | None) -> ClipSpec:
+    try:
+        return ClipSpec.model_validate(raw or {})
+    except ValidationError as exc:
+        raise PreconditionFailedError("not a valid clip", code="BAD_REQUEST",
+                                      details={"reason": str(exc)[:500]}) from exc  # fmt: skip
+
+
 def parse_bed(raw: JsonObject | None) -> BedSpec:
     if raw is None:
         raise PreconditionFailedError("give the bed (loop_start, loop_end, ending_start, target_seconds)",
@@ -117,7 +137,7 @@ class PreviewSource(BaseModel):
     gain_db: float = Field(default=0.0, ge=-60, le=24)
 
 
-PROCESSES = ("gain", "duck", "bed")
+PROCESSES = ("gain", "duck", "bed", "clip")
 MAX_PREVIEW_SOURCES = 8
 DOUBTFUL_SEAM = 0.5  # TW-1618: under this seam score a bed's seams are pointed out for a listen
 MAX_PREVIEW_SECONDS = 120.0
@@ -160,6 +180,7 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         gain_db: float = 0.0,
         ducking: JsonObject | None = None,
         bed: JsonObject | None = None,
+        clip: JsonObject | None = None,
         name: str | None = None,
         track: str | None = None,
         skill: str = "manual",
@@ -173,10 +194,11 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         self.policy.check_workspace()  # the permissions first: they are what the user must change
         self.policy.check_analysis()
         self._check_render_request(file, process, gain_db, skill)
-        assert file is not None  # checked above
         spec = parse_spec(ducking) if process == "duck" else None
         bed_spec = parse_bed(bed) if process == "bed" else None
-        source = self._audio_path(file)
+        clip_spec = parse_clip(clip) if process == "clip" else None
+        whole = bed_spec or clip_spec  # processes that read the whole file
+        source = self._audio_path(file or "")
         if not source.is_file():
             raise NotFoundError(f"not a file: {source}", code="NOT_FOUND")
         position = parse_seconds(start)
@@ -194,18 +216,21 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         self.policy.check_analysis(info_in.seconds)
         run_id = run or datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         effect, parameters, duck_notes = self._render_effect(spec, gain_db, position, info_in.seconds, info_in.rate)
-        bed_plan = None
+        bed_plan, out_seconds = None, round(info_in.seconds, 4)
         if bed_spec is not None:
             bed_plan, parameters, duck_notes = self._bed_plan(bed_spec, source, info_in.seconds)
-        out = RenderOut(action="render", dry_run=dry_run, status="planned", workspace=str(space.path))
+            out_seconds = bed_plan.seconds
+        elif clip_spec is not None:
+            parameters, out_seconds = self._clip_plan(clip_spec, gain_db, info_in.seconds)
+        out_rate = whole.sample_rate if whole is not None else None
+        out = RenderOut(action="render", dry_run=dry_run, status="planned", workspace=str(space.path),
+                        notes=list(duck_notes))  # fmt: skip
         notes = out.notes
-        notes += duck_notes
         if dry_run:
             out.render = RenderItemOut(
                 file=str(target), provenance=str(provenance_path(target)), skill=skill, run=run_id,
                 process=process, parameters=parameters, position=format_seconds(position),
-                position_seconds=position, seconds=bed_plan.seconds if bed_plan else round(info_in.seconds, 4),
-                sample_rate=(bed_spec.sample_rate if bed_spec else None) or info_in.rate,
+                position_seconds=position, seconds=out_seconds, sample_rate=out_rate or info_in.rate,
                 channels=info_in.channels, peak_dbfs=None, replaces=replaced["name"] if replaced else None,
                 source=str(source),
             )  # fmt: skip
@@ -222,7 +247,9 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
                 path=str(source), sha256=sha256(source), size=source.stat().st_size,
                 seconds=round(info_in.seconds, 6), rate=info_in.rate, channels=info_in.channels,
             )  # fmt: skip
-            peak = self._write_render(readable, target, effect, bed_plan, bed_spec.sample_rate if bed_spec else None)
+            peak = self._write_render(
+                readable, target, effect, bed_plan, out_rate=out_rate, clip=clip_spec, gain_db=gain_db
+            )
         written = probe(target)
         provenance = Provenance(
             file=target.name,
@@ -245,8 +272,14 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         write_provenance(target, provenance)
         out.status = "done"
         out.render = item_out(target, provenance, check=False)
+        self._after_render(out, target, peak, position, replaced)
+        return out
+
+    @staticmethod
+    def _after_render(out: RenderOut, target: Path, peak: float, position: float, replaced: JsonObject | None) -> None:
+        """What the user does next with a written render."""
         if peak > 1.0:
-            notes.append(
+            out.notes.append(
                 f"the render peaks at {_peak_db(peak)} dBFS: fine in 32-bit float, but lower a fader before export"
             )
         replaces = f" and mute {replaced['name']!r} (cubase_set_track_mix)" if replaced else ""
@@ -256,7 +289,6 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
             "In Cubase's import options untick 'Copy file to project folder' (it already is in the project "
             "folder) and do not convert to 24 bit."
         )
-        return out
 
     @staticmethod
     def _check_render_request(file: str | None, process: str, gain_db: float, skill: str) -> None:
@@ -307,15 +339,35 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         return plan, parameters, notes
 
     @staticmethod
+    def _clip_plan(clip: ClipSpec, gain_db: float, total: float) -> tuple[JsonObject, float]:
+        """The clip's parameters for the provenance and its length (TW-1619)."""
+        seconds = round(min(total, clip.trim_end) if clip.trim_end is not None else total, 4)
+        if clip.fade_in + clip.fade_out > seconds:
+            raise PreconditionFailedError("the fades are longer than the clip", code="BAD_REQUEST")
+        return {"gain_db": gain_db, **clip.model_dump(mode="json")}, seconds
+
+    @staticmethod
     def _write_render(
-        readable: Path, target: Path, effect: Process, bed: BedPlan | None, out_rate: int | None = None
+        readable: Path,
+        target: Path,
+        effect: Process,
+        bed: BedPlan | None,
+        *,
+        out_rate: int | None = None,
+        clip: ClipSpec | None = None,
+        gain_db: float = 0.0,
     ) -> float:
         """Write the render; return its sample peak (linear)."""
-        if bed is None:
+        if bed is None and clip is None:
             _, peak = render_file(readable, target, effect)
             return peak
-        data, rate = sf.read(str(readable), dtype="float64", always_2d=True)  # a bed is minutes, not hours
-        rendered = render_bed(data, rate, bed)
+        data, rate = sf.read(str(readable), dtype="float64", always_2d=True)  # a bed or a clip is minutes
+        if bed is not None:
+            rendered = render_bed(data, rate, bed)
+        else:
+            assert clip is not None
+            rendered = render_clip(data, rate, gain_db=gain_db, trim_end=clip.trim_end, fade_in=clip.fade_in,
+                                   fade_out=clip.fade_out)  # fmt: skip
         if out_rate is not None and out_rate != rate:  # TW-1618: at the project's rate, imported without a copy
             common = math.gcd(out_rate, rate)
             rendered = signal.resample_poly(rendered, out_rate // common, rate // common, axis=0)

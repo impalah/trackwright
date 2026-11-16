@@ -184,7 +184,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1619 Skill `podcast-section-transitions`
 
-- **Status:** pending (needs TW-1604, TW-1606, TW-1620)
+- **Status:** code done (2026-11-16), to try live: `analysis/transitions.py` (the nearest pause, the stinger after the last phrase, its audible tail, the options when it does not fit), the tool `cubase_transition_plan`, the `clip` process of `cubase_render` (gain, cut, fades, the project's rate) and the skill. Tests in `tests/unit/test_transitions_tw1619.py`. "The usual transition" from the show profile is left for when the show profile has roles (E0004)
 - **Scope:** an approved stinger or music in/out at a marker or time, never over the end of the last phrase, its tail respected, fades rendered offline; "the usual transition" comes from the show profile.
 
 ### TW-1620 Licensed audio library

@@ -16,11 +16,13 @@ from trackwright.core.reading import ReadingMixin
 from trackwright.core.rendering import RenderingMixin
 from trackwright.core.saving import SavingMixin
 from trackwright.core.settings import SettingsMixin
+from trackwright.core.transitioning import TransitionMixin
 from trackwright.core.workspacing import WorkspaceMixin
 from trackwright.core.writing import WritingMixin
 
 
 class CubaseService(
+    TransitionMixin,
     LibraryMixin,
     MusicMixin,
     QualityMixin,

@@ -95,6 +95,15 @@ Makes a music bed of a given length from music that is too short: a loop repeate
 - **You listen first:** a short preview of every seam, before anything changes in the project. The bed is never longer than asked and never stretched: it tells you how much shorter it is.
 - **What it changes, after your yes:** a new track with the bed at its place, and markers at the seams you doubted.
 
+## `podcast-section-transitions`
+
+Places a transition (a stinger, a short music in or out) between two sections, in the pause between them.
+
+- **Ask for it like this:** "put the usual transition between the interview and the news, without covering the last phrase", "a stinger at 12:30".
+- **How:** you give about where (the time of your marker) and choose the stinger from your licensed library (title, length, licence, credit). The skill exports the voices around that place, finds the pause, starts the stinger just after the last phrase and checks that its sound (not the silence the file may carry) ends before the next phrase. It renders it at the project's rate and makes a preview with the voices.
+- **When it does not fit:** it says by how much and offers to open the pause (insert silence: every track moves later), fade its tail out, or a shorter stinger. Nothing is cut or moved without your choice.
+- **What it changes, after your yes:** the transition on a transitions track at its place; its licence and credit recorded in the project's `Trackwright/` folder.
+
 ## `podcast-silence-trim`
 
 Finds the silences longer than a duration and removes them, closing the gaps so the episode gets shorter.
