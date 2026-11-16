@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 42 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 43 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -451,6 +451,15 @@ Show, episode and delivery profiles (TW-1607). Three layers, each overriding the
   Spotify's −14 LUFS is on its music page, not for podcasts, so it is not used. A show can add a host with `delivery.profiles.<name>` and the user's source.
 - **Errors:** `WORKSPACE_DISABLED`, `NO_PROJECT_FOLDER`, `NO_WORKSPACE`, `NOT_FOUND` (a show), `BAD_PROFILE`, `BAD_REQUEST`.
 
+### `cubase_preview` (writes a file, with dry run)
+
+A short file to listen to before changing the project (TW-1615): up to 8 exports, each placed by its project start and with its own gain, mixed over a project range of up to 120 s, and written as a 32-bit float WAV to `Trackwright/previews/` (never overwriting: the next one gets `-2`). For example, the voice export plus the ducked music around a first word. The user listens to it outside Cubase (Quick Look in the Finder, or any player).
+
+- **Input:** `sources` (`[{file, start, gain_db}]`), `start` and `end` (project seconds), `name`, `skill`, `dry_run`.
+- **Mixing:** silence where a source has no audio; a mono source on both channels; every source must have the same sample rate (`BAD_AUDIO` otherwise).
+- **Needs** `[analysis] enabled` and `[workspace] enabled`, and the workspace created.
+- **Errors:** `WORKSPACE_DISABLED`, `ANALYSIS_DISABLED`, `NO_WORKSPACE`, `NO_PROJECT_FOLDER`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST`.
+
 ### `cubase_ducking_plan` (read, needs `[analysis] enabled`)
 
 Plans how the music goes down under the voice (TW-1614), without writing anything. The same `ducking` object renders the music with `cubase_render` (`process: "duck"`).
@@ -458,7 +467,7 @@ Plans how the music goes down under the voice (TW-1614), without writing anythin
 - **Input:** `ducking`: `voice_file` (the export of the voice tracks soloed together) and `voice_start` (its range start), `attenuation_db` (−10), `pre_roll` (0.25 s), `hold` (0.8 s), `recovery` (1.2 s), `merge_gap` (0.9 s), `overrides` and `use_protected` (true); `music_start` and `music_seconds` (the music export's place, to cut the spans to it); `offset`, `limit`. The defaults are the brainstorm's starting values, not norms.
 - **How:** speech regions from the voice export (as `cubase_detect_speech`), joined over pauses shorter than `merge_gap`, held `hold` after the last word; two spans too close for the music to come up and go down again become one (no pumping). The music starts going down `pre_roll` before the first word and comes back up over `recovery`, along straight lines in dB: no jumps, exactly `attenuation_db` on the flat part.
 - **Overrides** (project seconds): `hold` keeps the music down over a span ("do not bring it up between those two phrases"), `free` keeps it up ("no ducking under the intro"), `depth` uses another `depth_db`. With `use_protected`, the episode profile's protected ranges are kept up too. Next to a `free` span or a protected range, the duck ends `recovery` before it and starts `pre_roll` after it, so the music is at full level all through it.
-- **Output:** the number of speech regions, the protected ranges used, the ducked spans (start and end, depth, where the ramps begin and end) and the ducked time.
+- **Output:** the number of speech regions, the protected ranges used, the ducked spans (start and end, depth, where the ramps begin and end), the ducked time, and `moments` to preview (each span's first word and recovery). With `previous` (the plan before an edit, TW-1615), `changed` lists the spans where the music changes, to preview and check only those.
 - **Errors:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_REQUEST` (a bad specification), `BAD_TIME`.
 
 ### `cubase_render` (`render` writes files, with dry run; `list` reads)

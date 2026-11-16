@@ -125,3 +125,19 @@ def test_envelope_properties(
         if all(not (a - params.recovery - params.pre_roll <= middle <= b + params.recovery + params.pre_roll)
                for a, b in holes):  # fmt: skip
             assert env.gain_db(np.array([middle]))[0] == pytest.approx(depth)
+
+
+def test_what_an_edit_changes() -> None:
+    """TW-1615: an edit of the plan changes only some spans; those are the ones to preview again."""
+    from trackwright.analysis.ducking import changed_spans
+
+    regions = [(10.0, 12.0), (30.0, 32.0), (60.0, 62.0)]
+    before = plan(regions)
+    after = plan(regions, overrides=[Override(30.0, 33.0, "depth", depth_db=-16.0)])
+    changed = changed_spans(before, after, start=0.0, end=80.0)
+    assert len(changed) == 1
+    first, last = changed[0]
+    assert 29.7 <= first <= 30.1
+    assert 33.9 <= last <= 34.05  # the recovery from -16 dB differs from the one from -10 dB until 34.0 s
+    assert changed_spans(before, before, start=0.0, end=80.0) == []
+    assert changed_spans(before, after, start=50.0, end=40.0) == []

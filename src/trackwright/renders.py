@@ -28,7 +28,7 @@ import numpy.typing as npt
 import soundfile as sf
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from trackwright.analysis.reader import AudioInfo, probe
+from trackwright.analysis.reader import AudioInfo, decoded, probe
 from trackwright.errors import PreconditionFailedError
 from trackwright.jsontypes import JsonObject
 from trackwright.workspace import FOLDER, OwnedItem, State, Workspace, now
@@ -163,6 +163,50 @@ def render_file(source: Path, target: Path, process: Process) -> tuple[AudioInfo
         Path(tmp).unlink(missing_ok=True)
         raise
     return info, peak
+
+
+def mix_range(sources: list[tuple[Path, float, float]], start: float, end: float) -> tuple[Block, int]:
+    """Sum ``(path, project start, gain dB)`` sources over the project range ``start``..``end``: silence where a
+    source has no audio, mono sources on both channels. All sources must share one sample rate."""
+    rate: int | None = None
+    channels = 1
+    pieces: list[Block] = []
+    for path, origin, gain_db in sources:
+        with decoded(path) as readable:
+            info = probe(readable)
+            if rate is None:
+                rate = info.rate
+            elif info.rate != rate:
+                raise PreconditionFailedError(
+                    f"{path.name} is at {info.rate} Hz, the others at {rate} Hz: export them at one rate",
+                    code="BAD_AUDIO",
+                )
+            frames = round((end - start) * rate)
+            offset = round((start - origin) * rate)  # where the range starts in this file
+            piece = np.zeros((frames, info.channels))
+            first, skip = max(0, offset), max(0, -offset)
+            if first < info.frames and skip < frames:
+                data, _ = sf.read(str(readable), start=first, frames=frames - skip, dtype="float64", always_2d=True)
+                piece[skip : skip + len(data)] = data
+        pieces.append(piece * 10 ** (gain_db / 20))
+        channels = max(channels, info.channels)
+    assert rate is not None  # at least one source
+    mixed = np.zeros((round((end - start) * rate), channels))
+    for piece in pieces:
+        mixed += piece if piece.shape[1] == channels else np.repeat(piece[:, :1], channels, axis=1)
+    return mixed, rate
+
+
+def write_audio(target: Path, data: Block, rate: int) -> None:
+    """``data`` as a 32-bit float WAV at ``target``, which appears only when complete."""
+    fd, tmp = tempfile.mkstemp(prefix=f".{target.name}.", suffix=SUFFIX, dir=target.parent)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            sf.write(handle, data.astype(np.float32), rate, format="WAV", subtype="FLOAT")
+        Path(tmp).replace(target)
+    except BaseException:
+        Path(tmp).unlink(missing_ok=True)
+        raise
 
 
 def write_provenance(render: Path, provenance: Provenance) -> Path:

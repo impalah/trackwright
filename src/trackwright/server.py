@@ -40,6 +40,7 @@ from trackwright.core.models import (
     PluginCatalogOut,
     PositionOut,
     PresetStepOut,
+    PreviewOut,
     ProfileOut,
     ProjectOut,
     ProjectSettingsOut,
@@ -633,7 +634,8 @@ def build_server(service: CubaseService) -> MCPServer:
         "export (the voice tracks soloed together, placed by voice_start), joined over pauses shorter than "
         "merge_gap, held after the last word, never re-raised for a short gap, kept up in the episode "
         "profile's protected ranges and in 'free' overrides. Returns the ducked spans (paged) with their depth "
-        "and ramps. The same ducking object renders the music with cubase_render (process 'duck'). Defaults: "
+        "and ramps, and the moments to preview; with 'previous' (the plan before an edit) the spans the edit "
+        "changes. The same ducking object renders the music with cubase_render (process 'duck'). Defaults: "
         "-10 dB, pre_roll 0.25 s, hold 0.8 s, recovery 1.2 s, merge_gap 0.9 s (starting values, not norms).",
     )
     async def cubase_ducking_plan(
@@ -648,13 +650,42 @@ def build_server(service: CubaseService) -> MCPServer:
         music_seconds: Annotated[
             float | None, Field(gt=0, description="length of the music export: spans are cut to it")
         ] = None,
+        previous: Annotated[
+            dict[str, Any] | None,
+            Field(description="the plan before an edit: 'changed' then lists the spans the edit changes"),
+        ] = None,
         offset: Annotated[int, Field(ge=0)] = 0,
         limit: Annotated[int, Field(ge=1, le=500)] = 100,
     ) -> DuckingPlanOut:
         return await run(
             lambda: service.ducking_plan(
-                ducking, music_start=music_start, music_seconds=music_seconds, offset=offset, limit=limit
+                ducking, music_start=music_start, music_seconds=music_seconds, previous=previous, offset=offset,
+                limit=limit,
             )
+        )  # fmt: skip
+
+    # ------------------------------------------------------------------ previews (TW-1615)
+    @server.tool(
+        annotations=WRITE,
+        description="A short preview to listen to before changing the project: up to 8 exports (each placed by "
+        "its project start, with a gain), mixed over a project range of up to 120 s and written as a 32-bit "
+        "float WAV to Trackwright/previews/ (never overwriting). For example the voice export plus the ducked "
+        "music around a first word. Dry run by default; needs [analysis] and [workspace] enabled. The user "
+        "listens to the file outside Cubase.",
+    )
+    async def cubase_preview(
+        sources: Annotated[
+            list[dict[str, Any]],
+            Field(description="[{file (absolute), start (project seconds of its first sample), gain_db}]"),
+        ],
+        start: Annotated[str, Field(description="project time where the preview starts (seconds)")],
+        end: Annotated[str, Field(description="project time where it ends")],
+        name: Annotated[str | None, Field(max_length=64, description="file name")] = None,
+        skill: Annotated[str, Field(min_length=1, max_length=64)] = "manual",
+        dry_run: DryRunArg = True,
+    ) -> PreviewOut:
+        return await run(
+            lambda: service.preview(sources, start=start, end=end, name=name, skill=skill, dry_run=dry_run)
         )
 
     # ------------------------------------------------------------------ renders (TW-1606)

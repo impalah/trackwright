@@ -616,14 +616,37 @@ class DuckSpanOut(_Out):
     rise_to: float = Field(description="where it is back at full level")
 
 
+class DuckMomentOut(_Out):
+    at: float = Field(description="project seconds")
+    why: str
+
+
 class DuckingPlanOut(_Out):
     parameters: dict[str, float]
+    changed: list[list[float]] | None = Field(
+        default=None, description="with previous: the spans (project seconds) where the edit changes the music"
+    )
+    moments: list[DuckMomentOut] = Field(
+        default_factory=list, description="where to preview: each page span's first word and its recovery"
+    )
     speech_regions: int = Field(description="speech regions found in the voice export")
     protected: list[list[float]] = Field(description="protected ranges kept at full level (project seconds)")
     total: int = Field(description="ducked spans")
     ducked_seconds: float
     spans: list[DuckSpanOut] = Field(description="paged with offset and limit")
     points: int = Field(description="points of the gain envelope")
+    notes: list[str] = Field(default_factory=list)
+
+
+class PreviewOut(_Out):
+    dry_run: bool
+    status: Literal["planned", "done"]
+    file: str = Field(description="the preview file (Trackwright/previews/), to listen to")
+    start: str = Field(description="project time of its first sample")
+    end: str
+    seconds: float
+    sources: list[str] = Field(description="the files mixed, with their gain")
+    peak_dbfs: float | None = None
     notes: list[str] = Field(default_factory=list)
 
 

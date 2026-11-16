@@ -10,7 +10,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Concatenate, Protocol, TypeVar
+from typing import TYPE_CHECKING, Concatenate, Protocol, TypeVar
 
 from trackwright.core.models import ParameterInfo, TrackInfo, Value
 from trackwright.core.policy import WritePolicy
@@ -27,6 +27,9 @@ from trackwright.exports import ExportedFile, ExportInspector
 from trackwright.hostport import HostPort
 from trackwright.jsontypes import JsonObject
 from trackwright.ops import WRITE_OPS
+
+if TYPE_CHECKING:
+    from trackwright.analysis.speech import SpeechActivity
 
 T = TypeVar("T")
 
@@ -120,6 +123,7 @@ class ServiceBase:
         self._import_baselines: dict[float, tuple[int, list[float]]] = {}  # TW-1403: edges before an import
         # TW-1605: solo changes made by an export's start phase, undone by its confirm or cancel phase
         self._export_solo: dict[float, list[SoloChange]] = {}
+        self._speech_memo: dict[tuple[str, int, int], SpeechActivity] = {}  # TW-1615: the voice's regions, one version
 
     # ------------------------------------------------------------------ host access
     @contextmanager

@@ -53,6 +53,7 @@ WRITE_TOOLS = {
     "cubase_plugin_preset",
     "cubase_workspace",
     "cubase_render",
+    "cubase_preview",
     "cubase_profile",
 }
 NAVIGATION_TOOLS = {

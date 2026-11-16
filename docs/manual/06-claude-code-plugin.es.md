@@ -75,6 +75,16 @@ Lleva el episodio terminado a la especificación de una plataforma: la sonoridad
 - **Cómo comprueba:** una maestra nueva tras el cambio, y después el archivo de entrega que exportas (un MP3, por ejemplo) medido con `cubase_final_qc`. Tres pasadas como mucho; si no converge, se para y lo explica.
 - **Qué cambia:** el fader de Stereo Out y, solo si hace falta, un limitador en la ranura 7 u 8, tras tu sí. Registra el limitador como suyo y el valor anterior del fader, para poder volver atrás.
 
+## `podcast-music-ducking`
+
+Baja la música bajo las voces: abajo justo antes de que alguien hable, abajo durante las pausas cortas, y de vuelta arriba con suavidad tras un bloque de voz.
+
+- **Pídela así:** "atenúa la música bajo las voces", "haz el ducking menos evidente", "no subas la música entre 12:30 y 13:10".
+- **Cómo:** la API de Cubase no puede escribir puntos de automatización ni enrutar un side-chain, así que se hace fuera de línea. Tú exportas las voces juntas y la música (la skill pone los solos y los restaura); la skill planifica la envolvente a partir de la voz, renderiza la música atenuada en `Trackwright/renders/` y hace preescuchas cortas (voz más música atenuada en la primera palabra, una recuperación, una pausa, el final) para que las escuches antes de que cambie nada.
+- **Los cambios en palabras** modifican el plan; solo se vuelven a renderizar y preescuchar los tramos que cambia.
+- **Qué cambia, tras tu sí:** una pista nueva con la música atenuada en su sitio, y la pista de música original silenciada (nunca borrada). Una ejecución posterior sustituye su propia pista atenuada y nada más.
+- **De qué avisa:** una voz con pausas cortas por todas partes (un monólogo) mantiene la música baja casi todo el tiempo; ofrece dejarla arriba en la intro, el cierre o una transición.
+
 ## `podcast-silence-trim`
 
 Encuentra los silencios más largos que una duración y los quita, cerrando los huecos para que el episodio sea más corto.

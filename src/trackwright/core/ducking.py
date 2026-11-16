@@ -16,9 +16,9 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from trackwright.analysis import decoded, probe
-from trackwright.analysis.ducking import DuckingParams, Envelope, Override, plan
+from trackwright.analysis.ducking import DuckingParams, Envelope, Override, changed_spans, plan
 from trackwright.analysis.speech import SpeechCriteria, detect_speech
-from trackwright.core.models import DuckingPlanOut, DuckSpanOut
+from trackwright.core.models import DuckingPlanOut, DuckMomentOut, DuckSpanOut
 from trackwright.core.profiling import ProfilesMixin
 from trackwright.core.timefmt import format_seconds, parse_seconds
 from trackwright.errors import NotFoundError, PreconditionFailedError
@@ -85,9 +85,15 @@ class DuckingMixin(ProfilesMixin):
             raise PreconditionFailedError("voice_file must be an absolute path", code="BAD_REQUEST")
         if not voice.is_file():
             raise NotFoundError(f"not a file: {voice}", code="NOT_FOUND")
-        with decoded(voice) as readable:
-            self.policy.check_analysis(probe(readable).seconds)
-            speech = detect_speech(readable, SpeechCriteria())
+        stat = voice.stat()
+        key = (str(voice), stat.st_size, stat.st_mtime_ns)
+        speech = self._speech_memo.get(key)
+        if speech is None:  # one detection per version of the voice export (a plan and its edit share it)
+            with decoded(voice) as readable:
+                self.policy.check_analysis(probe(readable).seconds)
+                speech = detect_speech(readable, SpeechCriteria())
+            self._speech_memo.clear()
+            self._speech_memo[key] = speech
         regions = [(spec.voice_start + r.start, spec.voice_start + r.end) for r in speech.regions]
         notes: list[str] = []
         protected: list[tuple[float, float]] = []
@@ -101,16 +107,38 @@ class DuckingMixin(ProfilesMixin):
         envelope = plan(regions, spec.params(), overrides=overrides, protected=protected, total=end)
         return envelope, len(regions), protected, notes
 
-    def ducking_plan(self, ducking: JsonObject, *, music_start: str = "0", music_seconds: float | None = None,
-                     offset: int = 0, limit: int = 100) -> DuckingPlanOut:  # fmt: skip
-        """The ducked spans the render would apply, read-only (TW-1614)."""
+    def ducking_plan(
+        self,
+        ducking: JsonObject,
+        *,
+        music_start: str = "0",
+        music_seconds: float | None = None,
+        previous: JsonObject | None = None,
+        offset: int = 0,
+        limit: int = 100,
+    ) -> DuckingPlanOut:
+        """The ducked spans the render would apply, read-only (TW-1614); with ``previous``, the spans an edit
+        changes (TW-1615)."""
         spec = parse_spec(ducking)
         origin = parse_seconds(music_start)
         if origin is None:
             raise PreconditionFailedError("music_start looks like '2.5' or '1:30'", code="BAD_TIME")
         env, regions, protected, notes = self.ducking_envelope(spec, start=origin, seconds=music_seconds)
         limit = max(1, min(limit, MAX_SPANS))
+        changed: list[list[float]] | None = None
+        if previous is not None:
+            before, _, _, _ = self.ducking_envelope(parse_spec(previous), start=origin, seconds=music_seconds)
+            last = max([0.0, *(p[0] for p in env.points), *(p[0] for p in before.points)])
+            end = origin + music_seconds if music_seconds is not None else last + 1.0
+            changed = [[round(a, 2), round(b, 2)] for a, b in changed_spans(before, env, start=origin, end=end)]
+        page = env.spans[offset : offset + limit]
+        moments = [m for s in page for m in (
+            DuckMomentOut(at=round(s.fall_from, 3), why="the music goes down for the first word"),
+            DuckMomentOut(at=round(s.end, 3), why="the music comes back up after the last word"),
+        )]  # fmt: skip
         return DuckingPlanOut(
+            changed=changed,
+            moments=moments,
             parameters=asdict(spec.params()),
             speech_regions=regions,
             protected=[[a, b] for a, b in protected],

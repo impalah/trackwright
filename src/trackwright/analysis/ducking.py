@@ -223,3 +223,19 @@ def plan(
     """Speech regions to the music's gain envelope."""
     params = params or DuckingParams()
     return envelope(plan_spans(regions, params, overrides=overrides, protected=protected, total=total))
+
+
+def changed_spans(
+    before: Envelope, after: Envelope, *, start: float, end: float, step: float = 0.01, tolerance_db: float = 0.05
+) -> list[Span]:
+    """Where two envelopes differ by more than ``tolerance_db`` between ``start`` and ``end``: the spans an edit
+    of the plan changes, to preview and check again (joined across gaps shorter than half a second)."""
+    if end <= start:
+        return []
+    grid = np.arange(start, end + step / 2, step)
+    differs = np.abs(before.gain_db(grid) - after.gain_db(grid)) > tolerance_db
+    spans: list[Span] = []
+    edges = np.flatnonzero(np.diff(np.concatenate([[0], differs.astype(np.int8), [0]])))
+    for first, last in zip(edges[::2], edges[1::2], strict=True):
+        spans.append((float(grid[first]), float(grid[min(last, len(grid) - 1)])))
+    return merge(spans, 0.5)

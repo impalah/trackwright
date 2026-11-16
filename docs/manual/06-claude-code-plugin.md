@@ -75,6 +75,16 @@ Brings the finished episode to a platform's spec: the loudness with the Stereo O
 - **How it checks:** a new master after the change, then the delivery file you export (MP3, for example) measured with `cubase_final_qc`. At most three rounds; if it does not converge it stops and explains.
 - **What it changes:** the Stereo Out fader and, only if needed, a limiter in slot 7 or 8, after your yes. It records the limiter as its own and the fader's previous value, so it can be put back.
 
+## `podcast-music-ducking`
+
+Lowers the music under the voices: down just before someone speaks, down through short pauses, gently back up after a block of speech.
+
+- **Ask for it like this:** "duck the music under the voices", "make the ducking less obvious", "do not bring the music up between 12:30 and 13:10".
+- **How:** the Cubase API cannot write automation points or route a side-chain, so it is done offline. You export the voices together and the music (the skill solos and restores); the skill plans the envelope from the speech, renders the ducked music into `Trackwright/renders/`, and makes short previews (voice plus ducked music at the first word, a recovery, a pause, the end) for you to listen to before anything changes.
+- **Edits in plain words** change the plan; only the spans an edit changes are rendered and previewed again.
+- **What it changes, after your yes:** a new track with the ducked music at the right place, and the original music track muted (never deleted). A later run replaces its own ducked track and nothing else.
+- **What it warns about:** a voice with short pauses everywhere (a monologue) keeps the music low almost all the time; it offers to keep it up at the intro, the outro or a transition.
+
 ## `podcast-silence-trim`
 
 Finds the silences longer than a duration and removes them, closing the gaps so the episode gets shorter.

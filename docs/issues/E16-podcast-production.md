@@ -164,7 +164,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1615 Skill `podcast-music-ducking`
 
-- **Status:** pending (needs TW-1605, TW-1606, TW-1614)
+- **Status:** code done (2026-11-16), to try live: the skill (contract of TW-1609); `cubase_preview` (a short mix of exports over a project range, to `Trackwright/previews/`); `cubase_ducking_plan` with `previous` (the spans an edit changes) and `moments` to preview; the voice's speech regions remembered per file version, so a plan and its edit detect them once. Tests in `tests/unit/test_music_ducking_tw1615.py`
 - **Scope:** export the voice tracks together and the music; plan; previews at first words, pauses, section changes and ends; apply by importing the ducked music and muting the original; edits in plain words change the stored plan and re-render only the affected spans. Acceptance: the voice stays clear and the recoveries do not distract, judged by the user.
 
 ### TW-1616 Experiment: ducking inside Cubase

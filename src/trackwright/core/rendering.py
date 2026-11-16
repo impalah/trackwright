@@ -18,11 +18,14 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
 from trackwright import __version__
 from trackwright.analysis import decoded, probe
 from trackwright.core.analyzing import AnalyzingMixin
 from trackwright.core.ducking import DuckingMixin, DuckingSpec, parse_spec
-from trackwright.core.models import RenderItemOut, RenderOut
+from trackwright.core.models import PreviewOut, RenderItemOut, RenderOut
 from trackwright.core.refs import TrackSelector
 from trackwright.core.timefmt import format_seconds, parse_seconds
 from trackwright.errors import NotFoundError, PreconditionFailedError
@@ -35,6 +38,7 @@ from trackwright.renders import (
     envelope_gain,
     gain,
     load_provenance,
+    mix_range,
     next_name,
     problems,
     provenance_path,
@@ -42,11 +46,24 @@ from trackwright.renders import (
     renders_of,
     sha256,
     slug,
+    write_audio,
     write_provenance,
 )
 from trackwright.workspace import Workspace
 
+
+class PreviewSource(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    file: str
+    start: float = Field(default=0.0, ge=0, description="project time of the file's first sample")
+    gain_db: float = Field(default=0.0, ge=-60, le=24)
+
+
 PROCESSES = ("gain", "duck")
+MAX_PREVIEW_SOURCES = 8
+MAX_PREVIEW_SECONDS = 120.0
+PREVIEWS = "previews"
 MAX_GAIN_DB = 40.0
 
 
@@ -209,6 +226,58 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
             "ducked_seconds": round(env.ducked_seconds, 3),
         }
         return envelope_gain(env.gain_db, rate, position), parameters, notes
+
+    # ------------------------------------------------------------------ previews (TW-1615)
+    def preview(
+        self,
+        sources: list[JsonObject],
+        *,
+        start: str,
+        end: str,
+        name: str | None = None,
+        skill: str = "manual",
+        dry_run: bool = True,
+    ) -> PreviewOut:
+        """A short mix of exports over a project range, written to ``Trackwright/previews/`` to listen to."""
+        self.policy.check_workspace()
+        self.policy.check_analysis()
+        try:
+            parsed = [PreviewSource.model_validate(item) for item in sources]
+        except ValidationError as exc:
+            raise PreconditionFailedError("not a valid list of sources", code="BAD_REQUEST",
+                                          details={"reason": str(exc)[:500]}) from exc  # fmt: skip
+        if not 1 <= len(parsed) <= MAX_PREVIEW_SOURCES:
+            raise PreconditionFailedError(f"give 1 to {MAX_PREVIEW_SOURCES} sources", code="BAD_REQUEST")
+        first, last = parse_seconds(start), parse_seconds(end)
+        if first is None or last is None:
+            raise PreconditionFailedError("start and end look like '2.5' or '1:30'", code="BAD_TIME")
+        if not 0 < last - first <= MAX_PREVIEW_SECONDS:
+            raise PreconditionFailedError(f"a preview lasts 0 to {MAX_PREVIEW_SECONDS:.0f} s", code="BAD_REQUEST")
+        paths = [self._audio_path(src.file) for src in parsed]
+        for path in paths:
+            if not path.is_file():
+                raise NotFoundError(f"not a file: {path}", code="NOT_FOUND")
+        space = self._render_workspace()
+        folder = space.path / PREVIEWS
+        base = slug((name or f"preview-{first:.0f}s").removesuffix(".wav"))
+        target = folder / next_name(folder, base) if folder.is_dir() else folder / f"{base}.wav"
+        names = [f"{p.name} ({src.gain_db:+g} dB)" for p, src in zip(paths, parsed, strict=True)]
+        out = PreviewOut(dry_run=dry_run, status="planned", file=str(target), start=format_seconds(first),
+                         end=format_seconds(last), seconds=round(last - first, 3), sources=names)  # fmt: skip
+        if dry_run:
+            return out
+        if not folder.is_dir():
+            raise PreconditionFailedError("the workspace has no previews/ folder: run cubase_workspace init",
+                                          code="NO_WORKSPACE", details={"path": str(folder)})  # fmt: skip
+        placed = [(path, src.start, src.gain_db) for path, src in zip(paths, parsed, strict=True)]
+        mix, rate = mix_range(placed, first, last)
+        write_audio(target, mix, rate)
+        peak = float(np.abs(mix).max(initial=0.0))
+        out.status, out.peak_dbfs = "done", _peak_db(peak)
+        out.notes.append(f"{skill}: listen to it in the Finder (Quick Look) or any player; it is not in the project")
+        if peak > 1.0:
+            out.notes.append("the preview peaks above 0 dBFS (32-bit float keeps it; lower the volume to listen)")
+        return out
 
     def _render_workspace(self) -> Workspace:
         folder, why = self.project_folder()
