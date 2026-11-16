@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 46 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 47 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -418,7 +418,7 @@ The `Trackwright/` folder inside the open project's folder, where skills keep th
 - **Input:** `action` (`status` by default, or `init`) and `dry_run` (for `init`).
 - **`status`:** says whether the folder exists, which subfolders `init` would create, whether `state.json` and `profile.toml` exist, how many items each skill has recorded (`owned`, by `skill:kind`) and a summary of the episode profile. Always allowed.
 - **`init`:** creates `Trackwright/` and its subfolders `renders/`, `previews/`, `analysis/` and `reports/`, and nothing else. Needs `[workspace] enabled`; idempotent.
-- **`record`, `forget`** (TW-1609): keep `state.json`, what each skill created. `record` takes `kind` (`track`, `plugin`, `render`, `preview`, `marker`, `automation`, `report`), `key` (a track uid, `<track uid>/slot:N`, a path…), `skill`, `run_id` and `details`; a record with the same kind and key replaces the old one (the newest creator owns it, and a note says whose it was); from the **same skill** its `details` are merged into the old ones (TW-1619: the licence added to the render the import recorded). A `key` that is an absolute path inside `Trackwright/` is stored relative (`renders/x.wav`), as the import records it. `forget` removes it. Dry run by default (`before` and `after`); need `[workspace] enabled` and the workspace created. `status` lists the items (`items`, the first 200). See [the skill contract](07-skill-contract.md).
+- **`record`, `forget`** (TW-1609): keep `state.json`, what each skill created. `record` takes `kind` (`track`, `plugin`, `render`, `preview`, `marker`, `automation`, `report`), `key` (a track uid, `<track uid>/slot:N`, a path…), `skill`, `run_id` and `details`; a record with the same kind and key replaces the old one (the newest creator owns it, and a note says whose it was); from the **same skill** its `details` are merged into the old ones (TW-1619: the licence added to the render the import recorded). A `key` that is an absolute path inside `Trackwright/` is stored relative (`renders/x.wav`), as the import records it. `forget` removes it. **`credits`** (TW-1621) gathers every sound recorded with a licence (`details.license`, from any skill) into `Trackwright/credits.md`: the credits the licences ask for, to paste into the episode notes, then a table of each sound, its licence, source, credit, where it is used and by which skill; the dry run returns them in `credits` without writing. `record`, `forget` and `credits`: dry run by default (`before` and `after`); need `[workspace] enabled` and the workspace created. `status` lists the items (`items`, the first 200). See [the skill contract](07-skill-contract.md).
 - **Layout:**
 
   | Path | Content |
@@ -482,6 +482,14 @@ A short file to listen to before changing the project (TW-1615): up to 8 exports
 - **Mixing:** silence where a source has no audio; a mono source on both channels; every source must have the same sample rate (`BAD_AUDIO` otherwise).
 - **Needs** `[analysis] enabled` and `[workspace] enabled`, and the workspace created.
 - **Errors:** `WORKSPACE_DISABLED`, `ANALYSIS_DISABLED`, `NO_WORKSPACE`, `NO_PROJECT_FOLDER`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST`.
+
+### `cubase_effect_plan` (read, needs `[analysis] enabled`)
+
+Plans a sound effect at the point the user approved (TW-1621), without writing anything.
+
+- **Input:** `effect_file` (absolute path, usually from `cubase_library`), `at` (where it goes, project time: never moved), `voice_file` and `voice_start` (the voice tracks' export, optional), `relative_db` (its level against the voice; default −12 dB when it lands on speech, −3 dB in a pause: starting values, not norms).
+- **Output:** `start`, `end` (where its sound ends: its **audible** length, above −60 dBFS), `effect_seconds`, `audible_seconds`, `sample_rate` (the effect's), `effect_level_db` (RMS over the part where it sounds, so a short effect is not diluted by the silence in its file), `speech_level_db` (the voice's typical level), `under_speech` (the speech it lands on, seconds) and `under_speech_seconds`, `relative_db`, `suggested_gain_db` (the `gain_db` for `cubase_render` `process: "clip"` that puts it `relative_db` from the voice), `overlaps` (effects of `podcast-sound-effects` already placed whose sound overlaps it, from `state.json`, with the track they are on: on the same track the events would overlap), `preview` (3 s around it) and `notes`.
+- **Errors:** `BAD_TIME`, `NOT_FOUND`, `SILENT_SOURCE`, `ANALYSIS_DISABLED`.
 
 ### `cubase_transition_plan` (read, needs `[analysis] enabled`)
 

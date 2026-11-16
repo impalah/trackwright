@@ -104,6 +104,15 @@ Coloca una transición (una cortinilla, una entrada o salida de música corta) e
 - **Cuando no cabe:** dice por cuánto y ofrece abrir la pausa (insertar silencio: todas las pistas se desplazan), desvanecer su cola o una cortinilla más corta. No se corta ni se mueve nada sin que lo elijas.
 - **Qué cambia, tras tu sí:** la transición en una pista de transiciones en su sitio; su licencia y crédito, registrados en la carpeta `Trackwright/` del proyecto.
 
+## `podcast-sound-effects`
+
+Coloca efectos de sonido de tu biblioteca con licencia en los puntos que elijas, y reúne los créditos del episodio.
+
+- **Pídelo así:** «una puerta cerrándose en el 12:04», «un clic de teclado bajo la demo en el 3:10, sutil», «reúne los créditos de los sonidos de este episodio».
+- **Cómo:** busca en tu biblioteca (título, duración, licencia, crédito) y eliges tú. Exporta las voces y dice sobre qué cae cada efecto (habla o una pausa, otros efectos). Propone un nivel respecto a la voz: bastante por debajo sobre habla, cerca de ella en una pausa. Luego renderiza el efecto con fundidos a la frecuencia del proyecto y hace una escucha previa con las voces.
+- **El punto es tuyo:** nunca mueve un efecto. Si cae sobre habla o sobre otro efecto, te lo dice.
+- **Qué cambia, tras tu sí:** cada efecto en una pista de efectos en su punto; su licencia registrada, y `Trackwright/credits.md` con los créditos para pegar en las notas del episodio.
+
 ## `podcast-silence-trim`
 
 Encuentra los silencios más largos que una duración y los quita, cerrando los huecos para que el episodio sea más corto.

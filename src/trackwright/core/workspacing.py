@@ -8,6 +8,7 @@ never guessed between several projects. Creating the folder needs ``[workspace] 
 from __future__ import annotations
 
 from collections import Counter
+from dataclasses import asdict
 from pathlib import Path
 from typing import Literal, get_args
 
@@ -18,9 +19,20 @@ from trackwright.core.base import ServiceBase
 from trackwright.core.models import WorkspaceOut
 from trackwright.errors import PreconditionFailedError
 from trackwright.jsontypes import JsonObject
-from trackwright.workspace import PROFILE_FILE, STATE_FILE, ItemKind, OwnedItem, Workspace, now
+from trackwright.workspace import (
+    CREDITS_FILE,
+    PROFILE_FILE,
+    STATE_FILE,
+    ItemKind,
+    OwnedItem,
+    Workspace,
+    atomic_write,
+    credits_markdown,
+    credits_of,
+    now,
+)
 
-WorkspaceAction = Literal["status", "init", "record", "forget"]
+WorkspaceAction = Literal["status", "init", "record", "forget", "credits"]
 MAX_ITEMS = 200
 
 
@@ -40,6 +52,8 @@ class WorkspaceMixin(ServiceBase):
             raise PreconditionFailedError(
                 f"action must be one of {list(get_args(WorkspaceAction))}", code="BAD_REQUEST"
             )
+        if action == "credits":
+            return self._credits(dry_run=dry_run)
         if action in ("record", "forget"):
             return self._own(action, kind=kind, key=key, skill=skill, run=run, details=details, dry_run=dry_run)
         if action == "init":
@@ -81,6 +95,34 @@ class WorkspaceMixin(ServiceBase):
                 }
         if not self.policy.workspace:
             out.notes.append("writing is disabled: set [workspace] enabled = true to let skills use this folder")
+        return out
+
+    def _credits(self, *, dry_run: bool) -> WorkspaceOut:
+        """Gather every licence recorded in state.json into ``Trackwright/credits.md`` (TW-1621)."""
+        self.policy.check_workspace()
+        folder, why = self.project_folder()
+        if folder is None:
+            raise PreconditionFailedError(
+                f"cannot find the workspace: {why}", code="NO_PROJECT_FOLDER", details={"reason": why}
+            )
+        space = Workspace(folder)
+        out = WorkspaceOut(
+            action="credits", dry_run=dry_run, enabled=True, status="planned",
+            project_folder=str(space.project_folder), path=str(space.path), exists=space.exists,
+        )  # fmt: skip
+        sounds = credits_of(space.load_state())
+        out.credits = [asdict(c) for c in sounds]
+        target = space.file(CREDITS_FILE)
+        out.credits_file = str(target)
+        if not sounds:
+            out.notes.append("no sound recorded with a licence: nothing to credit")
+        if dry_run:
+            return out
+        if not space.exists:
+            raise PreconditionFailedError("the project has no Trackwright/ folder yet: create it with "
+                                          "cubase_workspace (action 'init')", code="NO_WORKSPACE")  # fmt: skip
+        atomic_write(target, credits_markdown(sounds, space.project_folder.name).encode("utf-8"))
+        out.status = "written"
         return out
 
     def _own(

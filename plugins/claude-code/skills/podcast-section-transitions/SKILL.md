@@ -73,7 +73,7 @@ An explicit yes to the transition (name the render and where it goes) after the 
 
 ### 7. Verify
 
-The import's `verified`. Offer to play from 3 s before the transition in Cubase (`cubase_set_position`, cursor). If the library asks for a credit (`attribution`), remind the user to add it to the episode notes.
+The import's `verified`. Offer to play from 3 s before the transition in Cubase (`cubase_set_position`, cursor). If the library asks for a credit (`attribution`), remind the user to add it to the episode notes; `cubase_workspace` with `action: "credits"` gathers every licence of the episode into `Trackwright/credits.md`.
 
 ## Safety
 

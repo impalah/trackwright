@@ -104,6 +104,15 @@ Places a transition (a stinger, a short music in or out) between two sections, i
 - **When it does not fit:** it says by how much and offers to open the pause (insert silence: every track moves later), fade its tail out, or a shorter stinger. Nothing is cut or moved without your choice.
 - **What it changes, after your yes:** the transition on a transitions track at its place; its licence and credit recorded in the project's `Trackwright/` folder.
 
+## `podcast-sound-effects`
+
+Places sound effects from your licensed library at the points you choose, and gathers the episode's credits.
+
+- **Ask for it like this:** "a door closing at 12:04", "a keyboard click under the demo at 3:10, subtle", "collect the credits of the sounds in this episode".
+- **How:** it searches your library (title, length, licence, credit) and you choose. It exports the voices and says what each effect lands on (speech or a pause, other effects). It proposes a level against the voice: well under it over speech, close to it in a pause. Then it renders the effect with fades at the project's rate and makes a preview with the voices.
+- **The point is yours:** it never moves an effect. Over speech or over another effect, it tells you so.
+- **What it changes, after your yes:** each effect on an effects track at its point; its licence recorded, and `Trackwright/credits.md` with the credits to paste into the episode notes.
+
 ## `podcast-silence-trim`
 
 Finds the silences longer than a duration and removes them, closing the gaps so the episode gets shorter.

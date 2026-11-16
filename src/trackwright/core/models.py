@@ -402,10 +402,10 @@ class RangeEditOut(_Out):
 
 # ---------------------------------------------------------------------------- export (TW-1204)
 class WorkspaceOut(_Out):
-    action: Literal["status", "init", "record", "forget"]
+    action: Literal["status", "init", "record", "forget", "credits"]
     dry_run: bool
     enabled: bool = Field(description="[workspace] enabled: skills may write the folder")
-    status: Literal["unknown_project", "absent", "planned", "created", "exists", "recorded", "forgotten"]
+    status: Literal["unknown_project", "absent", "planned", "created", "exists", "recorded", "forgotten", "written"]
     project_folder: str | None = None
     path: str | None = Field(default=None, description="<project folder>/Trackwright")
     exists: bool = False
@@ -418,6 +418,10 @@ class WorkspaceOut(_Out):
     after: JsonObject | None = Field(default=None, description="record: the item as it will be recorded")
     has_profile: bool = False
     profile: dict[str, str | int | None] | None = None
+    credits: list[JsonObject] = Field(
+        default_factory=list, description="credits: every licensed sound recorded, its credit and where it is used"
+    )
+    credits_file: str | None = Field(default=None, description="credits: Trackwright/credits.md")
     notes: list[str] = Field(default_factory=list)
 
 
@@ -623,6 +627,31 @@ class TransitionPlanOut(_Out):
     sample_rate: int
     options: list[str] = Field(default_factory=list, description="when it does not fit: what can be done")
     preview: list[float] = Field(description="a range to preview (project seconds): last phrase to next one")
+    notes: list[str] = Field(default_factory=list)
+
+
+class EffectOverlapOut(_Out):
+    file: str = Field(description="the earlier effect's render")
+    start: float
+    end: float
+    track_uid: str | None = Field(description="the track it was imported on (same track: the events overlap)")
+
+
+class EffectPlanOut(_Out):
+    start: float = Field(description="where the effect goes (project seconds), as the user approved it")
+    start_time: str
+    end: float = Field(description="where its sound ends (audible length, not the file's)")
+    effect_seconds: float
+    audible_seconds: float
+    sample_rate: int
+    effect_level_db: float = Field(description="RMS over the part where it sounds (dBFS)")
+    speech_level_db: float | None = Field(description="the voice's typical level (with voice_file)")
+    under_speech: list[list[float]] = Field(default_factory=list, description="speech it lands on (seconds)")
+    under_speech_seconds: float = 0.0
+    relative_db: float | None = Field(description="the level wanted against the voice (starting value)")
+    suggested_gain_db: float | None = Field(description="gain_db for cubase_render so the effect sits there")
+    overlaps: list[EffectOverlapOut] = Field(default_factory=list, description="this skill's earlier effects")
+    preview: list[float]
     notes: list[str] = Field(default_factory=list)
 
 

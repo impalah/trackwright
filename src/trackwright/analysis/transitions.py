@@ -135,3 +135,23 @@ def render_clip(
     if fout > 0:
         out[n - fout :] *= np.linspace(1.0, 0.0, fout)[:, None]
     return out
+
+
+def overlaps(spans: Sequence[Span], start: float, end: float) -> list[Span]:
+    """The parts of ``spans`` inside ``start``..``end`` (TW-1621: the speech an effect lands on)."""
+    return [(max(a, start), min(b, end)) for a, b in sorted(spans) if a < end and b > start]
+
+
+def active_level_db(data: npt.NDArray[np.float64], rate: int, window: float = 0.05) -> float | None:
+    """RMS level (dBFS) over the windows where the sound is (above -60 dBFS): comparable to the speech level,
+    without the silence a file carries diluting a short effect. None for a silent file."""
+    x = data.mean(axis=1) if data.ndim == 2 else data
+    step = max(1, round(window * rate))
+    count = len(x) // step
+    if count == 0:
+        return None
+    rms = np.sqrt(np.mean(x[: count * step].reshape(count, step) ** 2, axis=1))
+    loud = rms[rms > 10 ** (AUDIBLE_DB / 20)]
+    if len(loud) == 0:
+        return None
+    return round(float(20 * np.log10(np.sqrt(np.mean(loud**2)))), 2)

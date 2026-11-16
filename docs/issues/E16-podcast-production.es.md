@@ -194,7 +194,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1621 Skill `podcast-sound-effects`
 
-- **Estado:** pendiente (necesita TW-1606, TW-1620)
+- **Estado:** código hecho (2026-11-16), falta probarlo en directo: la herramienta `cubase_effect_plan` (el habla sobre la que cae, los solapes con efectos anteriores, el nivel respecto a la voz), la acción `credits` de `cubase_workspace` (`Trackwright/credits.md` a partir de cada licencia registrada) y la skill; los efectos se renderizan con el proceso `clip` de TW-1619. Tests en `tests/unit/test_effects_tw1621.py`
 - **Alcance:** buscar en la biblioteca, colocar un efecto en un punto aprobado, ganancia y fundidos, solapes; procedencia y licencia anotadas en el episodio (`Trackwright/credits`).
 
 ## Fase 4 — Voz

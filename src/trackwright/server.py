@@ -29,6 +29,7 @@ from trackwright.core.models import (
     ConvertOut,
     DeliveryPlanOut,
     DuckingPlanOut,
+    EffectPlanOut,
     ExportOut,
     ImportOut,
     InsertPluginOut,
@@ -536,8 +537,11 @@ def build_server(service: CubaseService) -> MCPServer:
     )
     async def cubase_workspace(
         action: Annotated[
-            Literal["status", "init", "record", "forget"],
-            Field(description="status (read), init (create), record or forget an item a skill created"),
+            Literal["status", "init", "record", "forget", "credits"],
+            Field(
+                description="status (read), init (create), record or forget an item a skill created, credits "
+                "(gather the licences recorded into Trackwright/credits.md)"
+            ),
         ] = "status",
         kind: Annotated[
             Literal["track", "plugin", "render", "preview", "marker", "automation", "report"] | None,
@@ -655,6 +659,31 @@ def build_server(service: CubaseService) -> MCPServer:
         return await run(
             lambda: service.transition_plan(
                 voice_file, at, stinger_file, voice_start=voice_start, pre_gap=pre_gap, post_gap=post_gap
+            )
+        )
+
+    # ------------------------------------------------------------------ sound effects (TW-1621)
+    @server.tool(
+        annotations=READ,
+        description="Plan a sound effect at the point the user approved, read-only: where its sound ends (its "
+        "audible length, not the file's), the speech it lands on (with the voice export, placed by "
+        "voice_start), the effects of podcast-sound-effects it would overlap (same track: the events overlap), "
+        "its level where it sounds, the voice's typical level, and the gain_db for cubase_render (process "
+        "'clip') that puts it relative_db from the voice (starting values: -12 dB under speech, -3 dB in a "
+        "pause; the preview decides). Returns a range to preview.",
+    )
+    async def cubase_effect_plan(
+        effect_file: Annotated[str, Field(description="absolute path of the effect (from cubase_library)")],
+        at: Annotated[str, Field(description="where it goes, as approved: '754', '12:34' (project time)")],
+        voice_file: Annotated[str | None, Field(description="absolute path of the voice export")] = None,
+        voice_start: Annotated[float, Field(ge=0, description="project time of the voice export's start")] = 0.0,
+        relative_db: Annotated[
+            float | None, Field(ge=-40, le=12, description="its level against the voice (default by context)")
+        ] = None,
+    ) -> EffectPlanOut:
+        return await run(
+            lambda: service.effect_plan(
+                effect_file, at, voice_file=voice_file, voice_start=voice_start, relative_db=relative_db
             )
         )
 
