@@ -112,6 +112,14 @@ El espacio de trabajo del proyecto (TW-1602): una carpeta `Trackwright/` dentro 
 
 También cubre los **perfiles de programa** (TW-1607) en `shows/` junto al archivo de configuración (`~/.config/trackwright/shows/<programa>.toml`): `cubase_profile` solo los escribe con esta clave activada, tras un dry run.
 
+## `[library]`
+
+La biblioteca de audio con licencia (TW-1620): carpetas con música, cortinillas, efectos y ambientes que el usuario puede usar. Cada sonido necesita un archivo al lado, `<archivo>.toml` (`march.mp3` → `march.mp3.toml`), con su `title`, `kind` (`music`, `stinger`, `effect`, `ambience`, `voice`, `other`), **`license`** (obligatoria: un sonido sin ella, o con `unknown`, nunca se ofrece), `license_url`, `source`, `attribution` (el crédito que hay que dar), `allowed_uses` (por ejemplo `["podcast", "youtube"]`), `restrictions`, `tags`, `acquired` y `notes`. Trackwright solo lee estas carpetas y nunca descarga nada.
+
+| Clave | Por defecto | Descripción |
+|---|---|---|
+| `folders` | `[]` | Carpetas de la biblioteca, recorridas recursivamente. `trackwright library template <archivo>` imprime un archivo para rellenar; `trackwright library check` lista los sonidos que quedan fuera. |
+
 ## `[logging]`
 
 | Clave | Por defecto | Descripción |

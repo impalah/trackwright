@@ -112,6 +112,14 @@ The project workspace (TW-1602): a `Trackwright/` folder inside the open project
 
 It also covers the **show profiles** (TW-1607) in `shows/` next to the configuration file (`~/.config/trackwright/shows/<show>.toml`): `cubase_profile` writes them only with this key on, after a dry run.
 
+## `[library]`
+
+The licensed audio library (TW-1620): folders with music, stingers, effects and ambience the user may use. Every sound needs a sidecar next to it, `<file>.toml` (`march.mp3` → `march.mp3.toml`), with its `title`, `kind` (`music`, `stinger`, `effect`, `ambience`, `voice`, `other`), **`license`** (required: a sound without it, or with `unknown`, is never offered), `license_url`, `source`, `attribution` (the credit to give), `allowed_uses` (for example `["podcast", "youtube"]`), `restrictions`, `tags`, `acquired` and `notes`. Trackwright only reads these folders and never downloads anything.
+
+| Key | Default | Description |
+|---|---|---|
+| `folders` | `[]` | Library folders, searched recursively. `trackwright library template <file>` prints a sidecar to fill in; `trackwright library check` lists the sounds left out. |
+
 ## `[logging]`
 
 | Key | Default | Description |

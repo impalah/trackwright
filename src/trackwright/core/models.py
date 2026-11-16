@@ -688,6 +688,32 @@ class MusicAnalysisOut(_Out):
     notes: list[str] = Field(default_factory=list)
 
 
+class LibraryItemOut(_Out):
+    file: str
+    title: str
+    kind: str
+    seconds: float | None = Field(description="null when the header cannot be read (AAC)")
+    license: str
+    license_url: str
+    source: str
+    attribution: str = Field(description="the credit to give (empty: none asked)")
+    allowed_uses: list[str]
+    restrictions: str
+    tags: list[str]
+
+
+class LibraryOut(_Out):
+    action: Literal["search", "check"]
+    folders: list[str]
+    total: int = Field(description="licensed sounds found (search: matching)")
+    items: list[LibraryItemOut] = Field(default_factory=list, description="paged with offset and limit")
+    no_sidecar: list[str] = Field(default_factory=list, description="check: sounds without a .toml sidecar")
+    invalid: dict[str, str] = Field(default_factory=dict, description="check: sidecars that cannot be used, why")
+    orphan_sidecars: list[str] = Field(default_factory=list, description="check: sidecars without their sound")
+    missing_folders: list[str] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)
+
+
 class SpeechRegionOut(_Out):
     start: str = Field(description="project time, h:mm:ss.mmm")
     end: str

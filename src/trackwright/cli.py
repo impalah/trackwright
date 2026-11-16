@@ -120,7 +120,8 @@ def make_service(settings: Settings, *, simulate: bool) -> Any:
         from trackwright.fake import FakeCubase, FakeExports, FakeLauncher  # noqa: PLC0415
 
         cubase = FakeCubase()
-        return CubaseService(cubase, policy, launcher=FakeLauncher(cubase), exports=FakeExports())  # type: ignore[arg-type]
+        return CubaseService(cubase, policy, launcher=FakeLauncher(cubase), exports=FakeExports(),  # type: ignore[arg-type]
+                             library_folders=settings.library.folders)  # fmt: skip
     from trackwright.bridge import BridgeClient  # noqa: PLC0415
     from trackwright.hostport import BridgeHost  # noqa: PLC0415
     from trackwright.launcher import BridgeLauncher, CubaseLauncher  # noqa: PLC0415
@@ -133,7 +134,36 @@ def make_service(settings: Settings, *, simulate: bool) -> Any:
         ensure_bridge=bridge_launcher.ensure if settings.bridge.autostart else None,
         script_wait=settings.bridge.autostart_timeout,
     )
-    return CubaseService(host, policy, launcher=CubaseLauncher(settings.cubase))
+    return CubaseService(
+        host, policy, launcher=CubaseLauncher(settings.cubase), library_folders=settings.library.folders
+    )
+
+
+def cmd_library(args: argparse.Namespace, settings: Settings) -> int:
+    """Search or check the licensed audio library, or print a sidecar to fill in (TW-1620). Read-only."""
+    from trackwright.core.librarying import item_out  # noqa: PLC0415
+    from trackwright.library import scan, search, template  # noqa: PLC0415
+
+    if args.library_action == "template":
+        print(template(Path(args.file)), end="")  # noqa: T201  (the CLI prints to stdout)
+        return 0
+    folders = [Path(f).expanduser() for f in settings.library.folders]
+    if not folders:
+        emit({"error": "no library folders: add [library] folders = [...] to the configuration"})
+        return 1
+    items, problems = scan(folders)
+    if args.library_action == "check":
+        emit({
+            "folders": [str(f) for f in folders], "licensed": len(items),
+            "no_sidecar": [str(p) for p in problems.no_sidecar],
+            "invalid": {str(k): v for k, v in problems.invalid.items()},
+            "orphan_sidecars": [str(p) for p in problems.orphan_sidecars],
+            "missing_folders": [str(p) for p in problems.missing_folders],
+        })  # fmt: skip
+        return 0
+    found = search(items, " ".join(args.query), kind=args.kind, use=args.use)
+    emit({"total": len(found), "items": [item_out(i).model_dump(mode="json") for i in found]})
+    return 0
 
 
 def cmd_serve(args: argparse.Namespace, settings: Settings) -> int:
@@ -224,6 +254,16 @@ def build_parser() -> argparse.ArgumentParser:
     script.add_argument("--apply", action="store_true", help="really copy the file (default: dry run)")
     script.add_argument("--file", type=Path, help="install this script instead of the packaged one (experiments)")
     script.set_defaults(handler=cmd_script)
+    library = sub.add_parser("library", help="search or check the licensed audio library (read-only)")
+    library_sub = library.add_subparsers(dest="library_action", required=True)
+    found = library_sub.add_parser("search", help="licensed sounds matching words, kind and use")
+    found.add_argument("query", nargs="*", help="words to find in the title, tags or file name")
+    found.add_argument("--kind", choices=["music", "stinger", "effect", "ambience", "voice", "other"])
+    found.add_argument("--use", help="an allowed use, e.g. podcast")
+    library_sub.add_parser("check", help="sounds left out (no sidecar, no licence) and orphan sidecars")
+    tmpl = library_sub.add_parser("template", help="print a sidecar to fill in for a sound (writes nothing)")
+    tmpl.add_argument("file")
+    library.set_defaults(handler=cmd_library)
     ping = sub.add_parser("ping", help="check the round trip Python -> Cubase -> Python")
     ping.add_argument("--echo", default="hola-ñ-✓", help="text echoed back by the script")
     ping.set_defaults(handler=cmd_ping)

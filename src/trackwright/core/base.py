@@ -111,9 +111,11 @@ class ServiceBase:
         launcher: AppLauncher | None = None,
         exports: ExportFinder | None = None,
         shows_dir: Path | None = None,
+        library_folders: list[Path] | None = None,
     ) -> None:
         self.host = host
         self._shows_dir = shows_dir  # TW-1607: None = shows/ next to the configuration file
+        self._library_folders = list(library_folders or [])  # TW-1620: [library] folders
         self.launcher = launcher
         self.exports: ExportFinder = exports if exports is not None else ExportInspector()
         self.policy = policy

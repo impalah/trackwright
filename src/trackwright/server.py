@@ -34,6 +34,7 @@ from trackwright.core.models import (
     InsertPluginOut,
     InsertsOut,
     LaunchOut,
+    LibraryOut,
     LoudnessOut,
     MusicAnalysisOut,
     ParameterOut,
@@ -711,6 +712,34 @@ def build_server(service: CubaseService) -> MCPServer:
         top: Annotated[int, Field(ge=1, le=20, description="loop candidates to return")] = 5,
     ) -> MusicAnalysisOut:
         return await run(lambda: service.music_analysis(file, top=top))
+
+    # ------------------------------------------------------------------ licensed library (TW-1620)
+    @server.tool(
+        annotations=READ,
+        description="The user's licensed audio library ([library] folders): music, stingers, effects, ambience. "
+        "'search' finds licensed sounds by words (title, tags, file name), kind, an allowed use (e.g. podcast) "
+        "and length; each comes with its licence, source and the attribution to credit. 'check' lists the "
+        "sounds left out (no <file>.toml sidecar, or no licence in it) and sidecars without their sound. A "
+        "sound without a licence is never offered; nothing is ever downloaded.",
+    )
+    async def cubase_library(
+        action: Annotated[Literal["search", "check"], Field(description="search (default) or check")] = "search",
+        query: Annotated[str, Field(max_length=200, description="words, all of which must match")] = "",
+        kind: Annotated[
+            Literal["music", "stinger", "effect", "ambience", "voice", "other"] | None, Field(description="kind")
+        ] = None,
+        use: Annotated[str | None, Field(max_length=64, description="an allowed use, e.g. podcast")] = None,
+        min_seconds: Annotated[float | None, Field(ge=0)] = None,
+        max_seconds: Annotated[float | None, Field(gt=0)] = None,
+        offset: Annotated[int, Field(ge=0)] = 0,
+        limit: Annotated[int, Field(ge=1, le=200)] = 50,
+    ) -> LibraryOut:
+        return await run(
+            lambda: service.library(
+                action, query=query, kind=kind, use=use, min_seconds=min_seconds, max_seconds=max_seconds,
+                offset=offset, limit=limit,
+            )
+        )  # fmt: skip
 
     # ------------------------------------------------------------------ renders (TW-1606)
     @server.tool(

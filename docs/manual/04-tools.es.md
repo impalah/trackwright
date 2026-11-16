@@ -2,7 +2,7 @@
 
 [English](04-tools.md) · **Español**
 
-El servidor `trackwright` publica 44 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 45 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 Trackwright aspira a admitir varios DAW, pero hoy solo implementa **Cubase**. Por eso todas las herramientas se llaman `cubase_*` y esta página describe el comportamiento de Cubase: se verificó contra Cubase Elements 15.0.30, con scripts de experimento y desde Claude Code (ver el [registro de verificación](../verification.es.md)). Cualquier cliente MCP recibe las mismas herramientas. Otro DAW tendría su propio conjunto de herramientas; ver [Extensión a otros DAW](../architecture.es.md#extensión-a-otros-daw-posible-no-implementada).
 
@@ -452,6 +452,15 @@ Perfiles de programa, de episodio y de entrega (TW-1607). Tres capas, cada una p
 
   Los −14 LUFS de Spotify están en su página de música, no de podcasts, así que no se usan. Un programa puede añadir un servicio con `delivery.profiles.<nombre>` y la fuente del usuario.
 - **Errores:** `WORKSPACE_DISABLED`, `NO_PROJECT_FOLDER`, `NO_WORKSPACE`, `NOT_FOUND` (un programa), `BAD_PROFILE`, `BAD_REQUEST`.
+
+### `cubase_library` (lectura)
+
+La biblioteca de audio con licencia del usuario (TW-1620, `[library] folders`).
+
+- **`search`** (por defecto): sonidos con licencia cuyo título, etiquetas, tipo, nombre de archivo o notas contienen **todas** las palabras de `query`, filtrados por `kind`, un uso permitido `use` (por ejemplo `podcast`) y duración (`min_seconds`, `max_seconds`); cada uno con su archivo, duración, licencia, origen, la `attribution` que hay que dar y sus usos permitidos y restricciones. Paginado con `offset` y `limit`.
+- **`check`:** los sonidos que quedan fuera (sin archivo de datos, o con uno sin licencia o no válido, con el campo y el motivo) y los archivos de datos cuyo sonido ya no está.
+- Un sonido sin licencia **nunca se ofrece**; nunca se descarga nada; solo se leen los archivos de datos y las cabeceras de los sonidos.
+- **Errores:** `NO_LIBRARY` (sin carpetas configuradas), `BAD_REQUEST`.
 
 ### `cubase_music_analysis` (lectura, necesita `[analysis] enabled`)
 

@@ -189,7 +189,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1620 Licensed audio library
 
-- **Status:** pending
+- **Status:** code done (2026-11-16), the user's library to set up: `[library] folders`, a `<file>.toml` sidecar per sound (title, kind, licence required, source, attribution, allowed uses, tags), `trackwright/library.py` (scan, check, search; a sound without a licence or with `unknown` is never offered), the tool `cubase_library` (`search`, `check`) and the CLI `trackwright library search|check|template` (the template is printed, never written). Tests in `tests/unit/test_library_tw1620.py`
 - **Scope:** a local folder (or several) with one sidecar file per item: source, license, attribution, allowed uses, tags; an index and search (`trackwright library` and an MCP tool); items without a license note are not offered. Nothing is ever downloaded.
 
 ### TW-1621 Skill `podcast-sound-effects`

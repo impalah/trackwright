@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 44 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 45 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -452,6 +452,15 @@ Show, episode and delivery profiles (TW-1607). Three layers, each overriding the
 
   Spotify's −14 LUFS is on its music page, not for podcasts, so it is not used. A show can add a host with `delivery.profiles.<name>` and the user's source.
 - **Errors:** `WORKSPACE_DISABLED`, `NO_PROJECT_FOLDER`, `NO_WORKSPACE`, `NOT_FOUND` (a show), `BAD_PROFILE`, `BAD_REQUEST`.
+
+### `cubase_library` (read)
+
+The user's licensed audio library (TW-1620, `[library] folders`).
+
+- **`search`** (default): licensed sounds whose title, tags, kind, file name or notes contain **every** word of `query`, filtered by `kind`, an allowed `use` (for example `podcast`) and length (`min_seconds`, `max_seconds`); each with its file, length, licence, source, the `attribution` to credit and its allowed uses and restrictions. Paged with `offset` and `limit`.
+- **`check`:** the sounds left out (no sidecar, or a sidecar without a licence or not valid, with the field and why) and sidecars whose sound is gone.
+- A sound without a licence is **never offered**; nothing is ever downloaded; only the sidecars and the files' headers are read.
+- **Errors:** `NO_LIBRARY` (no folders configured), `BAD_REQUEST`.
 
 ### `cubase_music_analysis` (read, needs `[analysis] enabled`)
 

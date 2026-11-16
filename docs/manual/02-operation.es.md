@@ -21,6 +21,7 @@ También puedes arrancar el puente a mano en una terminal, como antes (`uv run t
 uv run trackwright bridge-status   # pid, peticiones, sesión del script, respuestas tardías, errores
 uv run trackwright bridge-stop     # para el puente (por ejemplo, tras actualizar Trackwright)
 uv run trackwright ping            # ida y vuelta Python → Cubase → Python
+uv run trackwright library check   # biblioteca de audio con licencia: sonidos que quedan fuera (TW-1620); también: search, template
 uv run trackwright doctor          # diagnóstico completo con soluciones
 ```
 

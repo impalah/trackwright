@@ -89,6 +89,12 @@ class WorkspaceConfig(_Section):
     ``WORKSPACE_DISABLED``. Nothing outside that folder is ever written."""
 
 
+class LibraryConfig(_Section):
+    folders: list[Path] = Field(default_factory=list)
+    """Folders of the licensed audio library (TW-1620): music, effects and stingers, each with a ``<file>.toml``
+    sidecar naming its licence. Only read, never written; a sound without a licence is never offered."""
+
+
 class LoggingConfig(_Section):
     level: Literal["TRACE", "DEBUG", "INFO", "SUCCESS", "WARNING", "ERROR", "CRITICAL"] = "INFO"
     file: Path | None = None
@@ -128,6 +134,7 @@ class Settings(_Section):
     writes: WritesConfig = Field(default_factory=WritesConfig)
     analysis: AnalysisConfig = Field(default_factory=AnalysisConfig)
     workspace: WorkspaceConfig = Field(default_factory=WorkspaceConfig)
+    library: LibraryConfig = Field(default_factory=LibraryConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     script: ScriptConfig = Field(default_factory=ScriptConfig)
     cubase: CubaseConfig = Field(default_factory=CubaseConfig)
