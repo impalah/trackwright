@@ -583,3 +583,9 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 - On `POC-TEST`, PreGain at −10 dB exported at −7 to −9 dB: its Compressor sits after PreGain.
 - On `TW1616 signal`, created during the session, nothing was recorded (the export equalled the source) although the control moved its PreGain; on `TW1501` the same curve recorded; after the user restarted Cubase, `TW1616 signal` recorded too.
 - With pink noise on `TW1616 signal`, 13 cycles: constant delay +0.22 s (0.135–0.335 s), flat parts exact, 0.35 dB RMS after the shift, smooth ramps, a 10 ms step smoothed to 0.08–0.09 s. Offline rendering stays the ducking skill's mode.
+
+## 2026-11-16 — TW-1616: part (a), a side-chained compressor, and two findings
+
+- Compressor on `TW1616 signal` (pink noise), −30 dB, 8:1, 10 ms, 300 ms, no make-up, set through the API; the side-chain turned on and fed with `TW1612 episode` by the user in Cubase. From the mix minus the voice: −17.9 dB median under the voice, 0.0 dB in its silences, the drop with the first syllable (no pre-roll), the return within 0.3–0.8 s, 1.8 dB median movement per 100 ms inside speech. No second ducking mode.
+- Cubase exported the voice's silence as −166 dBFS residue, not zeros: the speech detector found speech everywhere (floor −1082 dB); after the fix (frames under −120 dBFS are digital silence) the floor is −54 dB and the regions follow the voice.
+- `TW1507`, muted, exported with solo had its audio (−20.92 dBFS, as in TW-1615's voice export): a solo overrides a mute in Cubase; `cubase_export_mix` now leaves muted tracks out of `solo` unless `include_muted`. TW-1615's ducked music was planned with that track in the voices at 20–28 s and around 40 s.

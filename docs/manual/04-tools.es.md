@@ -362,6 +362,8 @@ Pensada para editar podcasts: trabaja en **segundos** y el compás no importa.
 
 ### `cubase_export_mix` (con el usuario, dos fases)
 
+> **Pistas silenciadas y `solo`** (TW-1616): en Cubase una pista en solo suena aunque esté silenciada. Por eso `solo` deja fuera las pistas silenciadas, con una nota, salvo si `include_muted` es true; cuando todas las pistas pedidas están silenciadas, se niega (`BAD_REQUEST`).
+
 Trackwright **nunca exporta por sí mismo**: coloca el rango y abre el diálogo de Cubase; el formato y el botón son del usuario.
 
 - **Fase `start`** (`dry_run` por defecto):

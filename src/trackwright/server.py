@@ -462,6 +462,10 @@ def build_server(service: CubaseService) -> MCPServer:
             list[str] | None,
             Field(description="start: export only these tracks (soloed for the export, restored afterwards)"),
         ] = None,
+        include_muted: Annotated[
+            bool,
+            Field(description="start: also solo muted tracks in 'solo' (a soloed track sounds even when muted)"),
+        ] = False,
         start: Annotated[str | None, Field(description="range start; omit with end for the whole project")] = None,
         end: Annotated[str | None, Field(description="range end")] = None,
         unit: Annotated[Literal["seconds", "bars"], Field(description="unit of start and end")] = "seconds",
@@ -472,8 +476,8 @@ def build_server(service: CubaseService) -> MCPServer:
     ) -> ExportOut:
         return await run(
             lambda: service.export_mix(
-                phase, solo=solo, start=start, end=end, unit=unit, since=since, expected_seconds=expected_seconds,
-                folder=folder, dry_run=dry_run,
+                phase, solo=solo, include_muted=include_muted, start=start, end=end, unit=unit, since=since,
+                expected_seconds=expected_seconds, folder=folder, dry_run=dry_run,
             )
         )  # fmt: skip
 

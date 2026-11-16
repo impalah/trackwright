@@ -362,6 +362,8 @@ Designed for podcast editing: it works in **seconds** and the time signature doe
 
 ### `cubase_export_mix` (with the user, two phases)
 
+> **Muted tracks and `solo`** (TW-1616): in Cubase a soloed track sounds even when it is muted. `solo` therefore leaves muted tracks out, with a note, unless `include_muted` is true; when every track asked for is muted, it refuses (`BAD_REQUEST`).
+
 Trackwright **never exports by itself**: it sets the range and opens the Cubase dialog; the format and the button are up to the user.
 
 - **`start` phase** (`dry_run` by default):

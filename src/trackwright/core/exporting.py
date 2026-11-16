@@ -67,6 +67,7 @@ class ExportMixin(RangeMixin):
         phase: Literal["start", "confirm", "cancel"],
         *,
         solo: list[str] | None = None,
+        include_muted: bool = False,
         start: str | None = None,
         end: str | None = None,
         unit: str = "seconds",
@@ -86,10 +87,17 @@ class ExportMixin(RangeMixin):
                             expected_seconds=None, folder=None, since=since)  # fmt: skip
             self._restore_solo(out)
             return out
-        return self._start_export(start, end, unit, solo, dry_run=dry_run)
+        return self._start_export(start, end, unit, solo, include_muted=include_muted, dry_run=dry_run)
 
     def _start_export(
-        self, start: str | None, end: str | None, unit: str, solo: list[str] | None, *, dry_run: bool
+        self,
+        start: str | None,
+        end: str | None,
+        unit: str,
+        solo: list[str] | None,
+        *,
+        include_muted: bool = False,
+        dry_run: bool,
     ) -> ExportOut:
         if (start is None) != (end is None):
             raise PreconditionFailedError("give both start and end, or neither for the whole project",
@@ -106,7 +114,7 @@ class ExportMixin(RangeMixin):
             out.expected_seconds = round(span[1] - span[0], 3)
         else:
             out.notes.append("whole project: the locators will go around all the audio")
-        plan = self._solo_plan(solo) if solo else []
+        plan = self._solo_plan(solo, include_muted=include_muted, notes=out.notes) if solo else []
         out.solo = [SoloChangeOut(track_uid=f"uid:{c.uid}", name=c.name, before=c.before, during=not c.before)
                     for c in plan]  # fmt: skip
         if dry_run:
@@ -154,9 +162,22 @@ class ExportMixin(RangeMixin):
         out.notes.append("the locators stay on the exported range")
 
     # ------------------------------------------------------------------ solo (TW-1605)
-    def _solo_plan(self, selectors: list[str]) -> list[SoloChange]:
-        """The solo flags to change so that exactly the given tracks are soloed (outputs never change)."""
-        wanted = {int(self.resolve_track(TrackSelector.parse(s))["id"]) for s in selectors}
+    def _solo_plan(self, selectors: list[str], *, include_muted: bool, notes: list[str]) -> list[SoloChange]:
+        """The solo flags to change so that exactly the given tracks are soloed (outputs never change).
+
+        A soloed track sounds in Cubase even when it is muted (TW-1616: a muted track exported with solo had
+        its audio), so muted tracks are left out unless ``include_muted``."""
+        items = [self.resolve_track(TrackSelector.parse(s)) for s in selectors]
+        muted = [self.track_info(i).name for i in items if self.track_info(i).mute] if not include_muted else []
+        if muted:
+            notes.append(f"left out of the solo because they are muted (a soloed track sounds even when muted): "
+                         f"{', '.join(muted)}; give include_muted to export them")  # fmt: skip
+        wanted = {int(i["id"]) for i in items if self.track_info(i).name not in muted}
+        if not wanted:
+            raise PreconditionFailedError(
+                "every track to export is muted: unmute it, or give include_muted", code="BAD_REQUEST",
+                details={"muted": muted},
+            )  # fmt: skip
         plan = []
         for item in self.channels():
             info = self.track_info(item)

@@ -41,7 +41,7 @@ Speak to the user in their language and keep them informed; they are in front of
 
 ### 2. Analyze
 
-1. Export the voices: `cubase_export_mix` with `phase: "start"`, the range, `solo` = the uids of **all** the voice tracks, `dry_run: false`. Ask for WAV, 32-bit float, the project's sample rate, a name like `ducking-voices`. Confirm (or cancel); check `solo_restored`.
+1. Export the voices: `cubase_export_mix` with `phase: "start"`, the range, `solo` = the uids of **all the voice tracks that are not muted** (a soloed track sounds even when muted, so `cubase_export_mix` leaves muted ones out and says so: a muted voice track is usually one a render replaced), `dry_run: false`. Ask for WAV, 32-bit float, the project's sample rate, a name like `ducking-voices`. Confirm (or cancel); check `solo_restored`.
 2. Export the music the same way, with `solo` = the music track's uid (name it `ducking-music`).
 3. `cubase_ducking_plan` with `ducking` = `{voice_file, voice_start: <range start>, attenuation_db, pre_roll, hold, recovery, merge_gap, overrides, use_protected}`, `music_start` = the range start, `music_seconds` = the music export's length, and `music_file` = the music export, so the `moments` it proposes have music to hear.
 

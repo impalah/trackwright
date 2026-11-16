@@ -115,3 +115,20 @@ def test_cancel_needs_since(fake: FakeCubase) -> None:
     with pytest.raises(TrackwrightError) as exc:
         service(fake).export_mix("cancel")
     assert exc.value.code == "BAD_REQUEST"
+
+
+# ---------------------------------------------------------------- muted tracks (TW-1616)
+def test_muted_tracks_are_left_out_of_the_solo(fake: FakeCubase) -> None:
+    """Live, a muted track soloed for an export was heard in it: Cubase lets a solo override a mute."""
+    from trackwright.errors import PreconditionFailedError
+
+    svc = service(fake)
+    svc.set_track_mix("POC-INSTR", mute=True, dry_run=False)
+    plan = svc.export_mix("start", solo=["POC-TEST", "POC-INSTR"], start="2", end="30")
+    assert [c.name for c in plan.solo] == ["POC-TEST"]
+    assert any("left out of the solo because they are muted" in n and "POC-INSTR" in n for n in plan.notes)
+    both = svc.export_mix("start", solo=["POC-TEST", "POC-INSTR"], include_muted=True, start="2", end="30")
+    assert sorted(c.name for c in both.solo) == ["POC-INSTR", "POC-TEST"]
+    with pytest.raises(PreconditionFailedError) as exc:
+        svc.export_mix("start", solo=["POC-INSTR"], start="2", end="30")
+    assert exc.value.code == "BAD_REQUEST"

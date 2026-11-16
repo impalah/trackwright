@@ -583,3 +583,9 @@ Cubase Elements 15.0.30, script 1.6.1, proyecto de pruebas, `TRACKWRIGHT_TEST_TR
 - En `POC-TEST`, PreGain a −10 dB se exportó entre −7 y −9 dB: su Compressor está después de PreGain.
 - En `TW1616 signal`, creada durante la sesión, no se grabó nada (la exportación era igual al origen) aunque el control movía su PreGain; en `TW1501` la misma curva se grabó; tras reiniciar Cubase el usuario, `TW1616 signal` también grabó.
 - Con ruido rosa en `TW1616 signal`, 13 ciclos: retardo constante de +0,22 s (0,135–0,335 s), partes planas exactas, 0,35 dB RMS tras el desplazamiento, rampas suaves, un escalón de 10 ms suavizado a 0,08–0,09 s. El render fuera de línea sigue siendo el modo de la skill de ducking.
+
+## 2026-11-16 — TW-1616: parte (a), un compresor con side-chain, y dos hallazgos
+
+- Compressor en `TW1616 signal` (ruido rosa), −30 dB, 8:1, 10 ms, 300 ms, sin make-up, ajustado por la API; el side-chain activado y alimentado con `TW1612 episode` por el usuario en Cubase. De la mezcla menos la voz: −17,9 dB de mediana bajo la voz, 0,0 dB en sus silencios, la bajada con la primera sílaba (sin pre-roll), la vuelta en 0,3–0,8 s, 1,8 dB de movimiento mediano por 100 ms dentro de la voz. Sin segundo modo de ducking.
+- Cubase exportó el silencio de la voz como restos de −166 dBFS, no ceros: el detector de voz encontraba voz en todas partes (suelo −1082 dB); tras la corrección (las tramas por debajo de −120 dBFS son silencio digital) el suelo es −54 dB y las regiones siguen a la voz.
+- `TW1507`, silenciada, exportada con solo tenía su audio (−20,92 dBFS, como en la exportación de voces de TW-1615): en Cubase el solo pasa por encima del silencio; `cubase_export_mix` deja ahora las pistas silenciadas fuera de `solo` salvo con `include_muted`. La música atenuada de TW-1615 se planificó con esa pista entre las voces en 20–28 s y hacia 40 s.

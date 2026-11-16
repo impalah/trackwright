@@ -2,7 +2,7 @@
 
 **English** · [Español](README.es.md)
 
-Run on 2026-11-16 on the test project (Cubase Elements 15.0.30, 48 kHz, 120 BPM). Part (b) first: the planned ducking envelope written by real-time automation recording on the music track's **PreGain** (`prefilter.gain`, a parameter the skill could own without touching the user's volume fader). Part (a), a side-chain the user sets up, is still to do.
+Run on 2026-11-16 on the test project (Cubase Elements 15.0.30, 48 kHz, 120 BPM). Part (b) first: the planned ducking envelope written by real-time automation recording on the music track's **PreGain** (`prefilter.gain`, a parameter the skill could own without touching the user's volume fader). Part (a), a side-chain the user sets up, below.
 
 ## What happened
 
@@ -21,7 +21,23 @@ Run on 2026-11-16 on the test project (Cubase Elements 15.0.30, 48 kHz, 120 BPM)
 
 Real-time automation reproduces a planned envelope to a fraction of a dB with a constant 0.22 s delay that recording the points early could compensate. But it plays the whole range in real time (46 minutes for a whole episode), needs a script reload for tracks created during the session, and PreGain acts before the inserts. The offline render is exact, immediate and leaves the original untouched: it stays the only mode of `podcast-music-ducking`; automation is worth it only when the user wants a curve to edit by hand in Cubase.
 
+## Part (a): a side-chained compressor
+
+A Compressor on `TW1616 signal` (the steady pink noise, Read off so the PreGain curve does not act): Threshold −30 dB, Ratio 8:1 (its maximum), Attack 10 ms, Release 300 ms, AutoMakeUp off, all set and read back through the API. The Compressor's 46 parameters include no side-chain switch: the user turned it on in its window and fed it with the voice, `TW1612 episode`. The voice and the noise exported together, and the voice alone; the compressor's gain is the mix minus the voice over the original noise, in 10 ms windows (`sidechain.py`):
+
+- the side-chain works: −17.9 dB median while the voice speaks (−20.5 to −10.1 dB), 0.0 dB in its silences (57.5 s), correlation −0.72 with the voice's level;
+- it drops **with** the first syllable (55.16 s, 80.66 s: no pre-roll), comes back within 0.3–0.8 s of the last one (no hold), and inside a phrase follows the syllables: 1.8 dB median change per 100 ms, 5.8 dB at the 95th percentile;
+- its depth depends on how loud the voice is, not on a chosen value.
+
+The offline plan does what a producer asks of ducking: down 0.25 s before the first word, a chosen depth held over the phrase, up only after a real pause. A side-chain is live and needs no render, but it pumps with the syllables, and the user must set up its routing by hand. Decision: no second mode for `podcast-music-ducking` now; offline rendering stays its only mode.
+
+## Found on the way (part a)
+
+- **Cubase's silence is not zero.** The export of the voice had −166 dBFS residue (about 5e-9) between its events, not exact zeros, and the speech detector took it as the noise floor (−1082 dB) and found speech everywhere. Fixed in the speech detector and in the levels of the silence analysis: frames under −120 dBFS count as digital silence.
+- **A soloed track sounds even when muted.** `TW1507`, muted, exported with solo had its audio (−20.92 dBFS at 20–26 s, exactly what the TW-1615 voice export had there). The voice export of TW-1615 therefore carried a muted track, and the ducked music of that test is planned on it at 20–28 s and around 40 s. Fixed: `cubase_export_mix` leaves muted tracks out of `solo`, with a note, unless `include_muted`.
+
 ## Files
 
 - `measure.py`: the gain an export applied, window by window, against the plan (lag, error on the flat parts, transitions).
+- `sidechain.py`: the gain of a side-chained compressor on a steady signal, against the voice and the offline plan.
 - `probe_binding.py`: which track's PreGain the automation control moves once a track is selected (no playback, the value put back).

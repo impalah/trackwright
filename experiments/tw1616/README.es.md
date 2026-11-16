@@ -2,7 +2,7 @@
 
 [English](README.md) · **Español**
 
-Hecho el 2026-11-16 en el proyecto de pruebas (Cubase Elements 15.0.30, 48 kHz, 120 BPM). Primero la parte (b): la envolvente de ducking planificada escrita grabando automatización en tiempo real sobre el **PreGain** de la pista de música (`prefilter.gain`, un parámetro del que la skill podría ser dueña sin tocar el fader de volumen del usuario). La parte (a), un side-chain que monta el usuario, queda pendiente.
+Hecho el 2026-11-16 en el proyecto de pruebas (Cubase Elements 15.0.30, 48 kHz, 120 BPM). Primero la parte (b): la envolvente de ducking planificada escrita grabando automatización en tiempo real sobre el **PreGain** de la pista de música (`prefilter.gain`, un parámetro del que la skill podría ser dueña sin tocar el fader de volumen del usuario). La parte (a), un side-chain que monta el usuario, más abajo.
 
 ## Qué pasó
 
@@ -21,7 +21,23 @@ Hecho el 2026-11-16 en el proyecto de pruebas (Cubase Elements 15.0.30, 48 kHz, 
 
 La automatización en tiempo real reproduce una envolvente planificada con una fracción de dB y un retardo constante de 0,22 s que se podría compensar grabando los puntos antes. Pero reproduce todo el rango en tiempo real (46 minutos para un episodio entero), necesita recargar el script para las pistas creadas durante la sesión, y PreGain actúa antes de las inserciones. El render fuera de línea es exacto, inmediato y deja el original intacto: sigue siendo el único modo de `podcast-music-ducking`; la automatización solo compensa cuando el usuario quiere una curva para editar a mano en Cubase.
 
+## Parte (a): un compresor con side-chain
+
+Un Compressor en `TW1616 signal` (el ruido rosa constante, con la lectura desactivada para que la curva de PreGain no actúe): Threshold −30 dB, Ratio 8:1 (su máximo), Attack 10 ms, Release 300 ms, AutoMakeUp desactivado, todo ajustado y releído por la API. Los 46 parámetros del Compressor no incluyen el interruptor de side-chain: el usuario lo activó en su ventana y lo alimentó con la voz, `TW1612 episode`. Se exportaron la voz y el ruido juntos, y la voz sola; la ganancia del compresor es la mezcla menos la voz entre el ruido original, en ventanas de 10 ms (`sidechain.py`):
+
+- el side-chain funciona: −17,9 dB de mediana mientras habla la voz (de −20,5 a −10,1 dB), 0,0 dB en sus silencios (57,5 s), correlación −0,72 con el nivel de la voz;
+- baja **con** la primera sílaba (55,16 s, 80,66 s: sin pre-roll), vuelve en 0,3–0,8 s tras la última (sin mantenimiento), y dentro de una frase sigue a las sílabas: 1,8 dB de cambio mediano por 100 ms, 5,8 dB en el percentil 95;
+- su profundidad depende de lo fuerte que sea la voz, no de un valor elegido.
+
+El plan fuera de línea hace lo que un productor pide al ducking: bajar 0,25 s antes de la primera palabra, una profundidad elegida mantenida durante la frase, y subir solo tras una pausa real. Un side-chain funciona en vivo y no necesita render, pero bombea con las sílabas, y el usuario tiene que montar su enrutamiento a mano. Decisión: ningún segundo modo para `podcast-music-ducking` por ahora; el render fuera de línea sigue siendo su único modo.
+
+## Encontrado por el camino (parte a)
+
+- **El silencio de Cubase no es cero.** La exportación de la voz tenía restos de −166 dBFS (unos 5e-9) entre sus eventos, no ceros exactos, y el detector de voz los tomó como suelo de ruido (−1082 dB) y encontró voz en todas partes. Corregido en el detector de voz y en los niveles del análisis de silencios: las tramas por debajo de −120 dBFS cuentan como silencio digital.
+- **Una pista en solo suena aunque esté silenciada.** `TW1507`, silenciada, exportada con solo tenía su audio (−20,92 dBFS en 20–26 s, exactamente lo que tenía allí la exportación de voces de TW-1615). La exportación de voces de TW-1615 llevaba por tanto una pista silenciada, y la música atenuada de esa prueba está planificada sobre ella en 20–28 s y hacia 40 s. Corregido: `cubase_export_mix` deja las pistas silenciadas fuera de `solo`, con una nota, salvo con `include_muted`.
+
 ## Archivos
 
 - `measure.py`: la ganancia que aplicó una exportación, ventana a ventana, frente al plan (retardo, error en las partes planas, transiciones).
+- `sidechain.py`: la ganancia de un compresor con side-chain sobre una señal constante, frente a la voz y al plan fuera de línea.
 - `probe_binding.py`: qué PreGain de pista mueve el control de automatización una vez seleccionada una pista (sin reproducir, con el valor devuelto).
