@@ -2,7 +2,7 @@
 
 [English](04-tools.md) · **Español**
 
-El servidor `trackwright` publica 43 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 44 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 Trackwright aspira a admitir varios DAW, pero hoy solo implementa **Cubase**. Por eso todas las herramientas se llaman `cubase_*` y esta página describe el comportamiento de Cubase: se verificó contra Cubase Elements 15.0.30, con scripts de experimento y desde Claude Code (ver el [registro de verificación](../verification.es.md)). Cualquier cliente MCP recibe las mismas herramientas. Otro DAW tendría su propio conjunto de herramientas; ver [Extensión a otros DAW](../architecture.es.md#extensión-a-otros-daw-posible-no-implementada).
 
@@ -453,6 +453,17 @@ Perfiles de programa, de episodio y de entrega (TW-1607). Tres capas, cada una p
   Los −14 LUFS de Spotify están en su página de música, no de podcasts, así que no se usan. Un programa puede añadir un servicio con `delivery.profiles.<nombre>` y la fuente del usuario.
 - **Errores:** `WORKSPACE_DISABLED`, `NO_PROJECT_FOLDER`, `NO_WORKSPACE`, `NOT_FOUND` (un programa), `BAD_PROFILE`, `BAD_REQUEST`.
 
+### `cubase_music_analysis` (lectura, necesita `[analysis] enabled`)
+
+Analiza un archivo de música para una cama (TW-1617), sin escribir nada.
+
+- **Entrada:** `file`, `top` (candidatos de bucle a devolver, 5).
+- **Tempo:** ataques por flujo espectral, su autocorrelación entre 60 y 180 BPM, y una rejilla de pulsos ajustada a los picos de los ataques. `tempo_confidence` por debajo de 0,3 significa que no hay pulso utilizable (música ambiental): las duraciones de bucle son entonces segundos enteros y hay que comprobarlas de oído.
+- **Bucles** (solo antes del final): duraciones en compases enteros de 4 pulsos, puntos de corte en pulsos movidos al cruce por cero más cercano en 5 ms. Cada uno tiene un `score` (0..1): la música justo después del final debe continuar como la música justo después del inicio, y justo antes de ambos igual, en timbre (24 bandas) **y** en armonía (croma, 12 clases de altura); cuenta la menor de las dos, así que se detecta un salto entre dos acordes. Entre uniones igual de buenas, las más cortas primero (encajan una duración objetivo con más precisión). `crossfade`: una sugerencia a partir del salto de nivel en la unión (0 cuando encaja).
+- **`ending`:** `tail` (donde el nivel cae definitivamente por debajo del nivel típico menos 10 dB), `start` (el inicio del último compás antes de eso), `end` (el último momento por encima de −60 dBFS).
+- **Comprobado con** música sintética a 75, 97, 120 y 140 BPM (tempo con 0,1 BPM, pulsos con 10 ms, el patrón de 4 compases encontrado como bucle aunque saltos más cortos coinciden en timbre). Falta validarlo con camas reales.
+- Con `source` y la caché de TW-1608. **Errores:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_AUDIO`.
+
 ### `cubase_preview` (escribe un archivo, con dry run)
 
 Un archivo corto para escuchar antes de cambiar el proyecto (TW-1615): hasta 8 exportaciones, cada una colocada por su inicio en el proyecto y con su propia ganancia, mezcladas en un rango del proyecto de hasta 120 s, y escritas como WAV de 32 bits float en `Trackwright/previews/` (sin sobrescribir: el siguiente recibe `-2`). Por ejemplo, la exportación de la voz más la música atenuada alrededor de una primera palabra. El usuario lo escucha fuera de Cubase (Vista rápida en el Finder, o cualquier reproductor).
@@ -477,8 +488,9 @@ Planifica cómo baja la música bajo la voz (TW-1614), sin escribir nada. El mis
 
 Audio procesado para el proyecto, escrito en `Trackwright/renders/` (TW-1606). La API de Cubase no puede procesar el audio de una pista, así que una skill exporta la pista sola, procesa la exportación en Python e importa el resultado en una pista nueva, silenciando la original.
 
-- **Entrada:** `action` (`render` por defecto, o `list`); para `render`: `file` (ruta absoluta de la exportación), `start` (tiempo de proyecto de la primera muestra de la exportación: el inicio de su rango), `process` (`gain` o `duck`), `gain_db` (±40), `ducking` (para `duck`: el objeto de `cubase_ducking_plan`), `name` (por defecto `<pista u origen>-<proceso>`), `track` (la pista a la que sustituye el render), `skill` y `run_id` (quién renderiza, se guarda en la procedencia), `dry_run`.
+- **Entrada:** `action` (`render` por defecto, o `list`); para `render`: `file` (ruta absoluta de la exportación), `start` (tiempo de proyecto de la primera muestra de la exportación: el inicio de su rango), `process` (`gain`, `duck` o `bed`), `bed` (para `bed`: `loop_start`, `loop_end`, `ending_start`, `target_seconds`, `crossfade`), `gain_db` (±40), `ducking` (para `duck`: el objeto de `cubase_ducking_plan`), `name` (por defecto `<pista u origen>-<proceso>`), `track` (la pista a la que sustituye el render), `skill` y `run_id` (quién renderiza, se guarda en la procedencia), `dry_run`.
 - **`render`:** escribe `<nombre>.wav` (WAV de 32 bits float, con la frecuencia y los canales del origen) y `<nombre>.json`, la **procedencia**: ruta, tamaño y SHA-256 del origen, el proceso y sus parámetros, la posición en el proyecto, la pista a la que sustituye (nombre y uid), el SHA-256 y el pico del propio render, y la versión de Trackwright. Un render existente nunca se sobrescribe (Cubase puede seguir usándolo): el siguiente es `<nombre>-2.wav`. Necesita `[analysis] enabled` (lee audio, con su `max_seconds`) y `[workspace] enabled`, y el espacio de trabajo creado con `cubase_workspace`.
+- **`bed`** (TW-1617): una cama de música de `target_seconds` a partir del archivo de música: la intro `[0, loop_start)`, el bucle `[loop_start, loop_end)` repetido, y el final desde `ending_start` hasta el final del archivo, con un `crossfade` de igual potencia (0,01 s por defecto) en cada unión. Tantas repeticiones como quepan **sin pasarse** del objetivo, nunca estiradas en el tiempo: se indican el resultado y cuánto le falta (`short_by`). Los valores salen de `cubase_music_analysis` o del usuario.
 - **`duck`** (TW-1614): la exportación de la música (`file`, `start`) atenuada bajo la voz con la envolvente que `cubase_ducking_plan` muestra para el mismo objeto `ducking`; la procedencia guarda el objeto completo, el SHA-256 de la exportación de la voz, los rangos protegidos usados y el tiempo atenuado.
 - **Después:** crear una pista de audio (`cubase_add_track_interactive`), importar el render en ella con `cubase_import_audio` en la posición devuelta y silenciar la pista original (`cubase_set_track_mix`). En las opciones de importación de Cubase, desmarcar «Copiar archivo a carpeta del proyecto» (el render ya está en la carpeta del proyecto) y dejar desactivada la conversión a 24 bits.
 - **`list`:** cada render con su procedencia, la pista en la que se importó (de `state.json`), si esa pista sigue en el proyecto, y `problems`: el render cambió después de hacerse, su origen cambió o ya no está.

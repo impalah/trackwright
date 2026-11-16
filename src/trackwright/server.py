@@ -35,6 +35,7 @@ from trackwright.core.models import (
     InsertsOut,
     LaunchOut,
     LoudnessOut,
+    MusicAnalysisOut,
     ParameterOut,
     ParametersOut,
     PluginCatalogOut,
@@ -695,6 +696,21 @@ def build_server(service: CubaseService) -> MCPServer:
             lambda: service.preview(sources, start=start, end=end, name=name, skill=skill, dry_run=dry_run)
         )
 
+    # ------------------------------------------------------------------ music beds (TW-1617)
+    @server.tool(
+        annotations=READ,
+        description="Analyze a music file for a bed, read-only: tempo (BPM, with a confidence: ambient music may "
+        "have no usable beat), loop candidates before the ending (whole bars, on beats moved to zero crossings, "
+        "each with a seam score in timbre and harmony and a suggested crossfade), and the ending (where the last "
+        "phrase starts and where the level falls for good). A bed of a given length is then rendered with "
+        "cubase_render (process 'bed'), never time-stretched. Needs [analysis] enabled.",
+    )
+    async def cubase_music_analysis(
+        file: Annotated[str, Field(description="absolute path of the music file")],
+        top: Annotated[int, Field(ge=1, le=20, description="loop candidates to return")] = 5,
+    ) -> MusicAnalysisOut:
+        return await run(lambda: service.music_analysis(file, top=top))
+
     # ------------------------------------------------------------------ renders (TW-1606)
     @server.tool(
         annotations=WRITE,
@@ -705,14 +721,22 @@ def build_server(service: CubaseService) -> MCPServer:
         "the given position with cubase_import_audio, which checks the position and records the track in "
         "state.json, and mute the original. 'list' shows the renders, where they were imported and whether "
         "the render or its source changed. Processes: gain (gain_db); duck (the music ducked under the voice, "
-        "from a ducking specification: see cubase_ducking_plan).",
+        "from a ducking specification: see cubase_ducking_plan); bed (a music bed of a given length: intro, the "
+        "loop repeated, the ending, never stretched; see cubase_music_analysis).",
     )
     async def cubase_render(
         action: Annotated[Literal["render", "list"], Field(description="render (write) or list (read)")] = "render",
         file: Annotated[str | None, Field(description="render: absolute path of the export to process")] = None,
         start: Annotated[str, Field(description="project time of the export's first sample (seconds)")] = "0",
-        process: Annotated[Literal["gain", "duck"], Field(description="what to do to the audio")] = "gain",
+        process: Annotated[Literal["gain", "duck", "bed"], Field(description="what to do to the audio")] = "gain",
         gain_db: Annotated[float, Field(ge=-40, le=40, description="gain: dB to apply")] = 0.0,
+        bed: Annotated[
+            dict[str, Any] | None,
+            Field(
+                description="bed: loop_start, loop_end, ending_start (seconds in the music file, from "
+                "cubase_music_analysis or the user), target_seconds, crossfade (default 0.01 s)"
+            ),
+        ] = None,
         ducking: Annotated[
             dict[str, Any] | None,
             Field(
@@ -733,8 +757,8 @@ def build_server(service: CubaseService) -> MCPServer:
     ) -> RenderOut:
         return await run(
             lambda: service.render(
-                action, file=file, start=start, process=process, gain_db=gain_db, ducking=ducking, name=name,
-                track=track, skill=skill, run=run_id, dry_run=dry_run,
+                action, file=file, start=start, process=process, gain_db=gain_db, ducking=ducking, bed=bed,
+                name=name, track=track, skill=skill, run=run_id, dry_run=dry_run,
             )
         )  # fmt: skip
 

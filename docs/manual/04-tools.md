@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 43 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 44 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -453,6 +453,17 @@ Show, episode and delivery profiles (TW-1607). Three layers, each overriding the
   Spotify's −14 LUFS is on its music page, not for podcasts, so it is not used. A show can add a host with `delivery.profiles.<name>` and the user's source.
 - **Errors:** `WORKSPACE_DISABLED`, `NO_PROJECT_FOLDER`, `NO_WORKSPACE`, `NOT_FOUND` (a show), `BAD_PROFILE`, `BAD_REQUEST`.
 
+### `cubase_music_analysis` (read, needs `[analysis] enabled`)
+
+Analyzes a music file for a bed (TW-1617), without writing anything.
+
+- **Input:** `file`, `top` (loop candidates to return, 5).
+- **Tempo:** spectral-flux onsets, their autocorrelation between 60 and 180 BPM, and a beat grid fitted to the onset peaks. `tempo_confidence` under 0.3 means no usable beat (ambient music): loop lengths are then whole seconds and must be checked by ear.
+- **Loops** (only before the ending): lengths in whole bars of 4 beats, cut points on beats moved to the nearest zero crossing within 5 ms. Each has a `score` (0..1): the music just after the end must continue like the music just after the start, and just before them alike, in timbre (24 bands) **and** harmony (chroma, 12 pitch classes); the lower of the two counts, so a jump between two chords is caught. Among equally good seams, the shortest first (they fit a target length more finely). `crossfade`: a suggestion from the level jump at the seam (0 when it matches).
+- **`ending`:** `tail` (where the level falls for good below the typical level minus 10 dB), `start` (the beginning of the last bar before it), `end` (the last moment above −60 dBFS).
+- **Checked on** synthetic music at 75, 97, 120 and 140 BPM (tempo within 0.1 BPM, beats within 10 ms, the 4-bar pattern found as the loop although shorter jumps match in timbre). Validation on real beds is pending.
+- With `source` and the cache of TW-1608. **Errors:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_AUDIO`.
+
 ### `cubase_preview` (writes a file, with dry run)
 
 A short file to listen to before changing the project (TW-1615): up to 8 exports, each placed by its project start and with its own gain, mixed over a project range of up to 120 s, and written as a 32-bit float WAV to `Trackwright/previews/` (never overwriting: the next one gets `-2`). For example, the voice export plus the ducked music around a first word. The user listens to it outside Cubase (Quick Look in the Finder, or any player).
@@ -477,8 +488,9 @@ Plans how the music goes down under the voice (TW-1614), without writing anythin
 
 Processed audio for the project, written to `Trackwright/renders/` (TW-1606). Cubase's API cannot process a track's audio, so a skill exports the track alone, processes the export in Python, and imports the result on a new track, muting the original.
 
-- **Input:** `action` (`render` by default, or `list`); for `render`: `file` (absolute path of the export), `start` (project time of the export's first sample: its range start), `process` (`gain` or `duck`), `gain_db` (±40), `ducking` (for `duck`: the object of `cubase_ducking_plan`), `name` (default `<track or source>-<process>`), `track` (the track the render replaces), `skill` and `run_id` (who renders, recorded in the provenance), `dry_run`.
+- **Input:** `action` (`render` by default, or `list`); for `render`: `file` (absolute path of the export), `start` (project time of the export's first sample: its range start), `process` (`gain`, `duck` or `bed`), `bed` (for `bed`: `loop_start`, `loop_end`, `ending_start`, `target_seconds`, `crossfade`), `gain_db` (±40), `ducking` (for `duck`: the object of `cubase_ducking_plan`), `name` (default `<track or source>-<process>`), `track` (the track the render replaces), `skill` and `run_id` (who renders, recorded in the provenance), `dry_run`.
 - **`render`:** writes `<name>.wav` (32-bit float WAV, the source's rate and channels) and `<name>.json`, the **provenance**: the source's path, size and SHA-256, the process and its parameters, the project position, the track it replaces (name and uid), the render's own SHA-256 and peak, and the Trackwright version. An existing render is never overwritten (Cubase may still reference it): the next one is `<name>-2.wav`. Needs `[analysis] enabled` (it reads audio, with its `max_seconds`) and `[workspace] enabled`, and the workspace created with `cubase_workspace`.
+- **`bed`** (TW-1617): a music bed of `target_seconds` from the music file: intro `[0, loop_start)`, the loop `[loop_start, loop_end)` repeated, and the ending from `ending_start` to the end of the file, with an equal-power `crossfade` (0.01 s by default) at every seam. As many repeats as fit **without going over** the target, never time-stretched: the result and how much shorter it is are reported (`short_by`). The values come from `cubase_music_analysis` or from the user.
 - **`duck`** (TW-1614): the music export (`file`, `start`) ducked under the voice with the envelope `cubase_ducking_plan` shows for the same `ducking` object; the provenance stores the whole object, the voice export's SHA-256, the protected ranges used and the ducked time.
 - **Then:** create an audio track (`cubase_add_track_interactive`), import the render on it with `cubase_import_audio` at the position returned, and mute the original track (`cubase_set_track_mix`). In Cubase's import options, untick "Copy file to project folder" (the render already is in the project folder) and leave the 24-bit conversion off.
 - **`list`:** every render with its provenance, the track it was imported on (from `state.json`), whether that track is still in the project, and `problems`: the render changed after it was made, its source changed or is gone.

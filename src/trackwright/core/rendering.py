@@ -8,7 +8,8 @@ enabled``; writing the render needs ``[workspace] enabled`` and an existing work
 Cubase except, with ``track``, reading that track's name and uid.
 
 Processes: ``gain`` (``gain_db``) and ``duck`` (TW-1614: the music under the voice, from a ``ducking``
-specification; see :mod:`trackwright.core.ducking`). Other skills (leveling) add theirs here.
+specification; see :mod:`trackwright.core.ducking`) and ``bed`` (TW-1617: a music bed of a given length, see
+:mod:`trackwright.analysis.music`). Other skills (leveling) add theirs here.
 """
 
 from __future__ import annotations
@@ -19,10 +20,12 @@ from pathlib import Path
 from typing import Literal
 
 import numpy as np
+import soundfile as sf
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from trackwright import __version__
 from trackwright.analysis import decoded, probe
+from trackwright.analysis.music import BedPlan, Ending, Loop, plan_bed, render_bed
 from trackwright.core.analyzing import AnalyzingMixin
 from trackwright.core.ducking import DuckingMixin, DuckingSpec, parse_spec
 from trackwright.core.models import PreviewOut, RenderItemOut, RenderOut
@@ -54,6 +57,36 @@ from trackwright.renders import (
 from trackwright.workspace import Workspace
 
 
+class BedSpec(BaseModel):
+    """A bed of a given length from a music file (TW-1617): intro, the loop repeated, the ending."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    loop_start: float = Field(ge=0, description="seconds in the music file")
+    loop_end: float = Field(gt=0)
+    ending_start: float = Field(ge=0, description="where the ending starts (after the loop)")
+    target_seconds: float = Field(gt=0, le=3 * 3600, description="the bed's length; never exceeded")
+    crossfade: float = Field(default=0.01, ge=0, le=4, description="equal-power crossfade at every seam")
+
+
+def parse_bed(raw: JsonObject | None) -> BedSpec:
+    if raw is None:
+        raise PreconditionFailedError("give the bed (loop_start, loop_end, ending_start, target_seconds)",
+                                      code="BAD_REQUEST")  # fmt: skip
+    try:
+        bed = BedSpec.model_validate(raw)
+    except ValidationError as exc:
+        raise PreconditionFailedError("not a valid bed", code="BAD_REQUEST",
+                                      details={"reason": str(exc)[:500]}) from exc  # fmt: skip
+    if bed.loop_end <= bed.loop_start:
+        raise PreconditionFailedError("loop_end must be after loop_start", code="BAD_REQUEST")
+    if bed.ending_start < bed.loop_end:
+        raise PreconditionFailedError("the ending must start after the loop ends", code="BAD_REQUEST")
+    if bed.crossfade * 2 >= bed.loop_end - bed.loop_start:
+        raise PreconditionFailedError("the crossfade is too long for the loop", code="BAD_REQUEST")
+    return bed
+
+
 class PreviewSource(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -62,7 +95,7 @@ class PreviewSource(BaseModel):
     gain_db: float = Field(default=0.0, ge=-60, le=24)
 
 
-PROCESSES = ("gain", "duck")
+PROCESSES = ("gain", "duck", "bed")
 MAX_PREVIEW_SOURCES = 8
 MAX_PREVIEW_SECONDS = 120.0
 PREVIEWS = "previews"
@@ -103,6 +136,7 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         process: str = "gain",
         gain_db: float = 0.0,
         ducking: JsonObject | None = None,
+        bed: JsonObject | None = None,
         name: str | None = None,
         track: str | None = None,
         skill: str = "manual",
@@ -118,16 +152,14 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         self._check_render_request(file, process, gain_db, skill)
         assert file is not None  # checked above
         spec = parse_spec(ducking) if process == "duck" else None
+        bed_spec = parse_bed(bed) if process == "bed" else None
         source = self._audio_path(file)
         if not source.is_file():
             raise NotFoundError(f"not a file: {source}", code="NOT_FOUND")
         position = parse_seconds(start)
         if position is None:
             raise PreconditionFailedError("start looks like '2.5', '1:30' or '0:01:30.000'", code="BAD_TIME")
-        replaced: JsonObject | None = None
-        if track is not None:
-            info = self.track_info(self.resolve_track(TrackSelector.parse(track)))
-            replaced = {"name": info.name, "uid": info.uid}
+        replaced = self._replaced_track(track)
         space = self._render_workspace()
         folder = space.path / RENDERS
         base = (name.removesuffix(".wav") if name else None) or "-".join(
@@ -139,6 +171,9 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
         self.policy.check_analysis(info_in.seconds)
         run_id = run or datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
         effect, parameters, duck_notes = self._render_effect(spec, gain_db, position, info_in.seconds, info_in.rate)
+        bed_plan = None
+        if bed_spec is not None:
+            bed_plan, parameters, duck_notes = self._bed_plan(bed_spec, info_in.seconds)
         out = RenderOut(action="render", dry_run=dry_run, status="planned", workspace=str(space.path))
         notes = out.notes
         notes += duck_notes
@@ -146,7 +181,8 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
             out.render = RenderItemOut(
                 file=str(target), provenance=str(provenance_path(target)), skill=skill, run=run_id,
                 process=process, parameters=parameters, position=format_seconds(position),
-                position_seconds=position, seconds=round(info_in.seconds, 4), sample_rate=info_in.rate,
+                position_seconds=position, seconds=bed_plan.seconds if bed_plan else round(info_in.seconds, 4),
+                sample_rate=info_in.rate,
                 channels=info_in.channels, peak_dbfs=None, replaces=replaced["name"] if replaced else None,
                 source=str(source),
             )  # fmt: skip
@@ -163,7 +199,7 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
                 path=str(source), sha256=sha256(source), size=source.stat().st_size,
                 seconds=round(info_in.seconds, 6), rate=info_in.rate, channels=info_in.channels,
             )  # fmt: skip
-            _, peak = render_file(readable, target, effect)
+            peak = self._write_render(readable, target, effect, bed_plan)
         written = probe(target)
         provenance = Provenance(
             file=target.name,
@@ -211,6 +247,37 @@ class RenderingMixin(DuckingMixin, AnalyzingMixin):
             raise PreconditionFailedError(f"gain_db must be within ±{MAX_GAIN_DB:.0f} dB", code="BAD_REQUEST")
         if not skill.strip():
             raise PreconditionFailedError("skill cannot be empty", code="BAD_REQUEST")
+
+    def _replaced_track(self, track: str | None) -> JsonObject | None:
+        """Name and uid of the track a render replaces, when given."""
+        if track is None:
+            return None
+        info = self.track_info(self.resolve_track(TrackSelector.parse(track)))
+        return {"name": info.name, "uid": info.uid}
+
+    @staticmethod
+    def _bed_plan(bed: BedSpec, total: float) -> tuple[BedPlan, JsonObject, list[str]]:
+        """Intro, the loop repeated and the ending, as near the target as the loop allows (TW-1617)."""
+        if bed.ending_start >= total:
+            raise PreconditionFailedError("the ending starts after the end of the file", code="BAD_REQUEST")
+        plan = plan_bed(Loop(bed.loop_start, bed.loop_end, 1.0, bed.crossfade),
+                        Ending(bed.ending_start, bed.ending_start, total), total, bed.target_seconds)  # fmt: skip
+        short = round(bed.target_seconds - plan.seconds, 3)
+        parameters: JsonObject = {**bed.model_dump(mode="json"), "repeats": plan.repeats, "seconds": plan.seconds,
+                                  "short_by": short}  # fmt: skip
+        note = f"{plan.repeats} repeats of the loop: {plan.seconds:g} s, {short:g} s short of the target (no stretch)"
+        return plan, parameters, [note]
+
+    @staticmethod
+    def _write_render(readable: Path, target: Path, effect: Process, bed: BedPlan | None) -> float:
+        """Write the render; return its sample peak (linear)."""
+        if bed is None:
+            _, peak = render_file(readable, target, effect)
+            return peak
+        data, rate = sf.read(str(readable), dtype="float64", always_2d=True)  # a bed is minutes, not hours
+        rendered = render_bed(data, rate, bed)
+        write_audio(target, rendered, rate)
+        return float(np.abs(rendered).max(initial=0.0))
 
     def _render_effect(
         self, spec: DuckingSpec | None, gain_db: float, position: float, seconds: float, rate: int

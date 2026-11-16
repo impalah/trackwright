@@ -657,6 +657,37 @@ class PreviewOut(_Out):
     notes: list[str] = Field(default_factory=list)
 
 
+class LoopOut(_Out):
+    start: float = Field(description="seconds in the file (on a beat, moved to a zero crossing)")
+    end: float
+    seconds: float
+    bars: int | None = Field(description="whole bars of 4 beats; null without a usable beat")
+    score: float = Field(description="0..1: how invisible the jump from end back to start is (timbre and harmony)")
+    crossfade: float = Field(description="suggested crossfade at the seam, seconds (0: none needed)")
+
+
+class EndingOut(_Out):
+    start: float = Field(description="where the ending (the last phrase before the fall) starts, seconds")
+    tail: float = Field(description="where the level starts falling for good")
+    end: float = Field(description="the last moment with sound (above -60 dBFS)")
+
+
+class MusicAnalysisOut(_Out):
+    file: str
+    sample_rate: int
+    channels: int
+    seconds: float
+    bpm: float | None = Field(description="estimated tempo")
+    tempo_confidence: float = Field(description="0..1; under 0.3 there is no usable beat")
+    beats: int = Field(description="number of beats found")
+    first_beat: float | None
+    loops: list[LoopOut] = Field(description="loop candidates before the ending, best seams first")
+    ending: EndingOut | None
+    source: AudioSourceOut | None = None
+    cache: AnalysisCacheState = "off"
+    notes: list[str] = Field(default_factory=list)
+
+
 class SpeechRegionOut(_Out):
     start: str = Field(description="project time, h:mm:ss.mmm")
     end: str
