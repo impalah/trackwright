@@ -490,11 +490,11 @@ Diagnoses a voice recording (TW-1623), without treating anything.
 - **Input:** `file` (the export of **one voice track alone**) and `start` (its range start, so the times are project times).
 - **How:** one pass in 30 s blocks (a 46-minute episode in about 5 s), with the speech regions of the voice. Each finding has `detected`, `severity` (`none`, `mild`, `moderate`, `strong`), a `confidence` (0 to 1: how much the data supports it, not how bad it is), `measures`, `times` (where to listen, strongest first, up to 20) and a `note`:
   - **`spectrum`:** the long-term speech spectrum in six bands (rumble 20–80 Hz, low, body, presence, sibilance 4–10 kHz, air), in dB relative to the whole;
-  - **`hum`:** peaks at 50 or 60 Hz and five harmonics against the spectrum 5–15 Hz around each, measured in the pauses (frames of 0.68 s); with no pauses long enough, measured over everything, and then the mains fundamental must stand out itself (a voice's harmonics make peaks too);
+  - **`hum`:** peaks at 50 or 60 Hz and five harmonics against the spectrum 5–15 Hz around each, measured in the pauses (frames of 0.68 s), with each harmonic's prominence (`h1_db`…`h6_db`, for the notches a cleanup needs); with no pauses long enough, measured over everything, and then the mains fundamental must stand out itself (a voice's harmonics make peaks too);
   - **`noise`:** the signal-to-noise ratio (typical speech level against the floor of the pauses: under 25 dB strong, 35 moderate, 45 mild) and the floor's colour (rumble, hiss, broadband);
   - **`plosives`:** bursts under 80 Hz that carry more than half the energy of a 10 ms window inside speech;
   - **`clicks`:** transients above 3 kHz more than 30 times their surroundings and 12 times their own 10 ms window, near speech and no more than 30 dB under the typical speech level; mild from 2 a minute;
-  - **`sibilance`:** windows where 5–10 kHz is as loud as typical speech;
+  - **`sibilance`:** windows where 5–10 kHz is as loud as typical speech; `band_low_hz` and `band_high_hz` give where the esses' energy lies (the sixth-octave bands within 3 dB of the strongest, over the frames where 5–10 kHz outweighs 1–4 kHz: often flat over several kHz, so a band and not a peak), for a de-esser;
   - **`reverb`:** the time to fall from 5 to 25 dB below each phrase's last loud moment, scaled to a T60 (the voice's own fall counts too: an estimate).
 - **The thresholds** are starting values, chosen on synthetic faults and checked on a whole real episode with the user listening (see the verification log): listen to the `times` before treating anything.
 - **Errors:** `NOT_FOUND`, `ANALYSIS_DISABLED`.

@@ -122,6 +122,15 @@ Places sound effects from your licensed library at the points you choose, and ga
 - **The point is yours:** it never moves an effect. Over speech or over another effect, it tells you so.
 - **What it changes, after your yes:** each effect on an effects track at its point; its licence recorded, and `Trackwright/credits.md` with the credits to paste into the episode notes.
 
+## `podcast-voice-cleanup`
+
+Diagnoses a voice and cleans what it finds, gently, with the plugins you have.
+
+- **Ask for it like this:** "this voice has hum", "the esses are harsh", "clean up the guest's track", "what is wrong with this recording?".
+- **How:** it exports the voice and measures hum, rumble, noise, plosives, clicks, sibilance and reverb, each with how sure it is and the moments to listen to. Then it proposes a treatment for each problem found, only with the plugins it finds installed: StudioEQ notches for hum, a high-pass for rumble and plosives, DeEsser for harsh esses, and `noise-gate` for noise in the pauses. It names the risk of each.
+- **You try it first:** the plugins go in with Bypass on; you play the problem moments in Cubase and toggle it.
+- **What it changes, after your yes:** the plugins stay active. A new export measures the improvement and checks that the voice keeps its body. Clicks and reverb are reported with their times, not treated.
+
 ## `podcast-silence-trim`
 
 Finds the silences longer than a duration and removes them, closing the gaps so the episode gets shorter.

@@ -122,6 +122,15 @@ Coloca efectos de sonido de tu biblioteca con licencia en los puntos que elijas,
 - **El punto es tuyo:** nunca mueve un efecto. Si cae sobre habla o sobre otro efecto, te lo dice.
 - **Qué cambia, tras tu sí:** cada efecto en una pista de efectos en su punto; su licencia registrada, y `Trackwright/credits.md` con los créditos para pegar en las notas del episodio.
 
+## `podcast-voice-cleanup`
+
+Diagnostica una voz y limpia lo que encuentra, con suavidad, con los plugins que tienes.
+
+- **Pídelo así:** «esta voz tiene zumbido», «las eses son ásperas», «limpia la pista del invitado», «¿qué le pasa a esta grabación?».
+- **Cómo:** exporta la voz y mide zumbido, retumbe, ruido, plosivas, clics, sibilancia y reverberación, cada uno con lo seguro que está y los momentos para escuchar. Después propone un tratamiento para cada problema encontrado, solo con los plugins que encuentra instalados: muescas de StudioEQ para el zumbido, un paso alto para retumbe y plosivas, DeEsser para las eses ásperas y `noise-gate` para el ruido de las pausas. Nombra el riesgo de cada uno.
+- **Lo pruebas antes:** los plugins entran con Bypass activado; reproduces en Cubase los momentos del problema y lo alternas.
+- **Qué cambia, tras tu sí:** los plugins quedan activos. Una exportación nueva mide la mejora y comprueba que la voz conserva su cuerpo. Los clics y la reverberación se informan con sus tiempos, sin tratarlos.
+
 ## `podcast-silence-trim`
 
 Encuentra los silencios más largos que una duración y los quita, cerrando los huecos para que el episodio sea más corto.

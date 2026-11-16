@@ -101,6 +101,10 @@ def test_each_fault_is_found_in_its_case_only(cases: dict[str, VoiceDiagnosis], 
 def test_the_measures(cases: dict[str, VoiceDiagnosis]) -> None:
     hum = finding(cases["hum"], "hum")
     assert (hum.measures["mains_hz"], hum.measures["measured_on"]) == (50, "pauses")
+    assert all(hum.measures[f"h{k}_db"] > 10 for k in range(1, 5))  # type: ignore[operator]  # four injected
+    sibilant = finding(cases["sibilance"], "sibilance").measures
+    assert 4700 <= sibilant["band_low_hz"] <= 6000  # type: ignore[operator]  # the injected noise: 5.5-9 kHz
+    assert 8000 <= sibilant["band_high_hz"] <= 10600  # type: ignore[operator]
     assert finding(cases["clean"], "noise").measures["snr_db"] > 45  # type: ignore[operator]
     assert finding(cases["noisy"], "noise").measures["snr_db"] < 35  # type: ignore[operator]
     assert finding(cases["reverb"], "reverb").measures["t60_s"] == pytest.approx(0.9, abs=0.3)

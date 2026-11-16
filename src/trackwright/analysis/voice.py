@@ -19,6 +19,7 @@ they are not standards. The confidence says how much the data supports each find
 
 from __future__ import annotations
 
+import itertools
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -157,6 +158,9 @@ def _read(path: Path, regions: Sequence[Span]) -> tuple[dict[str, Array], Array,
     speech_frames = pause_frames = 0
     speech_spans = [(a, b) for a, b in regions]
     window_l, window_h = np.hanning(LTAS_FRAME), np.hanning(HUM_FRAME)
+    freqs_l = np.fft.rfftfreq(LTAS_FRAME, 1 / rate)
+    sib_bins, mid_bins = (freqs_l >= 5000) & (freqs_l <= 10000), (freqs_l >= 1000) & (freqs_l <= 4000)
+    sibilant_power = np.zeros(LTAS_FRAME // 2 + 1)
     frames_total = info.frames
     ltas_mask = _mask(speech_spans, frames_total // LTAS_FRAME + 1, LTAS_FRAME / rate)
     hum_mask = _mask(speech_spans, frames_total // HUM_FRAME + 1, HUM_FRAME / rate, pad=0.15)
@@ -173,8 +177,11 @@ def _read(path: Path, regions: Sequence[Span]) -> tuple[dict[str, Array], Array,
         env.hp_rms.append(np.sqrt((hp * hp).mean(axis=1)) if len(hp) else np.zeros(0))
         for i, frame in ltas.feed(x):
             if i < len(ltas_mask) and ltas_mask[i]:
-                speech_power += np.abs(np.fft.rfft(frame * window_l)) ** 2
+                power = np.abs(np.fft.rfft(frame * window_l)) ** 2
+                speech_power += power
                 speech_frames += 1
+                if power[sib_bins].sum() > power[mid_bins].sum():  # an "s": where the esses sit (TW-1624)
+                    sibilant_power += power
         for i, frame in hum.feed(x):
             power = np.abs(np.fft.rfft(frame * window_h)) ** 2
             all_power += power
@@ -184,6 +191,7 @@ def _read(path: Path, regions: Sequence[Span]) -> tuple[dict[str, Array], Array,
     envelopes = {k: (np.concatenate(v) if v else np.zeros(0)) for k, v in vars_of(env).items()}
     hum_spectrum = pause_power / pause_frames if pause_frames else all_power / max(1, hum.index)
     speech_spectrum = speech_power / max(1, speech_frames)
+    envelopes["sibilant_spectrum"] = sibilant_power
     return envelopes, speech_spectrum, hum_spectrum, rate, pause_frames, frames_total / rate
 
 
@@ -285,6 +293,8 @@ def hum_finding(spectrum: Array, rate: int, pause_frames: int) -> Finding:
             "prominence_db": round(top, 1),
             "harmonics": len(strong),
             "measured_on": "pauses" if pause_frames else "everything",
+            # TW-1624: each harmonic's prominence, so a cleanup knows which ones need a notch
+            **{f"h{k}_db": round(p, 1) for k, p in enumerate(prominences, start=1)},
         },
         note=f"peaks at {base} Hz and its harmonics above the spectrum around them"
         if detected
@@ -369,12 +379,38 @@ def click_finding(
     )
 
 
-def sibilance_finding(env: dict[str, Array], speech: npt.NDArray[np.bool_], minutes: float) -> Finding:
+def _sibilant_band(spectrum: Array, rate: int) -> tuple[float | None, float | None]:
+    """Where the esses' energy lies (TW-1624, for a de-esser's band): the sixth-octave bands from 3 to 14 kHz
+    within 3 dB of the strongest, over the frames where 5-10 kHz outweighs 1-4 kHz. A voice's esses are often
+    flat over several kHz (E0004: 3-10 kHz within 3 dB), so this is a band, not a peak."""
+    if not spectrum.any():
+        return None, None
+    freqs = np.fft.rfftfreq(LTAS_FRAME, 1 / rate)
+    edges = 3000 * 2 ** (np.arange(0, 14) / 6)
+    edges = edges[edges < min(14000, rate / 2)]
+    levels = []
+    for lo, hi in itertools.pairwise(edges):
+        inside = spectrum[(freqs >= lo) & (freqs < hi)]
+        levels.append(_db(float(inside.mean())) if len(inside) else -np.inf)
+    if not levels:
+        return None, None
+    strong = [i for i, level in enumerate(levels) if level >= max(levels) - 3]
+    return round(float(edges[strong[0]]), -1), round(float(edges[strong[-1] + 1]), -1)
+
+
+def sibilance_finding(
+    env: dict[str, Array],
+    speech: npt.NDArray[np.bool_],
+    minutes: float,
+    spectrum: Array | None = None,
+    rate: int = 48000,
+) -> Finding:
     sib, total = env["sib"], env["total"]
     n = min(len(sib), len(total), len(speech))
     sib, total, speech = sib[:n], total[:n], speech[:n]
     if not speech.any():
         return Finding("sibilance", False, "none", 0.0, note="no speech")
+    low_hz, high_hz = _sibilant_band(spectrum, rate) if spectrum is not None else (None, None)
     reference = float(np.median(total[speech]))
     flags = speech & (sib > reference)
     events = _events(flags, 10 * np.log10(np.maximum(sib, EPS) / max(reference, EPS)))
@@ -385,7 +421,12 @@ def sibilance_finding(env: dict[str, Array], speech: npt.NDArray[np.bool_], minu
         severity != "none",
         severity,
         0.6,
-        measures={"count": len(events), "per_minute": round(per_minute, 2)},
+        measures={
+            "count": len(events),
+            "per_minute": round(per_minute, 2),
+            "band_low_hz": low_hz,
+            "band_high_hz": high_hz,
+        },
         times=_times(events),
         note="windows where 5-10 kHz is as loud as typical speech (harsh 's' and 'sh')",
     )
@@ -460,7 +501,7 @@ def diagnose(path: Path, regions: Sequence[Span], floor_db: float | None, speech
         noise_finding(floor_db, speech_db, hum_spectrum, rate, pause_frames),
         plosive_finding(env, speech, minutes),
         click_finding(env, near, speech, minutes, floor),
-        sibilance_finding(env, speech, minutes),
+        sibilance_finding(env, speech, minutes, env["sibilant_spectrum"], rate),
         reverb_finding(env["total"], sorted(regions), _quietest(env["total"])),
     ]
     return VoiceDiagnosis(round(seconds, 3), rate, speech_seconds, findings)
