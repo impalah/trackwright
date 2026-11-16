@@ -201,7 +201,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1622 Skill `podcast-dialogue-leveling`
 
-- **Estado:** código hecho (2026-11-16), falta probarlo en directo: `analysis/leveling.py` (sonoridad con ponderación K solo sobre el habla en pasos de 10 ms, segmentos, el exceso sobre la tolerancia, límites, rampas en las pausas), la herramienta `cubase_leveling_plan`, el proceso `level` de `cubase_render` y la skill (compresión opcional, con las herramientas existentes). Tests en `tests/unit/test_leveling_tw1622.py`
+- **Estado:** hecho (2026-11-16), ejecutada en el proyecto de pruebas con dos voces (ver el registro de verificación): `analysis/leveling.py` (sonoridad con ponderación K solo sobre el habla en pasos de 10 ms, segmentos, el exceso sobre la tolerancia, límites, rampas en las pausas), la herramienta `cubase_leveling_plan`, el proceso `level` de `cubase_render` y la skill (compresión opcional, con las herramientas existentes). Tests en `tests/unit/test_leveling_tw1622.py`
 - **Alcance:** sonoridad con puerta de voz por región y por persona, distinguiendo diferencias entre personas, entre tomas y dentro de una intervención; ganancias acotadas (±6 dB por defecto) que conservan susurros, risas y énfasis; pistas niveladas renderizadas e importadas; compresión moderada opcional con Compressor; fragmentos representativos comparados antes y después. Nunca todas las frases al mismo valor.
 
 ### TW-1623 Diagnóstico de la voz

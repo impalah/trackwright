@@ -622,3 +622,9 @@ Cubase Elements 15.0.30, script 1.6.1, test project, `TRACKWRIGHT_TEST_TRACK=POC
 - `cubase_render` `clip` (48 kHz, −2.6 dB, a 20 ms fade out: the sound reaches the end of the file), peak −5.56 dBFS. `cubase_preview` 15.0–21.4 s with the voice: the user: "sounds good". New stereo track `Effects`, imported at 18.000 without a copy (edges 18.000 and 18.400, `verified: true`). The licence recorded under `renders/effect-1-door.wav`, merged with the import's track and position.
 - A second effect planned on top (`Keyboard click` at 18.2 s, not placed): `overlaps` names the door, 18.0–18.4 s on the `Effects` track, with the note to use another track or move it.
 - `cubase_workspace` `credits`: `Trackwright/credits.md` with the two licensed sounds of the project (the transition's whoosh at 0:21.480, the door at 0:18.000); none asks for a credit.
+
+## 2026-11-16 — TW-1622: `podcast-dialogue-leveling` on the test project
+
+- Voices: TW1501 alone (the `transitions-voices` export, 0–140 s) and TW1507 alone (`leveling-TW1507`, exported with `include_muted`, the track is muted since TW-1606). `cubase_leveling_plan` with the defaults: target −17.28 LUFS (the median of the two), TW1501 −13.86 LUFS → −3.42 dB, TW1507 −20.70 LUFS → +3.42 dB.
+- Segments: TW1501's first (5.99–10.18 s) 3.33 dB under its voice → +1.33 dB of its own (the excess over 2 dB), total −2.09; the others within the tolerance. TW1507's second (10.99–17.91 s) 18.46 dB under its voice: it wanted +19.9 dB, bounded to +6.0 (reported, not forced); its 1.2 s phrase at 41 s only the voice's gain.
+- Renders `level` of both; previews 0–30 s with both voices: before −19.6 / −24.9 dB (5.3 dB apart), after −22.8 / −21.4 dB (1.4 dB). The user: "the after one is better". New stereo tracks `TW1501 leveled` and `TW1507 leveled`, imported at 0 without a copy (end edges 2:20.000, `verified: true`); TW1501 muted (`verified: true`), TW1507 already was.
