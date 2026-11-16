@@ -2,7 +2,7 @@
 
 [English](04-tools.md) · **Español**
 
-El servidor `trackwright` publica 40 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 41 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 Trackwright aspira a admitir varios DAW, pero hoy solo implementa **Cubase**. Por eso todas las herramientas se llaman `cubase_*` y esta página describe el comportamiento de Cubase: se verificó contra Cubase Elements 15.0.30, con scripts de experimento y desde Claude Code (ver el [registro de verificación](../verification.es.md)). Cualquier cliente MCP recibe las mismas herramientas. Otro DAW tendría su propio conjunto de herramientas; ver [Extensión a otros DAW](../architecture.es.md#extensión-a-otros-daw-posible-no-implementada).
 
@@ -482,6 +482,16 @@ Control de calidad final de un archivo de episodio, el entregado o una exportaci
 - **`verdict`:** `fail` cuando falló alguna comprobación. `source` dice qué archivo se midió (TW-1608).
 - **`report`:** escribe además `Trackwright/reports/qc-<archivo>-<hora>.json` y `.md`; necesita `[workspace] enabled` y el espacio de trabajo creado.
 - **Errores:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST` (un destino desconocido), `WORKSPACE_DISABLED`, `NO_WORKSPACE`, `NO_PROJECT_FOLDER`.
+
+### `cubase_delivery_plan` (lectura, necesita `[analysis] enabled`)
+
+Qué poner en Stereo Out para entregar la mezcla a un perfil de entrega (TW-1613), a partir de una exportación maestra y del fader actual. No cambia nada: la skill `podcast-delivery` aplica el plan con `cubase_set_parameter` y `cubase_insert_plugin` después de que el usuario lo apruebe.
+
+- **Entrada:** `file` (la maestra: una exportación WAV del episodio entero), `target` (un perfil de entrega), `codec` (el formato a entregar: `mp3`, `aac`, `wav`; por defecto el primero del perfil).
+- **Salida:** la sonoridad, la tolerancia y el techo del destino con su `source`; la sonoridad integrada y el pico real de la maestra; `fader_now_db`, `gain_db` (objetivo − medido) y `fader_db` (el valor a aplicar); `reachable` (false cuando pasaría de los +6,02 dB del fader); `predicted_lufs` y `predicted_true_peak` del archivo entregado antes de cualquier limitador; `limiter`, `threshold_db` y `peak_reduction_db` cuando se pasaría del techo; `limiter_slot` (la ranura 7 u 8 de Stereo Out, reutilizando un limitador que ya esté allí).
+- **Las cifras en que se basa** (TW-1612, `experiments/tw1612/`): el fader mueve la sonoridad exactamente lo que vale su ganancia; las ranuras 1–6 están antes del fader y las 7–8 después, así que un limitador en 1–6 no es un techo en cuanto el fader sube el nivel (se avisa cuando hay uno); el Brickwall Limiter deja pasar 0,24 dB de picos entre muestras; el MP3 de 128 kbps subió el pico real 0,82 dB (se usa también para AAC, con un aviso: no medido). El umbral es el techo menos ambos márgenes, redondeado hacia abajo a 0,1 dB.
+- **Avisos:** un objetivo que el fader no alcanza; más de 6 dB de reducción de picos (trabajo para compresión o nivelado antes); la sonoridad que se lleva el limitador (contar con una segunda pasada); un perfil sin objetivo de sonoridad o sin techo; las ranuras 7 y 8 ocupadas por otros plugins.
+- **Errores:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_AUDIO` (una maestra en silencio), `BAD_REQUEST` (un destino desconocido, un fader en −∞).
 
 ### `cubase_analyze_audio` (lectura, necesita `[analysis] enabled`)
 

@@ -65,6 +65,16 @@ The last look before publishing: does the file meet the platforms' specs, and is
 - **Where to listen:** the start, the end, the longest pauses, the level changes and the loudest moment; it can move the cursor to each one.
 - **What it changes:** nothing. Fixing loudness or peaks is the job of `podcast-delivery`. It can save the report (JSON and Markdown) in `Trackwright/reports/`.
 
+## `podcast-delivery`
+
+Brings the finished episode to a platform's spec: the loudness with the Stereo Out fader, and a limiter after the fader only when the peaks need it; then the delivery file, exported by you and measured itself.
+
+- **Ask for it like this:** "prepare the episode for Apple Podcasts", "normalize it to −16 LUFS", "fix the loudness the QC reported".
+- **How it decides:** it measures a WAV master and asks `cubase_delivery_plan` for the fader value and whether a limiter is needed, with its threshold. The numbers behind it were measured on a whole episode (TW-1612): the fader moves the loudness by exactly its gain; Stereo Out's slots 1–6 are before the fader and 7–8 after it, so a ceiling goes in 7 or 8; MP3 raises the peaks about 0.8 dB, so the limiter's threshold sits that much lower.
+- **What it warns about:** a target the fader cannot reach (+6 dB at most) and heavy limiting: both mean the voices should come up or be leveled first.
+- **How it checks:** a new master after the change, then the delivery file you export (MP3, for example) measured with `cubase_final_qc`. At most three rounds; if it does not converge it stops and explains.
+- **What it changes:** the Stereo Out fader and, only if needed, a limiter in slot 7 or 8, after your yes. It records the limiter as its own and the fader's previous value, so it can be put back.
+
 ## `podcast-silence-trim`
 
 Finds the silences longer than a duration and removes them, closing the gaps so the episode gets shorter.

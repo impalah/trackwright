@@ -28,6 +28,15 @@ PLUGINS: tuple[JsonObject, ...] = (
         "uid": "5B38F28281144FFE80285FF7CCF20483",
         "path": "",
     },
+    {  # TW-1613: as Cubase Elements 15 reports it (TW-1601)
+        "name": "Brickwall Limiter",
+        "vendor": "Steinberg Media Technologies",
+        "version": "1.0.0",
+        "format": "VST3",
+        "subCategories": "Fx|Mastering",
+        "uid": "94DEB7BF378041EE9E2FEDA24E19EF60",
+        "path": "",
+    },
 )
 
 

@@ -27,6 +27,7 @@ from trackwright.core.models import (
     ChangesOut,
     CommandOut,
     ConvertOut,
+    DeliveryPlanOut,
     ExportOut,
     ImportOut,
     InsertPluginOut,
@@ -604,6 +605,25 @@ def build_server(service: CubaseService) -> MCPServer:
                 long_pause_seconds=long_pause_seconds, jump_lu=jump_lu, report=report,
             )
         )  # fmt: skip
+
+    # ------------------------------------------------------------------ delivery plan (TW-1613)
+    @server.tool(
+        annotations=READ,
+        description="Plan the delivery of the mix to a delivery profile, read-only: from a master export (WAV, "
+        "the whole episode) and the current Stereo Out fader, the fader setting that reaches the target "
+        "loudness, the predicted true peak of the delivered format (MP3 adds ~0.8 dB), and whether a limiter "
+        "is needed in a post-fader slot (Stereo Out slots 7-8; 1-6 are before the fader), with its threshold. "
+        "Warns when the fader's range (+6.02 dB) is not enough or the limiting would be heavy. Apply it with "
+        "cubase_set_parameter and cubase_insert_plugin after the user agrees, then export and measure again.",
+    )
+    async def cubase_delivery_plan(
+        file: Annotated[str, Field(description="absolute path of the master export (WAV, whole episode)")],
+        target: Annotated[str, Field(description="delivery profile name (cubase_profile action 'delivery')")],
+        codec: Annotated[
+            str | None, Field(description="format to deliver: mp3, aac, wav; default the profile's first")
+        ] = None,
+    ) -> DeliveryPlanOut:
+        return await run(lambda: service.delivery_plan(file, target, codec=codec))
 
     # ------------------------------------------------------------------ renders (TW-1606)
     @server.tool(

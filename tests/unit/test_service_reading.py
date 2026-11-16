@@ -101,7 +101,7 @@ def test_list_available_plugins(service: CubaseService) -> None:
     catalog = service.list_available_plugins("selected", 1, "dynamics")
     assert catalog.collection == "Por defecto"
     assert [p.name for p in catalog.items] == ["Compressor"]
-    assert catalog.total == 2
+    assert catalog.total == 3  # StudioEQ, Compressor, Brickwall Limiter (TW-1613)
     assert catalog.matched == 1
     with pytest.raises(NotFoundError) as exc:
         service.list_available_plugins("selected", 9)

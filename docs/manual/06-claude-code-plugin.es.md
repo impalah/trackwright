@@ -65,6 +65,16 @@ El último vistazo antes de publicar: ¿cumple el archivo lo que piden las plata
 - **Dónde escuchar:** el principio, el final, las pausas más largas, los cambios de nivel y el momento más fuerte; puede llevar el cursor a cada uno.
 - **Qué cambia:** nada. Corregir la sonoridad o los picos es trabajo de `podcast-delivery`. Puede guardar el informe (JSON y Markdown) en `Trackwright/reports/`.
 
+## `podcast-delivery`
+
+Lleva el episodio terminado a la especificación de una plataforma: la sonoridad con el fader de Stereo Out, y un limitador después del fader solo cuando los picos lo necesitan; después, el archivo de entrega, exportado por ti y medido él mismo.
+
+- **Pídela así:** "prepara el episodio para Apple Podcasts", "normalízalo a −16 LUFS", "corrige la sonoridad que señaló el control final".
+- **Cómo decide:** mide una maestra WAV y pide a `cubase_delivery_plan` el valor del fader y si hace falta un limitador, con su umbral. Las cifras en que se basa se midieron en un episodio entero (TW-1612): el fader mueve la sonoridad exactamente lo que vale su ganancia; las ranuras 1–6 de Stereo Out están antes del fader y las 7–8 después, así que un techo va en la 7 o la 8; el MP3 sube los picos unos 0,8 dB, así que el umbral del limitador va ese tanto más abajo.
+- **De qué avisa:** de un objetivo que el fader no alcanza (+6 dB como mucho) y de una limitación fuerte: ambas cosas significan que las voces deben subir o nivelarse antes.
+- **Cómo comprueba:** una maestra nueva tras el cambio, y después el archivo de entrega que exportas (un MP3, por ejemplo) medido con `cubase_final_qc`. Tres pasadas como mucho; si no converge, se para y lo explica.
+- **Qué cambia:** el fader de Stereo Out y, solo si hace falta, un limitador en la ranura 7 u 8, tras tu sí. Registra el limitador como suyo y el valor anterior del fader, para poder volver atrás.
+
 ## `podcast-silence-trim`
 
 Encuentra los silencios más largos que una duración y los quita, cerrando los huecos para que el episodio sea más corto.

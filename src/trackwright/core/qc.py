@@ -29,15 +29,19 @@ from trackwright.analysis import (
     measure_loudness,
     probe,
 )
+from trackwright.analysis.delivery import plan_delivery
 from trackwright.analysis.qc import PCM, bitrate_kbps, codec_of, level_changes, loudest_moment
 from trackwright.core.analyzing import AnalyzingMixin, audio_source
-from trackwright.core.models import DeliveryProfileOut, QcItemOut, QcMomentOut, QcOut
+from trackwright.core.models import DeliveryPlanOut, DeliveryProfileOut, QcItemOut, QcMomentOut, QcOut
 from trackwright.core.profiling import ProfilesMixin
+from trackwright.core.reading import ReadingMixin
+from trackwright.core.tags import Channel
 from trackwright.core.timefmt import format_seconds, parse_seconds
 from trackwright.errors import PreconditionFailedError
 from trackwright.workspace import Workspace, atomic_write
 
 FULL_SCALE_DBFS = -0.01
+POST_FADER_SLOT = 7  # Stereo Out slots 7-8 are after the fader (TW-1612)
 MAX_LISTED = 20
 EDGE_LISTEN = 10.0  # seconds of the start and of the end to listen to
 
@@ -214,7 +218,7 @@ MANUAL = (
 )  # fmt: skip
 
 
-class QualityMixin(ProfilesMixin, AnalyzingMixin):
+class QualityMixin(ProfilesMixin, AnalyzingMixin, ReadingMixin):
     def final_qc(
         self,
         file: str,
@@ -282,6 +286,66 @@ class QualityMixin(ProfilesMixin, AnalyzingMixin):
         if report:
             out.report = self._write_report(path, out)
         return out
+
+    # ------------------------------------------------------------------ the delivery plan (TW-1613)
+    def delivery_plan(self, file: str, target: str, *, codec: str | None = None) -> DeliveryPlanOut:
+        """What to set on Stereo Out to deliver ``file``'s mix to ``target``: read-only."""
+        loud = self.measure_loudness(file)  # checks the policy; cached by hash (TW-1608)
+        if loud.integrated_lufs is None or loud.true_peak_dbtp is None:
+            raise PreconditionFailedError("the master is silent: nothing to deliver", code="BAD_AUDIO")
+        profile = self._qc_targets([target])[target]
+        chosen = codec or (profile.codecs[0] if profile.codecs else "wav")
+        output = next((t for t in self.list_tracks(limit=128).tracks if t.type == "OutputChannel"), None)
+        if output is None:
+            raise PreconditionFailedError("no output channel found", code="NOT_FOUND")
+        fader = self.get_parameter(output.track, "channel", Channel.VOLUME).parameter
+        if fader.plain is None or fader.plain < -200:  # -oo
+            raise PreconditionFailedError(f"the {output.name} fader is at -oo: set it first", code="BAD_REQUEST")
+        plan = plan_delivery(
+            measured_lufs=loud.integrated_lufs, measured_true_peak=loud.true_peak_dbtp, fader_now_db=fader.plain,
+            target_lufs=profile.loudness_lufs, tolerance_lu=profile.loudness_tolerance_lu,
+            ceiling_dbtp=profile.true_peak_dbtp, codec=chosen,
+        )  # fmt: skip
+        out = DeliveryPlanOut(
+            target=target, codec=chosen, target_lufs=plan.target_lufs, tolerance_lu=plan.tolerance_lu,
+            ceiling_dbtp=plan.ceiling_dbtp,
+            source=_source(profile, "loudness_lufs") or _source(profile, "true_peak_dbtp"),
+            master=loud.file, measured_lufs=plan.measured_lufs, measured_true_peak=plan.measured_true_peak,
+            stereo_out=output.name, fader_now_db=plan.fader_now_db, gain_db=plan.gain_db, fader_db=plan.fader_db,
+            reachable=plan.reachable, predicted_lufs=plan.predicted_lufs,
+            predicted_true_peak=plan.predicted_true_peak, limiter=plan.limiter, threshold_db=plan.threshold_db,
+            peak_reduction_db=plan.peak_reduction_db, limiter_slot=None, limiter_in_slot=None,
+            warnings=plan.warnings,
+        )  # fmt: skip
+        self._place_limiter(output.track, out)
+        if codec is None and profile.codecs:
+            out.notes.append(f"delivering as {chosen}, the first codec {target} lists; give codec for another")
+        if loud.source is not None and loud.source.project_saved_after:
+            out.notes.append("the project was saved after the master was exported: export it again if it changed")
+        return out
+
+    def _place_limiter(self, output: str, out: DeliveryPlanOut) -> None:
+        """Where a ceiling would go: a post-fader slot (7, 8), reusing a limiter already there."""
+        slots = self.list_inserts(output).slots
+        limiting = ("limiter", "maximizer")
+        for slot in slots[:6]:
+            name = slot.plugin.name if slot.plugin else ""
+            if any(word in name.lower() for word in limiting):
+                out.notes.append(
+                    f"{name} in slot {slot.index} is before the fader (TW-1612): it is no ceiling once the fader "
+                    "raises the level"
+                )
+        post = [s for s in slots if s.index >= POST_FADER_SLOT]
+        existing = next(
+            (s for s in post if s.plugin and any(w in s.plugin.name.lower() for w in limiting)), None
+        )  # fmt: skip
+        free = next((s for s in post if s.empty), None)
+        chosen = existing or free
+        if chosen is not None:
+            out.limiter_slot = chosen.index
+            out.limiter_in_slot = chosen.plugin.name if chosen.plugin else None
+        elif out.limiter:
+            out.warnings.append("slots 7 and 8 are taken by other plugins: free one for the limiter")
 
     @staticmethod
     def _duration_check(seconds: float, expected: float | None, codec: str | None) -> list[QcItemOut]:

@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 40 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 41 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -482,6 +482,16 @@ Final quality control of an episode file, the delivered one or a fresh export (T
 - **`verdict`:** `fail` when any check failed. `source` says which file was measured (TW-1608).
 - **`report`:** also writes `Trackwright/reports/qc-<file>-<time>.json` and `.md`; needs `[workspace] enabled` and the workspace created.
 - **Errors:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST` (an unknown target), `WORKSPACE_DISABLED`, `NO_WORKSPACE`, `NO_PROJECT_FOLDER`.
+
+### `cubase_delivery_plan` (read, needs `[analysis] enabled`)
+
+What to set on Stereo Out to deliver the mix to a delivery profile (TW-1613), from a master export and the current fader. Nothing is changed: the skill `podcast-delivery` applies the plan with `cubase_set_parameter` and `cubase_insert_plugin` after the user agrees.
+
+- **Input:** `file` (the master: a WAV export of the whole episode), `target` (a delivery profile), `codec` (the format to deliver: `mp3`, `aac`, `wav`; default the profile's first).
+- **Output:** the target's loudness, tolerance and ceiling with their `source`; the master's integrated loudness and true peak; `fader_now_db`, `gain_db` (target − measured) and `fader_db` (the setting to apply); `reachable` (false when it would pass the fader's +6.02 dB); `predicted_lufs` and `predicted_true_peak` of the delivered file before any limiter; `limiter`, `threshold_db` and `peak_reduction_db` when the ceiling would be passed; `limiter_slot` (Stereo Out's slot 7 or 8, reusing a limiter already there).
+- **The figures behind it** (TW-1612, `experiments/tw1612/`): the fader moves the loudness by exactly its gain; slots 1–6 are before the fader and 7–8 after it, so a limiter in 1–6 is no ceiling once the fader raises the level (noted when one is there); the Brickwall Limiter lets 0.24 dB of intersample peaks through; MP3 128 kbps raised the true peak by 0.82 dB (used for AAC too, with a warning: not measured). The threshold is the ceiling minus both margins, rounded down to 0.1 dB.
+- **Warnings:** a target the fader cannot reach; more than 6 dB of peak reduction (a job for compression or leveling upstream); the loudness that limiting takes (expect a second round); a profile without a loudness target or a ceiling; slots 7 and 8 taken by other plugins.
+- **Errors:** `ANALYSIS_DISABLED`, `TOO_LONG`, `NOT_FOUND`, `BAD_AUDIO` (a silent master), `BAD_REQUEST` (an unknown target, a fader at −∞).
 
 ### `cubase_analyze_audio` (read, needs `[analysis] enabled`)
 

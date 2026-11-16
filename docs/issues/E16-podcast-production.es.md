@@ -151,7 +151,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1613 Skill `podcast-delivery`
 
-- **Estado:** pendiente (necesita TW-1611, TW-1612)
+- **Estado:** código hecho (2026-11-16), falta probarlo en directo: la skill (contrato de TW-1609, tres pasadas como mucho) y la herramienta de solo lectura `cubase_delivery_plan` (ganancia del fader a partir de una maestra, pico real previsto del formato entregado, un limitador en una ranura posterior al fader con su umbral solo cuando el techo lo necesita, avisos por el rango de +6,02 dB del fader y por una limitación fuerte), con las cifras de TW-1612 en `trackwright/analysis/delivery.py`; el simulador conoce el Brickwall Limiter. Visto por el camino: `cubase_convert_value` sobre Stereo Out respondió con el título de la pista seleccionada (añadido a TW-1635). Tests en `tests/unit/test_delivery_plan_tw1613.py`
 - **Alcance:** elegir un perfil, exportar y medir, calcular si la ganancia sola alcanza el objetivo sin romper el techo (el ejemplo −21 → −16 LUFS de la lluvia de ideas); si no, proponer un limitador (y avisar cuando la ganancia necesaria pide procesar la dinámica antes); aplicar tras aprobación; exportar el máster y medirlo; exportar el formato de entrega con el usuario; decodificar y validar el archivo entregado; informe. Como mucho tres vueltas; después, parar y explicar.
 
 ## Fase 3 — Música
@@ -254,7 +254,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 ### TW-1635 Corrección: `cubase_record_automation` tras TW-1601
 
 - **Estado:** pendiente
-- **Visto en TW-1601:** (1) tras una grabación que indicó `complete: true`, la primera exportación salió plana y el fader quedó en −1,43 dB en lugar del valor del último punto; una exportación posterior, con la curva presente y R activado, sí la tenía. (2) El dry run indica el título del parámetro de la pista **seleccionada** (`TW1507 / Volumen`) para otra pista de destino (`TW1501`).
+- **Visto en TW-1601:** (1) tras una grabación que indicó `complete: true`, la primera exportación salió plana y el fader quedó en −1,43 dB en lugar del valor del último punto; una exportación posterior, con la curva presente y R activado, sí la tenía. (2) El dry run indica el título del parámetro de la pista **seleccionada** (`TW1507 / Volumen`) para otra pista de destino (`TW1501`). Visto de nuevo en TW-1613: `cubase_convert_value` sobre Stereo Out respondió `TW1612 episode / Volumen`, el título de la pista seleccionada; el valor era correcto, porque todos los volúmenes comparten escala, pero un control sin equivalente en la pista seleccionada podría convertirse en la equivocada.
 - **Alcance:** encontrar la causa de (1) con un test que la reproduzca (modo de lectura tras grabar, valor final del fader); indicar en la salida el estado de lectura de la pista; dejar el fader en el último punto; tomar el título del dry run de la pista de destino. La tolerancia de la relectura debe tener en cuenta el tick de ~110 ms (sus propias lecturas llegan un tick tarde).
 
 ## Fase 6 — Integración

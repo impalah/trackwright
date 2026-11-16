@@ -34,6 +34,7 @@ READ_TOOLS = {
     "cubase_measure_loudness",
     "cubase_detect_speech",
     "cubase_final_qc",
+    "cubase_delivery_plan",
 }
 WRITE_TOOLS = {
     "cubase_set_parameter",

@@ -580,6 +580,32 @@ class QcOut(_Out):
     notes: list[str] = Field(default_factory=list)
 
 
+class DeliveryPlanOut(_Out):
+    target: str = Field(description="the delivery profile")
+    codec: str = Field(description="the format to deliver: mp3, aac, wav…")
+    target_lufs: float | None
+    tolerance_lu: float | None
+    ceiling_dbtp: float | None
+    source: str | None = Field(description="the platform's page for the loudness and the ceiling")
+    master: str = Field(description="the measured master (an export of the mix)")
+    measured_lufs: float
+    measured_true_peak: float
+    stereo_out: str = Field(description="the output channel the plan acts on")
+    fader_now_db: float
+    gain_db: float = Field(description="change to the Stereo Out fader")
+    fader_db: float = Field(description="the fader setting to apply (at most +6.02 dB)")
+    reachable: bool = Field(description="the target is within the fader's range")
+    predicted_lufs: float
+    predicted_true_peak: float = Field(description="of the delivered file before any limiter (encoding included)")
+    limiter: bool = Field(description="a limiter is needed to keep the ceiling")
+    threshold_db: float | None = Field(description="its threshold: ceiling minus intersample and encoding margins")
+    peak_reduction_db: float | None
+    limiter_slot: int | None = Field(description="post-fader slot (7 or 8) for it: free, or holding a limiter")
+    limiter_in_slot: str | None = Field(description="the plugin already in that slot, if any")
+    warnings: list[str] = Field(default_factory=list)
+    notes: list[str] = Field(default_factory=list)
+
+
 class SpeechRegionOut(_Out):
     start: str = Field(description="project time, h:mm:ss.mmm")
     end: str

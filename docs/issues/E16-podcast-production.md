@@ -151,7 +151,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1613 Skill `podcast-delivery`
 
-- **Status:** pending (needs TW-1611, TW-1612)
+- **Status:** code done (2026-11-16), to try live: the skill (contract of TW-1609, three rounds at most) and the read-only tool `cubase_delivery_plan` (fader gain from a master, predicted true peak of the delivered format, a limiter in a post-fader slot with its threshold only when the ceiling needs it, warnings for the fader's +6.02 dB range and for heavy limiting), on TW-1612's figures in `trackwright/analysis/delivery.py`; the simulator knows the Brickwall Limiter. Seen on the way: `cubase_convert_value` on Stereo Out answered with the selected track's title (added to TW-1635). Tests in `tests/unit/test_delivery_plan_tw1613.py`
 - **Scope:** choose a profile, export and measure, compute whether gain alone reaches the target without breaking the ceiling (the brainstorm's −21 → −16 LUFS example), otherwise propose a limiter (and warn when the gain needed calls for dynamics processing upstream instead); apply after approval; export the master and measure; export the delivery format with the user; decode and validate the delivered file; report. At most three rounds, then stop and explain.
 
 ## Phase 3 — Music
@@ -254,7 +254,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 ### TW-1635 Fix: `cubase_record_automation` after TW-1601
 
 - **Status:** pending
-- **Seen in TW-1601:** (1) after a recording reported `complete: true`, the first export was flat and the fader was left at −1.43 dB instead of the last point's value; a later export, with the curve present and R on, had it. (2) The dry run reports the parameter title of the **selected** track (`TW1507 / Volumen`) for another target track (`TW1501`).
+- **Seen in TW-1601:** (1) after a recording reported `complete: true`, the first export was flat and the fader was left at −1.43 dB instead of the last point's value; a later export, with the curve present and R on, had it. (2) The dry run reports the parameter title of the **selected** track (`TW1507 / Volumen`) for another target track (`TW1501`). Seen again in TW-1613: `cubase_convert_value` on Stereo Out answered `TW1612 episode / Volumen`, the title of the selected track (`TW1612 episode`); the value was right, since every volume shares the scale, but a control without an equivalent on the selected track could be converted on the wrong one.
 - **Scope:** find the cause of (1) with a test that reproduces it (read mode after recording, the fader's final value); report the track's read state in the output; leave the fader at the last point; take the title in the dry run from the target track. The read-back tolerance should account for the ~110 ms tick (its own readings arrive one tick late).
 
 ## Phase 6 — Integration
