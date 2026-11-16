@@ -206,7 +206,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1623 Diagnóstico de la voz
 
-- **Estado:** pendiente
+- **Estado:** hecho (2026-11-16): `analysis/voice.py` (una pasada en bloques; espectro, zumbido, ruido, plosivas, clics, sibilancia, reverberación, cada uno con severidad, confianza y los tiempos para escuchar) y la herramienta `cubase_voice_diagnostics`; calibrado con fallos sintéticos (`tests/unit/test_voice_diagnostics_tw1623.py`: cada fallo encontrado solo en su caso) y validado sobre la voz completa de E0004 con la escucha del usuario, que endureció el detector de clics (ver el registro de verificación)
 - **Alcance:** análisis puros, cada uno con su confianza: espectro a largo plazo, zumbido (50/60 Hz y armónicos), ruido de banda ancha, plosivas (ráfagas de baja frecuencia), clics de boca (transitorios cortos), sibilancia (energía en la banda alta), reverberación (caída tras el final de las frases). Validados en episodios completos.
 
 ### TW-1624 Skill `podcast-voice-cleanup`

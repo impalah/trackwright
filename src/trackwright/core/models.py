@@ -690,6 +690,26 @@ class LevelingPlanOut(_Out):
     notes: list[str] = Field(default_factory=list)
 
 
+class VoiceFindingOut(_Out):
+    problem: Literal["spectrum", "hum", "noise", "plosives", "clicks", "sibilance", "reverb"]
+    detected: bool
+    severity: Literal["none", "mild", "moderate", "strong"]
+    confidence: float = Field(description="0..1: how much the data supports the finding, not how bad it is")
+    measures: dict[str, float | str | None]
+    times: list[float] = Field(default_factory=list, description="where to listen (project seconds), strongest first")
+    note: str
+
+
+class VoiceDiagnosticsOut(_Out):
+    file: str
+    start: float
+    seconds: float
+    sample_rate: int
+    speech_seconds: float
+    findings: list[VoiceFindingOut]
+    notes: list[str] = Field(default_factory=list)
+
+
 class DuckSpanOut(_Out):
     start: str = Field(description="the music is at depth_db from here (the first word)")
     end: str = Field(description="to here (the end of the hold)")

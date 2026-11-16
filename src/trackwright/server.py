@@ -61,6 +61,7 @@ from trackwright.core.models import (
     TrackListOut,
     TransitionPlanOut,
     TransportOut,
+    VoiceDiagnosticsOut,
     WorkspaceOut,
     WriteOut,
 )
@@ -127,7 +128,7 @@ async def run[T](fn: Callable[[], T]) -> T:
         raise tool_error(error) from exc
 
 
-def build_server(service: CubaseService) -> MCPServer:
+def build_server(service: CubaseService) -> MCPServer:  # noqa: PLR0915  (one registration per tool)
     server: MCPServer = MCPServer(name=SERVER_NAME, version=__version__, instructions=INSTRUCTIONS)
 
     # ------------------------------------------------------------------ read tools (E05)
@@ -662,6 +663,23 @@ def build_server(service: CubaseService) -> MCPServer:
                 voice_file, at, stinger_file, voice_start=voice_start, pre_gap=pre_gap, post_gap=post_gap
             )
         )
+
+    # ------------------------------------------------------------------ voice diagnostics (TW-1623)
+    @server.tool(
+        annotations=READ,
+        description="Diagnose a voice recording, read-only: the export of one voice track alone (start = its "
+        "range start). Each finding has detected, severity (none, mild, moderate, strong), a confidence (how "
+        "much the data supports it), measures and the times to listen to (project seconds, strongest first): "
+        "spectrum (long-term, six bands relative to the whole), hum (50/60 Hz and harmonics in the pauses), "
+        "noise (signal-to-noise and colour), plosives (bursts under 80 Hz in speech), clicks (short transients "
+        "above 3 kHz), sibilance (5-10 kHz as loud as typical speech), reverb (T60 estimate from phrase ends). "
+        "Treats nothing.",
+    )
+    async def cubase_voice_diagnostics(
+        file: Annotated[str, Field(description="absolute path of the export of one voice track alone")],
+        start: Annotated[float, Field(ge=0, description="project time of the export's first sample")] = 0.0,
+    ) -> VoiceDiagnosticsOut:
+        return await run(lambda: service.voice_diagnostics(file, start=start))
 
     # ------------------------------------------------------------------ dialogue leveling (TW-1622)
     @server.tool(

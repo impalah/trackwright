@@ -2,7 +2,7 @@
 
 **English** · [Español](04-tools.es.md)
 
-The `trackwright` server exposes 48 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
+The `trackwright` server exposes 49 tools. Each one has an input schema and an output schema that the MCP client receives automatically; this page explains how to use them and what their limitations are.
 
 Trackwright aims to support several DAWs, but today it only implements **Cubase**. That is why every tool is named `cubase_*` and this page describes Cubase's behavior: it was verified against Cubase Elements 15.0.30, with experiment scripts and from Claude Code (see the [verification log](../verification.md)). Any MCP client receives the same tools. Another DAW would get its own set of tools; see [Extension to other DAWs](../architecture.md#extension-to-other-daws-possible-not-implemented).
 
@@ -482,6 +482,22 @@ A short file to listen to before changing the project (TW-1615): up to 8 exports
 - **Mixing:** silence where a source has no audio; a mono source on both channels; every source must have the same sample rate (`BAD_AUDIO` otherwise).
 - **Needs** `[analysis] enabled` and `[workspace] enabled`, and the workspace created.
 - **Errors:** `WORKSPACE_DISABLED`, `ANALYSIS_DISABLED`, `NO_WORKSPACE`, `NO_PROJECT_FOLDER`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST`.
+
+### `cubase_voice_diagnostics` (read, needs `[analysis] enabled`)
+
+Diagnoses a voice recording (TW-1623), without treating anything.
+
+- **Input:** `file` (the export of **one voice track alone**) and `start` (its range start, so the times are project times).
+- **How:** one pass in 30 s blocks (a 46-minute episode in about 5 s), with the speech regions of the voice. Each finding has `detected`, `severity` (`none`, `mild`, `moderate`, `strong`), a `confidence` (0 to 1: how much the data supports it, not how bad it is), `measures`, `times` (where to listen, strongest first, up to 20) and a `note`:
+  - **`spectrum`:** the long-term speech spectrum in six bands (rumble 20–80 Hz, low, body, presence, sibilance 4–10 kHz, air), in dB relative to the whole;
+  - **`hum`:** peaks at 50 or 60 Hz and five harmonics against the spectrum 5–15 Hz around each, measured in the pauses (frames of 0.68 s); with no pauses long enough, measured over everything, and then the mains fundamental must stand out itself (a voice's harmonics make peaks too);
+  - **`noise`:** the signal-to-noise ratio (typical speech level against the floor of the pauses: under 25 dB strong, 35 moderate, 45 mild) and the floor's colour (rumble, hiss, broadband);
+  - **`plosives`:** bursts under 80 Hz that carry more than half the energy of a 10 ms window inside speech;
+  - **`clicks`:** transients above 3 kHz more than 30 times their surroundings and 12 times their own 10 ms window, near speech and no more than 30 dB under the typical speech level; mild from 2 a minute;
+  - **`sibilance`:** windows where 5–10 kHz is as loud as typical speech;
+  - **`reverb`:** the time to fall from 5 to 25 dB below each phrase's last loud moment, scaled to a T60 (the voice's own fall counts too: an estimate).
+- **The thresholds** are starting values, chosen on synthetic faults and checked on a whole real episode with the user listening (see the verification log): listen to the `times` before treating anything.
+- **Errors:** `NOT_FOUND`, `ANALYSIS_DISABLED`.
 
 ### `cubase_leveling_plan` (read, needs `[analysis] enabled`)
 

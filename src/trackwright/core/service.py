@@ -5,6 +5,7 @@ from __future__ import annotations
 from trackwright.core.analyzing import AnalyzingMixin
 from trackwright.core.automation import AutomationMixin
 from trackwright.core.commanding import CommandingMixin
+from trackwright.core.diagnosing import DiagnosingMixin
 from trackwright.core.effects import EffectsMixin
 from trackwright.core.importing import ImportMixin
 from trackwright.core.leveling import LevelingMixin
@@ -24,6 +25,7 @@ from trackwright.core.writing import WritingMixin
 
 
 class CubaseService(
+    DiagnosingMixin,
     LevelingMixin,
     EffectsMixin,
     TransitionMixin,

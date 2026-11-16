@@ -206,7 +206,7 @@ The same as E14 and E15: a failing test before each fix; documentation in Englis
 
 ### TW-1623 Voice diagnostics
 
-- **Status:** pending
+- **Status:** done (2026-11-16): `analysis/voice.py` (one pass in blocks; spectrum, hum, noise, plosives, clicks, sibilance, reverb, each with a severity, a confidence and the times to listen to) and the tool `cubase_voice_diagnostics`; calibrated on synthetic faults (`tests/unit/test_voice_diagnostics_tw1623.py`: each fault found in its own case only) and validated on the whole E0004 voice with the user listening, which tightened the click detector (see the verification log)
 - **Scope:** pure analyses with a confidence each: long-term spectrum, hum (50/60 Hz and harmonics), broadband noise, plosives (low-frequency bursts), mouth clicks (short transients), sibilance (high-band energy), reverberation (decay after phrase ends). Validated on whole episodes.
 
 ### TW-1624 Skill `podcast-voice-cleanup`

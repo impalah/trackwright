@@ -39,6 +39,7 @@ READ_TOOLS = {
     "cubase_transition_plan",
     "cubase_effect_plan",
     "cubase_leveling_plan",
+    "cubase_voice_diagnostics",
     "cubase_delivery_plan",
     "cubase_ducking_plan",
 }

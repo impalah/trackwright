@@ -2,7 +2,7 @@
 
 [English](04-tools.md) · **Español**
 
-El servidor `trackwright` publica 48 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
+El servidor `trackwright` publica 49 herramientas. Cada una tiene un esquema de entrada y otro de salida que el cliente MCP recibe automáticamente; aquí se explica cómo usarlas y qué limitaciones tienen.
 
 Trackwright aspira a admitir varios DAW, pero hoy solo implementa **Cubase**. Por eso todas las herramientas se llaman `cubase_*` y esta página describe el comportamiento de Cubase: se verificó contra Cubase Elements 15.0.30, con scripts de experimento y desde Claude Code (ver el [registro de verificación](../verification.es.md)). Cualquier cliente MCP recibe las mismas herramientas. Otro DAW tendría su propio conjunto de herramientas; ver [Extensión a otros DAW](../architecture.es.md#extensión-a-otros-daw-posible-no-implementada).
 
@@ -482,6 +482,22 @@ Un archivo corto para escuchar antes de cambiar el proyecto (TW-1615): hasta 8 e
 - **Mezcla:** silencio donde una fuente no tiene audio; una fuente mono en los dos canales; todas las fuentes deben tener la misma frecuencia de muestreo (`BAD_AUDIO` si no).
 - **Necesita** `[analysis] enabled` y `[workspace] enabled`, y el espacio de trabajo creado.
 - **Errores:** `WORKSPACE_DISABLED`, `ANALYSIS_DISABLED`, `NO_WORKSPACE`, `NO_PROJECT_FOLDER`, `NOT_FOUND`, `BAD_AUDIO`, `BAD_TIME`, `BAD_REQUEST`.
+
+### `cubase_voice_diagnostics` (lectura, necesita `[analysis] enabled`)
+
+Diagnostica una grabación de voz (TW-1623), sin tratar nada.
+
+- **Entrada:** `file` (la exportación de **una sola pista de voz**) y `start` (el inicio de su rango, para que los tiempos sean de proyecto).
+- **Cómo:** una pasada en bloques de 30 s (un episodio de 46 minutos en unos 5 s), con las regiones de habla de la voz. Cada hallazgo tiene `detected`, `severity` (`none`, `mild`, `moderate`, `strong`), una `confidence` (de 0 a 1: cuánto lo sostienen los datos, no lo grave que es), `measures`, `times` (dónde escuchar, los más fuertes primero, hasta 20) y una `note`:
+  - **`spectrum`:** el espectro de habla a largo plazo en seis bandas (retumbe 20–80 Hz, graves, cuerpo, presencia, sibilancia 4–10 kHz, aire), en dB respecto al total;
+  - **`hum`:** picos en 50 o 60 Hz y cinco armónicos frente al espectro 5–15 Hz a su alrededor, medidos en las pausas (tramos de 0,68 s); sin pausas suficientemente largas, medidos sobre todo, y entonces la fundamental de la red tiene que destacar por sí misma (los armónicos de una voz también hacen picos);
+  - **`noise`:** la relación señal/ruido (nivel típico de habla frente al suelo de las pausas: por debajo de 25 dB fuerte, 35 moderado, 45 leve) y el color del suelo (retumbe, siseo, de banda ancha);
+  - **`plosives`:** golpes por debajo de 80 Hz que llevan más de la mitad de la energía de una ventana de 10 ms dentro del habla;
+  - **`clicks`:** transitorios por encima de 3 kHz más de 30 veces sobre su entorno y 12 veces sobre su propia ventana de 10 ms, cerca del habla y a no más de 30 dB por debajo del nivel típico de habla; leve a partir de 2 por minuto;
+  - **`sibilance`:** ventanas en las que 5–10 kHz suena tan fuerte como el habla típica;
+  - **`reverb`:** el tiempo de caer de 5 a 25 dB por debajo del último momento fuerte de cada frase, llevado a un T60 (la propia caída de la voz también cuenta: una estimación).
+- **Los umbrales** son valores de partida, elegidos con fallos sintéticos y comprobados sobre un episodio real completo con la escucha del usuario (ver el registro de verificación): escucha los `times` antes de tratar nada.
+- **Errores:** `NOT_FOUND`, `ANALYSIS_DISABLED`.
 
 ### `cubase_leveling_plan` (lectura, necesita `[analysis] enabled`)
 
