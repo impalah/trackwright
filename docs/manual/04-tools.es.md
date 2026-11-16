@@ -561,6 +561,7 @@ Mecanismo verificado en Cubase Elements 15.0.30: el script tiene en la superfici
 
 - **Entrada:** `track`.
 - **Salida:** cada parámetro automatizable con su clave (`parameter`), el parámetro de Cubase al que está enlazado (`title`, por ejemplo «Compressor / Threshold»), su valor actual y si está disponible (`available`).
+- **Selección:** los controles de automatización siguen a la pista seleccionada, y Cubase los vincula a una nueva selección un momento después. Esta herramienta, `cubase_convert_value` y `cubase_record_automation` seleccionan la pista y esperan (hasta 3 s) a que el control de volumen lleve su nombre; si los controles nunca la siguen, se detienen con `CONTROLS_NOT_BOUND` y no tocan nada (TW-1616: leído al instante, el volumen de POC-TEST salió como el de otra pista).
 - **Claves:**
   - `volume`, `pan`;
   - `send1.level` a `send4.level`;

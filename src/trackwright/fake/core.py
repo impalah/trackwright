@@ -68,6 +68,9 @@ class FakeCore:
         self.beats_per_poll = 0.25
         self.auto_values: dict[tuple[int, str], float] = {}
         self.auto_touched: set[str] = set()
+        # TW-1616: Cubase binds the automation controls to a new selection a moment later; each entry is the
+        # channel title one auto.list still reports before the controls follow the selection
+        self.auto_lag: list[str] = []
         self.automation: dict[tuple[int, str], list[tuple[float, float]]] = {}
         self.markers: list[str] = []
         self.last_event_end: str | None = "9. 1. 1.  0"

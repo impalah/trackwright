@@ -93,7 +93,11 @@ class FakeAutomation(FakeEditing):
             return {"enabled": False, "controls": []}
         if self.selected < 0:
             return {"enabled": True, "controls": [], "errors": ["no selected channel"]}
-        return {"enabled": True, "controls": [self._describe_control(k) for k in self.AUTO_KEYS], "errors": []}
+        controls = [self._describe_control(k) for k in self.AUTO_KEYS]
+        if self.auto_lag:  # still bound to an earlier selection
+            stale = self.auto_lag.pop(0)
+            controls = [{**c, "title": f"{stale} / Volumen"} if c["key"] == "volume" else c for c in controls]
+        return {"enabled": True, "controls": controls, "errors": []}
 
     def _op_sel_step(self, p: JsonObject) -> JsonObject:
         direction = p.get("direction")

@@ -34,6 +34,7 @@ from trackwright.core.timefmt import bars_tuple, format_bars
 from trackwright.errors import NotFoundError, PreconditionFailedError, TrackwrightError, UnavailableError
 from trackwright.jsontypes import JsonObject
 
+CONTROLS_TIMEOUT = 3.0  # seconds to wait for the controls to follow a selection (TW-1616)
 MAX_POINTS = 64
 VERIFY_TOLERANCE = 0.05
 TICKS_PER_BEAT = 480
@@ -183,9 +184,36 @@ class AutomationMixin(ProjectMixin):
             self.call("da.convert", {"id": obj["id"], "tag": tag, "process": value, **MIXER})["plainFromProcess"]
         )
 
-    def _bound_control(self, item: JsonObject, parameter: str) -> tuple[JsonObject, AutomationTarget]:
+    def _controls_of(self, item: JsonObject) -> dict[str, JsonObject]:
+        """Select ``item`` and wait until the automation controls are bound to it (TW-1616).
+
+        Cubase binds the controls to a new selection a moment later: read right away, they still belonged to the
+        previous track (seen live: a volume titled "POC-TEST ducked" for POC-TEST, an insert of Stereo Out).
+        The volume control's title starts with the channel's name once they follow it; if that does not happen
+        in time, nothing is read or written on the wrong track."""
         self.select_channel(int(item["id"]))
+        prefix = f"{self.track_info(item).name} / "
+
+        def bound(controls: dict[str, JsonObject]) -> bool:
+            return str((controls.get("volume") or {}).get("title") or "").startswith(prefix)
+
         controls = self._auto_controls()
+        deadline = time.monotonic() + max(self._settle_timeout, CONTROLS_TIMEOUT)
+        while not bound(controls) and time.monotonic() < deadline:
+            self._sleep(0.1)
+            controls = self._auto_controls()
+        if not bound(controls):
+            title = (controls.get("volume") or {}).get("title")
+            raise PreconditionFailedError(
+                f"the automation controls did not follow the selection of {self.track_info(item).name!r} "
+                f"(they still show {title!r}): try again",
+                code="CONTROLS_NOT_BOUND",
+                details={"volume_title": title},
+            )
+        return controls
+
+    def _bound_control(self, item: JsonObject, parameter: str) -> tuple[JsonObject, AutomationTarget]:
+        controls = self._controls_of(item)
         if parameter not in controls:
             raise NotFoundError(f"unknown automation parameter {parameter!r}", code="PARAM_NOT_FOUND",
                                 details={"known": sorted(controls)})  # fmt: skip
@@ -202,8 +230,7 @@ class AutomationMixin(ProjectMixin):
     def list_automation_targets(self, track: str) -> AutomationTargetsOut:
         """Parameters of ``track`` that can be automated. Selects the track (the controls follow the selection)."""
         item = self.resolve_track(TrackSelector.parse(track))
-        self.select_channel(int(item["id"]))
-        controls = self._auto_controls()
+        controls = self._controls_of(item)
         targets = [self._target(key, c) for key, c in controls.items()]
         return AutomationTargetsOut(track=self.track_info(item).name, targets=targets)
 

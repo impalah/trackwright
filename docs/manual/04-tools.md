@@ -561,6 +561,7 @@ Mechanism verified in Cubase Elements 15.0.30: the script has one control per pa
 
 - **Input:** `track`.
 - **Output:** each automatable parameter with its key (`parameter`), the Cubase parameter it is bound to (`title`, for example "Compressor / Threshold"), its current value and whether it is available (`available`).
+- **Selection:** the automation controls follow the selected track, and Cubase binds them to a new selection a moment later. This tool, `cubase_convert_value` and `cubase_record_automation` select the track and wait (up to 3 s) until the volume control is titled with its name; if the controls never follow, they stop with `CONTROLS_NOT_BOUND` and touch nothing (TW-1616: read at once, POC-TEST's volume came back as another track's).
 - **Keys:**
   - `volume`, `pan`;
   - `send1.level` to `send4.level`;

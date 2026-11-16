@@ -253,7 +253,7 @@ Las mismas que en E14 y E15: un test que falla antes de cada corrección; docume
 
 ### TW-1635 Corrección: `cubase_record_automation` tras TW-1601
 
-- **Estado:** pendiente
+- **Estado:** en curso: (2) corregido en TW-1616 (2026-11-16): los controles de automatización se vinculan a una nueva selección un momento después, y toda lectura o escritura justo después de seleccionar usaba los controles de la pista anterior; las herramientas esperan ahora a que el control de volumen lleve el nombre de la pista y se detienen con `CONTROLS_NOT_BOUND` si no. (1) sigue abierto; puede tener la misma causa (una grabación que empezó con los controles de la selección anterior).
 - **Visto en TW-1601:** (1) tras una grabación que indicó `complete: true`, la primera exportación salió plana y el fader quedó en −1,43 dB en lugar del valor del último punto; una exportación posterior, con la curva presente y R activado, sí la tenía. (2) El dry run indica el título del parámetro de la pista **seleccionada** (`TW1507 / Volumen`) para otra pista de destino (`TW1501`). Visto de nuevo en TW-1613: `cubase_convert_value` sobre Stereo Out respondió `TW1612 episode / Volumen`, el título de la pista seleccionada; el valor era correcto, porque todos los volúmenes comparten escala, pero un control sin equivalente en la pista seleccionada podría convertirse en la equivocada.
 - **Alcance:** encontrar la causa de (1) con un test que la reproduzca (modo de lectura tras grabar, valor final del fader); indicar en la salida el estado de lectura de la pista; dejar el fader en el último punto; tomar el título del dry run de la pista de destino. La tolerancia de la relectura debe tener en cuenta el tick de ~110 ms (sus propias lecturas llegan un tick tarde).
 
